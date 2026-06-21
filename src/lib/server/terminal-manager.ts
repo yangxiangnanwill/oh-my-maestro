@@ -18,6 +18,8 @@ interface ActiveTerminal {
   session: TerminalSession;
   buffer: string[];
   throttleTimer: ReturnType<typeof setInterval> | null;
+  /** Set before kill() to prevent duplicate EXIT event from onExit callback */
+  _exiting?: boolean;
 }
 
 /** Spawn function signature — matches node-pty spawn */
@@ -34,6 +36,18 @@ export interface CreateTerminalOptions {
   rows?: number;
   shell?: string;
 }
+
+/** Whitelist of allowed shell executables (filename only, case-sensitive) */
+const SHELL_WHITELIST = new Set([
+  'powershell.exe',
+  'cmd.exe',
+  'pwsh.exe',
+  'bash',
+  'zsh',
+  'sh',
+  'fish',
+  'dash',
+]);
 
 /**
  * TerminalManager — manages PTY sessions via node-pty.
@@ -94,6 +108,14 @@ export class TerminalManager {
       options?.shell ??
       (process.platform === 'win32' ? 'powershell.exe' : (process.env.SHELL ?? '/bin/bash'));
 
+    // Validate shell against whitelist (extract filename to prevent path traversal)
+    const shellName = shell.split('/').pop()?.split('\\').pop() ?? shell;
+    if (!SHELL_WHITELIST.has(shellName)) {
+      throw new Error(
+        `Shell not allowed: ${shellName}. Allowed shells: ${[...SHELL_WHITELIST].join(', ')}`,
+      );
+    }
+
     const pty = this.spawnPty(shell, [], {
       name: 'xterm-256color',
       cols,
@@ -122,9 +144,11 @@ export class TerminalManager {
     // Start frame throttle for output
     this.startFrameThrottle(terminalId, pty);
 
-    // Handle PTY exit
+    // Handle PTY exit (skip if destroyTerminal already initiated cleanup)
     pty.onExit(({ exitCode }) => {
-      this.handlePtyExit(terminalId, exitCode);
+      if (!active._exiting) {
+        this.handlePtyExit(terminalId, exitCode);
+      }
     });
 
     // Emit CREATED event
@@ -184,25 +208,15 @@ export class TerminalManager {
     const active = this.sessions.get(terminalId);
     if (!active) return;
 
-    // Clear throttle timer
-    if (active.throttleTimer !== null) {
-      clearInterval(active.throttleTimer);
-      active.throttleTimer = null;
-    }
+    // Set _exiting flag BEFORE kill() to prevent onExit → handlePtyExit
+    // from sending a duplicate EXIT event
+    active._exiting = true;
 
-    // Kill PTY process
+    // Kill PTY process (may trigger onExit synchronously)
     active.pty.kill();
 
-    // Remove from sessions
-    this.sessions.delete(terminalId);
-
-    // Emit EXIT event
-    this.eventBus.publish(
-      TerminalEvents.EXIT,
-      Channels.TERMINAL,
-      { terminalId, exitCode: null, timestamp: new Date().toISOString() },
-      'server',
-    );
+    // Unified cleanup
+    this.cleanupSession(terminalId, null, true);
   }
 
   /**
@@ -277,10 +291,52 @@ export class TerminalManager {
 
   /**
    * Handle PTY process exit (triggered by onExit callback).
+   * Skips if _exiting flag is set (destroyTerminal already handled cleanup).
    */
   private handlePtyExit(terminalId: string, exitCode: number): void {
     const active = this.sessions.get(terminalId);
     if (!active) return;
+
+    // If destroyTerminal already set _exiting, skip — cleanup already done
+    if (active._exiting) return;
+
+    // Flush residual buffer data before cleanup
+    this.cleanupSession(terminalId, exitCode, true);
+  }
+
+  /**
+   * Unified session cleanup — flush residual buffer, clear throttle,
+   * remove from sessions, emit EXIT event.
+   *
+   * @param terminalId - Terminal to clean up
+   * @param exitCode - Exit code (null for manual destroy)
+   * @param flushBuffer - Whether to flush residual buffer as OUTPUT event
+   */
+  private cleanupSession(terminalId: string, exitCode: number | null, flushBuffer: boolean): void {
+    const active = this.sessions.get(terminalId);
+    if (!active) return;
+
+    // Flush residual buffer data before clearing throttle
+    if (flushBuffer && active.buffer.length > 0) {
+      const combined = active.buffer.join('');
+      active.buffer = [];
+
+      this.eventBus.publish(
+        TerminalEvents.OUTPUT,
+        Channels.TERMINAL,
+        { terminalId, data: combined, timestamp: new Date().toISOString() },
+        'server',
+      );
+
+      this.ringBuffer.push({
+        terminalId,
+        data: combined,
+        timestamp: new Date().toISOString(),
+      });
+      if (this.ringBuffer.length > this.RING_BUFFER_CAPACITY) {
+        this.ringBuffer.shift();
+      }
+    }
 
     // Clear throttle timer
     if (active.throttleTimer !== null) {
