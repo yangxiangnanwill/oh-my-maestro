@@ -154,3 +154,22 @@ export interface StateSyncEvent {
   timestamp: string;
   executionId?: string;
 }
+
+/** Stream chunk from Claude Code CLI NDJSON output */
+export interface StreamChunk {
+  type: 'text' | 'tool_use' | 'tool_result' | 'error';
+  content: string;
+  timestamp: string;
+}
+
+/** Intent routing result from keyword matching */
+export interface IntentCandidate {
+  workflowId: string;
+  score: number;
+}
+
+export interface IntentResult {
+  workflowId: string | null;
+  confidence: number;
+  candidates: IntentCandidate[];
+}
