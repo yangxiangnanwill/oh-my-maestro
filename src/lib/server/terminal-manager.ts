@@ -55,6 +55,8 @@ const SHELL_WHITELIST = new Set([
  * Handles session lifecycle (create/write/resize/destroy), 33ms frame throttle
  * for output, ring buffer (capacity 1000), and max 5 concurrent sessions.
  * Communicates all terminal events through EventBus.
+ *
+ * TODO(MAINT-002): 与 DialogManager 共享约 40% session 管理模式（CRUD + MAX_SESSIONS + EventBus 集成）。Phase 3 考虑提取泛型 SessionManager<T> 基类。
  */
 export class TerminalManager {
   private sessions = new Map<string, ActiveTerminal>();

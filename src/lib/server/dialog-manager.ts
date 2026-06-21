@@ -25,6 +25,8 @@ interface ActiveDialog {
  * Creates dialog sessions, spawns Claude Code CLI processes with NDJSON streaming,
  * parses output into StreamChunk events, and performs keyword-based intent recognition
  * to route user messages to appropriate workflows.
+ *
+ * TODO(MAINT-002): 与 TerminalManager 共享约 40% session 管理模式。Phase 3 考虑提取泛型 SessionManager<T> 基类。
  */
 export class DialogManager {
   private sessions = new Map<string, ActiveDialog>();
