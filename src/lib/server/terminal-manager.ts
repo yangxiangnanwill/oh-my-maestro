@@ -70,8 +70,11 @@ export class TerminalManager {
     private spawnPty: SpawnPtyFn = ptySpawn as SpawnPtyFn,
   ) {
     // Subscribe to term:input events from EventBus (client → PTY)
-    // Direct PTY write to avoid re-entrant loop (writeToTerminal also emits INPUT)
-    this.eventBus.subscribe(TerminalEvents.INPUT, (payload) => {
+    // Only process client-sourced events to avoid re-entrant loop:
+    // writeToTerminal() also publishes INPUT with source='server'
+    this.eventBus.subscribe(TerminalEvents.INPUT, (payload, event) => {
+      // Skip server-sourced INPUT events to prevent double-write
+      if (event.source === 'server') return;
       const { terminalId, data } = payload as { terminalId: string; data: string };
       const active = this.sessions.get(terminalId);
       if (active) {
