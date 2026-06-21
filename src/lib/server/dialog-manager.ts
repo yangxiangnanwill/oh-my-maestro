@@ -1,6 +1,6 @@
 // Maestro IDE — Dialog Manager (Claude Code CLI Subprocess Management + NDJSON Streaming + Intent Routing)
 
-import { spawn, type ChildProcess } from 'node:child_process';
+import { type ChildProcess } from 'node:child_process';
 import type { EventBus } from './event-bus.js';
 import type { DialogSession, WorkflowMeta, StreamChunk, IntentResult, IntentCandidate } from '../shared/types.js';
 import { Channels, DialogEvents } from '../shared/events.js';
@@ -9,7 +9,7 @@ import { Channels, DialogEvents } from '../shared/events.js';
 export type SpawnFn = (
   command: string,
   args?: readonly string[],
-  options?: Parameters<typeof spawn>[2],
+  options?: import('node:child_process').SpawnOptions,
 ) => ChildProcess;
 
 /** Active dialog tracking entry */
@@ -33,7 +33,7 @@ export class DialogManager {
 
   constructor(
     private eventBus: EventBus,
-    private spawnFn: SpawnFn = spawn,
+    private spawnFn: SpawnFn,
     private workflowRegistry: WorkflowMeta[] = [],
   ) {}
 
@@ -121,11 +121,13 @@ export class DialogManager {
     activeDialog.process = childProcess;
     activeDialog.session.cliProcessId = childProcess.pid ?? null;
 
-    // Parse stdout line-by-line as NDJSON
+    // Parse stdout line-by-line as NDJSON (with cross-chunk buffering)
     childProcess.stdout?.on('data', (chunk: Buffer | string) => {
       const text = typeof chunk === 'string' ? chunk : chunk.toString();
-      const lines = text.split('\n');
-
+      activeDialog.buffer += text;
+      const lines = activeDialog.buffer.split('\n');
+      // 最后一个元素可能是不完整行，保留在 buffer 中
+      activeDialog.buffer = lines.pop() ?? '';
       for (const line of lines) {
         const streamChunk = this.parseChunk(line);
         if (streamChunk) {
@@ -316,6 +318,15 @@ export class DialogManager {
       { sessionId },
       'server',
     );
+  }
+
+  /**
+   * Close all active dialog sessions (cleanup).
+   */
+  closeAll(): void {
+    for (const sessionId of [...this.sessions.keys()]) {
+      this.closeSession(sessionId);
+    }
   }
 
   /**
