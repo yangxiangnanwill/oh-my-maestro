@@ -120,8 +120,13 @@ export class WSGateway {
 
   /**
    * Broadcast an EventBus event to all subscribed clients.
+   * High-frequency events (term:output, dialog:stream-chunk) skip translation
+   * to avoid redundant JSON.stringify and object traversal overhead.
    */
   private broadcastEvent(event: InternalEvent): void {
+    // High-frequency events: skip translator middleware to avoid double JSON.stringify
+    const isHighFreq = event.type === 'term:output' || event.type === 'dialog:stream-chunk';
+
     for (const client of this.clients.values()) {
       const message: WSMessage = {
         channel: event.channel,
@@ -131,8 +136,8 @@ export class WSGateway {
       };
 
       if (client.subscribedChannels.has(event.channel) || client.subscribedChannels.has('*')) {
-        // Apply translation for this client
-        if (typeof event.payload === 'object' && event.payload !== null) {
+        // Apply translation for this client (skip for high-frequency events)
+        if (!isHighFreq && typeof event.payload === 'object' && event.payload !== null) {
           const { translated } = this.translator.translate(
             event.payload as Record<string, unknown>,
             client.id
@@ -146,11 +151,20 @@ export class WSGateway {
 
   /**
    * Send a message to a specific client.
+   * Checks bufferedAmount to skip slow clients (prevents server memory backpressure).
    */
   private sendToClient(client: ClientConnection, message: WSMessage): void {
-    if (client.ws.readyState === WebSocket.OPEN) {
-      client.ws.send(JSON.stringify(message));
+    if (client.ws.readyState !== WebSocket.OPEN) return;
+
+    // Backpressure check — skip slow clients with > 64KB buffered data
+    if (client.ws.bufferedAmount > 65536) {
+      console.warn(
+        `[WSGateway] Skipping slow client ${client.id}: bufferedAmount=${client.ws.bufferedAmount} bytes (threshold=65536)`,
+      );
+      return;
     }
+
+    client.ws.send(JSON.stringify(message));
   }
 
   /**

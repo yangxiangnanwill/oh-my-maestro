@@ -195,11 +195,13 @@ export class DialogManager {
    * Publish a STREAM_CHUNK event to the EventBus.
    */
   private emitStreamChunk(sessionId: string, chunk: StreamChunk): void {
+    // skipHistory: high-frequency event — avoid memory bloat from NDJSON streaming
     this.eventBus.publish(
       DialogEvents.STREAM_CHUNK,
       Channels.DIALOG,
       { sessionId, ...chunk },
       'server',
+      { skipHistory: true },
     );
   }
 

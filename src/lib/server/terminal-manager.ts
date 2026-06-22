@@ -286,12 +286,13 @@ export class TerminalManager {
         const combined = active.buffer.join('');
         active.buffer = [];
 
-        // Emit OUTPUT event
+        // Emit OUTPUT event (skipHistory: high-frequency event — avoid memory bloat)
         this.eventBus.publish(
           TerminalEvents.OUTPUT,
           Channels.TERMINAL,
           { terminalId, data: combined, timestamp: new Date().toISOString() },
           'server',
+          { skipHistory: true },
         );
 
         // Append to ring buffer, evict oldest if at capacity
@@ -344,6 +345,7 @@ export class TerminalManager {
         Channels.TERMINAL,
         { terminalId, data: combined, timestamp: new Date().toISOString() },
         'server',
+        { skipHistory: true },
       );
 
       this.ringBuffer.push({
