@@ -9,6 +9,7 @@ import { TranslatorMiddleware } from './translator.js';
 import { StateSyncEngine } from './state-sync.js';
 import { CLIAdapterRegistry, DefaultCLIAdapter, UnsupportedVersionError } from './cli-adapter.js';
 import { DelegateExecutor } from './delegate-executor.js';
+import { GateManager } from './gate-manager.js';
 import { TerminalManager } from './terminal-manager.js';
 import { DialogManager, type SpawnFn } from './dialog-manager.js';
 import { spawn } from 'node:child_process';
@@ -21,6 +22,7 @@ export class MaestroIDEServer {
   readonly stateSync: StateSyncEngine;
   readonly cliAdapter: CLIAdapterRegistry;
   readonly delegateExecutor: DelegateExecutor;
+  readonly gateManager: GateManager;
   readonly terminalManager: TerminalManager;
   readonly dialogManager: DialogManager;
 
@@ -37,6 +39,7 @@ export class MaestroIDEServer {
     this.cliAdapter = new CLIAdapterRegistry();
     this.cliAdapter.register('1', new DefaultCLIAdapter());
     this.delegateExecutor = new DelegateExecutor(this.eventBus);
+    this.gateManager = new GateManager(this.eventBus, this.delegateExecutor);
     this.terminalManager = new TerminalManager(this.eventBus);
     // Wrap spawn to match SpawnFn signature (args as second param)
     const spawnFn: SpawnFn = (command, args, options) => spawn(command, args ?? [], options ?? {});
@@ -88,14 +91,66 @@ export class MaestroIDEServer {
       }
     });
 
-    // POST /api/workflows/execute — trigger workflow execution
+    // POST /api/workflows/execute — trigger workflow execution (Phase 3: gate gating)
     this.app.post('/api/workflows/execute', async (c) => {
       try {
         const body = await c.req.json<{ workflowId: string; params: Record<string, unknown> }>();
-        const executionId = this.delegateExecutor.execute(body.workflowId, body.params);
-        return c.json({ executionId, status: 'queued' });
+        const executionId = `exec-${Date.now()}`;
+
+        // 执行 dry-run 分析
+        let dryRunResult = '';
+        try {
+          dryRunResult = await this.gateManager.performDryRun(
+            body.workflowId,
+            body.params,
+          );
+        } catch {
+          // Dry-run 失败不阻断流程，直接标记为空
+          dryRunResult = '';
+        }
+
+        // 创建审批门控（发布 gate:pending 事件，客户端展示 ApprovalPanel）
+        const gate = this.gateManager.createGate(
+          executionId,
+          0, // stepIndex starts at 0 for single-step workflows
+          dryRunResult,
+        );
+
+        return c.json({
+          executionId: gate.executionId,
+          gateId: gate.gateId,
+          status: 'pending' as const,
+        });
       } catch (err) {
         return c.json({ error: 'Failed to execute workflow', details: String(err) }, 500);
+      }
+    });
+
+    // POST /api/gates/:id/resolve — resolve approval gate (Phase 3: gate resolution)
+    this.app.post('/api/gates/:id/resolve', async (c) => {
+      try {
+        const gateId = c.req.param('id');
+        const { approved } = await c.req.json<{ approved: boolean }>();
+
+        const gate = this.gateManager.resolveGate(gateId, approved);
+
+        if (!gate) {
+          return c.json({ error: 'Gate not found' }, 404);
+        }
+
+        // 确认通过后执行实际的 delegate
+        if (approved && gate.status === 'approved') {
+          // 构建 params：从 gate 中提取工作流信息
+          const params: Record<string, unknown> = {};
+          this.delegateExecutor.execute(gate.executionId, params);
+        }
+
+        return c.json({
+          gateId: gate.gateId,
+          status: gate.status,
+        });
+      } catch (err) {
+        return c.json({ error: 'Failed to resolve gate', details: String(err) }, 500);
       }
     });
 
