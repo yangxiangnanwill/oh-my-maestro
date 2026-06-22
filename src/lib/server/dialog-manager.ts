@@ -4,6 +4,7 @@ import { type ChildProcess } from 'node:child_process';
 import type { EventBus } from './event-bus.js';
 import type { DialogSession, WorkflowMeta, StreamChunk, IntentResult, IntentCandidate } from '../shared/types.js';
 import { Channels, DialogEvents } from '../shared/events.js';
+import { SessionManager } from './session-manager.js';
 
 /** Spawn function signature — compatible with node:child_process.spawn */
 export type SpawnFn = (
@@ -25,28 +26,24 @@ interface ActiveDialog {
  * Creates dialog sessions, spawns Claude Code CLI processes with NDJSON streaming,
  * parses output into StreamChunk events, and performs keyword-based intent recognition
  * to route user messages to appropriate workflows.
- *
- * TODO(MAINT-002): 与 TerminalManager 共享约 40% session 管理模式。Phase 3 考虑提取泛型 SessionManager<T> 基类。
  */
-export class DialogManager {
-  private sessions = new Map<string, ActiveDialog>();
+export class DialogManager extends SessionManager<ActiveDialog> {
   private sessionCounter = 0;
-  private readonly MAX_SESSIONS = 5;
 
   constructor(
     private eventBus: EventBus,
     private spawnFn: SpawnFn,
     private workflowRegistry: WorkflowMeta[] = [],
-  ) {}
+  ) {
+    super(5);
+  }
 
   /**
    * Create a new dialog session.
    * Throws Error if max sessions (5) already reached.
    */
   createSession(clientId: string): DialogSession {
-    if (this.sessions.size >= this.MAX_SESSIONS) {
-      throw new Error('Maximum dialog sessions (5) reached');
-    }
+    this.checkMaxSessions('dialog');
 
     const sessionId = `dialog-${++this.sessionCounter}-${Date.now()}`;
     const now = new Date().toISOString();
@@ -339,19 +336,5 @@ export class DialogManager {
    */
   updateWorkflowRegistry(workflows: WorkflowMeta[]): void {
     this.workflowRegistry = workflows;
-  }
-
-  /**
-   * Get active session count.
-   */
-  getSessionCount(): number {
-    return this.sessions.size;
-  }
-
-  /**
-   * Check if a session exists.
-   */
-  hasSession(sessionId: string): boolean {
-    return this.sessions.has(sessionId);
   }
 }

@@ -4,6 +4,7 @@ import { type IPty, spawn as ptySpawn } from 'node-pty';
 import type { EventBus } from './event-bus.js';
 import type { TerminalSession, TerminalStatus } from '../shared/types.js';
 import { Channels, TerminalEvents } from '../shared/events.js';
+import { SessionManager } from './session-manager.js';
 
 /** Single entry in the ring buffer */
 export interface TerminalOutputEntry {
@@ -22,6 +23,10 @@ interface ActiveTerminal {
   _exiting?: boolean;
   /** Set during resize() to prevent re-entrant loop from ConPTY INPUT events */
   _resizing?: boolean;
+  /** Whether the throttle timer is currently active */
+  _throttleActive: boolean;
+  /** Consecutive idle ticks — timer stops after 3 idle ticks (~100ms) */
+  _idleTicks: number;
 }
 
 /** Spawn function signature — matches node-pty spawn */
@@ -58,13 +63,9 @@ const SHELL_WHITELIST = new Set([
  * Handles session lifecycle (create/write/resize/destroy), 33ms frame throttle
  * for output, ring buffer (capacity 1000), and max 5 concurrent sessions.
  * Communicates all terminal events through EventBus.
- *
- * TODO(MAINT-002): 与 DialogManager 共享约 40% session 管理模式（CRUD + MAX_SESSIONS + EventBus 集成）。Phase 3 考虑提取泛型 SessionManager<T> 基类。
  */
-export class TerminalManager {
-  private sessions = new Map<string, ActiveTerminal>();
+export class TerminalManager extends SessionManager<ActiveTerminal> {
   private ringBuffer: TerminalOutputEntry[] = [];
-  private readonly MAX_SESSIONS = 5;
   private readonly THROTTLE_MS = 33;
   private readonly RING_BUFFER_CAPACITY = 1000;
 
@@ -72,6 +73,8 @@ export class TerminalManager {
     private eventBus: EventBus,
     private spawnPty: SpawnPtyFn = ptySpawn as SpawnPtyFn,
   ) {
+    super(5);
+
     // Subscribe to term:input events from EventBus (client → PTY)
     // Only process client-sourced events to avoid re-entrant loop:
     // writeToTerminal() also publishes INPUT with source='server'
@@ -105,9 +108,7 @@ export class TerminalManager {
    * Throws if max sessions (5) reached.
    */
   createTerminal(terminalId: string, options?: CreateTerminalOptions): TerminalSession {
-    if (this.sessions.size >= this.MAX_SESSIONS) {
-      throw new Error(`Maximum terminal sessions (${this.MAX_SESSIONS}) reached`);
-    }
+    this.checkMaxSessions('terminal');
 
     const cwd = options?.cwd ?? process.cwd();
     const cols = options?.cols ?? 80;
@@ -145,6 +146,8 @@ export class TerminalManager {
       session,
       buffer: [],
       throttleTimer: null,
+      _throttleActive: false,
+      _idleTicks: 0,
     };
 
     this.sessions.set(terminalId, active);
@@ -245,13 +248,6 @@ export class TerminalManager {
   }
 
   /**
-   * Get the number of active sessions.
-   */
-  getSessionCount(): number {
-    return this.sessions.size;
-  }
-
-  /**
    * Get a specific terminal session.
    */
   getSession(terminalId: string): TerminalSession | undefined {
@@ -270,6 +266,8 @@ export class TerminalManager {
   /**
    * Start the 33ms frame throttle for PTY output.
    * Accumulates data in buffer, flushes every THROTTLE_MS.
+   * Timer dynamically starts/stops: active when data flows, stops after
+   * 3 consecutive idle ticks (~100ms) to reduce CPU usage to near zero.
    */
   private startFrameThrottle(terminalId: string, pty: IPty): void {
     const active = this.sessions.get(terminalId);
@@ -278,34 +276,47 @@ export class TerminalManager {
     // Register PTY data listener — accumulates to buffer
     pty.onData((data: string) => {
       active.buffer.push(data);
-    });
+      // Restart throttle timer if not currently active
+      if (!active._throttleActive) {
+        active._throttleActive = true;
+        active._idleTicks = 0;
+        active.throttleTimer = setInterval(() => {
+          if (active.buffer.length > 0) {
+            const combined = active.buffer.join('');
+            active.buffer = [];
+            active._idleTicks = 0;
 
-    // Set up throttle timer
-    active.throttleTimer = setInterval(() => {
-      if (active.buffer.length > 0) {
-        const combined = active.buffer.join('');
-        active.buffer = [];
+            // Emit OUTPUT event (skipHistory: high-frequency event — avoid memory bloat)
+            this.eventBus.publish(
+              TerminalEvents.OUTPUT,
+              Channels.TERMINAL,
+              { terminalId, data: combined, timestamp: new Date().toISOString() },
+              'server',
+              { skipHistory: true },
+            );
 
-        // Emit OUTPUT event (skipHistory: high-frequency event — avoid memory bloat)
-        this.eventBus.publish(
-          TerminalEvents.OUTPUT,
-          Channels.TERMINAL,
-          { terminalId, data: combined, timestamp: new Date().toISOString() },
-          'server',
-          { skipHistory: true },
-        );
-
-        // Append to ring buffer, evict oldest if at capacity
-        this.ringBuffer.push({
-          terminalId,
-          data: combined,
-          timestamp: new Date().toISOString(),
-        });
-        if (this.ringBuffer.length > this.RING_BUFFER_CAPACITY) {
-          this.ringBuffer.shift();
-        }
+            // Append to ring buffer, evict oldest if at capacity
+            this.ringBuffer.push({
+              terminalId,
+              data: combined,
+              timestamp: new Date().toISOString(),
+            });
+            if (this.ringBuffer.length > this.RING_BUFFER_CAPACITY) {
+              this.ringBuffer.shift();
+            }
+          } else {
+            // Buffer empty — increment idle counter
+            active._idleTicks++;
+            if (active._idleTicks >= 3) {
+              // Stop throttle timer after 3 consecutive idle ticks (~100ms)
+              clearInterval(active.throttleTimer!);
+              active.throttleTimer = null;
+              active._throttleActive = false;
+            }
+          }
+        }, this.THROTTLE_MS);
       }
-    }, this.THROTTLE_MS);
+    });
   }
 
   /**
