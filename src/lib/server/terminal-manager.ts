@@ -20,6 +20,8 @@ interface ActiveTerminal {
   throttleTimer: ReturnType<typeof setInterval> | null;
   /** Set before kill() to prevent duplicate EXIT event from onExit callback */
   _exiting?: boolean;
+  /** Set during resize() to prevent re-entrant loop from ConPTY INPUT events */
+  _resizing?: boolean;
 }
 
 /** Spawn function signature — matches node-pty spawn */
@@ -42,6 +44,7 @@ const SHELL_WHITELIST = new Set([
   'powershell.exe',
   'cmd.exe',
   'pwsh.exe',
+  'wsl.exe',
   'bash',
   'zsh',
   'sh',
@@ -193,9 +196,19 @@ export class TerminalManager {
     const active = this.sessions.get(terminalId);
     if (!active) return;
 
+    // Prevent re-entrant loop: ConPTY resize may trigger INPUT events
+    // that could cause a second resize call before the first completes
+    if (active._resizing) return;
+
+    active._resizing = true;
     active.pty.resize(cols, rows);
     active.session.cols = cols;
     active.session.rows = rows;
+
+    // Clear _resizing flag asynchronously to allow subsequent resize calls
+    setTimeout(() => {
+      active._resizing = false;
+    }, 0);
 
     this.eventBus.publish(
       TerminalEvents.RESIZE,

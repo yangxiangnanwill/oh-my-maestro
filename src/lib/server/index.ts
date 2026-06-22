@@ -9,6 +9,9 @@ import { TranslatorMiddleware } from './translator.js';
 import { StateSyncEngine } from './state-sync.js';
 import { CLIAdapterRegistry, DefaultCLIAdapter, UnsupportedVersionError } from './cli-adapter.js';
 import { DelegateExecutor } from './delegate-executor.js';
+import { TerminalManager } from './terminal-manager.js';
+import { DialogManager, type SpawnFn } from './dialog-manager.js';
+import { spawn } from 'node:child_process';
 
 export class MaestroIDEServer {
   readonly app: Hono;
@@ -18,6 +21,8 @@ export class MaestroIDEServer {
   readonly stateSync: StateSyncEngine;
   readonly cliAdapter: CLIAdapterRegistry;
   readonly delegateExecutor: DelegateExecutor;
+  readonly terminalManager: TerminalManager;
+  readonly dialogManager: DialogManager;
 
   private httpServer: ReturnType<typeof serve> | null = null;
   private detectedVersion: string | null = null;
@@ -32,6 +37,10 @@ export class MaestroIDEServer {
     this.cliAdapter = new CLIAdapterRegistry();
     this.cliAdapter.register('1', new DefaultCLIAdapter());
     this.delegateExecutor = new DelegateExecutor(this.eventBus);
+    this.terminalManager = new TerminalManager(this.eventBus);
+    // Wrap spawn to match SpawnFn signature (args as second param)
+    const spawnFn: SpawnFn = (command, args, options) => spawn(command, args ?? [], options ?? {});
+    this.dialogManager = new DialogManager(this.eventBus, spawnFn, []);
 
     this.setupRoutes();
   }
@@ -104,6 +113,92 @@ export class MaestroIDEServer {
         return c.json({ error: 'Failed to read project state', details: String(err) }, 500);
       }
     });
+
+    // ── Terminal API endpoints ──
+
+    // POST /api/terminal/create — create a new terminal session
+    this.app.post('/api/terminal/create', async (c) => {
+      try {
+        const body = await c.req.json<{ cwd?: string; cols?: number; rows?: number; shell?: string }>().catch(() => ({}));
+        const terminalId = `term-${Date.now()}`;
+        const session = this.terminalManager.createTerminal(terminalId, body);
+        return c.json({ terminalId, session });
+      } catch (err) {
+        return c.json({ error: 'Failed to create terminal', details: String(err) }, 500);
+      }
+    });
+
+    // POST /api/terminal/:id/write — write data to a terminal
+    this.app.post('/api/terminal/:id/write', async (c) => {
+      try {
+        const terminalId = c.req.param('id');
+        const { data } = await c.req.json<{ data: string }>();
+        this.terminalManager.writeToTerminal(terminalId, data);
+        return c.json({ ok: true });
+      } catch (err) {
+        return c.json({ error: 'Failed to write to terminal', details: String(err) }, 500);
+      }
+    });
+
+    // POST /api/terminal/:id/resize — resize a terminal
+    this.app.post('/api/terminal/:id/resize', async (c) => {
+      try {
+        const terminalId = c.req.param('id');
+        const { cols, rows } = await c.req.json<{ cols: number; rows: number }>();
+        this.terminalManager.resizeTerminal(terminalId, cols, rows);
+        return c.json({ ok: true });
+      } catch (err) {
+        return c.json({ error: 'Failed to resize terminal', details: String(err) }, 500);
+      }
+    });
+
+    // POST /api/terminal/:id/destroy — destroy a terminal session
+    this.app.post('/api/terminal/:id/destroy', async (c) => {
+      try {
+        const terminalId = c.req.param('id');
+        this.terminalManager.destroyTerminal(terminalId);
+        return c.json({ ok: true });
+      } catch (err) {
+        return c.json({ error: 'Failed to destroy terminal', details: String(err) }, 500);
+      }
+    });
+
+    // ── Dialog API endpoints ──
+
+    // POST /api/dialog/sessions — create a new dialog session
+    this.app.post('/api/dialog/sessions', async (c) => {
+      try {
+        const body = await c.req.json<{ clientId?: string }>().catch(() => ({ clientId: undefined }));
+        const clientId = body.clientId ?? 'http-client';
+        const session = this.dialogManager.createSession(clientId);
+        return c.json({ session });
+      } catch (err) {
+        return c.json({ error: 'Failed to create dialog session', details: String(err) }, 500);
+      }
+    });
+
+    // POST /api/dialog/sessions/:id/message — send a message to a dialog session
+    this.app.post('/api/dialog/sessions/:id/message', async (c) => {
+      try {
+        const sessionId = c.req.param('id');
+        const { message } = await c.req.json<{ message: string }>();
+        this.dialogManager.sendMessage(sessionId, message);
+        return c.json({ ok: true });
+      } catch (err) {
+        return c.json({ error: 'Failed to send message', details: String(err) }, 500);
+      }
+    });
+
+    // POST /api/dialog/sessions/:id/close — close a dialog session
+    this.app.post('/api/dialog/sessions/:id/close', async (c) => {
+      try {
+        const sessionId = c.req.param('id');
+        this.dialogManager.closeSession(sessionId);
+        return c.json({ ok: true });
+      } catch (err) {
+        return c.json({ error: 'Failed to close dialog session', details: String(err) }, 500);
+      }
+    });
   }
 
   /**
@@ -151,6 +246,8 @@ export class MaestroIDEServer {
    * Stop the server.
    */
   stop(): void {
+    this.terminalManager.destroyAll();
+    this.dialogManager.closeAll();
     this.stateSync.stop();
     this.wsGateway.stop();
     this.httpServer?.close();
@@ -172,6 +269,17 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     process.on('SIGINT', () => {
       server.stop();
       process.exit(0);
+    });
+
+    // Windows ConPTY sends SIGBREAK instead of SIGINT for Ctrl+C
+    process.on('SIGBREAK', () => {
+      server.stop();
+      process.exit(0);
+    });
+
+    // Fallback: ensure server cleanup on any exit
+    process.on('exit', (code) => {
+      server.stop();
     });
   }).catch(err => {
     console.error('[Maestro IDE] Failed to start:', err);

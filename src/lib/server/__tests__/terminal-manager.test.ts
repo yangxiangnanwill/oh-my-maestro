@@ -286,6 +286,26 @@ describe('TerminalManager', () => {
     it('should silently no-op for non-existent terminalId', () => {
       expect(() => manager.resizeTerminal('nonexistent', 80, 24)).not.toThrow();
     });
+
+    it('should prevent re-entrant resize (second call skipped due to _resizing guard)', () => {
+      manager.createTerminal('term-1');
+      const record = mock.ptyRecords[0];
+
+      // First resize: should succeed
+      manager.resizeTerminal('term-1', 120, 40);
+      expect(record.pty.resize).toHaveBeenCalledTimes(1);
+      expect(record.pty.resize).toHaveBeenCalledWith(120, 40);
+
+      // Second resize immediately: should be skipped due to _resizing guard
+      manager.resizeTerminal('term-1', 100, 30);
+      expect(record.pty.resize).toHaveBeenCalledTimes(1); // still 1, second was skipped
+
+      // After setTimeout(0), _resizing clears — subsequent resize should work
+      vi.advanceTimersByTime(0);
+      manager.resizeTerminal('term-1', 100, 30);
+      expect(record.pty.resize).toHaveBeenCalledTimes(2); // now it proceeds
+      expect(record.pty.resize).toHaveBeenLastCalledWith(100, 30);
+    });
   });
 
   describe('destroyTerminal()', () => {
