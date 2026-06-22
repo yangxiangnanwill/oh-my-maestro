@@ -18,20 +18,11 @@ import { Channels, TerminalEvents, DialogEvents } from '../../shared/events.js';
 
 const connectionWritable = writable({ connected: false, mode: 'simple' as DisplayMode, clientId: null as string | null });
 
-// Sync WSClient state into writable store on interval (polling approach for $state rune)
+// Event-driven connection state sync — replaces 500ms polling with callback-based updates
 if (typeof window !== 'undefined') {
-  let lastConnected = false;
-  let lastMode: DisplayMode = 'simple';
-  const syncInterval = setInterval(() => {
-    const connected = wsClient.isConnected;
-    const mode = wsClient.currentMode;
-    const clientId = wsClient.currentClientId;
-    if (connected !== lastConnected || mode !== lastMode) {
-      lastConnected = connected;
-      lastMode = mode;
-      connectionWritable.set({ connected, mode, clientId });
-    }
-  }, 500);
+  wsClient.onStateChange((state) => {
+    connectionWritable.set(state);
+  });
 }
 
 export const connectionState = derived(connectionWritable, ($state) => $state);

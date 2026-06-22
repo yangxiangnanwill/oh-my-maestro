@@ -122,29 +122,41 @@ export class WSGateway {
    * Broadcast an EventBus event to all subscribed clients.
    * High-frequency events (term:output, dialog:stream-chunk) skip translation
    * to avoid redundant JSON.stringify and object traversal overhead.
+   * Pre-serializes the message once for non-translated broadcasts — each client
+   * reuses the same serialized string instead of re-serializing per client.
    */
   private broadcastEvent(event: InternalEvent): void {
     // High-frequency events: skip translator middleware to avoid double JSON.stringify
     const isHighFreq = event.type === 'term:output' || event.type === 'dialog:stream-chunk';
 
-    for (const client of this.clients.values()) {
-      const message: WSMessage = {
-        channel: event.channel,
-        type: event.type,
-        payload: event.payload,
-        timestamp: event.timestamp,
-      };
+    // Pre-serialize the base message for non-translated broadcasts
+    const baseMessage: WSMessage = {
+      channel: event.channel,
+      type: event.type,
+      payload: event.payload,
+      timestamp: event.timestamp,
+    };
+    const preSerialized = JSON.stringify(baseMessage);
 
+    for (const client of this.clients.values()) {
       if (client.subscribedChannels.has(event.channel) || client.subscribedChannels.has('*')) {
-        // Apply translation for this client (skip for high-frequency events)
         if (!isHighFreq && typeof event.payload === 'object' && event.payload !== null) {
+          // Translation needed — serialize per-client with translated payload
           const { translated } = this.translator.translate(
             event.payload as Record<string, unknown>,
             client.id
           );
-          message.payload = translated;
+          const translatedMessage: WSMessage = {
+            channel: event.channel,
+            type: event.type,
+            payload: translated,
+            timestamp: event.timestamp,
+          };
+          this.sendToClient(client, translatedMessage);
+        } else {
+          // No translation needed — reuse pre-serialized string
+          this.sendRawToClient(client, preSerialized);
         }
-        this.sendToClient(client, message);
       }
     }
   }
@@ -165,6 +177,24 @@ export class WSGateway {
     }
 
     client.ws.send(JSON.stringify(message));
+  }
+
+  /**
+   * Send a pre-serialized message string to a specific client.
+   * Used for non-translated broadcasts where the message was pre-serialized once.
+   */
+  private sendRawToClient(client: ClientConnection, preSerialized: string): void {
+    if (client.ws.readyState !== WebSocket.OPEN) return;
+
+    // Backpressure check — skip slow clients with > 64KB buffered data
+    if (client.ws.bufferedAmount > 65536) {
+      console.warn(
+        `[WSGateway] Skipping slow client ${client.id}: bufferedAmount=${client.ws.bufferedAmount} bytes (threshold=65536)`,
+      );
+      return;
+    }
+
+    client.ws.send(preSerialized);
   }
 
   /**
