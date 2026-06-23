@@ -1,0 +1,346 @@
+From 00e75ae2b760533c878cdd4bb26789ba50112756 Mon Sep 17 00:00:00 2001
+From: will <yangxiangnan@wabestway.com>
+Date: Tue, 23 Jun 2026 14:33:04 +0800
+Subject: [PATCH 06/12] =?UTF-8?q?feat:=20TASK-002=20=E2=80=94=20=E5=88=9B?=
+ =?UTF-8?q?=E5=BB=BA=20CommandChainPanel=20React=20=E7=BB=84=E4=BB=B6?=
+ =?UTF-8?q?=EF=BC=88=E6=AD=A5=E9=AA=A4=E8=BF=9B=E5=BA=A6=20+=20=E5=86=B3?=
+ =?UTF-8?q?=E7=AD=96=E8=8A=82=E7=82=B9=E5=8F=AF=E8=A7=86=E5=8C=96=EF=BC=89?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../CommandChainPanel/CommandChainPanel.tsx   | 109 ++++++++++++++++++
+ .../CommandChainPanel/DecisionNodeView.tsx    |  61 ++++++++++
+ .../components/CommandChainPanel/StepItem.tsx |  75 ++++++++++++
+ .../components/CommandChainPanel/index.ts     |   8 ++
+ .../components/CommandChainPanel/types.ts     |  39 +++++++
+ 5 files changed, 292 insertions(+)
+ create mode 100644 apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx
+ create mode 100644 apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx
+ create mode 100644 apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx
+ create mode 100644 apps/desktop/src/renderer/components/CommandChainPanel/index.ts
+ create mode 100644 apps/desktop/src/renderer/components/CommandChainPanel/types.ts
+
+diff --git a/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx b/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx
+new file mode 100644
+index 000000000..3da8c08bf
+--- /dev/null
++++ b/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx
+@@ -0,0 +1,109 @@
++import { AlertTriangle, ListChecks, Loader2 } from "lucide-react";
++import { electronTrpc } from "renderer/lib/electron-trpc";
++import { DecisionNodeView } from "./DecisionNodeView";
++import { StepItem } from "./StepItem";
++import type { CommandChainPanelProps, CommandChainStatus } from "./types";
++
++function EmptyState() {
++  return (
++    <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
++      <ListChecks className="h-8 w-8" />
++      <p>暂无可用的命令链状态</p>
++      <p className="text-xs">请确认当前工作目录存在 status.json 文件</p>
++    </div>
++  );
++}
++
++function LoadingState() {
++  return (
++    <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted-foreground">
++      <Loader2 className="h-4 w-4 animate-spin" />
++      <span>加载中...</span>
++    </div>
++  );
++}
++
++function ErrorState({ message }: { message: string }) {
++  return (
++    <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm">
++      <AlertTriangle className="h-8 w-8 text-amber-500" />
++      <p className="text-muted-foreground">获取命令链状态失败</p>
++      <p className="max-w-[240px] text-xs text-red-500">{message}</p>
++    </div>
++  );
++}
++
++export function CommandChainPanel({
++  cwd,
++  title = "命令链状态",
++}: CommandChainPanelProps) {
++  const { data: status, isLoading, error } =
++    electronTrpc.commandChain.getStatus.useQuery(
++      { cwd },
++      {
++        refetchInterval: 2000,
++      },
++    );
++
++  const typedStatus = status as CommandChainStatus | null;
++
++  return (
++    <div className="flex h-full flex-col">
++      {/* 标题栏 */}
++      <div className="flex-shrink-0 border-b px-4 py-3">
++        <h3 className="text-sm font-semibold">{title}</h3>
++      </div>
++
++      {/* 内容区域 */}
++      <div className="flex-1 overflow-y-auto">
++        {isLoading && !typedStatus ? (
++          <LoadingState />
++        ) : error ? (
++          <ErrorState message={error.message} />
++        ) : !typedStatus ? (
++          <EmptyState />
++        ) : (
++          <div className="space-y-4 py-3">
++            {/* 步骤进度列表 */}
++            <section>
++              <h4 className="mb-2 px-4 text-xs font-medium text-muted-foreground">
++                步骤进度
++              </h4>
++              {typedStatus.steps && typedStatus.steps.length > 0 ? (
++                <ul className="space-y-0.5">
++                  {typedStatus.steps.map((step) => (
++                    <StepItem key={step.id} step={step} />
++                  ))}
++                </ul>
++              ) : (
++                <p className="px-4 text-xs text-muted-foreground">暂无步骤</p>
++              )}
++            </section>
++
++            {/* 决策节点 */}
++            {typedStatus.decisionNodes &&
++              typedStatus.decisionNodes.length > 0 && (
++                <section>
++                  <h4 className="mb-2 px-4 text-xs font-medium text-muted-foreground">
++                    决策节点
++                  </h4>
++                  <div className="space-y-2 px-4">
++                    {typedStatus.decisionNodes.map((node) => (
++                      <DecisionNodeView key={node.id} node={node} />
++                    ))}
++                  </div>
++                </section>
++              )}
++
++            {/* 完成确认状态 */}
++            {typedStatus.completionConfirmed && (
++              <div className="mx-4 rounded-md bg-green-50 px-3 py-2 text-xs text-green-700 dark:bg-green-900/20 dark:text-green-400">
++                所有步骤已确认完成
++              </div>
++            )}
++          </div>
++        )}
++      </div>
++    </div>
++  );
++}
+diff --git a/apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx b/apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx
+new file mode 100644
+index 000000000..191a1d582
+--- /dev/null
++++ b/apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx
+@@ -0,0 +1,61 @@
++import { GitBranch } from "lucide-react";
++import type { DecisionNode } from "./types";
++
++interface DecisionNodeViewProps {
++  node: DecisionNode;
++}
++
++export function DecisionNodeView({ node }: DecisionNodeViewProps) {
++  return (
++    <div className="rounded-md border bg-card px-3 py-2.5 text-sm">
++      {/* 决策类型标签 */}
++      <div className="mb-2 flex items-center gap-2">
++        <GitBranch className="h-4 w-4 text-purple-500" />
++        <span className="font-medium">{node.label}</span>
++        {node.resolved ? (
++          <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 dark:bg-green-900/30 dark:text-green-400">
++            已决策
++          </span>
++        ) : (
++          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
++            待决策
++          </span>
++        )}
++      </div>
++
++      {/* 决策问题 */}
++      <p className="mb-2 text-muted-foreground">{node.question}</p>
++
++      {/* 选项列表 */}
++      {node.options.length > 0 && (
++        <ul className="space-y-1">
++          {node.options.map((option, index) => {
++            const isSelected = option === node.selectedOption;
++            return (
++              <li
++                key={`${node.id}-option-${index}`}
++                className={`rounded px-2 py-1 text-xs ${
++                  isSelected
++                    ? "bg-purple-100 font-medium text-purple-800 dark:bg-purple-900/30 dark:text-purple-300"
++                    : "bg-muted/50 text-muted-foreground"
++                }`}
++              >
++                {option}
++                {isSelected && (
++                  <span className="ml-1.5 text-purple-600 dark:text-purple-400">
++                    ← 当前结论
++                  </span>
++                )}
++              </li>
++            );
++          })}
++        </ul>
++      )}
++
++      {/* 无选项时的 fallback */}
++      {node.options.length === 0 && (
++        <p className="text-xs text-muted-foreground">暂无选项</p>
++      )}
++    </div>
++  );
++}
+diff --git a/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx b/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx
+new file mode 100644
+index 000000000..a695fef29
+--- /dev/null
++++ b/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx
+@@ -0,0 +1,75 @@
++import { Circle, CircleCheck, CircleX, Loader2 } from "lucide-react";
++import type { Step, StepStatus } from "./types";
++
++/** 状态 → 图标映射 */
++const statusIconMap: Record<StepStatus, React.ReactNode> = {
++  pending: <Circle className="h-4 w-4 text-muted-foreground" />,
++  running: <Loader2 className="h-4 w-4 animate-spin text-blue-500" />,
++  completed: <CircleCheck className="h-4 w-4 text-green-500" />,
++  failed: <CircleX className="h-4 w-4 text-red-500" />,
++  skipped: <Circle className="h-4 w-4 text-muted-foreground/50" />,
++};
++
++/** 状态 → 中文文本映射 */
++const statusLabelMap: Record<StepStatus, string> = {
++  pending: "等待中",
++  running: "执行中",
++  completed: "已完成",
++  failed: "失败",
++  skipped: "已跳过",
++};
++
++/** 格式化耗时（毫秒 → 可读字符串） */
++function formatDuration(ms: number): string {
++  if (ms < 1000) return `${ms}ms`;
++  if (ms < 60_000) return `${(ms / 1000).toFixed(1)}s`;
++  const minutes = Math.floor(ms / 60_000);
++  const seconds = Math.round((ms % 60_000) / 1000);
++  return `${minutes}m ${seconds}s`;
++}
++
++/** 计算步骤耗时 */
++function computeDuration(step: Step): number | undefined {
++  if (step.durationMs !== undefined) return step.durationMs;
++  if (step.startedAt && step.completedAt) {
++    const start = new Date(step.startedAt).getTime();
++    const end = new Date(step.completedAt).getTime();
++    if (!Number.isNaN(start) && !Number.isNaN(end) && end > start) {
++      return end - start;
++    }
++  }
++  return undefined;
++}
++
++interface StepItemProps {
++  step: Step;
++}
++
++export function StepItem({ step }: StepItemProps) {
++  const icon = statusIconMap[step.status] ?? statusIconMap.pending;
++  const statusLabel = statusLabelMap[step.status] ?? step.status;
++  const duration = computeDuration(step);
++
++  return (
++    <li className="flex items-center gap-3 px-3 py-2 text-sm">
++      <span className="flex-shrink-0">{icon}</span>
++      <span className="flex-1 truncate">{step.label}</span>
++      <span className="flex-shrink-0 text-xs text-muted-foreground">
++        {statusLabel}
++      </span>
++      {duration !== undefined && (
++        <span className="flex-shrink-0 text-xs text-muted-foreground/70 tabular-nums">
++          {formatDuration(duration)}
++        </span>
++      )}
++      {step.error && (
++        <span
++          className="flex-shrink-0 max-w-[120px] truncate text-xs text-red-500"
++          title={step.error}
++        >
++          {step.error}
++        </span>
++      )}
++    </li>
++  );
++}
+diff --git a/apps/desktop/src/renderer/components/CommandChainPanel/index.ts b/apps/desktop/src/renderer/components/CommandChainPanel/index.ts
+new file mode 100644
+index 000000000..e7cd64af7
+--- /dev/null
++++ b/apps/desktop/src/renderer/components/CommandChainPanel/index.ts
+@@ -0,0 +1,8 @@
++export { CommandChainPanel } from "./CommandChainPanel";
++export type {
++  CommandChainPanelProps,
++  CommandChainStatus,
++  DecisionNode,
++  Step,
++  StepStatus,
++} from "./types";
+diff --git a/apps/desktop/src/renderer/components/CommandChainPanel/types.ts b/apps/desktop/src/renderer/components/CommandChainPanel/types.ts
+new file mode 100644
+index 000000000..4e0063ea2
+--- /dev/null
++++ b/apps/desktop/src/renderer/components/CommandChainPanel/types.ts
+@@ -0,0 +1,39 @@
++/** 步骤状态枚举 */
++export type StepStatus = "pending" | "running" | "completed" | "failed" | "skipped";
++
++/** 单个步骤 */
++export interface Step {
++  id: string;
++  label: string;
++  status: StepStatus;
++  startedAt?: string;
++  completedAt?: string;
++  error?: string;
++  /** 步骤耗时（毫秒），由组件根据 startedAt/completedAt 计算 */
++  durationMs?: number;
++}
++
++/** 决策节点 */
++export interface DecisionNode {
++  id: string;
++  label: string;
++  question: string;
++  options: string[];
++  selectedOption?: string;
++  resolved: boolean;
++}
++
++/** status.json 完整结构 */
++export interface CommandChainStatus {
++  steps: Step[];
++  decisionNodes: DecisionNode[];
++  completionConfirmed: boolean;
++}
++
++/** CommandChainPanel 组件 props */
++export interface CommandChainPanelProps {
++  /** 工作目录路径，用于 tRPC query */
++  cwd: string;
++  /** 面板标题，默认 "命令链状态" */
++  title?: string;
++}

@@ -1,0 +1,106 @@
+{
+  "id": "TASK-003",
+  "title": "提取 extractFunctionSource 到共享测试工具模块",
+  "description": "修复 MAINT-002：extractFunctionSource 函数在 CommandChainPanel.test.tsx 和 PromptGroup.test.ts 中重复定义（两处实现几乎完全相同）。提取到共享测试工具文件，消除代码重复，建立单一事实来源。",
+  "type": "refactor",
+  "priority": "medium",
+  "effort": "small",
+  "action": "1) 创建 D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/test-utils/source-analysis.ts，导出 extractFunctionSource(source: string, name: string): string 函数；2) 更新 CommandChainPanel.test.tsx 删除内联 extractFunctionSource 定义，改为从 test-utils/source-analysis 导入；3) 更新 PromptGroup.test.ts 删除内联 extractFunctionSource 定义，改为从 test-utils/source-analysis 导入。两个测试文件中的 extractFunctionSource 实现逻辑相同：通过 'function <name>' marker 定位函数定义，追踪括号和大括号深度提取完整函数体。",
+  "scope": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/test-utils/ + 两个测试文件",
+  "focus_paths": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/test-utils/",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts"
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave-2",
+  "convergence": {
+    "criteria": [
+      "grep -r 'function extractFunctionSource' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx 返回空（内联定义已移除）",
+      "grep -r 'function extractFunctionSource' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts 返回空（内联定义已移除）",
+      "grep -r 'extractFunctionSource' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/test-utils/source-analysis.ts 返回匹配（共享函数存在）",
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx 全部通过",
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts 全部通过"
+    ],
+    "verification": "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts",
+    "definition_of_done": "extractFunctionSource 有且仅有一份实现位于 test-utils/source-analysis.ts，两个测试文件通过 import 引用，所有现有测试通过"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/test-utils/source-analysis.ts",
+      "action": "create",
+      "target": "extractFunctionSource 共享函数",
+      "change": "创建新文件，导出 extractFunctionSource(source: string, name: string): string 函数。实现逻辑：通过 'function <name>' marker 定位，追踪括号深度到参数列表结束，追踪大括号深度到函数体结束，返回完整函数源码字符串"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+      "action": "modify",
+      "target": "extractFunctionSource 内联定义",
+      "change": "删除第 21-56 行的 extractFunctionSource 函数定义；添加 import { extractFunctionSource } from 'renderer/test-utils/source-analysis'；调用改为 extractFunctionSource(source, 'EmptyState') 等形式（传入 source 参数）"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts",
+      "action": "modify",
+      "target": "extractFunctionSource 内联定义",
+      "change": "删除第 43-75 行的 extractFunctionSource 函数定义；添加 import { extractFunctionSource } from 'renderer/test-utils/source-analysis'；调用改为 extractFunctionSource(source, 'ProjectPickerPill') 等形式（传入 source 参数）"
+    }
+  ],
+  "implementation": [
+    "Step 1: 读取两个测试文件中 extractFunctionSource 的完整实现",
+    "Step 2: 对比两处实现，确认逻辑相同（均通过 marker + 括号深度追踪提取函数体）",
+    "Step 3: 创建 src/renderer/test-utils/source-analysis.ts，导出 extractFunctionSource(source: string, name: string): string",
+    "Step 4: 更新 CommandChainPanel.test.tsx：删除内联定义，添加 import，调整调用传入 source 参数",
+    "Step 5: 更新 PromptGroup.test.ts：删除内联定义，补充缺失的 extractFunctionSource import（PromptGroup.test.ts 中 extractFunctionSource 未在 import 中声明，当前是内联定义），调整调用",
+    "Step 6: 运行两个测试文件验证"
+  ],
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts"
+    ],
+    "unit": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "两个测试文件所有 test case 通过",
+      "无 TypeScript 编译错误",
+      "grep 验证 extractFunctionSource 仅在 test-utils/source-analysis.ts 中定义"
+    ]
+  },
+  "reference": {
+    "pattern": "参考 Superset 项目现有的模块提取模式（如 lib/ 下的共享工具函数）",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "提取为独立模块而非合并测试文件。两个测试文件测试不同组件，不应合并。提取共享函数到 test-utils/ 遵循 DRY 原则，未来其他静态源码分析测试可复用。",
+    "decision_factors": [
+      "两个实现逻辑完全相同（marker 定位 + 括号深度追踪）",
+      "函数签名不同：PromptGroup 版支持 'function Name(' 匹配，CommandChainPanel 版使用 'function Name' + 后续括号匹配 — 统一为更健壮的实现",
+      "test-utils/ 是合理的共享工具位置，符合 Superset 目录约定"
+    ],
+    "tradeoffs": "引入跨组件的测试工具依赖，但 extractFunctionSource 是纯函数无需 mock，无循环依赖风险"
+  },
+  "risks": [
+    "两处 extractFunctionSource 在 marker 字符串上有细微差异（一个有 '(' 一个没有）— 需要统一为健壮实现，同时兼容两个测试文件的调用方式"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "20m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  },
+  "issue_id": "MAINT-002"
+}

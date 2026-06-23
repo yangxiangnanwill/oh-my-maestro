@@ -1,0 +1,78 @@
+{
+  "plan_id": "PLN-022",
+  "phase": 2,
+  "milestone": "F2",
+  "scope": "gap-fix",
+  "summary": "修复 Phase 2 代码审查发现的 11 个 critical+high findings。合并为 3 个任务：TASK-001 重构 tRPC router + StatusPoller（7 个 findings），TASK-002 修复 CommandChainPanel 类型安全 + error 处理（4 个 findings），TASK-003 提取共享测试工具（1 个 finding）。Wave 1 完成后端重构（TASK-001），Wave 2 并行执行前端修复和测试工具提取。",
+  "approach": "按依赖关系分 2 个 Wave 执行。Wave 1 集中修复 main process 侧的路径遍历、认证缺失、单例竞态、同步阻塞和重复类型定义。TASK-001 的类型导出变更（CommandChainStatusOutput）是 TASK-002 的前置依赖。TASK-002 和 TASK-003 无依赖关系，可在 Wave 2 并行执行。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003"],
+  "task_count": 3,
+  "complexity": "medium",
+  "estimated_total_minutes": 120,
+  "gap_mode": true,
+  "source": "review",
+  "source_findings": [
+    "SEC-001", "SEC-002", "SEC-003", "SEC-004",
+    "COR-001", "COR-002",
+    "ARCH-001", "ARCH-002", "ARCH-003",
+    "PERF-001", "PERF-002",
+    "BP-001", "BP-002",
+    "MAINT-001", "MAINT-002"
+  ],
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001"],
+      "label": "后端重构：tRPC router + StatusPoller",
+      "rationale": "TASK-001 的类型导出变更（CommandChainStatusOutput 从 zod schema 推断）是 TASK-002 消除 as 断言的前置依赖"
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-002", "TASK-003"],
+      "label": "前端修复 + 测试工具提取",
+      "parallel": true,
+      "rationale": "TASK-002 和 TASK-003 修改不同文件且无依赖，可并行执行"
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "TASK-001: 重构 StatusPoller（无状态设计）→ 更新 tRPC router（path 校验 + 类型导出）",
+      "TASK-002: CommandChainPanel 消费 CommandChainStatusOutput 类型 → 消除 as 断言 → error 类型守卫 → 移除 refetchInterval",
+      "TASK-003: 抽取 extractFunctionSource → 更新两个测试文件引用"
+    ]
+  },
+  "design_decisions": [
+    "StatusPoller 从单例 setInterval 改为无状态设计：每次 query 直接异步读取 status.json",
+    "tRPC router cwd 输入添加 zod refine 校验：path.resolve + path.normalize 防止路径遍历",
+    "StepStatus 枚举提取到 command-chain router 作为共享 zod schema 和导出类型",
+    "CommandChainPanel 从 tRPC router 导入类型，消除 as CommandChainStatus 断言",
+    "error.message 访问前添加类型守卫（error instanceof Error ? error.message : '未知错误'）",
+    "移除前端 refetchInterval: 2000（tRPC 默认使用 staleTime 控制重新查询）",
+    "extractFunctionSource 提取到 src/renderer/test-utils/source-analysis.ts"
+  ],
+  "shared_context": {
+    "patterns": [
+      "zod refine 用于路径校验（参考 settings router 的 createCustomAgent input schema）",
+      "tRPC router.createRouter() 模式",
+      "Bun test 静态源码分析测试模式（extractFunctionSource）"
+    ],
+    "conventions": [
+      "ESM imports，使用 node:fs/promises",
+      "Zod schema 定义在 router 文件中",
+      "TypeScript strict 模式",
+      "Biome 格式化"
+    ],
+    "dependencies": [
+      "@trpc/server, zod, react-query (已安装)",
+      "node:fs/promises (Node.js 内置)"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-23T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "gap-fix",
+    "review_source": "Phase 2 Code Review — command-chain 模块"
+  }
+}

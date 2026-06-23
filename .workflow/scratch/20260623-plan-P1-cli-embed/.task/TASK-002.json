@@ -1,0 +1,35 @@
+{
+  "status": "completed",
+  "task_id": "TASK-002",
+  "phase": 1,
+  "milestone": "F1",
+  "title": "配置 Maestro-flow 终端环境变量",
+  "type": "feature",
+  "complexity": "low",
+  "estimated_minutes": 15,
+  "depends_on": ["TASK-001"],
+  "files": [
+    {"path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts", "action": "reference", "target": "buildTerminalEnv() 函数", "change": "确保 MAESTRO_HOME 环境变量在终端环境中可用"}
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/lib/agent-launch-command.ts",
+    "D:/WorkSpace/Source/maestro-flow/package.json"
+  ],
+  "action": "在 Superset 终端环境中配置 Maestro-flow 所需的环境变量：(1) MAESTRO_HOME 指向用户 .maestro 目录（Windows: %USERPROFILE%\\.maestro，Unix: ~/.maestro）；(2) 确保 Node.js 在 PATH 中（Maestro-flow 依赖 Node.js 18+）；(3) 在 Agent Launch Config 的 env 字段中添加 MAESTRO_HOME 和 NODE_PATH。",
+  "implementation": [
+    "Step 1: 读取 env.ts buildTerminalEnv() 确认环境变量构建逻辑",
+    "Step 2: 在 buildTerminalEnv() 中添加 MAESTRO_HOME 环境变量",
+    "Step 3: Windows: MAESTRO_HOME = path.join(os.homedir(), '.maestro')",
+    "Step 4: 在 Agent Launch Config 的 env 字段中传递 MAESTRO_HOME",
+    "Step 5: 验证终端中 echo $MAESTRO_HOME（或 %MAESTRO_HOME%）输出正确路径"
+  ],
+  "convergence": {
+    "criteria": [
+      "buildTerminalEnv() 函数包含 MAESTRO_HOME 环境变量设置",
+      "MAESTRO_HOME 路径指向用户 .maestro 目录",
+      "Agent Launch Config 的 env 字段包含 MAESTRO_HOME",
+      "grep -c 'MAESTRO_HOME' apps/desktop/src/main/lib/terminal/env.ts 返回 >= 1"
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import { join, normalize, resolve } from "node:path";
+import { join, resolve, sep } from "node:path";
 
 /** status.json 中单个步骤的定义 */
 export interface CommandChainStep {
@@ -29,6 +29,18 @@ export interface CommandChainStatus {
 }
 
 /**
+ * 路径安全校验：检查是否包含路径遍历（..）或空字节注入。
+ * 使用 resolve() 展开后按 sep 分割检查 ".." 段，替代无效的 resolve===normalize 比较。
+ */
+function isPathSafe(cwd: string): boolean {
+	if (!cwd || cwd.includes("\0")) {
+		return false;
+	}
+	const segments = resolve(cwd).split(sep);
+	return !segments.includes("..");
+}
+
+/**
  * 无状态异步读取指定工作目录下的 status.json 文件，解析为 CommandChainStatus。
  * 若文件不存在、路径无效或解析失败则返回 null。
  *
@@ -38,15 +50,13 @@ export interface CommandChainStatus {
 export async function readCommandChainStatus(
 	cwd: string,
 ): Promise<CommandChainStatus | null> {
-	// 路径校验：拒绝空字符串和路径遍历攻击
-	const resolved = resolve(cwd);
-	const normalized = normalize(cwd);
-	if (resolved !== normalized || !normalized) {
+	// 路径校验：拒绝空字符串、路径遍历攻击和空字节注入
+	if (!isPathSafe(cwd)) {
 		return null;
 	}
 
 	try {
-		const filePath = join(normalized, "status.json");
+		const filePath = join(resolve(cwd), "status.json");
 		const raw = await readFile(filePath, "utf-8");
 		const parsed: unknown = JSON.parse(raw);
 		return validateStatus(parsed);
@@ -55,56 +65,71 @@ export async function readCommandChainStatus(
 	}
 }
 
+/** 自定义 type guard 替代 as Record<string, unknown> 断言 */
+function isRecord(v: unknown): v is Record<string, unknown> {
+	return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+
 /** 校验并转换解析结果为 CommandChainStatus */
 function validateStatus(data: unknown): CommandChainStatus | null {
-	if (data === null || typeof data !== "object") {
+	if (!isRecord(data)) {
 		return null;
 	}
 
-	const obj = data as Record<string, unknown>;
-
-	if (!Array.isArray(obj.steps)) {
+	if (!Array.isArray(data.steps)) {
 		return null;
 	}
 
-	const steps: CommandChainStep[] = obj.steps.map((step: unknown) => {
-		const s = step as Record<string, unknown>;
+	const steps: CommandChainStep[] = data.steps.map((step: unknown) => {
+		// null 元素防御：拒绝 null 或非对象元素
+		if (step === null || typeof step !== "object") {
+			return null;
+		}
+		if (!isRecord(step)) {
+			return null;
+		}
 		return {
-			id: String(s.id ?? ""),
-			label: String(s.label ?? ""),
-			status: validateStepState(s.status),
-			startedAt: typeof s.startedAt === "string" ? s.startedAt : undefined,
+			id: String(step.id ?? ""),
+			label: String(step.label ?? ""),
+			status: validateStepState(step.status),
+			startedAt: typeof step.startedAt === "string" ? step.startedAt : undefined,
 			completedAt:
-				typeof s.completedAt === "string" ? s.completedAt : undefined,
-			error: typeof s.error === "string" ? s.error : undefined,
+				typeof step.completedAt === "string" ? step.completedAt : undefined,
+			error: typeof step.error === "string" ? step.error : undefined,
 		};
-	});
+	}).filter((s): s is CommandChainStep => s !== null);
 
 	const decisionNodes: CommandChainDecisionNode[] = Array.isArray(
-		obj.decisionNodes,
+		data.decisionNodes,
 	)
-		? obj.decisionNodes.map((node: unknown) => {
-				const n = node as Record<string, unknown>;
+		? data.decisionNodes.map((node: unknown) => {
+				// null 元素防御：拒绝 null 或非对象元素
+				if (node === null || typeof node !== "object") {
+					return null;
+				}
+				if (!isRecord(node)) {
+					return null;
+				}
 				return {
-					id: String(n.id ?? ""),
-					label: String(n.label ?? ""),
-					question: String(n.question ?? ""),
-					options: Array.isArray(n.options)
-						? n.options.map((o: unknown) => String(o))
+					id: String(node.id ?? ""),
+					label: String(node.label ?? ""),
+					question: String(node.question ?? ""),
+					options: Array.isArray(node.options)
+						? node.options.map((o: unknown) => String(o))
 						: [],
 					selectedOption:
-						typeof n.selectedOption === "string"
-							? n.selectedOption
+						typeof node.selectedOption === "string"
+							? node.selectedOption
 							: undefined,
-					resolved: Boolean(n.resolved),
+					resolved: Boolean(node.resolved),
 				};
-			})
+			}).filter((n): n is CommandChainDecisionNode => n !== null)
 		: [];
 
 	return {
 		steps,
 		decisionNodes,
-		completionConfirmed: Boolean(obj.completionConfirmed),
+		completionConfirmed: Boolean(data.completionConfirmed),
 	};
 }
 
@@ -120,6 +145,6 @@ function validateStepState(
 	];
 	const s = String(status ?? "pending");
 	return validStatuses.includes(s as CommandChainStep["status"])
-		? (s as CommandChainStep["status"])
+		? s as CommandChainStep["status"]
 		: "pending";
 }

@@ -1,0 +1,253 @@
+{
+  "query": "maestro",
+  "count": 19,
+  "results": [
+    {
+      "id": "roadmap-roadmap",
+      "type": "roadmap",
+      "title": "Roadmap: Superset + Maestro-flow 融合",
+      "category": null,
+      "summary": "## Overview",
+      "score": 2.0399976417405528,
+      "snippet": "L1: # Roadmap: Superset + Maestro-flow 融合",
+      "source": {
+        "kind": "file",
+        "path": "roadmap.md"
+      }
+    },
+    {
+      "id": "project-project",
+      "type": "project",
+      "title": "Maestro IDE",
+      "category": null,
+      "summary": "基于 maestro-flow 封装的 IDE-like 产品，面向非 CLI 习惯开发者。",
+      "score": 1.9661949349095043,
+      "snippet": "L1: # Maestro IDE",
+      "source": {
+        "kind": "file",
+        "path": "project.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-macro-superset-maestro-discussion",
+      "type": "note",
+      "title": "Discussion: Superset + Maestro-flow 兼容性宏分析",
+      "category": "scratch",
+      "summary": "**Session ID**: ANL-superset-maestro-2026-06-22 **Date**: 2026-06-22 **Mode**: Macro (standalone) **Topic**: 评估 Superset 能否基于 Maestro-flow 魔改，Superset 可视化 + Maestro-flow 内核替代 oh-my-maestro",
+      "score": 1.844799184401396,
+      "snippet": "L1: # Discussion: Superset + Maestro-flow 兼容性宏分析",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-macro-superset-maestro/discussion.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-macro-superset-maestro-context",
+      "type": "note",
+      "title": "Context: Superset + Maestro-flow 融合决策",
+      "category": "scratch",
+      "summary": "**Date**: 2026-06-22 **Source**: ANL-007 (宏分析) **Areas discussed**: 技术栈调和、架构融合策略、功能迁移方案、oh-my-maestro 去留",
+      "score": 1.824541710798467,
+      "snippet": "L1: # Context: Superset + Maestro-flow 融合决策",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-macro-superset-maestro/context.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-001",
+      "type": "spec",
+      "title": "**Dependency Injection for Subprocess Calls**: Use constructor parameters (execFn, spawnFn) with defaults from node:child_process instead of module-level vi.mock. Benefits: type-safe, no hoisting issues, explicit dependencies, works with any test framework. Pattern: `constructor(private execFn = exec)` then `this.execFn('maestro --version')`.",
+      "category": "learning",
+      "summary": "**Dependency Injection for Subprocess Calls**: Use constructor parameters (execFn, spawnFn) with defaults from node:child_process instead of module-level vi.mock. Benefits: type-safe, no hoisting issues, explicit dependencies, works with an",
+      "score": 1.757556008302777,
+      "snippet": "L1: **Dependency Injection for Subprocess Calls**: Use...",
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-macro-superset-maestro-analysis",
+      "type": "note",
+      "title": "Analysis: Superset + Maestro-flow 兼容性宏分析",
+      "category": "scratch",
+      "summary": "**Artifact ID**: ANL-007 **Date**: 2026-06-22 **Scope**: Macro (Standalone) **Mode**: Full (6-dimension scoring)",
+      "score": 1.7532523032989602,
+      "snippet": "L1: # Analysis: Superset + Maestro-flow 兼容性宏分析",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-macro-superset-maestro/analysis.md"
+      }
+    },
+    {
+      "id": "spec:project:ui-conventions-001",
+      "type": "spec",
+      "title": "Product Context: Maestro IDE. Register: product. Users: 不习惯 CLI 的开发者，使用场景为 IDE-like 工作流管理。Brand personality: 精准、高效、可靠（专业工具感）。Design principles: 自解释、非阻塞、信息透明、一致性。Anti-references: 避免 hacker 风格、企业软件臃肿感、游戏化 UI。Accessibility: WCAG 2.1 AA。",
+      "category": "ui",
+      "summary": "Product Context: Maestro IDE. Register: product. Users: 不习惯 CLI 的开发者，使用场景为 IDE-like 工作流管理。Brand personality: 精准、高效、可靠（专业工具感）。Design principles: 自解释、非阻塞、信息透明、一致性。Anti-references: 避免 hacker 风格、企业软件臃肿感、游戏化 UI。Accessibility: WCAG 2.1 AA。",
+      "score": 1.714766697278392,
+      "snippet": "L1: Product Context: Maestro IDE. Register: product. U...",
+      "source": {
+        "kind": "file",
+        "path": "specs/ui-conventions.md"
+      }
+    },
+    {
+      "id": "scratch-20260623-analyze-p1-cli-embed-context",
+      "type": "note",
+      "title": "Context: Phase 1 — CLI 嵌入",
+      "category": "scratch",
+      "summary": "**Date**: 2026-06-23 **Source**: ANL-009 (Phase 1 分析) **Areas discussed**: Maestro-flow CLI 集成策略、Agent 注册方式、终端兼容性",
+      "score": 1.707354838089416,
+      "snippet": "L5: **Areas discussed**: Maestro-flow CLI 集成策略、Agent 注...",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260623-analyze-P1-cli-embed/context.md"
+      }
+    },
+    {
+      "id": "scratch-20260623-analyze-p1-cli-embed-analysis",
+      "type": "note",
+      "title": "Analysis: Phase 1 — CLI 嵌入",
+      "category": "scratch",
+      "summary": "**Artifact ID**: ANL-009 **Date**: 2026-06-23 **Scope**: Micro (Phase 1, Milestone F1) **Mode**: Quick (focused decision extraction)",
+      "score": 1.6443205269215628,
+      "snippet": "L12: Phase 1 的目标是让 Maestro-flow CLI (`maestro` 命令) 在 Su...",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260623-analyze-P1-cli-embed/analysis.md"
+      }
+    },
+    {
+      "id": "scratch-20260620-plan-maestro-ide-plan",
+      "type": "note",
+      "title": "Maestro IDE — Foundation Phase 实施计划",
+      "category": "scratch",
+      "summary": "# Maestro IDE — Foundation Phase 实施计划",
+      "score": 1.4757678004308443,
+      "snippet": "L3: # Maestro IDE — Foundation Phase 实施计划",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260620-plan-maestro-ide/plan.md"
+      }
+    },
+    {
+      "id": "spec:project:ui-conventions",
+      "type": "spec",
+      "title": "UI Conventions",
+      "category": "ui",
+      "summary": "# UI Conventions",
+      "score": 1.3627600327603988,
+      "snippet": "L18: Product Context: Maestro IDE. Register: product. U...",
+      "source": {
+        "kind": "file",
+        "path": "specs/ui-conventions.md"
+      }
+    },
+    {
+      "id": "scratch-20260620-brainstorm-maestro-ide-guidance-specification",
+      "type": "note",
+      "title": "Guidance Specification: Maestro IDE — AI Workflow Orchestrator for Non-CLI Developers",
+      "category": "scratch",
+      "summary": "## §1. Project Positioning & Goals",
+      "score": 1.2989656652359483,
+      "snippet": "L1: # Guidance Specification: Maestro IDE — AI Workflo...",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260620-brainstorm-maestro-ide/guidance-specification.md"
+      }
+    },
+    {
+      "id": "scratch-20260620-brainstorm-maestro-ide-design-research",
+      "type": "note",
+      "title": "Design Research: IDE-like GUI Wrapper for CLI-based AI Workflow Tool",
+      "category": "scratch",
+      "summary": "## Key Findings",
+      "score": 1.2843536631974921,
+      "snippet": "L38: - Key pattern: **Slash command extensibility** -- ...",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260620-brainstorm-maestro-ide/design-research.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p0-environment-bootstrap-context",
+      "type": "note",
+      "title": "Context: Phase 0 — Environment Bootstrap",
+      "category": "scratch",
+      "summary": "**Date**: 2026-06-22 **Source**: ANL-008 (Phase 0 分析) **Areas discussed**: Windows 兼容性修复策略、oh-my-maestro 归档方式、概念翻译层保留",
+      "score": 1.1452737453706314,
+      "snippet": "L5: **Areas discussed**: Windows 兼容性修复策略、oh-my-maestro...",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P0-environment-bootstrap/context.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p0-environment-bootstrap-discussion",
+      "type": "note",
+      "title": "Discussion: Phase 0 — Environment Bootstrap",
+      "category": "scratch",
+      "summary": "**Session ID**: ANL-008 **Date**: 2026-06-22 **Mode**: Micro (Phase 0, Milestone F1) **Depth**: Quick (focused decision extraction)",
+      "score": 0.9518951804572072,
+      "snippet": "L19: 3. oh-my-maestro 如何归档？",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P0-environment-bootstrap/discussion.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p0-environment-bootstrap-analysis",
+      "type": "note",
+      "title": "Analysis: Phase 0 — Environment Bootstrap",
+      "category": "scratch",
+      "summary": "**Artifact ID**: ANL-008 **Date**: 2026-06-22 **Scope**: Micro (Phase 0, Milestone F1) **Mode**: Quick (focused decision extraction)",
+      "score": 0.7469616608425126,
+      "snippet": "L14: 2. **oh-my-maestro 归档** — 提取概念翻译层设计文档后删除",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P0-environment-bootstrap/analysis.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p3-trust-polish-discussion",
+      "type": "note",
+      "title": "Discussion: Phase 3 — Trust & Polish",
+      "category": "scratch",
+      "summary": "**Session**: ANL-003 **Date**: 2026-06-22 **Milestone**: M3 \"Refined — Trust & Polish\" **Phase**: 3 \"trust-polish\" **Mode**: Deep Dive **Dimensions**: architecture, platform, performance, frontend",
+      "score": 0.3841013214767599,
+      "snippet": "L30: - maestro delegate (claude): Phase 3 架构分析 (进行中)",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P3-trust-polish/discussion.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings",
+      "type": "spec",
+      "title": "Learnings",
+      "category": "learning",
+      "summary": "# Learnings",
+      "score": 0.33746287192574975,
+      "snippet": "L10: **Dependency Injection for Subprocess Calls**: Use...",
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p3-trust-polish-analysis",
+      "type": "note",
+      "title": "Analysis: Phase 3 — Trust & Polish",
+      "category": "scratch",
+      "summary": "**Session**: ANL-003 **Date**: 2026-06-22 **Milestone**: M3 \"Refined — Trust & Polish\" **Phase**: 3 \"trust-polish\"",
+      "score": 0.32134428890474986,
+      "snippet": "L10: Phase 3 是 Maestro IDE 的最后一个里程碑，聚焦信任层和生产就绪度。核心交付物：审...",
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P3-trust-polish/analysis.md"
+      }
+    }
+  ]
+}

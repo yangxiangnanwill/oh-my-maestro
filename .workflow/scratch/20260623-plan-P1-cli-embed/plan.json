@@ -1,0 +1,47 @@
+{
+  "plan_id": "PLN-010",
+  "phase": 1,
+  "milestone": "F1",
+  "scope": "phase",
+  "summary": "Phase 1: CLI 嵌入 — 在 Superset 终端面板中集成 Maestro-flow CLI，通过 Custom Agent API 注册 Maestro-flow 为可用 Agent 类型。3 个任务，2 个 Wave。",
+  "approach": "Wave 1 注册 Maestro-flow 为 Agent Preset（核心集成），Wave 2 并行验证命令兼容性和配置环境变量。利用 Superset 已有的 createCustomAgent tRPC mutation 和 agent-launch 基础设施。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003"],
+  "task_count": 3,
+  "complexity": "low",
+  "estimated_total_minutes": 60,
+  "waves": [
+    {
+      "id": "wave-1",
+      "task_ids": ["TASK-001"],
+      "label": "Agent Preset 注册",
+      "parallel": false
+    },
+    {
+      "id": "wave-2",
+      "task_ids": ["TASK-002", "TASK-003"],
+      "label": "环境配置 + 命令验证",
+      "parallel": true
+    }
+  ],
+  "design_decisions": [
+    "方案 A: 使用 Superset Custom Agent API (createCustomAgent) 注册 Maestro-flow",
+    "command: 'maestro', kind: 'terminal', promptTransport: 'terminal'",
+    "taskPromptTemplate 包含基础命令提示，支持 --cd 参数指定工作目录",
+    "环境变量 MAESTRO_HOME 指向用户 .maestro 目录"
+  ],
+  "confidence": {
+    "overall": 0.90,
+    "dimensions": {
+      "requirements_coverage": 0.95,
+      "task_quality": 0.90,
+      "dependency_correctness": 0.90,
+      "estimation_accuracy": 0.90,
+      "collision_safety": 0.85
+    },
+    "pressure_pass": {
+      "target_task": "TASK-001",
+      "result": "PASS",
+      "notes": "Agent Preset 注册是核心阻塞任务，read_first 覆盖所有 agent preset 相关代码，convergence 可 grep/tRPC 验证"
+    }
+  }
+}

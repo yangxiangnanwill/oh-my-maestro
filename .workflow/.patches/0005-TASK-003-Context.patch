@@ -1,0 +1,182 @@
+From 9c5dbf82e05262b6ad2899707eff67912364672b Mon Sep 17 00:00:00 2001
+From: will <yangxiangnan@wabestway.com>
+Date: Tue, 23 Jun 2026 14:21:16 +0800
+Subject: [PATCH 05/12] =?UTF-8?q?TASK-003:=20=E5=AE=9E=E7=8E=B0=E6=A6=82?=
+ =?UTF-8?q?=E5=BF=B5=E7=BF=BB=E8=AF=91=20Context=20+=20=E7=AE=80=E5=8D=95/?=
+ =?UTF-8?q?=E9=AB=98=E7=BA=A7=E6=A8=A1=E5=BC=8F=E5=88=87=E6=8D=A2?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../renderer/contexts/TranslationContext.tsx  | 126 ++++++++++++++++++
+ .../src/renderer/contexts/translations.ts     |  27 ++++
+ 2 files changed, 153 insertions(+)
+ create mode 100644 apps/desktop/src/renderer/contexts/TranslationContext.tsx
+ create mode 100644 apps/desktop/src/renderer/contexts/translations.ts
+
+diff --git a/apps/desktop/src/renderer/contexts/TranslationContext.tsx b/apps/desktop/src/renderer/contexts/TranslationContext.tsx
+new file mode 100644
+index 000000000..c97454ebe
+--- /dev/null
++++ b/apps/desktop/src/renderer/contexts/TranslationContext.tsx
+@@ -0,0 +1,126 @@
++import {
++  createContext,
++  type ReactNode,
++  useCallback,
++  useContext,
++  useEffect,
++  useState,
++} from "react";
++import { TRANSLATIONS } from "./translations";
++
++/**
++ * 显示模式：simple 显示中文翻译，advanced 显示原始英文 key。
++ */
++export type DisplayMode = "simple" | "advanced";
++
++/**
++ * TranslationContext 暴露的值类型。
++ */
++export interface TranslationContextValue {
++  /** 当前显示模式 */
++  displayMode: DisplayMode;
++  /** 切换显示模式 */
++  setDisplayMode: (mode: DisplayMode) => void;
++  /**
++   * 翻译 Maestro 术语。
++   * - simple 模式：查 TRANSLATIONS 表返回中文，无匹配时返回原始 key
++   * - advanced 模式：始终返回原始 key
++   * @param key 术语键名（snake_case）
++   * @param mode 可选的覆写模式，不传则使用当前 displayMode
++   */
++  translate: (key: string, mode?: DisplayMode) => string;
++  /** translate() 的别名 */
++  t: (key: string, mode?: DisplayMode) => string;
++}
++
++const STORAGE_KEY = "maestro-display-mode";
++
++/**
++ * 安全地从 localStorage 读取值。
++ * SSR/预渲染环境或浏览器禁用 localStorage 时返回 null。
++ */
++function safeGetItem(key: string): string | null {
++  try {
++    return localStorage.getItem(key);
++  } catch {
++    return null;
++  }
++}
++
++/**
++ * 安全地向 localStorage 写入值。
++ */
++function safeSetItem(key: string, value: string): void {
++  try {
++    localStorage.setItem(key, value);
++  } catch {
++    // 静默失败 — 写入不是关键路径
++  }
++}
++
++const TranslationContext = createContext<TranslationContextValue | null>(null);
++
++/**
++ * TranslationProvider — 包裹组件树以提供术语翻译能力。
++ *
++ * displayMode 默认从 localStorage('maestro-display-mode') 读取，
++ * 若无则初始化为 'simple'。模式变更时自动持久化。
++ */
++export function TranslationProvider({ children }: { children: ReactNode }) {
++  const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => {
++    const stored = safeGetItem(STORAGE_KEY);
++    if (stored === "simple" || stored === "advanced") {
++      return stored;
++    }
++    return "simple";
++  });
++
++  useEffect(() => {
++    safeSetItem(STORAGE_KEY, displayMode);
++  }, [displayMode]);
++
++  const setDisplayMode = useCallback((mode: DisplayMode) => {
++    setDisplayModeState(mode);
++  }, []);
++
++  const translate = useCallback(
++    (key: string, mode?: DisplayMode): string => {
++      const effectiveMode = mode ?? displayMode;
++      if (effectiveMode === "advanced") {
++        return key;
++      }
++      return TRANSLATIONS[key] ?? key;
++    },
++    [displayMode],
++  );
++
++  const t = translate;
++
++  return (
++    <TranslationContext.Provider value={{ displayMode, setDisplayMode, translate, t }}>
++      {children}
++    </TranslationContext.Provider>
++  );
++}
++
++/**
++ * useTranslation — 获取翻译函数和显示模式。
++ *
++ * 若在 TranslationProvider 外部调用，会 fallback 返回原始 key，
++ * 避免组件树未包裹时崩溃（RSK-T003-1 缓解）。
++ */
++export function useTranslation(): TranslationContextValue {
++  const ctx = useContext(TranslationContext);
++
++  if (!ctx) {
++    // Provider 未挂载时的安全 fallback
++    return {
++      displayMode: "simple",
++      setDisplayMode: () => {},
++      translate: (key: string) => key,
++      t: (key: string) => key,
++    };
++  }
++
++  return ctx;
++}
+diff --git a/apps/desktop/src/renderer/contexts/translations.ts b/apps/desktop/src/renderer/contexts/translations.ts
+new file mode 100644
+index 000000000..21065234e
+--- /dev/null
++++ b/apps/desktop/src/renderer/contexts/translations.ts
+@@ -0,0 +1,27 @@
++/**
++ * Maestro 术语 → 用户友好中文翻译注册表。
++ *
++ * 所有翻译键使用 snake_case，与 Maestro 内部术语保持一致。
++ * 翻译值面向不熟悉 CLI 的开发者，提供直观的中文概念映射。
++ */
++export const TRANSLATIONS: Record<string, string> = {
++  // 核心概念
++  chain: "工作流",
++  phase: "阶段",
++  wave: "批次",
++  task: "任务",
++  step: "步骤",
++
++  // 决策与状态
++  decision: "决策",
++  decision_node: "决策节点",
++  status: "状态",
++  pending: "等待中",
++  running: "执行中",
++  completed: "已完成",
++  completion_confirmed: "已完成确认",
++  failed: "失败",
++
++  // 元数据
++  duration: "耗时",
++};

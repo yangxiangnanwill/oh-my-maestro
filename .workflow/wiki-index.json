@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": 1782174612653,
+  "generatedAt": 1782215535545,
   "entries": [
     {
       "id": "project-project",
@@ -1039,6 +1039,90 @@
       "source": {
         "kind": "file",
         "path": "scratch/20260622-test-P3-trust-polish/uat.md"
+      }
+    },
+    {
+      "id": "scratch-20260623-analyze-p1-cli-embed-analysis",
+      "type": "note",
+      "title": "Analysis: Phase 1 — CLI 嵌入",
+      "summary": "**Artifact ID**: ANL-009 **Date**: 2026-06-23 **Scope**: Micro (Phase 1, Milestone F1) **Mode**: Quick (focused decision extraction)",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-23T00:56:47.738Z",
+      "updated": "2026-06-23T00:56:47.750Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260623-analyze-P1-cli-embed/analysis.md"
+      }
+    },
+    {
+      "id": "scratch-20260623-analyze-p1-cli-embed-context",
+      "type": "note",
+      "title": "Context: Phase 1 — CLI 嵌入",
+      "summary": "**Date**: 2026-06-23 **Source**: ANL-009 (Phase 1 分析) **Areas discussed**: Maestro-flow CLI 集成策略、Agent 注册方式、终端兼容性",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-23T00:57:00.255Z",
+      "updated": "2026-06-23T00:57:00.265Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260623-analyze-P1-cli-embed/context.md"
+      }
+    },
+    {
+      "id": "scratch-20260623-analyze-p2-command-chain-ui-analysis",
+      "type": "note",
+      "title": "Analysis: Phase 2 — 命令链 UI",
+      "summary": "**Artifact ID**: ANL-010 **Date**: 2026-06-23 **Scope**: Micro (Phase 2, Milestone F2) **Mode**: Quick (focused)",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-23T02:14:20.343Z",
+      "updated": "2026-06-23T02:14:20.415Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260623-analyze-P2-command-chain-ui/analysis.md"
+      }
+    },
+    {
+      "id": "scratch-20260623-analyze-p2-command-chain-ui-context",
+      "type": "note",
+      "title": "Context: Phase 2 — 命令链 UI",
+      "summary": "**Date**: 2026-06-23 **Source**: ANL-010 **Areas discussed**: status.json 解析、React 组件设计、文件轮询机制、术语翻译应用",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-23T02:16:37.804Z",
+      "updated": "2026-06-23T02:16:37.812Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260623-analyze-P2-command-chain-ui/context.md"
       }
     },
     {

@@ -1,0 +1,132 @@
+{
+  "task_id": "TASK-002",
+  "phase": 2,
+  "milestone": "F2",
+  "title": "创建 CommandChainPanel React 组件（步骤进度 + 决策节点可视化）",
+  "type": "feature",
+  "complexity": "medium",
+  "estimated_minutes": 55,
+  "status": "completed",
+  "depends_on": ["TASK-001"],
+  "parallel_group": "wave-2",
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "action": "create",
+      "target": "CommandChainPanel component",
+      "change": "新建主组件，使用 tRPC query 获取状态数据，渲染步骤进度列表和决策节点"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/index.ts",
+      "action": "create",
+      "target": "barrel export",
+      "change": "导出 CommandChainPanel 组件"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx",
+      "action": "create",
+      "target": "StepItem component",
+      "change": "单个步骤行组件，显示步骤名称、状态图标、耗时"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx",
+      "action": "create",
+      "target": "DecisionNodeView component",
+      "change": "决策节点只读展示组件，显示决策类型、选项、结论"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+      "action": "create",
+      "target": "TypeScript types",
+      "change": "定义 CommandChainStatus、Step、DecisionNode 等类型接口"
+    }
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/PlanBlock/PlanBlock.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/ToolCallBlock/ToolCallBlock.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/ReadOnlyToolCall/ReadOnlyToolCall.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/hooks/useCurrentPlan.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/command-chain/index.ts"
+  ],
+  "action": "新建 apps/desktop/src/renderer/components/CommandChainPanel/ 目录，创建 CommandChainPanel.tsx（主组件）、StepItem.tsx（步骤行）、DecisionNodeView.tsx（决策节点）、types.ts（类型定义）、index.ts（导出）。CommandChainPanel 通过 electronTrpc.commandChain.getStatus.useQuery() 获取数据，渲染步骤进度列表和决策节点。状态映射: pending→灰色圆环, running→蓝色旋转, completed→绿色对勾, failed→红色叉号。",
+  "implementation": [
+    "Step 1: 读取 PlanBlock.tsx 了解 Plan/PlanHeader/PlanContent 组件结构模式",
+    "Step 2: 读取 ToolCallBlock.tsx 了解状态渲染模式 (pending/running/completed/failed)",
+    "Step 3: 读取 ReadOnlyToolCall.tsx 了解只读展示模式",
+    "Step 4: 创建 types.ts — 定义 CommandChainStatus, Step, DecisionNode, StepStatus 等接口",
+    "Step 5: 创建 StepItem.tsx — 单步骤行组件，接收 step: Step + useTranslation",
+    "Step 6: StepItem 状态图标: pending→Circle, running→Loader2(animate-spin), completed→CircleCheck(green), failed→CircleX(red)",
+    "Step 7: StepItem 显示: 步骤名称、状态文本、耗时 (duration_ms → 格式化)",
+    "Step 8: 创建 DecisionNodeView.tsx — 决策节点只读展示",
+    "Step 9: DecisionNodeView 显示: 决策类型标签、选项列表、当前结论（高亮）",
+    "Step 10: 创建 CommandChainPanel.tsx — 主组件",
+    "Step 11: CommandChainPanel 使用 electronTrpc.commandChain.getStatus.useQuery({ cwd }) 获取数据",
+    "Step 12: CommandChainPanel 渲染: 标题栏 + steps.map(StepItem) + decisionNodes.map(DecisionNodeView)",
+    "Step 13: 处理空状态 (status.json 不存在)、加载状态、错误状态",
+    "Step 14: 创建 index.ts barrel export",
+    "Step 15: 使用 TailwindCSS v4 样式类，参考现有组件间距和颜色"
+  ],
+  "convergence": {
+    "criteria": [
+      "ls apps/desktop/src/renderer/components/CommandChainPanel/ 返回至少 5 个文件 (CommandChainPanel.tsx, StepItem.tsx, DecisionNodeView.tsx, types.ts, index.ts)",
+      "grep -r 'electronTrpc.commandChain.getStatus' apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx 返回 useQuery 调用行",
+      "grep -r 'pending.*running.*completed.*failed' apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx 返回状态映射逻辑",
+      "grep -r 'DecisionNodeView' apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx 返回组件定义行",
+      "grep -r 'export.*CommandChainPanel' apps/desktop/src/renderer/components/CommandChainPanel/index.ts 返回导出语句"
+    ],
+    "verification": "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && ls -la src/renderer/components/CommandChainPanel/ && grep -c 'export' src/renderer/components/CommandChainPanel/index.ts",
+    "definition_of_done": "CommandChainPanel 组件可以从 tRPC 获取 status.json 数据，渲染步骤进度列表（含状态图标和耗时）和决策节点（只读展示），处理空/加载/错误状态"
+  },
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && npx tsc --noEmit --pretty 2>&1 | grep -i 'CommandChainPanel' | head -10"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "TypeScript 编译无错误",
+      "组件导出可通过 import { CommandChainPanel } from 'renderer/components/CommandChainPanel' 引用",
+      "所有状态变体 (pending/running/completed/failed) 在 StepItem 中有对应渲染逻辑"
+    ]
+  },
+  "reference": {
+    "pattern": "参考 PlanBlock 的折叠面板结构和 ToolCallBlock 的状态图标映射模式。使用 lucide-react 图标库（项目已依赖）。",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/PlanBlock/PlanBlock.tsx",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/ToolCallBlock/ToolCallBlock.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "将步骤进度和决策节点合并为一个组件任务（同一功能域），使用 4 个子文件分离关注点。遵循现有 PlanBlock 的 Plan/PlanHeader/PlanContent 结构模式和 ToolCallBlock 的状态图标映射。",
+    "decision_factors": [
+      "步骤进度和决策节点属于同一 UI 面板，不应拆分",
+      "PlanBlock 展示了项目内标准的折叠面板模式",
+      "ToolCallBlock 展示了状态到图标的映射模式",
+      "lucide-react 已在项目依赖中"
+    ],
+    "tradeoffs": "决策节点交互式编辑 deferred 到 Phase 3，当前只读展示降低复杂度。"
+  },
+  "risks": [
+    {
+      "id": "RSK-T002-1",
+      "description": "tRPC query 类型推断可能不完整（TASK-001 的 router 类型需正确导出）",
+      "mitigation": "在 types.ts 中手动定义 CommandChainStatus 接口作为 fallback"
+    },
+    {
+      "id": "RSK-T002-2",
+      "description": "TailwindCSS v4 类名可能与现有样式冲突",
+      "mitigation": "使用组件内部作用域样式，参考现有组件间距约定"
+    }
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "55m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": "wave-2",
+    "executor": "agent"
+  }
+}

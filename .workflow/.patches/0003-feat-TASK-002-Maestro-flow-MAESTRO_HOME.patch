@@ -1,0 +1,43 @@
+From a109659a2c7ebac34ca5f2857c5973479e05bb01 Mon Sep 17 00:00:00 2001
+From: will <yangxiangnan@wabestway.com>
+Date: Tue, 23 Jun 2026 10:07:57 +0800
+Subject: [PATCH 03/12] =?UTF-8?q?feat:=20TASK-002=20=E2=80=94=20=E9=85=8D?=
+ =?UTF-8?q?=E7=BD=AE=20Maestro-flow=20=E7=BB=88=E7=AB=AF=E7=8E=AF=E5=A2=83?=
+ =?UTF-8?q?=E5=8F=98=E9=87=8F=20MAESTRO=5FHOME?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ apps/desktop/src/main/lib/terminal/env.ts | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/apps/desktop/src/main/lib/terminal/env.ts b/apps/desktop/src/main/lib/terminal/env.ts
+index a55a710b1..a55c8a930 100644
+--- a/apps/desktop/src/main/lib/terminal/env.ts
++++ b/apps/desktop/src/main/lib/terminal/env.ts
+@@ -1,6 +1,7 @@
+ import { exec } from "node:child_process";
+ import fs from "node:fs";
+ import os from "node:os";
++import path from "node:path";
+ import defaultShell from "default-shell";
+ import { env } from "shared/env.shared";
+ import { getShellEnv } from "../agent-setup/shell-wrappers";
+@@ -273,6 +274,7 @@ const ALLOWED_ENV_VARS = new Set([
+ 	"BUN_INSTALL",
+ 	"PNPM_HOME",
+ 	"VOLTA_HOME",
++	"MAESTRO_HOME",
+ 	"ASDF_DIR",
+ 	"ASDF_DATA_DIR",
+ 	"FNM_DIR",
+@@ -499,6 +501,8 @@ export function buildTerminalEnv(params: {
+ 		SUPERSET_ENV: env.NODE_ENV === "development" ? "development" : "production",
+ 		// Hook protocol version for forward compatibility
+ 		SUPERSET_HOOK_VERSION: HOOK_PROTOCOL_VERSION,
++		// Maestro-flow home directory for config, workflows, and agent definitions
++		MAESTRO_HOME: path.join(os.homedir(), ".maestro"),
+ 	};
+ 
+ 	delete terminalEnv.GOOGLE_API_KEY;

@@ -68,7 +68,8 @@
       "electron-builder 26.8.1（已配置 Windows NSIS）"
     ]
   },
-  "confidence": {
+  "status": "completed",
+  "completed_at": "2026-06-22T21:30:00+08:00",
     "overall": 0.83,
     "feasibility": 0.80,
     "impact": 0.95,

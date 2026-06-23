@@ -1,0 +1,1 @@
+{"type":"command","scope":"global","platform":"claude","name":"ccw","path":"C:\\Users\\Administrator\\.claude\\commands\\ccw.md","hint":"\\\"task description\\\"","description":"Main workflow orchestrator - analyze intent, select workflow, execute command chain in main process","required":0,"deferred":0,"missing_required":[]}

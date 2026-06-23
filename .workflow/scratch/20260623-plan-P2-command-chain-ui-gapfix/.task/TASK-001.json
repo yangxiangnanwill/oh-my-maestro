@@ -1,0 +1,81 @@
+{
+  "id": "TASK-001",
+  "title": "挂载 TranslationProvider 到 RootLayout",
+  "description": "在 RootLayout（-layout.tsx）中导入 TranslationProvider 并包裹 {children}，使所有下游组件能通过 useTranslation() 获取术语翻译能力。TranslationProvider 应当在 AuthProvider 内部、children 外部，即 <AuthProvider><TranslationProvider>{children}</TranslationProvider></AuthProvider>。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "small",
+  "action": "在 D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/-layout.tsx 中添加: `import { TranslationProvider } from 'renderer/contexts/TranslationContext';`；将 `{children}` 包裹为 `<TranslationProvider>{children}</TranslationProvider>`",
+  "scope": "src/renderer/routes/-layout.tsx",
+  "focus_paths": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/-layout.tsx"
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/-layout.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/contexts/TranslationContext.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/__root.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/providers/AuthProvider.tsx"
+  ],
+  "depends_on": [],
+  "parallel_group": null,
+  "issue_id": "GAP-002",
+  "convergence": {
+    "criteria": [
+      "grep -l \"TranslationProvider\" \"D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/-layout.tsx\" 返回匹配",
+      "grep -c \"from 'renderer/contexts/TranslationContext'\" \"D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/-layout.tsx\" 返回 >=1",
+      "<TranslationProvider> 在 AuthProvider 内部、children 外部（即 TranslationProvider 的 children 是 {children}）",
+      "grep \"TranslationProvider\" 在整个 codebase 中的文件列表至少包含 -layout.tsx"
+    ],
+    "verification": "grep -n \"TranslationProvider\" \"D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/-layout.tsx\"",
+    "definition_of_done": "TranslationProvider 已挂载到 RootLayout 的 React 组件树中，所有子路由组件的 useTranslation() 调用将访问到有效的 Context 值而非 fallback"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/-layout.tsx",
+      "action": "modify",
+      "target": "RootLayout 组件函数体",
+      "change": "导入 TranslationProvider 并用其包裹 {children}，使其位于 AuthProvider 内部"
+    }
+  ],
+  "implementation": [
+    "在 -layout.tsx 顶部 import 区域添加: import { TranslationProvider } from 'renderer/contexts/TranslationContext';",
+    "在 RootLayout 的 JSX 中，将第 19 行的 {children} 替换为 <TranslationProvider>{children}</TranslationProvider>"
+  ],
+  "test": {
+    "commands": ["cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test --grep TranslationContext 2>&1 | head -30"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "TypeScript 编译无错误（TranslationProvider 导入路径正确）",
+      "grep 验证 -layout.tsx 包含 TranslationProvider 导入和 JSX 使用"
+    ]
+  },
+  "reference": {
+    "pattern": "参考 AuthProvider 在 RootLayout 中的挂载模式 — 作为包裹器嵌套在 JSX 中",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/-layout.tsx",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/providers/AuthProvider.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "在 RootLayout 挂载 TranslationProvider 而非 index.tsx。RootLayout 已有成熟的 Provider 嵌套层级（PostHogProvider > ElectronTRPCProvider > AuthProvider），将 TranslationProvider 放在 AuthProvider 内部可确保它与其他 Provider 共享同一 React Context 树，且 AuthProvider 的认证状态对翻译功能非必需",
+    "decision_factors": [
+      "RootLayout 是所有路由的根布局，确保所有页面均可访问 TranslationContext",
+      "放在 AuthProvider 内部符合 '翻译是 UI 层概念，不依赖认证' 的语义",
+      "无需修改 index.tsx 或 __root.tsx，最小化变更范围"
+    ],
+    "tradeoffs": "若未来需要翻译认证相关 UI 文案（如 AuthProvider 内部的登录提示），可将 TranslationProvider 提升到 AuthProvider 外层，但当前无此需求"
+  },
+  "risks": [],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

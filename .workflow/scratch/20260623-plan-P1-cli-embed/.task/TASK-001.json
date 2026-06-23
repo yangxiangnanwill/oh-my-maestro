@@ -1,0 +1,37 @@
+{
+  "task_id": "TASK-001",
+  "phase": 1,
+  "milestone": "F1",
+  "title": "注册 Maestro-flow 为 Superset Custom Agent Preset",
+  "type": "feature",
+  "complexity": "medium",
+  "estimated_minutes": 30,
+  "depends_on": [],
+  "files": [
+    {"path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/settings/index.ts", "action": "reference", "target": "createCustomAgent tRPC mutation", "change": "通过 tRPC API 注册 Maestro-flow Agent Preset"},
+    {"path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/settings/agent-preset-router.utils.ts", "action": "reference", "target": "Agent Preset schema", "change": "验证 schema 是否满足 Maestro-flow 需求"}
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/settings/agent-preset-router.utils.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/settings/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/lib/agent-launch-command.ts",
+    "D:/WorkSpace/Source/maestro-flow/package.json"
+  ],
+  "action": "通过 Superset 的 createCustomAgent tRPC mutation 注册 Maestro-flow Agent Preset：label='Maestro', command='maestro', kind='terminal', promptTransport='terminal', description='Maestro-flow 工作流编排引擎', taskPromptTemplate='执行 Maestro-flow 任务：{prompt}\\n\\n工作目录：{cwd}\\n\\n可用的 maestro 子命令：search, ralph skills, ralph next, spec load, spec add'。在 Agent Preset 注册表中添加默认配置，使 Maestro 出现在 Agent 选择列表中。",
+  "implementation": [
+    "Step 1: 读取 agent-preset-router.utils.ts 确认 createCustomAgentInputSchema 字段",
+    "Step 2: 读取 index.ts createCustomAgent mutation 确认注册流程",
+    "Step 3: 读取 agent-launch-command.ts 确认 AgentLaunchConfig 格式",
+    "Step 4: 在 Superset 设置/数据库中注册 Maestro-flow Agent Preset",
+    "Step 5: 配置 Agent Preset: label='Maestro', command='maestro', kind='terminal'",
+    "Step 6: 验证 Maestro 出现在 Superset Agent 选择列表中"
+  ],
+  "convergence": {
+    "criteria": [
+      "Maestro-flow 在 Superset Agent Preset 配置中注册（通过 getResolvedAgentPresets 可查询到）",
+      "Agent Preset 的 command 字段为 'maestro'",
+      "Agent Preset 的 kind 字段为 'terminal'",
+      "Agent Preset 的 label 字段包含 'Maestro'"
+    ]
+  }
+}

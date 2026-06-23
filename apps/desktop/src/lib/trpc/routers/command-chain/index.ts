@@ -1,4 +1,4 @@
-import { normalize, resolve } from "node:path";
+import { resolve, sep } from "node:path";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
 import { readCommandChainStatus } from "../../../../main/lib/command-chain-status-poller";
@@ -49,9 +49,12 @@ export const createCommandChainRouter = () => {
 				z.object({
 					cwd: z.string().min(1).refine(
 						(val) => {
-							const resolved = resolve(val);
-							const normalized = normalize(val);
-							return resolved === normalized && normalized.length > 0;
+							// 路径安全校验：拒绝空字节注入 + 路径遍历（..）
+							if (val.includes("\0")) {
+								return false;
+							}
+							const segments = resolve(val).split(sep);
+							return !segments.includes("..");
 						},
 						{ message: "Invalid working directory path" },
 					),

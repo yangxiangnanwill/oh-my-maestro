@@ -1,0 +1,111 @@
+{
+  "task_id": "TASK-003",
+  "phase": 2,
+  "milestone": "F2",
+  "title": "实现概念翻译 Context + 简单/高级模式切换",
+  "type": "feature",
+  "complexity": "medium",
+  "estimated_minutes": 25,
+  "depends_on": [],
+  "parallel_group": "wave-2",
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/contexts/TranslationContext.tsx",
+      "action": "create",
+      "target": "TranslationContext + TranslationProvider + useTranslation hook",
+      "change": "新建 React Context，提供 translate(key, mode) 函数和 displayMode 状态"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/contexts/translations.ts",
+      "action": "create",
+      "target": "TRANSLATIONS 注册表",
+      "change": "定义 Maestro 术语 → 用户友好中文的翻译映射表"
+    }
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/providers/AuthProvider/AuthProvider.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/hooks/useCurrentPlan.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/types.ts"
+  ],
+  "action": "新建 apps/desktop/src/renderer/contexts/ 目录（当前不存在）。创建 TranslationContext.tsx 实现 TranslationProvider 组件和 useTranslation() hook。创建 translations.ts 定义 TRANSLATIONS 注册表。translate('chain', 'simple') → '工作流'，translate('chain', 'advanced') → 'chain'。displayMode 默认 'simple'，通过 localStorage('maestro-display-mode') 持久化。",
+  "implementation": [
+    "Step 1: 读取 AuthProvider 了解 Provider Context 模式",
+    "Step 2: 创建 contexts/translations.ts — TRANSLATIONS 注册表",
+    "Step 3: 注册表包含: chain→工作流, phase→阶段, wave→批次, task→任务, decision→决策, status→状态, pending→等待中, running→执行中, completed→已完成, failed→失败, decision_node→决策节点, step→步骤, duration→耗时, completion_confirmed→已完成确认",
+    "Step 4: 创建 contexts/TranslationContext.tsx",
+    "Step 5: 定义 DisplayMode 类型: 'simple' | 'advanced'",
+    "Step 6: 定义 TranslationContextValue 接口: { displayMode, setDisplayMode, translate(key, mode?), t(key, mode?) }",
+    "Step 7: 实现 TranslationProvider 组件 — 使用 useState 管理 displayMode",
+    "Step 8: displayMode 初始化从 localStorage.getItem('maestro-display-mode') 读取，默认 'simple'",
+    "Step 9: displayMode 变更时写入 localStorage.setItem('maestro-display-mode', mode)",
+    "Step 10: 实现 translate(key: string, mode?: DisplayMode): string 函数",
+    "Step 11: simple 模式查 TRANSLATIONS 表返回中文，advanced 模式返回原始 key",
+    "Step 12: 实现 t() 别名函数（等同于 translate）",
+    "Step 13: 导出 TranslationProvider, useTranslation, type DisplayMode"
+  ],
+  "convergence": {
+    "criteria": [
+      "grep -r 'createContext' apps/desktop/src/renderer/contexts/TranslationContext.tsx 返回 Context 创建行",
+      "grep -r 'useTranslation' apps/desktop/src/renderer/contexts/TranslationContext.tsx 返回 hook 定义行",
+      "grep -r 'localStorage.getItem.*maestro-display-mode' apps/desktop/src/renderer/contexts/TranslationContext.tsx 返回 localStorage 读取行",
+      "grep -r 'localStorage.setItem.*maestro-display-mode' apps/desktop/src/renderer/contexts/TranslationContext.tsx 返回 localStorage 写入行",
+      "grep -r 'chain' apps/desktop/src/renderer/contexts/translations.ts 返回翻译条目行",
+      "grep -r '工作流' apps/desktop/src/renderer/contexts/translations.ts 返回中文翻译行"
+    ],
+    "verification": "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && ls -la src/renderer/contexts/TranslationContext.tsx src/renderer/contexts/translations.ts && grep -c 'export' src/renderer/contexts/TranslationContext.tsx",
+    "definition_of_done": "TranslationProvider 可包裹组件树，useTranslation() hook 返回 { displayMode, setDisplayMode, translate, t }，translate('chain', 'simple') 返回 '工作流'，translate('chain', 'advanced') 返回 'chain'，displayMode 通过 localStorage 持久化"
+  },
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && npx tsc --noEmit --pretty 2>&1 | grep -i 'TranslationContext' | head -10"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "TypeScript 编译无错误",
+      "TranslationProvider 和 useTranslation 可通过 import 引用",
+      "TRANSLATIONS 注册表包含至少 12 个术语条目",
+      "localStorage 读写逻辑完整"
+    ]
+  },
+  "reference": {
+    "pattern": "参考 AuthProvider 的 Context + Provider 模式，使用 React.createContext + useContext 实现。参考 useCurrentPlan 的 hook 模式。",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/providers/AuthProvider/AuthProvider.tsx",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/hooks/useCurrentPlan.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "将翻译 Context 和模式切换合并为一个任务（同一功能域）。使用 React Context 模式（项目已有 AuthProvider 先例），localStorage 持久化模式选择（轻量、无需后端）。",
+    "decision_factors": [
+      "React Context 是项目现有模式（AuthProvider）",
+      "localStorage 持久化无需额外依赖",
+      "翻译注册表集中管理便于维护",
+      "简单/高级模式切换是同一 Context 的自然扩展"
+    ],
+    "tradeoffs": "localStorage vs 后端存储: localStorage 更简单但不同步跨设备。当前 Phase 2 范围仅本地使用，Phase 3 可升级为设置同步。"
+  },
+  "risks": [
+    {
+      "id": "RSK-T003-1",
+      "description": "TranslationProvider 需要包裹在组件树中才能使用 useTranslation",
+      "mitigation": "在 useTranslation 中检测 Context 是否存在，不存在时 fallback 返回原始 key"
+    },
+    {
+      "id": "RSK-T003-2",
+      "description": "localStorage 在 SSR/预渲染环境可能不可用",
+      "mitigation": "使用 try-catch 包裹 localStorage 调用，fallback 到默认值"
+    }
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "25m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": "wave-2",
+    "executor": "agent"
+  }
+}

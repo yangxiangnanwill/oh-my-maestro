@@ -1,0 +1,229 @@
+{
+  "phase": 2,
+  "level": "standard",
+  "verdict": "WARN",
+  "reviewed_at": "2026-06-23T16:00:00+08:00",
+  "reviewer": "workflow-reviewer",
+  "dimensions_reviewed": ["correctness", "security", "performance", "architecture", "maintainability", "best-practices"],
+  "files_reviewed": [
+    "src/main/lib/command-chain-status-poller.ts",
+    "src/main/lib/command-chain-status-poller.test.ts",
+    "src/lib/trpc/routers/command-chain/index.ts",
+    "src/lib/trpc/routers/index.ts",
+    "src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "src/renderer/components/CommandChainPanel/StepItem.tsx",
+    "src/renderer/components/CommandChainPanel/DecisionNodeView.tsx",
+    "src/renderer/components/CommandChainPanel/types.ts",
+    "src/renderer/components/CommandChainPanel/index.ts",
+    "src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+    "src/renderer/contexts/TranslationContext.tsx",
+    "src/renderer/contexts/translations.ts",
+    "src/renderer/contexts/TranslationContext.test.tsx",
+    "src/renderer/routes/-layout.tsx",
+    "src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx"
+  ],
+  "severity_distribution": {
+    "critical": 1,
+    "high": 10,
+    "medium": 24,
+    "low": 22,
+    "total": 57
+  },
+  "critical_files": [
+    {
+      "file": "src/lib/trpc/routers/command-chain/index.ts",
+      "dimensions": ["security", "architecture", "correctness", "maintainability", "best-practices"]
+    },
+    {
+      "file": "src/main/lib/command-chain-status-poller.ts",
+      "dimensions": ["security", "performance", "correctness", "maintainability", "architecture"]
+    },
+    {
+      "file": "src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "dimensions": ["correctness", "architecture", "performance", "best-practices", "maintainability"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "SEC-001",
+      "dimension": "security",
+      "severity": "critical",
+      "title": "路径遍历：用户可控的 cwd 直接拼接到文件系统路径中",
+      "file": "src/main/lib/command-chain-status-poller.ts",
+      "line": 85,
+      "snippet": "const filePath = join(this.cwd, \"status.json\");",
+      "description": "cwd 参数来自渲染进程（通过 tRPC router 的 input.cwd），未经任何路径规范化或沙箱校验，直接与 status.json 拼接后用于 readFileSync。攻击者可以传入 \"../../etc\" 遍历路径。",
+      "impact": "可能读取文件系统上任意位置的 status.json 文件，导致信息泄露。",
+      "suggestion": "对 cwd 进行路径规范化（path.resolve + path.normalize），限制 cwd 必须在允许的基础目录范围内。"
+    },
+    {
+      "id": "COR-001",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "tRPC useQuery 返回的 error 类型不是 Error，直接访问 .message 可能在运行时崩溃",
+      "file": "src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "line": 62,
+      "snippet": "<ErrorState message={error.message} />",
+      "description": "@trpc/react-query 的 useQuery 返回的 error 类型为 TRPCClientErrorLike，可能不是标准 Error 实例。直接访问 .message 属性在运行时可能返回 undefined 或抛出异常。",
+      "impact": "tRPC 查询因网络错误或序列化错误失败时，ErrorState 组件可能显示 undefined 或导致渲染崩溃。",
+      "suggestion": "使用类型守卫：`error instanceof Error ? error.message : '获取命令链状态失败'`"
+    },
+    {
+      "id": "COR-002",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "statusPoller 作为模块级单例，多次调用 start() 时存在竞态条件",
+      "file": "src/lib/trpc/routers/command-chain/index.ts",
+      "line": 44,
+      "snippet": "const statusPoller = new CommandChainStatusPoller();",
+      "description": "statusPoller 是模块级单例，每次 getStatus query 都调用 start()（内部先 stop() 重置状态），多客户端并发时存在竞态条件。",
+      "impact": "多客户端或多标签页场景下，状态查询结果可能指向错误的工作目录。",
+      "suggestion": "使用 Map<string, CommandChainStatusPoller> 按 cwd 管理多个 poller 实例，或改为无状态设计。"
+    },
+    {
+      "id": "SEC-002",
+      "dimension": "security",
+      "severity": "high",
+      "title": "tRPC publicProcedure 无认证：任意渲染进程可调用 getStatus 读取文件系统",
+      "file": "src/lib/trpc/routers/command-chain/index.ts",
+      "line": 48,
+      "snippet": "getStatus: publicProcedure",
+      "description": "tRPC 端点使用 publicProcedure，没有任何认证或授权检查。任何能够访问 tRPC 通道的渲染进程都可以调用此端点读取文件系统内容。",
+      "impact": "未授权的渲染进程或恶意代码可以通过此端点探测文件系统结构。",
+      "suggestion": "将 publicProcedure 改为需要认证的 procedure，添加 cwd 路径白名单校验。"
+    },
+    {
+      "id": "SEC-003",
+      "dimension": "security",
+      "severity": "high",
+      "title": "cwd 输入仅校验为 string 类型，未做路径合法性检查",
+      "file": "src/lib/trpc/routers/command-chain/index.ts",
+      "line": 51,
+      "snippet": "cwd: z.string()",
+      "description": "Zod schema 仅校验 cwd 为 string 类型，未做任何路径格式校验（如必须为绝对路径、不包含 '..' 等）。",
+      "impact": "绕过输入校验，传入恶意路径导致读取非预期文件。",
+      "suggestion": "使用 z.string().min(1).refine() 校验路径格式，确保为绝对路径且不包含 '..' 穿越。"
+    },
+    {
+      "id": "SEC-004",
+      "dimension": "security",
+      "severity": "high",
+      "title": "单例 Poller 共享状态：不同 cwd 之间可能泄露状态",
+      "file": "src/lib/trpc/routers/command-chain/index.ts",
+      "line": 44,
+      "snippet": "const statusPoller = new CommandChainStatusPoller();",
+      "description": "单例 Poller 在 stop() 和 start() 之间的竞态窗口内，getStatus() 可能返回上一个 cwd 的残留数据。",
+      "impact": "跨请求状态泄露：一个用户的 cwd 状态可能被另一个调用者读取到。",
+      "suggestion": "改为按 cwd 分片的 Map<cwd, Poller> 管理多个轮询实例。"
+    },
+    {
+      "id": "ARCH-001",
+      "dimension": "architecture",
+      "severity": "high",
+      "title": "tRPC 桥接层模块级实例化 main-process 类，导致单例生命周期与 Electron 多窗口生命周期耦合",
+      "file": "src/lib/trpc/routers/command-chain/index.ts",
+      "line": 44,
+      "snippet": "const statusPoller = new CommandChainStatusPoller();",
+      "description": "statusPoller 在模块顶层创建，多窗口或多项目并发时，cwd 可能被覆盖，导致返回错误窗口的状态数据。",
+      "impact": "多窗口场景下状态混乱，stop() 方法会清空 lastStatus，其他窗口的查询可能突然返回 null。",
+      "suggestion": "将 statusPoller 的创建移入 createCommandChainRouter() 内部，或改为 cwd→poller 的 Map 管理多实例。"
+    },
+    {
+      "id": "ARCH-002",
+      "dimension": "architecture",
+      "severity": "high",
+      "title": "statusPoller 的轮询生命周期与 tRPC query 的 refetchInterval 存在双重轮询架构冗余",
+      "file": "src/lib/trpc/routers/command-chain/index.ts",
+      "line": 57,
+      "snippet": "statusPoller.start(input.cwd);\nreturn statusPoller.getStatus();",
+      "description": "main process 侧 setInterval 每 2 秒轮询 + 前端 react-query refetchInterval 每 2 秒轮询，双重轮询浪费 I/O 资源。",
+      "impact": "status.json 每 2 秒被读取 2 次；poller 的 setInterval 永不清除造成资源泄漏；面板卸载时 poller 仍然运行。",
+      "suggestion": "统一为一种轮询机制：由 tRPC resolver 每次同步读取文件（利用前端 refetchInterval 已做间隔控制），移除 Poller 类。"
+    },
+    {
+      "id": "ARCH-003",
+      "dimension": "architecture",
+      "severity": "high",
+      "title": "renderer 层 Step 类型定义了 main 层不存在的 durationMs 字段，跨层数据契约不一致",
+      "file": "src/renderer/components/CommandChainPanel/types.ts",
+      "line": 13,
+      "snippet": "durationMs?: number;",
+      "description": "renderer 层的 types.ts 中 Step 接口定义了 durationMs 字段，但 main 层和 tRPC 层都没有此字段。CommandChainPanel.tsx 使用 as 强制转换绕过类型检查。",
+      "impact": "TypeScript 类型系统被绕过，增删字段时编译期不会被捕获。",
+      "suggestion": "从 renderer 的 Step 类型中移除 durationMs，或在 tRPC output schema 中统一添加。"
+    },
+    {
+      "id": "PERF-001",
+      "dimension": "performance",
+      "severity": "high",
+      "title": "双重轮询：tRPC query refetchInterval 与 main 进程 setInterval 叠加",
+      "file": "src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "line": 44,
+      "snippet": "refetchInterval: 2000",
+      "description": "前端 refetchInterval 和后端 setInterval 双重轮询，每次 tRPC 调用都会销毁并重建 main 进程的 setInterval 定时器。",
+      "impact": "每次 tRPC 查询（每 2 秒）都会销毁并重建定时器，产生不必要的 GC 压力。",
+      "suggestion": "将 start() 方法改为幂等：如果 cwd 未变化且 timer 已在运行，跳过 stop/start 循环。"
+    },
+    {
+      "id": "PERF-002",
+      "dimension": "performance",
+      "severity": "high",
+      "title": "readFileSync 阻塞 main 进程事件循环",
+      "file": "src/main/lib/command-chain-status-poller.ts",
+      "line": 86,
+      "snippet": "const raw = readFileSync(filePath, \"utf-8\");",
+      "description": "poll() 方法使用同步的 readFileSync 读取 status.json，在 Electron main 进程中同步 I/O 会阻塞事件循环。",
+      "impact": "磁盘 I/O 繁忙时，同步读取可能阻塞 main 进程数十至数百毫秒，导致 UI 响应迟钝。",
+      "suggestion": "将 readFileSync 替换为异步的 readFile，使用 fs/promises。"
+    },
+    {
+      "id": "BP-001",
+      "dimension": "best-practices",
+      "severity": "high",
+      "title": "类型断言绕过 tRPC 类型安全",
+      "file": "src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "line": 48,
+      "snippet": "const typedStatus = status as CommandChainStatus | null;",
+      "description": "使用 as 类型断言将 tRPC query 返回的 status 强制转换为本地定义的 CommandChainStatus 类型，绕过类型检查。",
+      "impact": "前后端类型定义独立维护，任一侧修改结构而另一侧未同步时，TypeScript 不会报告错误。",
+      "suggestion": "从 tRPC router 导入 CommandChainStatusOutput 类型，消除 as 断言。"
+    },
+    {
+      "id": "BP-002",
+      "dimension": "best-practices",
+      "severity": "high",
+      "title": "tRPC error.message 直接暴露给用户界面",
+      "file": "src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "line": 62,
+      "snippet": "<ErrorState message={error.message} />",
+      "description": "tRPC 的 error.message 可能包含技术细节（如堆栈信息、内部路径），直接展示给终端用户存在信息泄露风险。",
+      "impact": "技术实现细节可能泄露到用户界面。",
+      "suggestion": "对 error 进行类型检查后再提取 message，或使用通用错误提示文案。"
+    },
+    {
+      "id": "MAINT-001",
+      "dimension": "maintainability",
+      "severity": "high",
+      "title": "步骤状态枚举值在 3 个文件中重复定义，存在同步风险",
+      "file": "src/main/lib/command-chain-status-poller.ts",
+      "line": 8,
+      "snippet": "status: \"pending\" | \"running\" | \"completed\" | \"failed\" | \"skipped\";",
+      "description": "步骤状态枚举在 3 个位置独立定义（main 层 TypeScript 类型、tRPC Zod schema、前端 types.ts），任何一处新增状态值时其他位置必须同步更新。",
+      "impact": "新增步骤状态时需修改 3 处，遗漏任何一处都会导致运行时行为不一致。",
+      "suggestion": "将 StepStatus 提取到共享模块，所有位置从同一来源导入。"
+    },
+    {
+      "id": "MAINT-002",
+      "dimension": "maintainability",
+      "severity": "high",
+      "title": "CommandChainPanel.test.tsx 复制了 PromptGroup.test.ts 的 extractFunctionSource 逻辑",
+      "file": "src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+      "line": 21,
+      "snippet": "function extractFunctionSource(name: string): string {",
+      "description": "extractFunctionSource 函数与 PromptGroup.test.ts 中的实现几乎完全相同，是 36 行括号匹配逻辑的逐字复制。",
+      "impact": "未来若需要修复括号匹配的边界情况，需在两个文件中分别修改。",
+      "suggestion": "将 extractFunctionSource 提取到共享测试工具模块。"
+    }
+  ],
+  "issues_created": []
+}

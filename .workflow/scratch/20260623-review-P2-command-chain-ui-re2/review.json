@@ -1,0 +1,99 @@
+{
+  "phase": 2,
+  "level": "quick",
+  "verdict": "BLOCK",
+  "reviewed_at": "2026-06-23T17:30:00+08:00",
+  "reviewer": "workflow-reviewer",
+  "review_type": "re-review",
+  "prior_review": "REV-005",
+  "dimensions_reviewed": ["correctness", "security"],
+  "files_reviewed": [
+    "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+    "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+    "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+    "apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx"
+  ],
+  "severity_distribution": {
+    "critical": 2,
+    "high": 2,
+    "medium": 2,
+    "low": 0,
+    "total": 6
+  },
+  "prior_findings_status": {
+    "fixed": 9,
+    "partially_fixed": 1,
+    "not_fixed": 1,
+    "total": 11
+  },
+  "findings": [
+    {
+      "id": "REV2-001",
+      "dimension": "security",
+      "severity": "critical",
+      "title": "路径遍历检测无效 — resolve === normalize 不阻止目录遍历",
+      "file": "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "line": 42,
+      "description": "resolve() 和 normalize() 都会解析 .. 路径段，因此对于遍历路径两者结果始终相同，检查永远通过。",
+      "suggestion": "使用 path.relative() 检查解析后的路径是否在允许的基础目录内",
+      "regression": true
+    },
+    {
+      "id": "REV2-002",
+      "dimension": "security",
+      "severity": "critical",
+      "title": "tRPC 端点路径遍历检测同样无效",
+      "file": "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "line": 50,
+      "description": "zod refine 中的 resolve === normalize 检查与 REV2-001 相同问题，双重无效防御。",
+      "suggestion": "在 refine 中使用 path.relative() 或 startsWith 检查",
+      "regression": true
+    },
+    {
+      "id": "REV2-003",
+      "dimension": "security",
+      "severity": "high",
+      "title": "publicProcedure 无认证",
+      "file": "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "line": 47,
+      "description": "getStatus 使用 publicProcedure，无认证/授权检查。",
+      "suggestion": "添加 IPC 来源校验或改用 protectedProcedure",
+      "regression": false
+    },
+    {
+      "id": "REV2-004",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "validateStatus 对非对象数组元素无防御",
+      "file": "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "line": 71,
+      "description": "steps 数组包含 null 或原始类型元素时，as Record<string, unknown> 断言导致 TypeError。",
+      "suggestion": "在 map 回调开头添加类型守卫",
+      "regression": false
+    },
+    {
+      "id": "REV2-005",
+      "dimension": "best-practices",
+      "severity": "medium",
+      "title": "validateStatus 中残留 as 类型断言（4处）",
+      "file": "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "line": 64,
+      "description": "4 处 as 类型断言绕过 TypeScript 类型安全。",
+      "suggestion": "使用自定义 type guard 函数替代 as 断言",
+      "regression": false
+    },
+    {
+      "id": "REV2-006",
+      "dimension": "security",
+      "severity": "medium",
+      "title": "空字节注入 — null byte 可通过路径校验",
+      "file": "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "line": 42,
+      "description": "resolve() 和 normalize() 保留空字节，后续 join 会截断。",
+      "suggestion": "添加空字节检查：if (cwd.includes('\\0')) return null;",
+      "regression": false
+    }
+  ],
+  "issues_created": []
+}

@@ -1,0 +1,80 @@
+{
+  "plan_id": "PLN-020",
+  "phase": 2,
+  "milestone": "F2",
+  "scope": "phase",
+  "summary": "Phase 2: 命令链 UI — 在 Superset Sidebar 中渲染 Maestro-flow 命令链步骤进度面板。3 个任务，2 个 Wave。Wave 1 实现 status.json 文件轮询 tRPC 服务（数据源），Wave 2 并行开发 CommandChainPanel 组件和概念翻译 Context。",
+  "approach": "Wave 1 在 main process 创建 StatusPoller 文件轮询服务并通过 tRPC 暴露给 renderer（数据源依赖）。Wave 2 并行开发 CommandChainPanel React 组件（步骤进度 + 决策节点可视化）和 TranslationContext + useTranslation hook（术语翻译 + 简单/高级模式切换）。组件使用 shadcn/ui + TailwindCSS v4，参考现有 PlanBlock 和 ToolCallBlock 的状态渲染模式。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003"],
+  "task_count": 3,
+  "complexity": "medium",
+  "estimated_total_minutes": 115,
+  "waves": [
+    {
+      "id": "wave-1",
+      "task_ids": ["TASK-001"],
+      "label": "status.json 文件轮询服务",
+      "parallel": false
+    },
+    {
+      "id": "wave-2",
+      "task_ids": ["TASK-002", "TASK-003"],
+      "label": "CommandChainPanel 组件 + 概念翻译 Context",
+      "parallel": true
+    }
+  ],
+  "design_decisions": [
+    "方案 A: 文件轮询 status.json（每 2s），通过 tRPC query 暴露给 renderer",
+    "方案 B: React Context + useTranslation hook 实现概念翻译层",
+    "方案 C: Sidebar 面板渲染命令链状态，参考现有 DashboardSidebar 模式",
+    "决策节点只读展示，交互式 deferred 到 Phase 3",
+    "默认简单模式（术语翻译启用），高级模式显示原始 Maestro 术语"
+  ],
+  "shared_context": {
+    "patterns": [
+      "tRPC router 模式: createXxxRouter() → router({ procedure: publicProcedure.input(schema).query(...) })",
+      "React 组件模式: 参考 PlanBlock 的 Plan/PlanHeader/PlanContent 结构",
+      "状态渲染模式: 参考 ToolCallBlock 的 pending/running/completed/failed 状态映射",
+      "Provider 模式: 参考 AuthProvider 的 Context + Provider 结构"
+    ],
+    "conventions": [
+      "ESM imports",
+      "TypeScript strict mode",
+      "TailwindCSS v4 + shadcn/ui",
+      "组件目录结构: ComponentName/ComponentName.tsx + index.ts",
+      "tRPC 路径: apps/desktop/src/lib/trpc/routers/<name>/index.ts"
+    ],
+    "dependencies": [
+      "@superset/ui/ai-elements (现有 Plan/ToolCallRow 等组件)",
+      "lucide-react (图标)",
+      "zod (tRPC input schema)",
+      "tailwind-merge + clsx (样式)"
+    ]
+  },
+  "data_flow": {
+    "diagram": "Maestro-flow status.json → StatusPoller (main, 2s interval) → tRPC query → CommandChainPanel (renderer) → TranslationContext → UI",
+    "stages": [
+      "Maestro-flow 写入 status.json 到工作目录",
+      "StatusPoller 每 2s 读取并解析 status.json",
+      "tRPC router 暴露 getCommandChainStatus query",
+      "CommandChainPanel 通过 useQuery 获取状态数据",
+      "TranslationContext 根据 displayMode 翻译术语",
+      "步骤进度 + 决策节点渲染到 Sidebar 面板"
+    ]
+  },
+  "confidence": {
+    "overall": 0.85,
+    "dimensions": {
+      "requirements_coverage": 0.90,
+      "task_quality": 0.85,
+      "dependency_correctness": 0.85,
+      "estimation_accuracy": 0.80,
+      "collision_safety": 0.85
+    },
+    "pressure_pass": {
+      "target_task": "TASK-001",
+      "result": "PASS",
+      "notes": "TASK-001 是数据源依赖，阻塞 TASK-002。read_first 覆盖所有 tRPC router 模式文件和 main lib 参考文件，convergence 可 grep/tRPC 验证"
+    }
+  }
+}

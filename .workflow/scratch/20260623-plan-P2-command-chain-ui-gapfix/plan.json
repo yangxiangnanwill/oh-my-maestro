@@ -1,0 +1,69 @@
+{
+  "plan_id": "PLN-021",
+  "phase": 2,
+  "milestone": "F2",
+  "scope": "gap-fix",
+  "summary": "Phase 2 gap 修复: 挂载 TranslationProvider 到 RootLayout + CommandChainPanel 到 DashboardSidebar + 单元测试覆盖（3 个 GAP，3 个 TASK，2 个 Wave）",
+  "approach": "Wave 1 将 TranslationProvider 挂载到 RootLayout，使所有下游组件能通过 useTranslation() 获取翻译能力。Wave 2 并行执行：将 CommandChainPanel 挂载到 DashboardSidebar（传入 cwd prop）和编写单元测试（Poller 纯逻辑测试 + TranslationContext hook 测试 + CommandChainPanel 渲染测试）。所有 GAP 来自 Phase 2 验证，修复范围局限在 wiring 和 test 覆盖，不新增功能。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003"],
+  "task_count": 3,
+  "complexity": "low",
+  "estimated_total_minutes": 90,
+  "gap_mode": true,
+  "source_gaps": ["GAP-001", "GAP-002", "GAP-003"],
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001"],
+      "label": "TranslationProvider 挂载（Provider 是组件挂载的前置依赖）"
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-002", "TASK-003"],
+      "label": "CommandChainPanel 挂载 + 单元测试（可并行）",
+      "parallel": true
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "RootLayout 挂载 TranslationProvider → 子组件可通过 useTranslation() 获取翻译",
+      "DashboardSidebar 导入 CommandChainPanel → 传入当前 worktree cwd → Panel 通过 tRPC 轮询 status.json 数据"
+    ]
+  },
+  "design_decisions": [
+    "TranslationProvider 挂载在 RootLayout 而非 index.tsx，因其依赖 AuthProvider/ElectronTRPCProvider 等已存在的 Provider 层级",
+    "CommandChainPanel 挂载在 DashboardSidebar 底部（Settings/Help 上方），作为独立 section 显示",
+    "测试使用 bun test 框架（与项目一致），import { describe, expect, it } from 'bun:test'",
+    "CommandChainStatusPoller 测试不 mock fs，使用 tmpdir 创建真实 status.json 文件（遵循项目现有测试模式）",
+    "TranslationContext 测试通过 renderHook 方式验证 hook 返回值",
+    "CommandChainPanel 测试仅验证空状态/加载状态渲染，不测试 tRPC hook 内部逻辑"
+  ],
+  "shared_context": {
+    "patterns": [
+      "bun:test 测试模式: import { describe, expect, it } from 'bun:test'",
+      "Provider 挂载模式: 参考 AuthProvider 在 RootLayout 中的嵌套方式",
+      "tmpdir + mkdtempSync 测试文件模式: 参考 bundled-cli.test.ts 的 temp 文件管理",
+      "渲染测试可直接读取组件源码验证无编译错误和结构完整性"
+    ],
+    "conventions": [
+      "测试文件命名: <module-name>.test.ts（与源码同目录或平行位置）",
+      "测试命令: bun test",
+      "TypeScript strict mode",
+      "ESM imports",
+      "renderer 测试: 纯逻辑提取/解析模式（见 useCurrentPlan.test.ts） 或 源文件静态分析（见 PromptGroup.test.ts）"
+    ],
+    "dependencies": [
+      "bun:test（内置于 bun）",
+      "@tanstack/react-router (RootLayout 路由结构)",
+      "@trpc/react-query (CommandChainPanel 中的 electronTrpc hooks)"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-23T14:00:00+08:00",
+    "source": "workflow-planner",
+    "planning_mode": "gap-fix",
+    "plan_type": "gap",
+    "verification_artifact": "D:/WorkSpace/VsCode/oh-my-maestro/.workflow/scratch/20260623-plan-P2-command-chain-ui/verification.json"
+  }
+}

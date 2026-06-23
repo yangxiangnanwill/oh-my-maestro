@@ -1,0 +1,87 @@
+{
+  "id": "TASK-002",
+  "title": "挂载 CommandChainPanel 到 DashboardSidebar",
+  "description": "在 DashboardSidebar 组件中导入 CommandChainPanel 并作为新的 section 渲染。CommandChainPanel 需要 cwd prop，应从当前活跃的 worktree/workspace 路径获取。参考 DashboardSidebar 中已有的 V2SetupScriptCard 的条件渲染模式（仅在特定条件下显示）。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "在 D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx 中添加: `import { CommandChainPanel } from 'renderer/components/CommandChainPanel';`；在 Sidebar 底部区域（PortsList 上方或 Settings 上方）添加 `<CommandChainPanel cwd={activeHostUrl ?? ''} />` 条件渲染",
+  "scope": "src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx",
+  "focus_paths": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx"
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/_authenticated/providers/LocalHostServiceProvider.tsx"
+  ],
+  "depends_on": ["TASK-001"],
+  "parallel_group": null,
+  "issue_id": "GAP-001",
+  "convergence": {
+    "criteria": [
+      "grep -l \"CommandChainPanel\" \"D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx\" 返回匹配",
+      "grep -c \"from 'renderer/components/CommandChainPanel'\" \"D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx\" 返回 >=1",
+      "DashboardSidebar.tsx 中 <CommandChainPanel 标签的 cwd prop 绑定到 activeHostUrl 或等效的工作目录变量",
+      "grep \"CommandChainPanel\" 在整个 renderer 目录中至少有 2 个文件引用（index.ts 导出 + DashboardSidebar 导入）"
+    ],
+    "verification": "grep -n \"CommandChainPanel\" \"D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx\"",
+    "definition_of_done": "CommandChainPanel 组件已挂载到 DashboardSidebar 中，在用户打开 Superset 并进入 Dashboard 页面时，Sidebar 底部显示命令链状态面板（空状态或加载中）"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx",
+      "action": "modify",
+      "target": "DashboardSidebar 组件函数体",
+      "change": "导入 CommandChainPanel 并在 Sidebar 底部区域（PortsList 上方，第 232 行之前）添加条件渲染的 <CommandChainPanel cwd={...} />"
+    }
+  ],
+  "implementation": [
+    "在 DashboardSidebar.tsx 顶部 import 区域添加: import { CommandChainPanel } from 'renderer/components/CommandChainPanel';",
+    "在 Sidebar JSX 中，在 {!isCollapsed && <DashboardSidebarPortsList />}（第 232 行）之前插入 CommandChainPanel 渲染",
+    "CommandChainPanel 仅在 !isCollapsed 且 activeHostUrl 存在时渲染，使用条件: {!isCollapsed && activeHostUrl && <CommandChainPanel cwd={activeHostUrl} />}",
+    "确保 CommandChainPanel 有合适的容器样式（如 border-t border-border mt-auto 使其固定在 Sidebar 底部区域）"
+  ],
+  "test": {
+    "commands": ["cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test --grep CommandChainPanel 2>&1 | head -30"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "TypeScript 编译无错误（CommandChainPanel 导入路径和 cwd prop 类型正确）",
+      "grep 验证 DashboardSidebar.tsx 包含 CommandChainPanel 导入和 JSX 使用"
+    ]
+  },
+  "reference": {
+    "pattern": "参考 V2SetupScriptCard 的条件渲染模式（第 233-239 行）: {!isCollapsed && activeV2Project && activeHostUrl && (<V2SetupScriptCard ... />)}",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx"
+    ],
+    "examples": "V2SetupScriptCard 在第 233 行: {!isCollapsed && activeV2Project && activeHostUrl && (<V2SetupScriptCard hostUrl={activeHostUrl} projectId={activeV2Project.id} projectName={activeV2Project.name} />)}"
+  },
+  "rationale": {
+    "chosen_approach": "将 CommandChainPanel 挂载到 DashboardSidebar 底部（PortsList 上方），作为独立的命令链状态 section。使用 activeHostUrl（来自 useLocalHostService()）作为 cwd 值，因为它是当前活跃工作目录的路径。条件渲染确保仅在 Sidebar 展开且有活跃工作目录时显示面板",
+    "decision_factors": [
+      "DashboardSidebar 是 Sidebar 内容的唯一渲染入口，所有 section 都在此文件中组合",
+      "activeHostUrl 是当前活跃 workspace 的本地路径，与 CommandChainPanel 需要的 cwd 语义匹配",
+      "放在 PortsList 上方、Settings 下方，符合 '状态面板 > 端口列表 > 设置' 的信息层次",
+      "条件渲染避免在无活跃 workspace 时显示空面板"
+    ],
+    "tradeoffs": "若 cwd 需要更精确的路径（如 worktree 子目录而非 host URL），后续可替换为更精确的路径源，但 activeHostUrl 是当前最合适的可用值"
+  },
+  "risks": [
+    "activeHostUrl 可能为 undefined 或空字符串，CommandChainPanel 内部需处理无效 cwd（组件已有 EmptyState fallback）"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "25m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

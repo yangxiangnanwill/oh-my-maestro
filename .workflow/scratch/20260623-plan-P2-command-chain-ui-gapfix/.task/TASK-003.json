@@ -1,0 +1,115 @@
+{
+  "id": "TASK-003",
+  "title": "添加 Phase 2 新增文件的单元测试覆盖",
+  "description": "为 Phase 2 创建的三个核心模块添加单元测试：1) CommandChainStatusPoller（主进程文件轮询逻辑）— 使用 tmpdir 创建真实 status.json 文件验证解析和生命周期；2) TranslationContext（Context + hook）— 验证 Provider 挂载/未挂载时的 useTranslation 返回值；3) CommandChainPanel（UI 组件）— 验证空状态/加载状态/错误状态的渲染输出。测试框架为 bun test。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "创建 3 个测试文件: D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.test.ts, D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/contexts/TranslationContext.test.tsx, D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+  "scope": "测试覆盖 — main/lib + renderer/contexts + renderer/components",
+  "focus_paths": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/contexts/TranslationContext.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx"
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/bundled-cli.test.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/contexts/TranslationContext.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/contexts/translations.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/hooks/useCurrentPlan.test.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave-2",
+  "issue_id": "GAP-003",
+  "convergence": {
+    "criteria": [
+      "文件 command-chain-status-poller.test.ts 存在且包含 >=3 个 it/test 块",
+      "文件 TranslationContext.test.tsx 存在且包含 >=3 个 it/test 块",
+      "文件 CommandChainPanel.test.tsx 存在且包含 >=2 个 it/test 块",
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test --grep \"CommandChainStatusPoller|TranslationContext|CommandChainPanel\" 通过率 >=80%（所有新增测试通过，已存在的同名 grep 匹配例外可忽略）",
+      "grep -l \"from 'bun:test'\" 在上述 3 个测试文件中均有匹配"
+    ],
+    "verification": "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/main/lib/command-chain-status-poller.test.ts src/renderer/contexts/TranslationContext.test.tsx src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+    "definition_of_done": "所有 Phase 2 新增模块均有基础单元测试覆盖：Poller 测试覆盖 start/stop/poll/validateStatus 生命周期，TranslationContext 测试覆盖 Provider 挂载/未挂载/模式切换，CommandChainPanel 测试覆盖空状态/加载状态/错误状态渲染"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.test.ts",
+      "action": "create",
+      "target": "测试文件",
+      "change": "创建 CommandChainStatusPoller 单元测试：start/stop 生命周期、poll 文件读取、validateStatus 校验、getStatus 返回值"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/contexts/TranslationContext.test.tsx",
+      "action": "create",
+      "target": "测试文件",
+      "change": "创建 TranslationContext 单元测试：Provider 挂载时 translate/t 行为、simple/advanced 模式切换、未挂载 fallback、displayMode localStorage 持久化"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+      "action": "create",
+      "target": "测试文件",
+      "change": "创建 CommandChainPanel 单元测试：空状态渲染、加载状态渲染、步骤列表渲染、决策节点渲染"
+    }
+  ],
+  "implementation": [
+    "创建 src/main/lib/command-chain-status-poller.test.ts: 测试 start() 启动轮询和立即 poll、stop() 停止轮询、getStatus() 返回 null（无 status.json 时）、getStatus() 返回解析后的状态（创建 tmpdir + status.json）、validateStatus 拒绝无效 status 值。使用 mkdtempSync + writeFileSync + rmSync 管理临时文件",
+    "创建 src/renderer/contexts/TranslationContext.test.tsx: 测试 TranslationProvider 挂载时 useTranslation 返回 translate/t 函数、simple 模式返回中文翻译、advanced 模式返回原始 key、未匹配 key 返回原始值、TranslationProvider 未挂载时 useTranslation 返回 fallback 值。若 React 组件测试复杂，可提取纯函数 translateLogic 单独测试",
+    "创建 src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx: 测试空状态（无 status 数据时显示 '暂无可用的命令链状态'）、确认组件包含 ListChecks 图标、步骤 section 和决策节点 section 的结构存在。由于 CommandChainPanel 依赖 tRPC hook，测试可读取源码验证结构完整性（参考 PromptGroup.test.ts 的源码静态分析模式），验证 EmptyState/LoadingState/ErrorState 三个内部组件均被定义和使用"
+  ],
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/main/lib/command-chain-status-poller.test.ts",
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/renderer/contexts/TranslationContext.test.tsx",
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx"
+    ],
+    "unit": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.test.ts",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/contexts/TranslationContext.test.tsx",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "3 个测试文件全部创建",
+      "每个测试文件至少包含 2 个 it/test 块",
+      "bun test 运行所有新增测试，通过率 100%"
+    ]
+  },
+  "reference": {
+    "pattern": "Poller 测试参考 bundled-cli.test.ts 的 tmpdir + beforeEach/afterEach 模式；Context 测试参考 useCurrentPlan.test.ts 的纯逻辑提取测试模式；Panel 测试参考 PromptGroup.test.ts 的源码静态分析模式",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/bundled-cli.test.ts",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/hooks/useCurrentPlan.test.ts",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts"
+    ],
+    "examples": "bundled-cli.test.ts 第 22-113 行: 使用 mkdtempSync 创建临时目录，beforeEach 准备测试数据，afterEach 清理 rmSync(..., { recursive: true, force: true })"
+  },
+  "rationale": {
+    "chosen_approach": "分 3 个测试文件覆盖 3 个模块，遵循项目现有测试模式：Poller 使用真实 fs 操作 + tmpdir（不 mock fs），TranslationContext 优先测试纯逻辑（可提取 translateLogic 函数避免 React 渲染依赖），CommandChainPanel 使用源码静态分析（因组件依赖 tRPC context 无法简单单元测试）",
+    "decision_factors": [
+      "项目测试框架为 bun test，已有 100+ 测试文件遵循此模式",
+      "main/lib 测试全部使用真实 fs + tmpdir，无 mock 模式",
+      "renderer 测试大量使用纯逻辑提取模式（提取函数独立测试），因为 React 组件依赖复杂的 Provider 树",
+      "PromptGroup.test.ts 展示了源码静态分析测试模式，适合无法 mount 渲染的组件"
+    ],
+    "tradeoffs": "CommandChainPanel 的渲染测试使用源码分析而非 DOM 渲染，无法捕获运行时错误，但这是项目现有模式且避免了搭建完整 tRPC/React 测试环境的复杂性"
+  },
+  "risks": [
+    "CommandChainPanel 依赖 @trpc/react-query 和 electronTrpc 上下文，传统 React 渲染测试需要大量 mock，源码静态分析是最实际的替代方案"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "50m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

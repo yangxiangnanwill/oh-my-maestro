@@ -1,0 +1,121 @@
+{
+  "id": "TASK-002",
+  "title": "修复 CommandChainPanel 类型安全 + error 处理 + 架构对齐",
+  "description": "修复 4 个 findings：COR-001（error.message 直接访问可能运行时崩溃）、BP-001（as CommandChainStatus 类型断言绕过类型安全）、BP-002（error.message 直接暴露给用户界面）、ARCH-003（durationMs 字段跨层数据契约不一致）、PERF-001（前端 refetchInterval 双重轮询）。核心策略：从 tRPC router 导入 CommandChainStatusOutput 类型消除 as 断言，添加 error 类型守卫，移除 types.ts 中多余的 durationMs 字段，移除前端 refetchInterval。",
+  "type": "fix",
+  "priority": "high",
+  "effort": "medium",
+  "action": "1) 在 CommandChainPanel.tsx 中：将 import type { CommandChainStatus } from './types' 替换为 import type { CommandChainStatusOutput } from 'lib/trpc/routers/command-chain'（或通过 renderer 可访问的路径）；2) 删除 const typedStatus = status as CommandChainStatus | null 行，直接使用 status（其类型已由 tRPC 推断为 CommandChainStatusOutput | null | undefined）；3) 将 error.message 替换为 error instanceof Error ? error.message : '未知错误'；4) 移除 refetchInterval: 2000 配置项（依赖 tRPC 默认 refetch 行为）；5) 在 types.ts 中删除 Step 接口的 durationMs?: number 字段；6) 更新 types.ts 中 CommandChainStatus 接口改为从 tRPC router 重导出类型（如果前端需要本地类型别名）。",
+  "scope": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/",
+  "focus_paths": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/index.ts"
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/lib/electron-trpc.ts"
+  ],
+  "depends_on": ["TASK-001"],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "grep -r 'as CommandChainStatus' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx 返回空（as 断言已移除）",
+      "grep -r 'error\\.message' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx 返回空（直接访问已替换为类型守卫）",
+      "grep -r 'instanceof Error' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx 返回匹配（有类型守卫）",
+      "grep -r 'refetchInterval' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx 返回空（双重轮询已移除）",
+      "grep -r 'durationMs' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/types.ts 返回空（多余字段已移除）",
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx 全部通过"
+    ],
+    "verification": "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx && npx tsc --noEmit --project tsconfig.json 2>&1 | grep -i 'CommandChainPanel' 返回空",
+    "definition_of_done": "CommandChainPanel 不再使用 as 类型断言，error 访问有类型守卫保护，前端不再独立轮询，durationMs 字段已从类型定义中移除，所有现有测试通过且无 TypeScript 错误"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "action": "modify",
+      "target": "类型导入 + error 处理 + refetchInterval",
+      "change": "导入 CommandChainStatusOutput 替代本地 CommandChainStatus；删除 as 断言行；error.message 改为 error instanceof Error ? error.message : '未知错误'；移除 refetchInterval: 2000"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+      "action": "modify",
+      "target": "Step 接口 + CommandChainStatus 接口",
+      "change": "删除 Step.durationMs?: number 字段；CommandChainStatus 改为从 tRPC router 重导出（或保持本地定义但确保与 CommandChainStatusOutput 一致）"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx",
+      "action": "modify",
+      "target": "computeDuration 函数",
+      "change": "移除 step.durationMs 检查分支，仅保留 startedAt/completedAt 计算逻辑"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/index.ts",
+      "action": "modify",
+      "target": "导出类型",
+      "change": "更新类型重导出，移除 durationMs 相关"
+    }
+  ],
+  "implementation": [
+    "Step 1: 读取 CommandChainPanel.tsx 确认当前导入和 error 处理逻辑",
+    "Step 2: 读取 types.ts 确认 durationMs 使用位置",
+    "Step 3: 读取 StepItem.tsx 确认 computeDuration 中 durationMs 引用",
+    "Step 4: 确认 TASK-001 已完成，CommandChainStatusOutput 类型可从 tRPC router 导入",
+    "Step 5: 修改 CommandChainPanel.tsx：更新导入、删除 as 断言、添加 error 类型守卫、移除 refetchInterval",
+    "Step 6: 修改 types.ts：删除 durationMs 字段",
+    "Step 7: 修改 StepItem.tsx：移除 computeDuration 中 durationMs 分支",
+    "Step 8: 修改 index.ts：更新类型重导出",
+    "Step 9: 运行测试验证"
+  ],
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx"
+    ],
+    "unit": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "所有现有测试通过（7 个 test case）",
+      "无 TypeScript 编译错误",
+      "grep 验证无 as CommandChainStatus、无 error.message 直接访问、无 refetchInterval、无 durationMs"
+    ]
+  },
+  "reference": {
+    "pattern": "参考 Superset 其他组件如何使用 tRPC query 返回类型（如 ChatInterface 组件）",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/renderer/lib/electron-trpc.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "直接使用 tRPC 推断的返回类型消除 as 断言，添加 instanceof Error 类型守卫防止运行时崩溃，移除前端 refetchInterval 消除双重轮询。durationMs 是纯前端计算字段，不应出现在跨层数据契约中。",
+    "decision_factors": [
+      "tRPC 的 useQuery 已通过 .output() 推断返回类型，无需手动断言",
+      "error.message 在 TRPCClientError 以外的 error 类型上可能不存在",
+      "refetchInterval 与后端 Poller 的 setInterval 形成双重轮询",
+      "durationMs 在 types.ts 中定义但从未由后端填充，属于数据契约不一致"
+    ],
+    "tradeoffs": "移除 refetchInterval 后前端依赖 tRPC 默认的 staleTime + refetchOnWindowFocus 行为，数据刷新频率可能降低，但后端已改为每次 query 直接读文件，数据始终是最新的"
+  },
+  "risks": [
+    "CommandChainStatusOutput 类型可能无法直接从 renderer 侧导入（Electron 主进程/渲染进程隔离）— 备选方案：在 types.ts 中手动保持类型定义与 zod schema 一致，但删除 as 断言"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "30m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  },
+  "issue_id": "COR-001"
+}

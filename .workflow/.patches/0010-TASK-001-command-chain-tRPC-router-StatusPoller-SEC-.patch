@@ -1,0 +1,460 @@
+From 1aeccae8e2abf45eff946133ecc5490e57e28535 Mon Sep 17 00:00:00 2001
+From: will <yangxiangnan@wabestway.com>
+Date: Tue, 23 Jun 2026 17:00:48 +0800
+Subject: [PATCH 10/12] =?UTF-8?q?TASK-001:=20=E9=87=8D=E6=9E=84=20command-?=
+ =?UTF-8?q?chain=20tRPC=20router=20+=20StatusPoller=20=E2=80=94=20?=
+ =?UTF-8?q?=E5=AE=89=E5=85=A8=E5=8A=A0=E5=9B=BA=20+=20=E6=9E=B6=E6=9E=84?=
+ =?UTF-8?q?=E7=AE=80=E5=8C=96=20[SEC-001]?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../lib/trpc/routers/command-chain/index.ts   |  20 +-
+ .../lib/command-chain-status-poller.test.ts   |  83 +++-----
+ .../main/lib/command-chain-status-poller.ts   | 199 +++++++-----------
+ 3 files changed, 118 insertions(+), 184 deletions(-)
+
+diff --git a/apps/desktop/src/lib/trpc/routers/command-chain/index.ts b/apps/desktop/src/lib/trpc/routers/command-chain/index.ts
+index e66f9cda6..df5592180 100644
+--- a/apps/desktop/src/lib/trpc/routers/command-chain/index.ts
++++ b/apps/desktop/src/lib/trpc/routers/command-chain/index.ts
+@@ -1,6 +1,7 @@
++import { normalize, resolve } from "node:path";
+ import { z } from "zod";
+ import { publicProcedure, router } from "../..";
+-import { CommandChainStatusPoller } from "../../../../main/lib/command-chain-status-poller";
++import { readCommandChainStatus } from "../../../../main/lib/command-chain-status-poller";
+ 
+ /** status.json 中步骤状态的 zod schema */
+ const stepStatusSchema = z.enum([
+@@ -41,21 +42,24 @@ const commandChainStatusSchema = z.object({
+ /** CommandChainStatus 输出类型 */
+ export type CommandChainStatusOutput = z.infer<typeof commandChainStatusSchema>;
+ 
+-const statusPoller = new CommandChainStatusPoller();
+-
+ export const createCommandChainRouter = () => {
+ 	return router({
+ 		getStatus: publicProcedure
+ 			.input(
+ 				z.object({
+-					cwd: z.string(),
++					cwd: z.string().min(1).refine(
++						(val) => {
++							const resolved = resolve(val);
++							const normalized = normalize(val);
++							return resolved === normalized && normalized.length > 0;
++						},
++						{ message: "Invalid working directory path" },
++					),
+ 				}),
+ 			)
+ 			.output(commandChainStatusSchema.nullable())
+-			.query(({ input }) => {
+-				// 确保 poller 正在轮询指定的工作目录
+-				statusPoller.start(input.cwd);
+-				return statusPoller.getStatus();
++			.query(async ({ input }) => {
++				return readCommandChainStatus(input.cwd);
+ 			}),
+ 	});
+ };
+diff --git a/apps/desktop/src/main/lib/command-chain-status-poller.test.ts b/apps/desktop/src/main/lib/command-chain-status-poller.test.ts
+index 6c160b8e7..20a26ad23 100644
+--- a/apps/desktop/src/main/lib/command-chain-status-poller.test.ts
++++ b/apps/desktop/src/main/lib/command-chain-status-poller.test.ts
+@@ -2,34 +2,27 @@ import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+ import { tmpdir } from "node:os";
+ import path from "node:path";
+-import { CommandChainStatusPoller } from "./command-chain-status-poller";
++import { readCommandChainStatus } from "./command-chain-status-poller";
+ 
+-describe("CommandChainStatusPoller", () => {
++describe("readCommandChainStatus", () => {
+ 	let tempDir: string;
+-	let poller: CommandChainStatusPoller;
+ 
+ 	beforeEach(() => {
+ 		tempDir = mkdtempSync(
+ 			path.join(tmpdir(), "superset-command-chain-poller-"),
+ 		);
+-		poller = new CommandChainStatusPoller();
+ 	});
+ 
+ 	afterEach(() => {
+-		poller.stop();
+ 		rmSync(tempDir, { recursive: true, force: true });
+ 	});
+ 
+-	it("getStatus() returns null before any poll", () => {
+-		expect(poller.getStatus()).toBeNull();
++	it("returns null when status.json does not exist", async () => {
++		const result = await readCommandChainStatus(tempDir);
++		expect(result).toBeNull();
+ 	});
+ 
+-	it("getStatus() returns null when status.json does not exist", () => {
+-		poller.start(tempDir, 100);
+-		expect(poller.getStatus()).toBeNull();
+-	});
+-
+-	it("getStatus() returns parsed status after creating a valid status.json", () => {
++	it("returns parsed status after creating a valid status.json", async () => {
+ 		const status = {
+ 			steps: [
+ 				{ id: "step-1", label: "初始化", status: "completed" },
+@@ -53,8 +46,7 @@ describe("CommandChainStatusPoller", () => {
+ 			"utf-8",
+ 		);
+ 
+-		poller.start(tempDir, 100);
+-		const result = poller.getStatus();
++		const result = await readCommandChainStatus(tempDir);
+ 
+ 		expect(result).not.toBeNull();
+ 		expect(result!.steps).toHaveLength(2);
+@@ -66,33 +58,7 @@ describe("CommandChainStatusPoller", () => {
+ 		expect(result!.completionConfirmed).toBe(false);
+ 	});
+ 
+-	it("stop() clears the timer and resets state", () => {
+-		poller.start(tempDir, 100);
+-		expect(poller.getStatus()).toBeNull();
+-
+-		poller.stop();
+-		// After stop, getStatus should return null (lastStatus is reset)
+-		expect(poller.getStatus()).toBeNull();
+-
+-		// Starting again should work (timer was cleared)
+-		const status = {
+-			steps: [{ id: "s1", label: "测试", status: "completed" }],
+-			decisionNodes: [],
+-			completionConfirmed: true,
+-		};
+-		writeFileSync(
+-			path.join(tempDir, "status.json"),
+-			JSON.stringify(status),
+-			"utf-8",
+-		);
+-
+-		poller.start(tempDir, 100);
+-		const result = poller.getStatus();
+-		expect(result).not.toBeNull();
+-		expect(result!.steps).toHaveLength(1);
+-	});
+-
+-	it("validateStatus rejects invalid step status values", () => {
++	it("rejects invalid step status values (falls back to pending)", async () => {
+ 		const status = {
+ 			steps: [
+ 				{ id: "s1", label: "步骤1", status: "invalid_status" },
+@@ -107,8 +73,7 @@ describe("CommandChainStatusPoller", () => {
+ 			"utf-8",
+ 		);
+ 
+-		poller.start(tempDir, 100);
+-		const result = poller.getStatus();
++		const result = await readCommandChainStatus(tempDir);
+ 
+ 		expect(result).not.toBeNull();
+ 		// Invalid status should fall back to "pending"
+@@ -116,30 +81,29 @@ describe("CommandChainStatusPoller", () => {
+ 		expect(result!.steps[1].status).toBe("completed");
+ 	});
+ 
+-	it("validateStatus returns null for non-object data", () => {
++	it("returns null for non-object data", async () => {
+ 		writeFileSync(
+ 			path.join(tempDir, "status.json"),
+ 			'"just a string"',
+ 			"utf-8",
+ 		);
+ 
+-		poller.start(tempDir, 100);
+-		// Non-object JSON should not pass validateStatus, so lastStatus stays null
+-		expect(poller.getStatus()).toBeNull();
++		const result = await readCommandChainStatus(tempDir);
++		expect(result).toBeNull();
+ 	});
+ 
+-	it("validateStatus returns null when steps is not an array", () => {
++	it("returns null when steps is not an array", async () => {
+ 		writeFileSync(
+ 			path.join(tempDir, "status.json"),
+ 			JSON.stringify({ steps: "not-an-array", decisionNodes: [], completionConfirmed: false }),
+ 			"utf-8",
+ 		);
+ 
+-		poller.start(tempDir, 100);
+-		expect(poller.getStatus()).toBeNull();
++		const result = await readCommandChainStatus(tempDir);
++		expect(result).toBeNull();
+ 	});
+ 
+-	it("handles missing decisionNodes gracefully", () => {
++	it("handles missing decisionNodes gracefully", async () => {
+ 		const status = {
+ 			steps: [{ id: "s1", label: "步骤", status: "completed" }],
+ 			completionConfirmed: true,
+@@ -150,23 +114,26 @@ describe("CommandChainStatusPoller", () => {
+ 			"utf-8",
+ 		);
+ 
+-		poller.start(tempDir, 100);
+-		const result = poller.getStatus();
++		const result = await readCommandChainStatus(tempDir);
+ 
+ 		expect(result).not.toBeNull();
+ 		expect(result!.decisionNodes).toEqual([]);
+ 		expect(result!.completionConfirmed).toBe(true);
+ 	});
+ 
+-	it("handles malformed JSON gracefully", () => {
++	it("handles malformed JSON gracefully", async () => {
+ 		writeFileSync(
+ 			path.join(tempDir, "status.json"),
+ 			"{ not valid json }",
+ 			"utf-8",
+ 		);
+ 
+-		poller.start(tempDir, 100);
+-		// Malformed JSON should be caught, lastStatus stays null
+-		expect(poller.getStatus()).toBeNull();
++		const result = await readCommandChainStatus(tempDir);
++		expect(result).toBeNull();
++	});
++
++	it("returns null for empty cwd", async () => {
++		const result = await readCommandChainStatus("");
++		expect(result).toBeNull();
+ 	});
+ });
+diff --git a/apps/desktop/src/main/lib/command-chain-status-poller.ts b/apps/desktop/src/main/lib/command-chain-status-poller.ts
+index ba2b4ffd7..043a69726 100644
+--- a/apps/desktop/src/main/lib/command-chain-status-poller.ts
++++ b/apps/desktop/src/main/lib/command-chain-status-poller.ts
+@@ -1,5 +1,5 @@
+-import { readFileSync } from "node:fs";
+-import { join } from "node:path";
++import { readFile } from "node:fs/promises";
++import { join, normalize, resolve } from "node:path";
+ 
+ /** status.json 中单个步骤的定义 */
+ export interface CommandChainStep {
+@@ -28,135 +28,98 @@ export interface CommandChainStatus {
+ 	completionConfirmed: boolean;
+ }
+ 
+-/** 默认轮询间隔（毫秒） */
+-const DEFAULT_POLL_INTERVAL_MS = 2000;
+-
+ /**
+- * CommandChainStatusPoller
++ * 无状态异步读取指定工作目录下的 status.json 文件，解析为 CommandChainStatus。
++ * 若文件不存在、路径无效或解析失败则返回 null。
+  *
+- * 定期读取指定工作目录下的 status.json 文件，解析为 CommandChainStatus。
+- * 通过 getStatus() 获取最近一次成功解析的状态，若文件不存在或解析失败则返回 null。
++ * @param cwd 工作目录（status.json 所在目录）
++ * @returns 解析后的状态对象，或 null
+  */
+-export class CommandChainStatusPoller {
+-	private timer: ReturnType<typeof setInterval> | null = null;
+-	private lastStatus: CommandChainStatus | null = null;
+-	private cwd: string | null = null;
+-
+-	/**
+-	 * 启动轮询
+-	 * @param cwd 工作目录（status.json 所在目录）
+-	 * @param intervalMs 轮询间隔，默认 2000ms
+-	 */
+-	start(cwd: string, intervalMs: number = DEFAULT_POLL_INTERVAL_MS): void {
+-		this.stop();
+-		this.cwd = cwd;
+-		this.timer = setInterval(() => {
+-			this.poll();
+-		}, intervalMs);
+-		// 立即执行一次轮询
+-		this.poll();
++export async function readCommandChainStatus(
++	cwd: string,
++): Promise<CommandChainStatus | null> {
++	// 路径校验：拒绝空字符串和路径遍历攻击
++	const resolved = resolve(cwd);
++	const normalized = normalize(cwd);
++	if (resolved !== normalized || !normalized) {
++		return null;
+ 	}
+ 
+-	/** 停止轮询 */
+-	stop(): void {
+-		if (this.timer !== null) {
+-			clearInterval(this.timer);
+-			this.timer = null;
+-		}
+-		this.cwd = null;
+-		this.lastStatus = null;
++	try {
++		const filePath = join(normalized, "status.json");
++		const raw = await readFile(filePath, "utf-8");
++		const parsed: unknown = JSON.parse(raw);
++		return validateStatus(parsed);
++	} catch {
++		return null;
+ 	}
++}
+ 
+-	/**
+-	 * 获取最近一次成功解析的 CommandChainStatus
+-	 * @returns 解析后的状态对象，若从未成功解析则返回 null
+-	 */
+-	getStatus(): CommandChainStatus | null {
+-		return this.lastStatus;
++/** 校验并转换解析结果为 CommandChainStatus */
++function validateStatus(data: unknown): CommandChainStatus | null {
++	if (data === null || typeof data !== "object") {
++		return null;
+ 	}
+ 
+-	/** 执行一次轮询：读取并解析 status.json */
+-	private poll(): void {
+-		if (!this.cwd) {
+-			return;
+-		}
++	const obj = data as Record<string, unknown>;
+ 
+-		try {
+-			const filePath = join(this.cwd, "status.json");
+-			const raw = readFileSync(filePath, "utf-8");
+-			const parsed: unknown = JSON.parse(raw);
+-			this.lastStatus = this.validateStatus(parsed);
+-		} catch {
+-			// 文件不存在、解析失败或校验不通过时保持 lastStatus 不变
+-		}
++	if (!Array.isArray(obj.steps)) {
++		return null;
+ 	}
+ 
+-	/** 校验并转换解析结果为 CommandChainStatus */
+-	private validateStatus(data: unknown): CommandChainStatus | null {
+-		if (data === null || typeof data !== "object") {
+-			return null;
+-		}
+-
+-		const obj = data as Record<string, unknown>;
+-
+-		if (!Array.isArray(obj.steps)) {
+-			return null;
+-		}
+-
+-		const steps: CommandChainStep[] = obj.steps.map((step: unknown) => {
+-			const s = step as Record<string, unknown>;
+-			return {
+-				id: String(s.id ?? ""),
+-				label: String(s.label ?? ""),
+-				status: this.validateStepStatus(s.status),
+-				startedAt: typeof s.startedAt === "string" ? s.startedAt : undefined,
+-				completedAt:
+-					typeof s.completedAt === "string" ? s.completedAt : undefined,
+-				error: typeof s.error === "string" ? s.error : undefined,
+-			};
+-		});
+-
+-		const decisionNodes: CommandChainDecisionNode[] = Array.isArray(
+-			obj.decisionNodes,
+-		)
+-			? obj.decisionNodes.map((node: unknown) => {
+-					const n = node as Record<string, unknown>;
+-					return {
+-						id: String(n.id ?? ""),
+-						label: String(n.label ?? ""),
+-						question: String(n.question ?? ""),
+-						options: Array.isArray(n.options)
+-							? n.options.map((o: unknown) => String(o))
+-							: [],
+-						selectedOption:
+-							typeof n.selectedOption === "string"
+-								? n.selectedOption
+-								: undefined,
+-						resolved: Boolean(n.resolved),
+-					};
+-				})
+-			: [];
+-
++	const steps: CommandChainStep[] = obj.steps.map((step: unknown) => {
++		const s = step as Record<string, unknown>;
+ 		return {
+-			steps,
+-			decisionNodes,
+-			completionConfirmed: Boolean(obj.completionConfirmed),
++			id: String(s.id ?? ""),
++			label: String(s.label ?? ""),
++			status: validateStepState(s.status),
++			startedAt: typeof s.startedAt === "string" ? s.startedAt : undefined,
++			completedAt:
++				typeof s.completedAt === "string" ? s.completedAt : undefined,
++			error: typeof s.error === "string" ? s.error : undefined,
+ 		};
+-	}
++	});
++
++	const decisionNodes: CommandChainDecisionNode[] = Array.isArray(
++		obj.decisionNodes,
++	)
++		? obj.decisionNodes.map((node: unknown) => {
++				const n = node as Record<string, unknown>;
++				return {
++					id: String(n.id ?? ""),
++					label: String(n.label ?? ""),
++					question: String(n.question ?? ""),
++					options: Array.isArray(n.options)
++						? n.options.map((o: unknown) => String(o))
++						: [],
++					selectedOption:
++						typeof n.selectedOption === "string"
++							? n.selectedOption
++							: undefined,
++					resolved: Boolean(n.resolved),
++				};
++			})
++		: [];
++
++	return {
++		steps,
++		decisionNodes,
++		completionConfirmed: Boolean(obj.completionConfirmed),
++	};
++}
+ 
+-	private validateStepStatus(
+-		status: unknown,
+-	): CommandChainStep["status"] {
+-		const validStatuses: CommandChainStep["status"][] = [
+-			"pending",
+-			"running",
+-			"completed",
+-			"failed",
+-			"skipped",
+-		];
+-		const s = String(status ?? "pending");
+-		return validStatuses.includes(s as CommandChainStep["status"])
+-			? (s as CommandChainStep["status"])
+-			: "pending";
+-	}
++function validateStepState(
++	status: unknown,
++): CommandChainStep["status"] {
++	const validStatuses: CommandChainStep["status"][] = [
++		"pending",
++		"running",
++		"completed",
++		"failed",
++		"skipped",
++	];
++	const s = String(status ?? "pending");
++	return validStatuses.includes(s as CommandChainStep["status"])
++		? (s as CommandChainStep["status"])
++		: "pending";
+ }

@@ -1,0 +1,147 @@
+From 9e38683cbd9dabf246986184b3c081a80d6406b8 Mon Sep 17 00:00:00 2001
+From: will <yangxiangnan@wabestway.com>
+Date: Tue, 23 Jun 2026 17:33:13 +0800
+Subject: [PATCH 12/12] =?UTF-8?q?TASK-003:=20=E6=8F=90=E5=8F=96=20extractF?=
+ =?UTF-8?q?unctionSource=20=E5=88=B0=E5=85=B1=E4=BA=AB=E6=B5=8B=E8=AF=95?=
+ =?UTF-8?q?=E5=B7=A5=E5=85=B7=E6=A8=A1=E5=9D=97=20[MAINT-002]?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../PromptGroup/PromptGroup.test.ts           | 65 +++++++++++++++++++
+ .../renderer/test-utils/source-analysis.ts    | 53 +++++++++++++++
+ 2 files changed, 118 insertions(+)
+ create mode 100644 apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts
+ create mode 100644 apps/desktop/src/renderer/test-utils/source-analysis.ts
+
+diff --git a/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts b/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts
+new file mode 100644
+index 000000000..508f6c20f
+--- /dev/null
++++ b/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.test.ts
+@@ -0,0 +1,65 @@
++import { describe, expect, test } from "bun:test";
++// biome-ignore lint/style/noRestrictedImports: test file needs fs/path for source verification
++import { readFileSync } from "node:fs";
++// biome-ignore lint/style/noRestrictedImports: test file needs fs/path for source verification
++import { join } from "node:path";
++import { extractFunctionSource } from "../../../../test-utils/source-analysis";
++
++// Regression guard for issue #4680: vertical scroll broken in the project
++// selector dropdown.
++//
++// The PopoverContent is portaled to document.body via Radix, but React still
++// bubbles synthetic events (including `wheel`) through the React tree. The
++// NewWorkspaceModal wraps PromptGroup in `<div className="flex-1 overflow-y-auto">`
++// (NewWorkspaceModalContent.tsx). Without `onWheel.stopPropagation()` on the
++// popover, wheel scrolling inside the project list reaches that scrollable
++// wrapper and the dropdown can't scroll past the first ~8 items.
++//
++// Every other picker in this file and in the dashboard variant uses the same
++// `onWheel={(event) => event.stopPropagation()}` mitigation — see
++// CompareBaseBranchPickerInline below in the same file, and
++// routes/_authenticated/components/DashboardNewWorkspaceModal/.../ProjectPickerPill.tsx.
++describe("ProjectPickerPill (PromptGroup)", () => {
++	const source = readFileSync(join(import.meta.dir, "PromptGroup.tsx"), "utf8");
++
++	// Return the JSX opening tag of <PopoverContent ...>, properly handling
++	// `>` characters that appear inside JSX expression children (e.g. arrow
++	// functions like `(event) => event.stopPropagation()`).
++	const extractPopoverContentProps = (jsxSource: string) => {
++		const start = jsxSource.indexOf("<PopoverContent");
++		if (start === -1)
++			throw new Error("PopoverContent JSX element not found in source");
++		let braceDepth = 0;
++		for (let i = start; i < jsxSource.length; i++) {
++			const ch = jsxSource[i];
++			if (ch === "{") braceDepth++;
++			else if (ch === "}") braceDepth--;
++			else if (ch === ">" && braceDepth === 0) {
++				return jsxSource.slice(start, i + 1);
++			}
++		}
++		throw new Error("Could not find end of <PopoverContent ...> opening tag");
++	};
++
++	test("PopoverContent stops wheel propagation so the popup scrolls inside the modal", () => {
++		const body = extractFunctionSource(source, "ProjectPickerPill");
++
++		expect(body).toContain("<PopoverContent");
++		// PopoverContent must call stopPropagation on wheel events to keep them
++		// from reaching the surrounding modal's overflow-y-auto wrapper.
++		const popoverContentProps = extractPopoverContentProps(body);
++		expect(popoverContentProps).toMatch(
++			/onWheel=\{[\s\S]*?\.stopPropagation\(\)[\s\S]*?\}/,
++		);
++	});
++
++	test("matches the pattern used by every other picker in this file", () => {
++		// Sanity-check: the sibling picker in the same file already has the fix.
++		// If it ever loses it, this regression class will resurface.
++		const sibling = extractFunctionSource(source, "CompareBaseBranchPickerInline");
++		const siblingPopover = extractPopoverContentProps(sibling);
++		expect(siblingPopover).toMatch(
++			/onWheel=\{[\s\S]*?\.stopPropagation\(\)[\s\S]*?\}/,
++		);
++	});
++});
+diff --git a/apps/desktop/src/renderer/test-utils/source-analysis.ts b/apps/desktop/src/renderer/test-utils/source-analysis.ts
+new file mode 100644
+index 000000000..ada78e27d
+--- /dev/null
++++ b/apps/desktop/src/renderer/test-utils/source-analysis.ts
+@@ -0,0 +1,53 @@
++/**
++ * 共享测试工具：从源码字符串中提取指定函数的完整定义。
++ *
++ * 用于静态源码分析测试（无需渲染组件即可验证函数/组件结构）。
++ */
++
++/**
++ * 从源码字符串中提取指定函数的完整定义。
++ *
++ * 通过 `function <name>` marker 定位函数定义，追踪括号深度到参数列表结束，
++ * 追踪大括号深度到函数体结束，返回完整函数源码字符串。
++ *
++ * @param source - 源码字符串
++ * @param name   - 函数名
++ * @returns 从 `function ${name}` 到闭合 `}` 的完整函数源码
++ * @throws 如果找不到函数定义或无法解析参数列表/函数体
++ */
++export function extractFunctionSource(source: string, name: string): string {
++	// 匹配 "function Name" 开头（不要求紧跟括号，兼容泛型参数等变体）
++	const marker = `function ${name}`;
++	const start = source.indexOf(marker);
++	if (start === -1) throw new Error(`${name} not found in source`);
++
++	// 找到参数列表结束位置（追踪括号深度）
++	let parenDepth = 0;
++	let paramsEnd = -1;
++	for (let i = start + marker.length; i < source.length; i++) {
++		const ch = source[i];
++		if (ch === "(") parenDepth++;
++		else if (ch === ")") {
++			parenDepth--;
++			if (parenDepth === 0) {
++				paramsEnd = i;
++				break;
++			}
++		}
++	}
++	if (paramsEnd === -1)
++		throw new Error(`Could not find end of ${name} parameter list`);
++
++	// 找到函数体（追踪大括号深度）
++	const braceStart = source.indexOf("{", paramsEnd);
++	let depth = 0;
++	for (let i = braceStart; i < source.length; i++) {
++		const ch = source[i];
++		if (ch === "{") depth++;
++		else if (ch === "}") {
++			depth--;
++			if (depth === 0) return source.slice(start, i + 1);
++		}
++	}
++	throw new Error(`Could not find end of ${name} function`);
++}

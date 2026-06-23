@@ -23,3 +23,12 @@
 {"type":"cli","id":"CLI-1782120063879-1","timestamp":"2026-06-22T09:21:03.879Z","command":"spec load","args":{"category":"review","stdin":false}}
 {"type":"cli","id":"CLI-1782120083166-1","timestamp":"2026-06-22T09:21:23.166Z","command":"spec load","args":{"category":"security","stdin":false}}
 {"type":"cli","id":"CLI-1782124599589-1","timestamp":"2026-06-22T10:36:39.589Z","command":"spec load","args":{"category":"arch","stdin":false}}
+{"type":"cli","id":"CLI-1782179973856-1","timestamp":"2026-06-23T01:59:33.857Z","command":"spec load","args":{"category":"arch","stdin":false}}
+{"type":"cli","id":"CLI-1782179976521-1","timestamp":"2026-06-23T01:59:36.521Z","command":"spec load","args":{"category":"arch","stdin":false}}
+{"type":"cli","id":"CLI-1782180286013-1","timestamp":"2026-06-23T02:04:46.013Z","command":"spec load","args":{"category":"arch","stdin":false}}
+{"type":"cli","id":"CLI-1782182325539-1","timestamp":"2026-06-23T02:38:45.539Z","command":"spec load","args":{"category":"arch","keyword":"translation","stdin":false}}
+{"type":"cli","id":"CLI-1782194045838-1","timestamp":"2026-06-23T05:54:05.838Z","command":"spec load","args":{"category":"coding","stdin":false}}
+{"type":"cli","id":"CLI-1782194047902-1","timestamp":"2026-06-23T05:54:07.902Z","command":"spec load","args":{"category":"ui","stdin":false}}
+{"type":"cli","id":"CLI-1782201863935-1","timestamp":"2026-06-23T08:04:23.936Z","command":"spec load","args":{"category":"review","stdin":false}}
+{"type":"cli","id":"CLI-1782203768904-1","timestamp":"2026-06-23T08:36:08.904Z","command":"spec load","args":{"category":"arch","stdin":false}}
+{"type":"cli","id":"CLI-1782215550086-1","timestamp":"2026-06-23T11:52:30.086Z","command":"spec load","args":{"category":"coding","stdin":false}}

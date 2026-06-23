@@ -1,0 +1,51 @@
+{
+  "plan_id": "PLN-023",
+  "phase": 2,
+  "milestone": "F2",
+  "scope": "gap-fix",
+  "summary": "修复 re-review (REV-006) 发现的 6 个 findings：2 critical（路径遍历检测无效）+ 2 high（publicProcedure 无认证、null 数组元素无防御）+ 2 medium（as 断言残留、空字节注入）。所有修复集中在 2 个文件中，合并为 1 个 task。",
+  "approach": "单 Task 修复策略：同时修改 command-chain-status-poller.ts 和 command-chain/index.ts，用 path.relative() 范围检查替换无效的 resolve===normalize 比较，添加空字节检查，添加 null 元素类型守卫，用自定义 type guard 替代 as 断言。两个文件共享相同的路径安全校验逻辑。",
+  "task_ids": ["TASK-001"],
+  "task_count": 1,
+  "complexity": "low",
+  "estimated_total_minutes": 20,
+  "gap_mode": true,
+  "source": "re-review",
+  "source_findings": ["REV2-001", "REV2-002", "REV2-003", "REV2-004", "REV2-005", "REV2-006"],
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001"]
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": ["输入校验加固", "路径遍历检测修复", "类型安全增强"]
+  },
+  "design_decisions": [
+    "路径校验：使用 path.resolve() + sep 分割检查 '..' 段，替代无效的 resolve===normalize 比较",
+    "空字节注入：在路径校验入口统一检查 cwd.includes('\\0')",
+    "类型守卫：创建 isRecord() 自定义 type guard 替代 as Record<string, unknown> 断言",
+    "null 元素防御：在 steps.map() 回调开头添加 step === null || typeof step !== 'object' 检查",
+    "publicProcedure 保持：Superset 无 protectedProcedure，通过加强输入校验（路径安全 + 空字节）降低风险"
+  ],
+  "shared_context": {
+    "patterns": [
+      "路径安全校验：resolve + sep split + '..' 段检查",
+      "type guard 模式：isRecord(v): v is Record<string, unknown>",
+      "zod refine 校验模式"
+    ],
+    "conventions": [
+      "ESM imports (node:path)",
+      "TypeScript strict mode",
+      "提前返回 null 的防御模式"
+    ],
+    "dependencies": []
+  },
+  "_metadata": {
+    "timestamp": "2026-06-23T10:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "gap-fix"
+  }
+}

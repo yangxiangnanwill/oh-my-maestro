@@ -1,0 +1,67 @@
+{
+  "phase": 2,
+  "status": "gaps_found",
+  "verified_at": "2026-06-23T11:30:00+08:00",
+  "verifier": "claude",
+  "must_haves": {
+    "truths": [
+      { "criterion": "commandChain router registered", "status": "verified", "evidence": "routers/index.ts:38" },
+      { "criterion": "CommandChainStatusPoller class defined", "status": "verified", "evidence": "command-chain-status-poller.ts:40" },
+      { "criterion": "setInterval polling timer", "status": "verified", "evidence": "command-chain-status-poller.ts:53" },
+      { "criterion": "getStatus query defined", "status": "verified", "evidence": "command-chain/index.ts:48" },
+      { "criterion": "fs.readFileSync import", "status": "verified", "evidence": "command-chain-status-poller.ts:1" },
+      { "criterion": "5 files in CommandChainPanel/", "status": "verified", "evidence": "ls returns 5 files" },
+      { "criterion": "electronTrpc.commandChain.getStatus.useQuery", "status": "verified", "evidence": "CommandChainPanel.tsx:41" },
+      { "criterion": "pending/running/completed/failed status mapping", "status": "verified", "evidence": "StepItem.tsx:6-18" },
+      { "criterion": "DecisionNodeView component defined", "status": "verified", "evidence": "DecisionNodeView.tsx:8" },
+      { "criterion": "CommandChainPanel export", "status": "verified", "evidence": "index.ts:1" },
+      { "criterion": "createContext call", "status": "verified", "evidence": "TranslationContext.tsx:61" },
+      { "criterion": "useTranslation hook defined", "status": "verified", "evidence": "TranslationContext.tsx:112" },
+      { "criterion": "localStorage.getItem maestro-display-mode", "status": "verified", "evidence": "TranslationContext.tsx:36,71" },
+      { "criterion": "localStorage.setItem maestro-display-mode", "status": "verified", "evidence": "TranslationContext.tsx:79" },
+      { "criterion": "chain translation entry", "status": "verified", "evidence": "translations.ts:9" },
+      { "criterion": "工作流 Chinese translation", "status": "verified", "evidence": "translations.ts:9" }
+    ],
+    "artifacts": [
+      { "path": "src/main/lib/command-chain-status-poller.ts", "status": "exists" },
+      { "path": "src/lib/trpc/routers/command-chain/index.ts", "status": "exists" },
+      { "path": "src/renderer/components/CommandChainPanel/CommandChainPanel.tsx", "status": "exists" },
+      { "path": "src/renderer/components/CommandChainPanel/StepItem.tsx", "status": "exists" },
+      { "path": "src/renderer/components/CommandChainPanel/DecisionNodeView.tsx", "status": "exists" },
+      { "path": "src/renderer/components/CommandChainPanel/types.ts", "status": "exists" },
+      { "path": "src/renderer/components/CommandChainPanel/index.ts", "status": "exists" },
+      { "path": "src/renderer/contexts/TranslationContext.tsx", "status": "exists" },
+      { "path": "src/renderer/contexts/translations.ts", "status": "exists" }
+    ],
+    "key_links": [
+      { "path": "CommandChainPanel.tsx", "status": "orphaned", "importers": [], "note": "组件未挂载到任何页面/布局 — 预期行为，Phase 2 仅创建组件" },
+      { "path": "TranslationContext.tsx", "status": "orphaned", "importers": [], "note": "Provider 未挂载到组件树 — 预期行为，Phase 2 仅创建 Context" }
+    ]
+  },
+  "gaps": [
+    {
+      "id": "GAP-001",
+      "type": "wiring",
+      "severity": "high",
+      "description": "CommandChainPanel 组件未被任何外部组件导入使用",
+      "fix_direction": "在目标页面中 import { CommandChainPanel } 并传入 cwd prop。建议在 Phase 2.5 或 Phase 3 中完成挂载。"
+    },
+    {
+      "id": "GAP-002",
+      "type": "wiring",
+      "severity": "high",
+      "description": "TranslationProvider 未被挂载到 React 组件树根部",
+      "fix_direction": "在 App 入口处包裹 <TranslationProvider><App /></TranslationProvider>。建议在 Phase 2.5 或 Phase 3 中完成挂载。"
+    },
+    {
+      "id": "GAP-003",
+      "type": "test",
+      "severity": "medium",
+      "description": "所有新增文件均无单元测试覆盖",
+      "fix_direction": "为 CommandChainStatusPoller 添加单元测试（mock fs），为 TranslationContext 添加 hook 测试，为面板组件添加渲染测试。"
+    }
+  ],
+  "antipatterns": [],
+  "coverage_score": 1.0,
+  "note": "GAP-001 和 GAP-002 是预期的 wiring gaps — Phase 2 范围仅创建组件和 Context，挂载到应用入口属于后续集成步骤。GAP-003 测试覆盖 deferred 到后续质量阶段。"
+}

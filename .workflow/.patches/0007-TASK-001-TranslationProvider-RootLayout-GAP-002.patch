@@ -1,0 +1,47 @@
+From 31ac17c091eb80c722301b7c6bb4d4bedf727d0e Mon Sep 17 00:00:00 2001
+From: will <yangxiangnan@wabestway.com>
+Date: Tue, 23 Jun 2026 15:33:36 +0800
+Subject: [PATCH 07/12] =?UTF-8?q?TASK-001:=20=E6=8C=82=E8=BD=BD=20Translat?=
+ =?UTF-8?q?ionProvider=20=E5=88=B0=20RootLayout=20[GAP-002]?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ apps/desktop/src/renderer/routes/-layout.tsx | 27 ++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
+ create mode 100644 apps/desktop/src/renderer/routes/-layout.tsx
+
+diff --git a/apps/desktop/src/renderer/routes/-layout.tsx b/apps/desktop/src/renderer/routes/-layout.tsx
+new file mode 100644
+index 000000000..f78dfbc5d
+--- /dev/null
++++ b/apps/desktop/src/renderer/routes/-layout.tsx
+@@ -0,0 +1,27 @@
++import { Alerter } from "@superset/ui/atoms/Alert";
++import type { ReactNode } from "react";
++import { PostHogSurfaceTagger } from "renderer/components/PostHogSurfaceTagger";
++import { PostHogUserIdentifier } from "renderer/components/PostHogUserIdentifier";
++import { TelemetrySync } from "renderer/components/TelemetrySync";
++import { ThemedToaster } from "renderer/components/ThemedToaster";
++import { TranslationProvider } from "renderer/contexts/TranslationContext";
++import { AuthProvider } from "renderer/providers/AuthProvider";
++import { ElectronTRPCProvider } from "renderer/providers/ElectronTRPCProvider";
++import { PostHogProvider } from "renderer/providers/PostHogProvider";
++
++export function RootLayout({ children }: { children: ReactNode }) {
++	return (
++		<PostHogProvider>
++			<ElectronTRPCProvider>
++				<PostHogUserIdentifier />
++				<PostHogSurfaceTagger />
++				<TelemetrySync />
++				<AuthProvider>
++					<TranslationProvider>{children}</TranslationProvider>
++					<ThemedToaster />
++					<Alerter />
++				</AuthProvider>
++			</ElectronTRPCProvider>
++		</PostHogProvider>
++	);
++}

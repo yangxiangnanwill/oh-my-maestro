@@ -1,0 +1,231 @@
+From d36a3feb792da4c39450e934c8e1b758f5de9acd Mon Sep 17 00:00:00 2001
+From: will <yangxiangnan@wabestway.com>
+Date: Tue, 23 Jun 2026 17:26:20 +0800
+Subject: [PATCH 11/12] =?UTF-8?q?TASK-002:=20=E4=BF=AE=E5=A4=8D=20CommandC?=
+ =?UTF-8?q?hainPanel=20=E7=B1=BB=E5=9E=8B=E5=AE=89=E5=85=A8=20+=20error=20?=
+ =?UTF-8?q?=E5=A4=84=E7=90=86=20+=20=E6=9E=B6=E6=9E=84=E5=AF=B9=E9=BD=90?=
+ =?UTF-8?q?=20[COR-001]?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../CommandChainPanel.test.tsx                | 55 +++----------------
+ .../CommandChainPanel/CommandChainPanel.tsx   | 26 ++++-----
+ .../components/CommandChainPanel/StepItem.tsx |  1 -
+ .../components/CommandChainPanel/types.ts     |  2 -
+ 4 files changed, 20 insertions(+), 64 deletions(-)
+
+diff --git a/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx b/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx
+index c5da8bc23..132a6e303 100644
+--- a/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx
++++ b/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx
+@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
+ import { readFileSync } from "node:fs";
+ // biome-ignore lint/style/noRestrictedImports: test file needs fs/path for source verification
+ import { join } from "node:path";
++import { extractFunctionSource } from "../../test-utils/source-analysis";
+ 
+ /**
+  * CommandChainPanel 源码静态分析测试。
+@@ -17,64 +18,26 @@ describe("CommandChainPanel", () => {
+ 		"utf8",
+ 	);
+ 
+-	/** 从源码中提取指定函数/组件的完整定义 */
+-	function extractFunctionSource(name: string): string {
+-		// 匹配 "function Name(" 或 "function Name (" 开头
+-		const marker = `function ${name}`;
+-		const start = source.indexOf(marker);
+-		if (start === -1) throw new Error(`${name} not found in CommandChainPanel.tsx`);
+-
+-		// 找到参数列表结束位置
+-		let parenDepth = 0;
+-		let paramsEnd = -1;
+-		for (let i = start + marker.length; i < source.length; i++) {
+-			const ch = source[i];
+-			if (ch === "(") parenDepth++;
+-			else if (ch === ")") {
+-				parenDepth--;
+-				if (parenDepth === 0) {
+-					paramsEnd = i;
+-					break;
+-				}
+-			}
+-		}
+-		if (paramsEnd === -1)
+-			throw new Error(`Could not find end of ${name} parameter list`);
+-
+-		// 找到函数体
+-		const braceStart = source.indexOf("{", paramsEnd);
+-		let depth = 0;
+-		for (let i = braceStart; i < source.length; i++) {
+-			const ch = source[i];
+-			if (ch === "{") depth++;
+-			else if (ch === "}") {
+-				depth--;
+-				if (depth === 0) return source.slice(start, i + 1);
+-			}
+-		}
+-		throw new Error(`Could not find end of ${name} function`);
+-	}
+-
+ 	test("EmptyState component is defined and shows placeholder text", () => {
+-		const body = extractFunctionSource("EmptyState");
++		const body = extractFunctionSource(source, "EmptyState");
+ 		expect(body).toContain("暂无可用的命令链状态");
+ 		expect(body).toContain("status.json");
+ 	});
+ 
+ 	test("LoadingState component is defined and shows loading indicator", () => {
+-		const body = extractFunctionSource("LoadingState");
++		const body = extractFunctionSource(source, "LoadingState");
+ 		expect(body).toContain("加载中...");
+ 		expect(body).toContain("animate-spin");
+ 	});
+ 
+ 	test("ErrorState component is defined and shows error message", () => {
+-		const body = extractFunctionSource("ErrorState");
++		const body = extractFunctionSource(source, "ErrorState");
+ 		expect(body).toContain("获取命令链状态失败");
+ 		expect(body).toContain("AlertTriangle");
+ 	});
+ 
+ 	test("CommandChainPanel component is exported and contains key sections", () => {
+-		const body = extractFunctionSource("CommandChainPanel");
++		const body = extractFunctionSource(source, "CommandChainPanel");
+ 		expect(body).toContain("function CommandChainPanel");
+ 		expect(body).toContain("步骤进度");
+ 		expect(body).toContain("决策节点");
+@@ -82,20 +45,20 @@ describe("CommandChainPanel", () => {
+ 	});
+ 
+ 	test("CommandChainPanel renders EmptyState when no status data", () => {
+-		const body = extractFunctionSource("CommandChainPanel");
++		const body = extractFunctionSource(source, "CommandChainPanel");
+ 		// 无 typedStatus 时应渲染 EmptyState
+ 		expect(body).toContain("<EmptyState />");
+ 	});
+ 
+ 	test("CommandChainPanel renders LoadingState when loading", () => {
+-		const body = extractFunctionSource("CommandChainPanel");
++		const body = extractFunctionSource(source, "CommandChainPanel");
+ 		expect(body).toContain("<LoadingState />");
+ 	});
+ 
+ 	test("CommandChainPanel renders ErrorState on error", () => {
+-		const body = extractFunctionSource("CommandChainPanel");
++		const body = extractFunctionSource(source, "CommandChainPanel");
+ 		expect(body).toContain("<ErrorState");
+-		expect(body).toContain("error.message");
++		expect(body).toContain("error instanceof Error");
+ 	});
+ 
+ 	test("CommandChainPanel uses ListChecks icon for empty state", () => {
+diff --git a/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx b/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx
+index 3da8c08bf..b22803d21 100644
+--- a/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx
++++ b/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx
+@@ -2,7 +2,7 @@ import { AlertTriangle, ListChecks, Loader2 } from "lucide-react";
+ import { electronTrpc } from "renderer/lib/electron-trpc";
+ import { DecisionNodeView } from "./DecisionNodeView";
+ import { StepItem } from "./StepItem";
+-import type { CommandChainPanelProps, CommandChainStatus } from "./types";
++import type { CommandChainPanelProps } from "./types";
+ 
+ function EmptyState() {
+   return (
+@@ -40,13 +40,9 @@ export function CommandChainPanel({
+   const { data: status, isLoading, error } =
+     electronTrpc.commandChain.getStatus.useQuery(
+       { cwd },
+-      {
+-        refetchInterval: 2000,
+-      },
++      {},
+     );
+ 
+-  const typedStatus = status as CommandChainStatus | null;
+-
+   return (
+     <div className="flex h-full flex-col">
+       {/* 标题栏 */}
+@@ -56,11 +52,11 @@ export function CommandChainPanel({
+ 
+       {/* 内容区域 */}
+       <div className="flex-1 overflow-y-auto">
+-        {isLoading && !typedStatus ? (
++        {isLoading && !status ? (
+           <LoadingState />
+         ) : error ? (
+-          <ErrorState message={error.message} />
+-        ) : !typedStatus ? (
++          <ErrorState message={error instanceof Error ? error.message : '未知错误'} />
++        ) : !status ? (
+           <EmptyState />
+         ) : (
+           <div className="space-y-4 py-3">
+@@ -69,9 +65,9 @@ export function CommandChainPanel({
+               <h4 className="mb-2 px-4 text-xs font-medium text-muted-foreground">
+                 步骤进度
+               </h4>
+-              {typedStatus.steps && typedStatus.steps.length > 0 ? (
++              {status.steps && status.steps.length > 0 ? (
+                 <ul className="space-y-0.5">
+-                  {typedStatus.steps.map((step) => (
++                  {status.steps.map((step) => (
+                     <StepItem key={step.id} step={step} />
+                   ))}
+                 </ul>
+@@ -81,14 +77,14 @@ export function CommandChainPanel({
+             </section>
+ 
+             {/* 决策节点 */}
+-            {typedStatus.decisionNodes &&
+-              typedStatus.decisionNodes.length > 0 && (
++            {status.decisionNodes &&
++              status.decisionNodes.length > 0 && (
+                 <section>
+                   <h4 className="mb-2 px-4 text-xs font-medium text-muted-foreground">
+                     决策节点
+                   </h4>
+                   <div className="space-y-2 px-4">
+-                    {typedStatus.decisionNodes.map((node) => (
++                    {status.decisionNodes.map((node) => (
+                       <DecisionNodeView key={node.id} node={node} />
+                     ))}
+                   </div>
+@@ -96,7 +92,7 @@ export function CommandChainPanel({
+               )}
+ 
+             {/* 完成确认状态 */}
+-            {typedStatus.completionConfirmed && (
++            {status.completionConfirmed && (
+               <div className="mx-4 rounded-md bg-green-50 px-3 py-2 text-xs text-green-700 dark:bg-green-900/20 dark:text-green-400">
+                 所有步骤已确认完成
+               </div>
+diff --git a/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx b/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx
+index a695fef29..16f256e33 100644
+--- a/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx
++++ b/apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx
+@@ -30,7 +30,6 @@ function formatDuration(ms: number): string {
+ 
+ /** 计算步骤耗时 */
+ function computeDuration(step: Step): number | undefined {
+-  if (step.durationMs !== undefined) return step.durationMs;
+   if (step.startedAt && step.completedAt) {
+     const start = new Date(step.startedAt).getTime();
+     const end = new Date(step.completedAt).getTime();
+diff --git a/apps/desktop/src/renderer/components/CommandChainPanel/types.ts b/apps/desktop/src/renderer/components/CommandChainPanel/types.ts
+index 4e0063ea2..1b568940a 100644
+--- a/apps/desktop/src/renderer/components/CommandChainPanel/types.ts
++++ b/apps/desktop/src/renderer/components/CommandChainPanel/types.ts
+@@ -9,8 +9,6 @@ export interface Step {
+   startedAt?: string;
+   completedAt?: string;
+   error?: string;
+-  /** 步骤耗时（毫秒），由组件根据 startedAt/completedAt 计算 */
+-  durationMs?: number;
+ }
+ 
+ /** 决策节点 */

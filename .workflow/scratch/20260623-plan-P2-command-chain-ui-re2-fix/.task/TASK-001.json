@@ -1,0 +1,113 @@
+{
+  "id": "TASK-001",
+  "title": "修复路径遍历检测 + 输入校验加固（6 findings 合并修复）",
+  "description": "修复 re-review (REV-006) 发现的 6 个 findings，集中在 command-chain-status-poller.ts 和 command-chain/index.ts 两个文件的路径校验和类型安全逻辑。",
+  "type": "fix",
+  "priority": "critical",
+  "effort": "low",
+  "action": "修改 apps/desktop/src/main/lib/command-chain-status-poller.ts 的 readCommandChainStatus() 函数：用 path.resolve()+sep 分割 '..' 段检查 + 空字节检查替换无效的 resolve===normalize 比较；在 validateStatus() 中创建 isRecord() type guard 替代 4 处 as 断言；在 steps.map() 回调添加 null 元素类型守卫。修改 apps/desktop/src/lib/trpc/routers/command-chain/index.ts 的 getStatus input refine：用相同的 resolve+sep 分割 '..' 段检查 + 空字节检查替换无效的 resolve===normalize 比较。",
+  "scope": "apps/desktop/src/main/lib/command-chain-status-poller.ts + apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+  "focus_paths": [
+    "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+    "apps/desktop/src/lib/trpc/routers/command-chain/index.ts"
+  ],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/command-chain-status-poller.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/routers/command-chain/index.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "grep -c 'resolve(val) === normalize(val)' apps/desktop/src/main/lib/command-chain-status-poller.ts 返回 0",
+      "grep -c 'resolve(val) === normalize(val)' apps/desktop/src/lib/trpc/routers/command-chain/index.ts 返回 0",
+      "grep -c 'includes..\\\\..' apps/desktop/src/main/lib/command-chain-status-poller.ts 返回 >0",
+      "grep -c 'includes..\\\\0..' apps/desktop/src/main/lib/command-chain-status-poller.ts 返回 >0",
+      "grep -c 'includes..\\\\0..' apps/desktop/src/lib/trpc/routers/command-chain/index.ts 返回 >0",
+      "grep -c 'as Record<string, unknown>' apps/desktop/src/main/lib/command-chain-status-poller.ts 返回 0",
+      "grep -c 'isRecord' apps/desktop/src/main/lib/command-chain-status-poller.ts 返回 >0",
+      "grep -c 'step === null' apps/desktop/src/main/lib/command-chain-status-poller.ts 返回 >0",
+      "npx tsc --noEmit 在 apps/desktop 目录下无新增类型错误"
+    ],
+    "verification": "cd D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop && grep -n 'resolve.*normalize' src/main/lib/command-chain-status-poller.ts src/lib/trpc/routers/command-chain/index.ts && echo '---' && grep -n '\\\\..' src/main/lib/command-chain-status-poller.ts src/lib/trpc/routers/command-chain/index.ts && echo '---' && grep -n '\\\\0' src/main/lib/command-chain-status-poller.ts src/lib/trpc/routers/command-chain/index.ts && echo '---' && grep -n 'isRecord' src/main/lib/command-chain-status-poller.ts && echo '---' && grep -n 'as Record' src/main/lib/command-chain-status-poller.ts || echo 'No as Record found - PASS'",
+    "definition_of_done": "两个文件的路径遍历检测使用正确的 resolve+sep 分割 '..' 段检查，空字节被拦截，validateStatus 无 as 断言且防御 null 数组元素，TypeScript 编译零错误"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "action": "modify",
+      "target": "readCommandChainStatus 函数的路径校验逻辑 + validateStatus 函数的类型断言",
+      "change": "替换第42-46行路径校验为 resolve+sep 分割 '..' 段检查 + 空字节检查；在 validateStatus 中添加 isRecord() type guard 函数替代 4 处 as 断言；在 steps.map() 回调添加 null 元素类型守卫；在 validateStepState 中用 type guard 替代 as 断言"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "action": "modify",
+      "target": "getStatus input 的 zod refine 路径校验逻辑",
+      "change": "替换第50-56行 zod refine 中的 resolve===normalize 为 resolve+sep 分割 '..' 段检查 + 空字节检查；添加 sep import"
+    }
+  ],
+  "implementation": [
+    "Step 1: 读取 command-chain-status-poller.ts 了解当前路径校验和 validateStatus 实现",
+    "Step 2: 读取 command-chain/index.ts 了解当前 zod refine 实现",
+    "Step 3: 在 poller 中实现 isPathSafe(cwd): boolean 辅助函数 — resolve(cwd) 后 split(sep) 检查 '..' 段 + cwd.includes('\\0')",
+    "Step 4: 替换 readCommandChainStatus 第42-46行的 resolve===normalize 检查为 isPathSafe(cwd)",
+    "Step 5: 在 validateStatus 上方创建 isRecord(v: unknown): v is Record<string, unknown> type guard",
+    "Step 6: 替换 validateStatus 中 const obj = data as Record<string, unknown> 为 isRecord 守卫",
+    "Step 7: 在 steps.map() 回调开头添加 if (step === null || typeof step !== 'object') 类型守卫",
+    "Step 8: 替换 decisionNodes.map() 回调中的 as 断言为 isRecord 守卫",
+    "Step 9: 替换 validateStepState 中的 as CommandChainStep['status'] 为 type guard 模式",
+    "Step 10: 在 command-chain/index.ts 的 zod refine 中实现相同的 isPathSafe 逻辑",
+    "Step 11: 运行 npx tsc --noEmit 验证无类型错误"
+  ],
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop && npx tsc --noEmit --pretty 2>&1 | head -20"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "resolve===normalize 在两文件中均被替换",
+      "空字节检查在两文件中均存在",
+      "as Record<string, unknown> 在 poller 中消失",
+      "isRecord type guard 存在且被使用",
+      "steps.map 回调有 null 元素防御",
+      "TypeScript 编译零错误"
+    ]
+  },
+  "reference": {
+    "pattern": "路径安全校验：import { resolve, sep } from 'node:path'; const segments = resolve(cwd).split(sep); if (cwd.includes('\\0') || segments.includes('..')) return null;",
+    "files": [
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/routers/command-chain/index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "使用 path.resolve() + sep 分割检查 '..' 段替代 resolve===normalize，因为 normalize() 也会解析 '..'，导致两者比较无法检测路径遍历。添加空字节检查防止 null byte injection。创建 isRecord() type guard 替代 as 断言提高类型安全。在 map 回调添加 null 守卫防止 TypeError。",
+    "decision_factors": [
+      "resolve() 会展开 '..' 到实际路径，但 normalize() 也会 — 所以 resolve===normalize 无法阻止遍历",
+      "使用 sep 分割检查 '..' 段是最简单可靠的方法",
+      "空字节注入可绕过路径校验到达底层系统调用",
+      "type guard 比 as 断言更安全，TypeScript 可正确收窄类型",
+      "两个文件共享相同的路径安全逻辑，保持一致性"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    {
+      "description": "Windows 路径中 sep 为 \\，但路径可能混合使用 / 和 \\",
+      "mitigation": "使用 normalize() 统一路径分隔符后再 split(sep)，或在 split 前同时处理两种分隔符"
+    }
+  ],
+  "issue_id": "REV2-001",
+  "meta": {
+    "status": "pending",
+    "estimated_time": "20m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

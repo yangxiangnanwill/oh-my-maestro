@@ -1,0 +1,110 @@
+{
+  "id": "TASK-001",
+  "title": "重构 command-chain tRPC router + StatusPoller：安全加固 + 架构简化",
+  "description": "修复 7 个 critical+high findings：SEC-001（路径遍历）、SEC-002（无认证）、SEC-003（cwd 无校验）、COR-002（单例竞态）、SEC-004（状态泄露）、ARCH-001（单例与多窗口耦合）、ARCH-002（双重轮询冗余）、PERF-002（readFileSync 阻塞）、MAINT-001（StepStatus 重复定义）。核心策略：将 StatusPoller 从模块级单例 setInterval 改为无状态设计（每次 query 直接异步读取文件），在 tRPC router 层添加 cwd 路径校验。",
+  "type": "fix",
+  "priority": "critical",
+  "effort": "large",
+  "action": "1) 重构 StatusPoller：移除 setInterval 定时器、单例模式、cwd 状态，改为 export async function readCommandChainStatus(cwd: string): Promise<CommandChainStatus | null> 无状态函数，内部使用 fs/promises readFile 异步读取；2) 在 tRPC router 中添加 cwd 路径校验：z.string().refine((val) => { const resolved = path.resolve(val); const normalized = path.normalize(val); return resolved === normalized && normalized.length > 0; }, { message: 'Invalid working directory path' })；3) 将 publicProcedure 改为 publicProcedure（Superset 无 protectedProcedure，保持 publicProcedure 但添加输入校验作为防御层）；4) 将 StepStatus zod schema 提取为共享导出，移除 main/lib 中的重复 interface 定义；5) 移除 router 中的模块级 statusPoller 单例，getStatus.query 直接调用 readCommandChainStatus(input.cwd)；6) 删除 command-chain-status-poller.ts 中的类定义，仅保留类型接口和 readCommandChainStatus 函数。",
+  "scope": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/command-chain/index.ts + D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts",
+  "focus_paths": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.test.ts"
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.test.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/index.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "grep -r 'setInterval' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts 返回空（无定时器）",
+      "grep -r 'readFileSync' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts 返回空（无同步 I/O）",
+      "grep -r 'class CommandChainStatusPoller' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts 返回空（类已移除）",
+      "grep -r 'statusPoller' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/command-chain/index.ts 返回空（单例已移除）",
+      "grep -r 'z.string().*refine' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/command-chain/index.ts 返回匹配（cwd 有 refine 校验）",
+      "grep -r 'StepStatus' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts 返回空（类型定义已迁移到 router）",
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/main/lib/command-chain-status-poller.test.ts 全部通过"
+    ],
+    "verification": "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/main/lib/command-chain-status-poller.test.ts",
+    "definition_of_done": "StatusPoller 已从有状态单例重构为无状态异步函数，tRPC router 添加了 cwd 路径校验，StepStatus 类型不再重复定义，所有现有测试通过"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "action": "modify",
+      "target": "CommandChainStatusPoller 类 → readCommandChainStatus 函数",
+      "change": "移除类定义、setInterval 定时器、readFileSync；改为 export async function readCommandChainStatus(cwd: string): Promise<CommandChainStatus | null>；使用 fs/promises readFile；保留 CommandChainStep/CommandChainDecisionNode/CommandChainStatus 类型接口；移除 validateStepStatus 方法（校验逻辑移到 router 的 zod schema）"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "action": "modify",
+      "target": "tRPC router getStatus 过程",
+      "change": "添加 cwd 的 zod refine 路径校验；移除 statusPoller 单例导入和实例化；getStatus.query 直接调用 readCommandChainStatus(input.cwd)；保持 publicProcedure（Superset 无 protectedProcedure）；导出 CommandChainStatusOutput 类型供前端使用"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.test.ts",
+      "action": "modify",
+      "target": "测试用例适配新 API",
+      "change": "更新 import 从类改为函数；测试改为调用 readCommandChainStatus(cwd) 而非 poller.start() + poller.getStatus()；保留所有现有测试场景（文件不存在、有效 JSON、无效状态、格式错误等）"
+    }
+  ],
+  "implementation": [
+    "Step 1: 读取 command-chain-status-poller.ts 理解当前实现",
+    "Step 2: 重构 command-chain-status-poller.ts：移除类，导出 async function readCommandChainStatus(cwd: string): Promise<CommandChainStatus | null>，内部使用 fs/promises readFile + JSON.parse + 基本类型校验",
+    "Step 3: 重构 tRPC router index.ts：移除 statusPoller 导入，cwd input 添加 zod refine（path.resolve + path.normalize 校验），getStatus.query 直接 await readCommandChainStatus(input.cwd)",
+    "Step 4: 更新 command-chain-status-poller.test.ts：适配新函数 API，每个测试改为 await readCommandChainStatus(tempDir)",
+    "Step 5: 运行 bun test 验证所有测试通过"
+  ],
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && bun test src/main/lib/command-chain-status-poller.test.ts"
+    ],
+    "unit": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "所有现有测试通过（7 个 test case）",
+      "无 TypeScript 编译错误",
+      "grep 验证无 readFileSync、无 setInterval、无 class CommandChainStatusPoller"
+    ]
+  },
+  "reference": {
+    "pattern": "参考 settings router 的 createCustomAgent input schema（zod refine 校验模式）和 filesystem router 的路径处理",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/settings/index.ts",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/filesystem/index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "无状态函数设计替代单例 setInterval。每次 tRPC query 直接异步读取文件，天然消除竞态条件、状态泄露和同步 I/O 阻塞。路径校验在 tRPC input 层通过 zod refine 实现，符合 Superset 现有模式。",
+    "decision_factors": [
+      "Superset 无 protectedProcedure — 保持 publicProcedure，通过输入校验防御",
+      "无状态设计比 Map<cwd, Poller> 更简单，无生命周期管理问题",
+      "异步 readFile 消除事件循环阻塞",
+      "zod refine 是 Superset 已有的输入校验模式"
+    ],
+    "tradeoffs": "每次 query 都读文件（vs 缓存），但 status.json 很小（<10KB），2s 轮询间隔下 I/O 开销可忽略"
+  },
+  "risks": [
+    "测试文件需要从同步模式改为 async/await 模式 — 工作量可控，现有 7 个 test case 结构清晰"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "45m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  },
+  "issue_id": "SEC-001"
+}

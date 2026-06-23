@@ -1,0 +1,329 @@
+From 6f2253795056c5ebdd001a684bd980a08fc78658 Mon Sep 17 00:00:00 2001
+From: will <yangxiangnan@wabestway.com>
+Date: Tue, 23 Jun 2026 14:06:16 +0800
+Subject: [PATCH 04/12] =?UTF-8?q?feat:=20TASK-001=20=E2=80=94=20=E5=88=9B?=
+ =?UTF-8?q?=E5=BB=BA=20status.json=20=E6=96=87=E4=BB=B6=E8=BD=AE=E8=AF=A2?=
+ =?UTF-8?q?=20tRPC=20=E6=9C=8D=E5=8A=A1?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ .../lib/trpc/routers/command-chain/index.ts   |  61 +++++++
+ apps/desktop/src/lib/trpc/routers/index.ts    |  69 ++++++++
+ .../main/lib/command-chain-status-poller.ts   | 162 ++++++++++++++++++
+ 3 files changed, 292 insertions(+)
+ create mode 100644 apps/desktop/src/lib/trpc/routers/command-chain/index.ts
+ create mode 100644 apps/desktop/src/lib/trpc/routers/index.ts
+ create mode 100644 apps/desktop/src/main/lib/command-chain-status-poller.ts
+
+diff --git a/apps/desktop/src/lib/trpc/routers/command-chain/index.ts b/apps/desktop/src/lib/trpc/routers/command-chain/index.ts
+new file mode 100644
+index 000000000..e66f9cda6
+--- /dev/null
++++ b/apps/desktop/src/lib/trpc/routers/command-chain/index.ts
+@@ -0,0 +1,61 @@
++import { z } from "zod";
++import { publicProcedure, router } from "../..";
++import { CommandChainStatusPoller } from "../../../../main/lib/command-chain-status-poller";
++
++/** status.json 中步骤状态的 zod schema */
++const stepStatusSchema = z.enum([
++	"pending",
++	"running",
++	"completed",
++	"failed",
++	"skipped",
++]);
++
++/** status.json 中单个步骤的 zod schema */
++const commandChainStepSchema = z.object({
++	id: z.string(),
++	label: z.string(),
++	status: stepStatusSchema,
++	startedAt: z.string().optional(),
++	completedAt: z.string().optional(),
++	error: z.string().optional(),
++});
++
++/** status.json 中决策节点的 zod schema */
++const commandChainDecisionNodeSchema = z.object({
++	id: z.string(),
++	label: z.string(),
++	question: z.string(),
++	options: z.array(z.string()),
++	selectedOption: z.string().optional(),
++	resolved: z.boolean(),
++});
++
++/** status.json 完整结构的 zod schema */
++const commandChainStatusSchema = z.object({
++	steps: z.array(commandChainStepSchema),
++	decisionNodes: z.array(commandChainDecisionNodeSchema),
++	completionConfirmed: z.boolean(),
++});
++
++/** CommandChainStatus 输出类型 */
++export type CommandChainStatusOutput = z.infer<typeof commandChainStatusSchema>;
++
++const statusPoller = new CommandChainStatusPoller();
++
++export const createCommandChainRouter = () => {
++	return router({
++		getStatus: publicProcedure
++			.input(
++				z.object({
++					cwd: z.string(),
++				}),
++			)
++			.output(commandChainStatusSchema.nullable())
++			.query(({ input }) => {
++				// 确保 poller 正在轮询指定的工作目录
++				statusPoller.start(input.cwd);
++				return statusPoller.getStatus();
++			}),
++	});
++};
+diff --git a/apps/desktop/src/lib/trpc/routers/index.ts b/apps/desktop/src/lib/trpc/routers/index.ts
+new file mode 100644
+index 000000000..8e243a185
+--- /dev/null
++++ b/apps/desktop/src/lib/trpc/routers/index.ts
+@@ -0,0 +1,69 @@
++import type { BrowserWindow } from "electron";
++import { router } from "..";
++import { createAnalyticsRouter } from "./analytics";
++import { createAuthRouter } from "./auth";
++import { createAutoUpdateRouter } from "./auto-update";
++import { createBrowserRouter } from "./browser/browser";
++import { createBrowserHistoryRouter } from "./browser-history";
++import { createCacheRouter } from "./cache";
++import { createChangesRouter } from "./changes";
++import { createChatRuntimeServiceRouter } from "./chat-runtime-service";
++import { createChatServiceRouter } from "./chat-service";
++import { createCommandChainRouter } from "./command-chain";
++import { createConfigRouter } from "./config";
++import { createDeviceRouter } from "./device";
++import { createExternalRouter } from "./external";
++import { createFilesystemRouter } from "./filesystem";
++import { createHostServiceCoordinatorRouter } from "./host-service-coordinator";
++import { createKeyboardLayoutRouter } from "./keyboardLayout";
++import { createMenuRouter } from "./menu";
++import { createMigrationRouter } from "./migration";
++import { createNotificationsRouter } from "./notifications";
++import { createPermissionsRouter } from "./permissions";
++import { createPortsRouter } from "./ports";
++import { createProjectsRouter } from "./projects";
++import { createResourceMetricsRouter } from "./resource-metrics";
++import { createRingtoneRouter } from "./ringtone";
++import { createSettingsRouter } from "./settings";
++import { createSystemRouter } from "./system";
++import { createTerminalRouter } from "./terminal";
++import { createUiStateRouter } from "./ui-state";
++import { createWindowRouter } from "./window";
++import { createWorkspacesRouter } from "./workspaces";
++
++export const createAppRouter = (getWindow: () => BrowserWindow | null) => {
++	return router({
++		chatRuntimeService: createChatRuntimeServiceRouter(),
++		chatService: createChatServiceRouter(),
++		commandChain: createCommandChainRouter(),
++		analytics: createAnalyticsRouter(),
++		browser: createBrowserRouter(),
++		browserHistory: createBrowserHistoryRouter(),
++		auth: createAuthRouter(),
++		autoUpdate: createAutoUpdateRouter(),
++		cache: createCacheRouter(),
++		window: createWindowRouter(getWindow),
++		projects: createProjectsRouter(getWindow),
++		workspaces: createWorkspacesRouter(),
++		terminal: createTerminalRouter(),
++		changes: createChangesRouter(),
++		filesystem: createFilesystemRouter(),
++		notifications: createNotificationsRouter(getWindow),
++		permissions: createPermissionsRouter(),
++		ports: createPortsRouter(),
++		resourceMetrics: createResourceMetricsRouter(),
++		menu: createMenuRouter(),
++		external: createExternalRouter(),
++		settings: createSettingsRouter(),
++		system: createSystemRouter(),
++		config: createConfigRouter(),
++		device: createDeviceRouter(),
++		uiState: createUiStateRouter(),
++		ringtone: createRingtoneRouter(getWindow),
++		hostServiceCoordinator: createHostServiceCoordinatorRouter(),
++		keyboardLayout: createKeyboardLayoutRouter(),
++		migration: createMigrationRouter(),
++	});
++};
++
++export type AppRouter = ReturnType<typeof createAppRouter>;
+diff --git a/apps/desktop/src/main/lib/command-chain-status-poller.ts b/apps/desktop/src/main/lib/command-chain-status-poller.ts
+new file mode 100644
+index 000000000..ba2b4ffd7
+--- /dev/null
++++ b/apps/desktop/src/main/lib/command-chain-status-poller.ts
+@@ -0,0 +1,162 @@
++import { readFileSync } from "node:fs";
++import { join } from "node:path";
++
++/** status.json 中单个步骤的定义 */
++export interface CommandChainStep {
++	id: string;
++	label: string;
++	status: "pending" | "running" | "completed" | "failed" | "skipped";
++	startedAt?: string;
++	completedAt?: string;
++	error?: string;
++}
++
++/** status.json 中决策节点的定义 */
++export interface CommandChainDecisionNode {
++	id: string;
++	label: string;
++	question: string;
++	options: string[];
++	selectedOption?: string;
++	resolved: boolean;
++}
++
++/** status.json 完整结构 */
++export interface CommandChainStatus {
++	steps: CommandChainStep[];
++	decisionNodes: CommandChainDecisionNode[];
++	completionConfirmed: boolean;
++}
++
++/** 默认轮询间隔（毫秒） */
++const DEFAULT_POLL_INTERVAL_MS = 2000;
++
++/**
++ * CommandChainStatusPoller
++ *
++ * 定期读取指定工作目录下的 status.json 文件，解析为 CommandChainStatus。
++ * 通过 getStatus() 获取最近一次成功解析的状态，若文件不存在或解析失败则返回 null。
++ */
++export class CommandChainStatusPoller {
++	private timer: ReturnType<typeof setInterval> | null = null;
++	private lastStatus: CommandChainStatus | null = null;
++	private cwd: string | null = null;
++
++	/**
++	 * 启动轮询
++	 * @param cwd 工作目录（status.json 所在目录）
++	 * @param intervalMs 轮询间隔，默认 2000ms
++	 */
++	start(cwd: string, intervalMs: number = DEFAULT_POLL_INTERVAL_MS): void {
++		this.stop();
++		this.cwd = cwd;
++		this.timer = setInterval(() => {
++			this.poll();
++		}, intervalMs);
++		// 立即执行一次轮询
++		this.poll();
++	}
++
++	/** 停止轮询 */
++	stop(): void {
++		if (this.timer !== null) {
++			clearInterval(this.timer);
++			this.timer = null;
++		}
++		this.cwd = null;
++		this.lastStatus = null;
++	}
++
++	/**
++	 * 获取最近一次成功解析的 CommandChainStatus
++	 * @returns 解析后的状态对象，若从未成功解析则返回 null
++	 */
++	getStatus(): CommandChainStatus | null {
++		return this.lastStatus;
++	}
++
++	/** 执行一次轮询：读取并解析 status.json */
++	private poll(): void {
++		if (!this.cwd) {
++			return;
++		}
++
++		try {
++			const filePath = join(this.cwd, "status.json");
++			const raw = readFileSync(filePath, "utf-8");
++			const parsed: unknown = JSON.parse(raw);
++			this.lastStatus = this.validateStatus(parsed);
++		} catch {
++			// 文件不存在、解析失败或校验不通过时保持 lastStatus 不变
++		}
++	}
++
++	/** 校验并转换解析结果为 CommandChainStatus */
++	private validateStatus(data: unknown): CommandChainStatus | null {
++		if (data === null || typeof data !== "object") {
++			return null;
++		}
++
++		const obj = data as Record<string, unknown>;
++
++		if (!Array.isArray(obj.steps)) {
++			return null;
++		}
++
++		const steps: CommandChainStep[] = obj.steps.map((step: unknown) => {
++			const s = step as Record<string, unknown>;
++			return {
++				id: String(s.id ?? ""),
++				label: String(s.label ?? ""),
++				status: this.validateStepStatus(s.status),
++				startedAt: typeof s.startedAt === "string" ? s.startedAt : undefined,
++				completedAt:
++					typeof s.completedAt === "string" ? s.completedAt : undefined,
++				error: typeof s.error === "string" ? s.error : undefined,
++			};
++		});
++
++		const decisionNodes: CommandChainDecisionNode[] = Array.isArray(
++			obj.decisionNodes,
++		)
++			? obj.decisionNodes.map((node: unknown) => {
++					const n = node as Record<string, unknown>;
++					return {
++						id: String(n.id ?? ""),
++						label: String(n.label ?? ""),
++						question: String(n.question ?? ""),
++						options: Array.isArray(n.options)
++							? n.options.map((o: unknown) => String(o))
++							: [],
++						selectedOption:
++							typeof n.selectedOption === "string"
++								? n.selectedOption
++								: undefined,
++						resolved: Boolean(n.resolved),
++					};
++				})
++			: [];
++
++		return {
++			steps,
++			decisionNodes,
++			completionConfirmed: Boolean(obj.completionConfirmed),
++		};
++	}
++
++	private validateStepStatus(
++		status: unknown,
++	): CommandChainStep["status"] {
++		const validStatuses: CommandChainStep["status"][] = [
++			"pending",
++			"running",
++			"completed",
++			"failed",
++			"skipped",
++		];
++		const s = String(status ?? "pending");
++		return validStatuses.includes(s as CommandChainStep["status"])
++			? (s as CommandChainStep["status"])
++			: "pending";
++	}
++}
