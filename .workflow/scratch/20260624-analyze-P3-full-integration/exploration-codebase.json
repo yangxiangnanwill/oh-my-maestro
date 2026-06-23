@@ -1,0 +1,102 @@
+{
+  "session": "ANL-011",
+  "phase": 3,
+  "explored_at": "2026-06-24T09:00:00+08:00",
+  "relevant_files": [
+    {
+      "path": "apps/desktop/src/main/index.ts",
+      "role": "Electron 主进程入口",
+      "significance": "setupAgentHooks() 调用点 — Phase 3 MCP 注册插入点 (line 417-421)"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "role": "status.json 读取器",
+      "significance": "Phase 2 文件轮询 → Phase 3 需扩展为 WebSocket/事件驱动"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "role": "tRPC 路由",
+      "significance": "现有 getStatus endpoint — Phase 3 需新增 KG search/analyze results endpoints"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "role": "命令链面板组件",
+      "significance": "3 态渲染模式可复用于知识面板和分析面板"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/terminal/env.ts",
+      "role": "终端环境构建器",
+      "significance": "已注入 MAESTRO_HOME (line 504-506) — Phase 3 可扩展"
+    },
+    {
+      "path": ".workflow/roadmap.md",
+      "role": "路线图",
+      "significance": "Phase 3 定义：6 Wave, 6 success criteria"
+    },
+    {
+      "path": ".workflow/blueprint/BLP-maestro-ide-2026-06-20/architecture/ADR-002-cli-subprocess-integration.md",
+      "role": "架构决策",
+      "significance": "CLI 子进程集成策略 — Phase 1 子进程 → Phase 3 平台无关模块"
+    },
+    {
+      "path": ".workflow/blueprint/BLP-maestro-ide-2026-06-20/architecture/ADR-004-event-driven-state-sync.md",
+      "role": "架构决策",
+      "significance": "WebSocket + EventBus 状态同步 — Phase 3 从文件轮询迁移到事件驱动"
+    },
+    {
+      "path": ".workflow/scratch/20260622-analyze-macro-superset-maestro/conclusions.json",
+      "role": "宏分析结论",
+      "significance": "Phase 3 目标：KG + 分析 + 决策通过 MCP 暴露"
+    },
+    {
+      "path": ".workflow/scratch/20260622-analyze-superset-architecture/exploration-codebase.json",
+      "role": "Superset 架构探索",
+      "significance": "发现 packages/mcp-v2/src/server.ts 有 28 个 MCP 工具"
+    }
+  ],
+  "call_chains": [
+    {
+      "name": "Command Chain Status (Phase 2 existing)",
+      "flow": "CommandChainPanel → tRPC IPC → command-chain/index.ts → readCommandChainStatus() → readFile(status.json) → validateStatus() → CommandChainStatus"
+    },
+    {
+      "name": "Agent Launch (existing Superset)",
+      "flow": "AgentSessionOrchestrator → terminal-adapter → launchCommandInPane → DaemonTerminalManager → TerminalHost → notify-hook → TerminalAgentStore"
+    },
+    {
+      "name": "Proposed Phase 3 MCP Bridge",
+      "flow": "Maestro-flow MCP Server → Superset MCP Registry → Superset Agent System → Agent lifecycle hooks → Ralph decision engine → CommandChainPanel"
+    }
+  ],
+  "data_flows": [
+    { "from": "Maestro-flow CLI", "to": "Filesystem", "mechanism": "status.json write", "phase": "P1-P2" },
+    { "from": "Filesystem", "to": "Main Process", "mechanism": "readFile() poll", "phase": "P2" },
+    { "from": "Main Process", "to": "Renderer", "mechanism": "tRPC over IPC", "phase": "P2" },
+    { "from": "Maestro MCP Server", "to": "Superset MCP Registry", "mechanism": "MCP protocol", "phase": "P3 proposed" }
+  ],
+  "code_anchors": [
+    {
+      "file": "apps/desktop/src/main/lib/terminal/env.ts",
+      "lines": "504-506",
+      "snippet": "MAESTRO_HOME: path.join(os.homedir(), \".maestro\")",
+      "significance": "Maestro-flow 环境变量已注入终端"
+    },
+    {
+      "file": "apps/desktop/src/main/index.ts",
+      "lines": "417-421",
+      "snippet": "try { setupAgentHooks(); } catch (error) { console.error(...); }",
+      "significance": "Phase 3 MCP 注册插入点"
+    },
+    {
+      "file": ".workflow/roadmap.md",
+      "lines": "144-149",
+      "snippet": "Wave 1-6 DAG",
+      "significance": "Phase 3 的 6 个 Wave 定义"
+    }
+  ],
+  "key_gaps": [
+    "MCP Registry 在当前 checkout 中不存在 — 需要 Superset 完整 monorepo 或移植 MCP 端点接口",
+    "agent-setup 模块在当前文件树中缺失 — setupAgentHooks 的实现在完整 Superset repo 中",
+    "Maestro-flow mcp/ 模块在外部仓库中 — 需要确定集成方式（子进程 vs 内嵌模块）"
+  ]
+}

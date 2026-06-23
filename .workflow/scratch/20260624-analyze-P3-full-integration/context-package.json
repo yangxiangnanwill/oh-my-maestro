@@ -1,0 +1,70 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "analyze",
+    "artifact_id": "ANL-011",
+    "session_path": "scratch/20260624-analyze-P3-full-integration/",
+    "generated_at": "2026-06-24T09:30:00+08:00"
+  },
+  "requirements": [
+    {
+      "id": "WAVE-1",
+      "title": "MCP Server 集成",
+      "acceptance": "Maestro MCP 的 28+ 工具在 Superset Agent 中可发现和调用"
+    },
+    {
+      "id": "WAVE-2",
+      "title": "知识面板",
+      "acceptance": "maestro search 结果渲染为可交互的知识卡片"
+    },
+    {
+      "id": "WAVE-3",
+      "title": "分析面板",
+      "acceptance": "6 维评分卡 + 风险矩阵在 UI 中渲染"
+    },
+    {
+      "id": "WAVE-4",
+      "title": "命令面板",
+      "acceptance": "20 高频 command 可搜索和触发"
+    },
+    {
+      "id": "WAVE-5",
+      "title": "Agent 生命周期联动",
+      "acceptance": "Ralph 决策节点触发 Superset Agent hooks"
+    },
+    {
+      "id": "WAVE-6",
+      "title": "端到端集成测试",
+      "acceptance": "NL 需求 → 命令链 → UI → 决策 → 执行的完整演示"
+    }
+  ],
+  "constraints": [
+    { "area": "MCP 协议", "status": "locked", "ref": "context.md#Locked" },
+    { "area": "Windows 平台", "status": "locked", "ref": "context.md#Locked" },
+    { "area": "P1-P2 兼容性", "status": "locked", "ref": "context.md#Locked" },
+    { "area": "在家环境启动", "status": "locked", "ref": "context.md#Locked" },
+    { "area": "面板 UI 设计", "status": "open", "ref": "context.md#Free" },
+    { "area": "命令面板分批策略", "status": "open", "ref": "context.md#Free" },
+    { "area": "事件推送协议", "status": "open", "ref": "context.md#Free" }
+  ],
+  "non_goals": [
+    { "title": "移动端支持", "rationale": "v0.4.0+", "ref": "context.md#Deferred" },
+    { "title": "IDE 插件", "rationale": "v0.4.0+", "ref": "context.md#Deferred" },
+    { "title": "生产部署", "rationale": "v0.4.0+", "ref": "context.md#Deferred" }
+  ],
+  "insights": [
+    { "area": "MCP 集成", "role": "analyzer", "summary": "MCP Server 注册是所有后续 Wave 的基础设施，应优先实现" },
+    { "area": "组件复用", "role": "analyzer", "summary": "CommandChainPanel 3 态渲染 + useQuery 模式可抽取为通用 StatusPanel" },
+    { "area": "状态同步", "role": "analyzer", "summary": "文件轮询 → WebSocket 事件驱动升级应在 Wave 1-2 间实施" }
+  ],
+  "open_questions": [
+    { "area": "MCP registry", "question": "Superset MCP registry 在当前版本中是否可用？" },
+    { "area": "Maestro mcp", "question": "Maestro-flow mcp/ 模块如何与 Superset 集成（npm link vs 子进程 vs 内嵌）" },
+    { "area": "命令面板", "question": "70+ command 迁移是否需要修改 Maestro-flow CLI 的输出格式" }
+  ],
+  "references": [
+    { "type": "analysis", "path": "context.md" },
+    { "type": "conclusions", "path": "conclusions.json" },
+    { "type": "exploration", "path": "exploration-codebase.json" }
+  ]
+}

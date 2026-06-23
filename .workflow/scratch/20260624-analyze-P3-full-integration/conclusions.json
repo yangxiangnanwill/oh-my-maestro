@@ -1,0 +1,143 @@
+{
+  "session_id": "ANL-011",
+  "phase": 3,
+  "scope": "micro",
+  "overall_verdict": "CONDITIONAL_GO",
+  "confidence": 0.72,
+  "recommendations": [
+    {
+      "id": "REC-001",
+      "title": "在家环境获取 Superset 完整 monorepo 后启动 Phase 3",
+      "rationale": "当前 oh-my-maestro checkout 仅包含 apps/desktop/，缺失 packages/mcp-v2/ 和 agent-setup 模块",
+      "priority": "high",
+      "action": "git clone Superset 完整仓库 → 确认 MCP registry 机制 → 在完整环境中执行 Phase 3",
+      "review_status": "accepted"
+    },
+    {
+      "id": "REC-002",
+      "title": "Wave 1 优先：Maestro MCP → Superset MCP registry",
+      "rationale": "MCP Server 集成是所有后续 Wave 的基础（KG 搜索、分析结果、命令面板都需要 MCP transport）",
+      "priority": "high",
+      "action": "创建 MCP provider 注册逻辑 → 验证 28 个 Maestro MCP 工具在 Superset 中可见",
+      "review_status": "accepted"
+    },
+    {
+      "id": "REC-003",
+      "title": "复用 CommandChainPanel 3 态模式构建知识面板和分析面板",
+      "rationale": "Phase 2 的 CommandChainPanel 已实现 Loading/Error/Empty/Data 四态渲染 + useQuery 轮询模式",
+      "priority": "medium",
+      "action": "抽取 shared/StatusPanel 通用组件 → KnowledgePanel 和 AnalysisPanel 基于此构建",
+      "review_status": "accepted"
+    },
+    {
+      "id": "REC-004",
+      "title": "状态同步从文件轮询迁移到 WebSocket",
+      "rationale": "ADR-004 已规划 WebSocket + EventBus 架构；Phase 2 的文件轮询在 Phase 3 应升级",
+      "priority": "medium",
+      "action": "在 MCP transport 层添加 WebSocket 支持 → status.json 变更推送替代 2s 轮询",
+      "review_status": "accepted"
+    },
+    {
+      "id": "REC-005",
+      "title": "命令面板独立于终端面板",
+      "rationale": "70+ command 迁移需要搜索和分类，终端面板不适合",
+      "priority": "medium",
+      "action": "复用 Superset 现有 Agent 命令面板 UI → 注册 Maestro command 为可搜索的 Agent action",
+      "review_status": "accepted"
+    }
+  ],
+  "risks": [
+    {
+      "id": "RISK-001",
+      "description": "Superset MCP registry 机制可能在当前版本中不存在或不兼容",
+      "probability": "high",
+      "impact": "blocking",
+      "mitigation": "在家环境获取 Superset 完整 repo 后验证；备用方案：独立 HTTP API 桥接"
+    },
+    {
+      "id": "RISK-002",
+      "description": "Maestro-flow mcp/ 模块在外部仓库中，集成需要跨仓库协调",
+      "probability": "medium",
+      "impact": "high",
+      "mitigation": "stdin/stdio transport 桥接，或 npm link 本地开发"
+    },
+    {
+      "id": "RISK-003",
+      "description": "70+ command 迁移工作量可能超出预期",
+      "probability": "medium",
+      "impact": "medium",
+      "mitigation": "分批迁移：Wave 4 先做高频 20 command → 其余在后续迭代"
+    },
+    {
+      "id": "RISK-004",
+      "description": "Ralph 决策引擎的 Agent 生命周期联动侵入性强",
+      "probability": "low",
+      "impact": "high",
+      "mitigation": "使用现有 notify-hook 机制；新增 decision-node WebSocket 事件"
+    }
+  ],
+  "decision_trail": [
+    {
+      "decision": "Phase 3 在家环境启动",
+      "context": "当前环境缺失 Superset 完整 monorepo 关键模块",
+      "chosen": "CONDITIONAL GO — 等待在家环境",
+      "reason": "MCP registry 和 agent-setup 是硬依赖"
+    },
+    {
+      "decision": "MCP 集成优先于 UI 面板",
+      "context": "Wave DAG 排序",
+      "chosen": "Wave 1 (MCP Server) 优先",
+      "reason": "MCP transport 是 KG/分析/命令面板的基础设施"
+    },
+    {
+      "decision": "复用 Phase 2 组件模式",
+      "context": "避免重复造轮子",
+      "chosen": "抽取 StatusPanel 通用组件",
+      "reason": "CommandChainPanel 的 3 态渲染 + useQuery 模式已验证可用"
+    }
+  ],
+  "implementation_scope": [
+    {
+      "objective": "Wave 1: Maestro MCP Server 注册为 Superset MCP provider",
+      "rationale": "基础设施 — 所有后续 Wave 依赖",
+      "priority": "high",
+      "target_files": ["apps/desktop/src/main/lib/agent-setup/", "packages/mcp-v2/"],
+      "acceptance_criteria": "Maestro MCP 的 28+ 工具在 Superset Agent 中可发现和调用"
+    },
+    {
+      "objective": "Wave 2: 知识面板 — KG 搜索结果 React 可视化",
+      "rationale": "让用户看到 Maestro-flow 的知识图谱",
+      "priority": "medium",
+      "target_files": ["apps/desktop/src/renderer/components/KnowledgePanel/"],
+      "acceptance_criteria": "maestro search 结果在独立面板中渲染为可交互的知识卡片"
+    },
+    {
+      "objective": "Wave 3: 分析面板 — 6 维评分 + 风险矩阵 UI",
+      "rationale": "maestro-analyze 的评分结果可视化",
+      "priority": "medium",
+      "target_files": ["apps/desktop/src/renderer/components/AnalysisPanel/"],
+      "acceptance_criteria": "6 维评分卡 + 概率-影响风险矩阵在 UI 中渲染"
+    },
+    {
+      "objective": "Wave 4: 命令面板 — 70+ command 迁移",
+      "rationale": "Searchable command palette",
+      "priority": "medium",
+      "target_files": ["apps/desktop/src/renderer/components/CommandPalette/"],
+      "acceptance_criteria": "20 高频 command 可搜索和触发"
+    },
+    {
+      "objective": "Wave 5: Agent 生命周期联动",
+      "rationale": "Ralph 决策与 Superset Agent 生命周期深度集成",
+      "priority": "low",
+      "target_files": ["apps/desktop/src/main/lib/agent-setup/"],
+      "acceptance_criteria": "Ralph 决策节点触发 Superset Agent hooks"
+    },
+    {
+      "objective": "Wave 6: 端到端集成测试",
+      "rationale": "验证完整闭环",
+      "priority": "low",
+      "target_files": [],
+      "acceptance_criteria": "NL 需求 → 命令链 → UI → 决策 → 执行的完整演示"
+    }
+  ]
+}

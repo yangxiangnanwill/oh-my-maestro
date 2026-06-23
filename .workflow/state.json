@@ -308,6 +308,21 @@
       "completed_at": "2026-06-23T09:25:00+08:00",
       "tasks_completed": 3,
       "tasks_total": 3
+    },
+    {
+      "id": "ANL-011",
+      "type": "analyze",
+      "scope": "micro",
+      "phase": 3,
+      "milestone": "F3",
+      "path": "scratch/20260624-analyze-P3-full-integration",
+      "context_package": "scratch/20260624-analyze-P3-full-integration/context-package.json",
+      "status": "completed",
+      "harvested": false,
+      "verdict": "CONDITIONAL_GO",
+      "scope_verdict": "large",
+      "created_at": "2026-06-24T09:00:00+08:00",
+      "completed_at": "2026-06-24T09:30:00+08:00"
     }
   ],
   "milestone_history": [
