@@ -51,7 +51,7 @@
       "id": "F2",
       "type": "standard",
       "name": "Orchestration — 编排可视化",
-      "status": "planned",
+      "status": "audited",
       "phases": [2],
       "phase_slugs": { "2": "command-chain-ui" },
       "roadmap_ref": ".workflow/roadmap.md",
