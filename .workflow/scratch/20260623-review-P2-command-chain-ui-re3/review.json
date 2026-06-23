@@ -1,0 +1,62 @@
+{
+  "phase": 2,
+  "phase_slug": "command-chain-ui",
+  "milestone": "F2",
+  "level": "quick",
+  "verdict": "PASS",
+  "reviewed_at": "2026-06-23T20:30:00+08:00",
+  "reviewer": "workflow-reviewer",
+  "review_type": "re-review (3rd pass — re2-fix verification)",
+  "depends_on": ["EXC-012"],
+  "prior_reviews": ["REV-005", "REV-006"],
+  "dimensions_reviewed": ["correctness", "security"],
+  "files_reviewed": [
+    "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+    "apps/desktop/src/lib/trpc/routers/command-chain/index.ts"
+  ],
+  "severity_distribution": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 1,
+    "total": 1
+  },
+  "critical_files": [],
+  "findings": [
+    {
+      "id": "COR-001",
+      "dimension": "correctness",
+      "severity": "low",
+      "title": "isRecord() 调用前有冗余的 null/typeof 检查",
+      "file": "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "line": 85,
+      "snippet": "if (step === null || typeof step !== \"object\") { return null; } if (!isRecord(step)) { return null; }",
+      "description": "isRecord() 内部已检查 v !== null && typeof v === \"object\"，外层的 null/typeof 检查是冗余的。不过 TypeScript 需要显式 null check 来收窄类型，所以保留是合理的。",
+      "impact": "轻微代码冗余，不影响功能或安全",
+      "suggestion": "可选优化：将 isRecord 改为接受 unknown 并在内部做完整的类型收窄，或保留现状（TypeScript 类型收窄需要显式 null check）"
+    },
+    {
+      "id": "SEC-001",
+      "dimension": "security",
+      "severity": "info",
+      "title": "publicProcedure 无认证 — 已知架构决策",
+      "file": "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "line": 47,
+      "snippet": "getStatus: publicProcedure",
+      "description": "getStatus 使用 publicProcedure（无认证），这是已知的架构决策。Superset 无 protectedProcedure，通过加强输入校验（路径安全 + 空字节）降低风险。REV-006 中的 REV2-004 (publicProcedure 无认证) 已通过输入校验加固缓解。",
+      "impact": "状态读取端点无认证，但仅读取 status.json 文件，不涉及写操作",
+      "suggestion": "如果未来 Superset 支持 protectedProcedure，可考虑迁移。当前输入校验已足够。"
+    }
+  ],
+  "deep_dives": [],
+  "issues_created": [],
+  "verification_of_prior_findings": {
+    "REV2-001": { "status": "FIXED", "note": "resolve===normalize 已替换为 resolve+sep 分割 .. 段检查" },
+    "REV2-002": { "status": "FIXED", "note": "空字节注入检查已在两处入口添加" },
+    "REV2-003": { "status": "FIXED", "note": "as Record<string,unknown> 已替换为 isRecord() type guard" },
+    "REV2-004": { "status": "MITIGATED", "note": "publicProcedure 保持，通过加强输入校验降低风险" },
+    "REV2-005": { "status": "FIXED", "note": "as 断言残留已清理（validateStepState 中的 as 受 includes 保护）" },
+    "REV2-006": { "status": "FIXED", "note": "null 数组元素防御已在 steps/decisionNodes map 回调中添加" }
+  },
+  "summary": "P2 re-review 修复验证通过。6 个 REV-006 findings 全部 FIXED 或 MITIGATED。路径遍历检测从无效的 resolve===normalize 改为正确的 resolve+sep 分割 .. 段检查。空字节注入在两处入口均有检查。as 断言已替换为 isRecord() type guard。null 数组元素有防御。代码质量良好，无 critical/high 发现。"
+}

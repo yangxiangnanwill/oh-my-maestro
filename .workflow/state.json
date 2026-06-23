@@ -446,6 +446,22 @@
       "note": "C9 tsc check skipped — tsc not available in current env",
       "created_at": "2026-06-23T20:00:00+08:00",
       "completed_at": "2026-06-23T20:15:00+08:00"
+    },
+    {
+      "id": "REV-007",
+      "type": "review",
+      "milestone": "F2",
+      "phase": 2,
+      "scope": "phase",
+      "path": "scratch/20260623-review-P2-command-chain-ui-re3",
+      "status": "completed",
+      "depends_on": ["EXC-012"],
+      "harvested": false,
+      "verdict": "PASS",
+      "review_type": "re-review (3rd pass)",
+      "prior_reviews": ["REV-005", "REV-006"],
+      "created_at": "2026-06-23T20:25:00+08:00",
+      "completed_at": "2026-06-23T20:30:00+08:00"
     }
   ],
   "milestone_history": [
