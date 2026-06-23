@@ -1,0 +1,114 @@
+{
+  "task_id": "TASK-001",
+  "phase": 2,
+  "milestone": "F2",
+  "title": "创建 status.json 文件轮询 tRPC 服务",
+  "type": "feature",
+  "complexity": "medium",
+  "estimated_minutes": 35,
+  "depends_on": [],
+  "parallel_group": null,
+  "status": "completed",
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "action": "create",
+      "target": "commandChainRouter",
+      "change": "新建 tRPC router，暴露 getCommandChainStatus query，从 StatusPoller 获取解析后的 status.json 数据"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "action": "create",
+      "target": "CommandChainStatusPoller class",
+      "change": "新建 StatusPoller 类，每 2s 轮询指定工作目录的 status.json，解析 steps[] 和 decision_nodes[]"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/index.ts",
+      "action": "modify",
+      "target": "createAppRouter function",
+      "change": "注册 commandChain router 到 AppRouter"
+    }
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/filesystem/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/persistence/persistence.ts"
+  ],
+  "action": "新建 apps/desktop/src/main/lib/command-chain-status-poller.ts 实现 CommandChainStatusPoller 类，包含 start(cwd: string, intervalMs: number = 2000)、stop()、getStatus(): CommandChainStatus | null 方法。新建 apps/desktop/src/lib/trpc/routers/command-chain/index.ts 实现 createCommandChainRouter()，暴露 commandChain.getStatus publicProcedure.query。在 apps/desktop/src/lib/trpc/routers/index.ts 注册 commandChain router。",
+  "implementation": [
+    "Step 1: 读取 trpc/routers/index.ts 了解 AppRouter 注册模式",
+    "Step 2: 读取 trpc/routers/filesystem/index.ts 了解 tRPC router 实现模式",
+    "Step 3: 创建 main/lib/command-chain-status-poller.ts — CommandChainStatusPoller 类",
+    "Step 4: 定义 CommandChainStatus TypeScript 接口 (steps: Step[], decisionNodes: DecisionNode[], completionConfirmed: boolean)",
+    "Step 5: 实现 poll() 方法 — 使用 Node.js fs.readFileSync 读取 status.json，JSON.parse 解析",
+    "Step 6: 实现 start/stop 方法 — 使用 setInterval/clearInterval，默认间隔 2000ms",
+    "Step 7: 实现 getStatus() 方法 — 返回最后解析的 CommandChainStatus 或 null",
+    "Step 8: 创建 trpc/routers/command-chain/index.ts — createCommandChainRouter()",
+    "Step 9: 暴露 commandChain.getStatus publicProcedure.query，实例化 StatusPoller 并返回 getStatus()",
+    "Step 10: 在 trpc/routers/index.ts 中导入并注册 commandChain router",
+    "Step 11: 使用 zod schema 定义 status.json 结构验证"
+  ],
+  "convergence": {
+    "criteria": [
+      "grep -r 'commandChain' apps/desktop/src/lib/trpc/routers/index.ts 返回 commandChain router 注册行",
+      "grep -r 'CommandChainStatusPoller' apps/desktop/src/main/lib/command-chain-status-poller.ts 返回类定义行",
+      "grep -r 'setInterval' apps/desktop/src/main/lib/command-chain-status-poller.ts 返回至少 1 处（轮询定时器）",
+      "grep -r 'getStatus' apps/desktop/src/lib/trpc/routers/command-chain/index.ts 返回 query 定义行",
+      "cat apps/desktop/src/main/lib/command-chain-status-poller.ts 包含 'fs.readFileSync' 或 'fs/promises' 导入"
+    ],
+    "verification": "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && grep -r 'commandChain' src/lib/trpc/routers/index.ts && ls -la src/main/lib/command-chain-status-poller.ts && ls -la src/lib/trpc/routers/command-chain/index.ts",
+    "definition_of_done": "StatusPoller 可以每 2s 读取并解析 status.json，tRPC query commandChain.getStatus 可从 renderer 调用并返回 CommandChainStatus 对象"
+  },
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/GitRepoes/superset/apps/desktop && npx tsc --noEmit --pretty 2>&1 | grep -i 'command-chain' | head -5"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "TypeScript 编译无错误",
+      "createCommandChainRouter 导出可被 AppRouter 注册",
+      "CommandChainStatusPoller 类导出具 start/stop/getStatus 方法"
+    ]
+  },
+  "reference": {
+    "pattern": "参考 tRPC filesystem router 的 publicProcedure.query 模式和 main process persistence 模块的文件操作模式",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/lib/trpc/routers/filesystem/index.ts",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/persistence/persistence.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "在 main process 创建独立 StatusPoller 类（单一职责），通过 tRPC router 暴露给 renderer（遵循现有架构模式）。使用 setInterval 轮询避免引入额外依赖，2s 间隔平衡实时性和性能。",
+    "decision_factors": [
+      "最小侵入 — 无需修改 Maestro-flow",
+      "遵循现有 tRPC router 模式",
+      "可扩展 — 后续可替换为文件 watch 或 WebSocket"
+    ],
+    "tradeoffs": "轮询 vs 文件 watch: 轮询更简单、跨平台兼容性好，但最多 2s 延迟。Phase 3 可升级为 @parcel/watcher 文件监听。"
+  },
+  "risks": [
+    {
+      "id": "RSK-T001-1",
+      "description": "status.json 文件不存在时轮询器行为需处理",
+      "mitigation": "getStatus() 返回 null 而非抛异常，组件侧处理 null 状态"
+    },
+    {
+      "id": "RSK-T001-2",
+      "description": "工作目录（cwd）在 renderer 侧未知",
+      "mitigation": "tRPC query input 接收 workspaceCwd，或从 workspace context 获取"
+    }
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "35m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}
