@@ -1,0 +1,35 @@
+{
+  "status": "completed",
+  "task_id": "TASK-003",
+  "phase": 1,
+  "milestone": "F1",
+  "title": "Maestro-flow 命令兼容性验证",
+  "type": "test",
+  "complexity": "low",
+  "estimated_minutes": 15,
+  "depends_on": ["TASK-001"],
+  "files": [],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/session.ts",
+    "D:/WorkSpace/Source/maestro-flow/README.zh-CN.md"
+  ],
+  "action": "验证 Maestro-flow CLI 在 Superset 终端中的核心命令兼容性：(1) maestro --version 输出正确版本；(2) maestro search 'test' 在项目目录中正常输出搜索结果；(3) maestro ralph skills --platform claude --json --quiet 输出 JSON 格式的 skill 列表；(4) maestro spec load --category arch 正常输出架构约束；(5) 验证 ANSI 颜色和 Unicode 字符在 xterm.js 中正确渲染。",
+  "implementation": [
+    "Step 1: 在 Superset 终端面板中启动 Maestro Agent session",
+    "Step 2: 执行 maestro --version，验证输出包含版本号",
+    "Step 3: 执行 maestro search 'test'，验证搜索输出",
+    "Step 4: 执行 maestro ralph skills --platform claude --json --quiet，验证 JSON 输出",
+    "Step 5: 执行 maestro spec load --category arch，验证规格加载输出",
+    "Step 6: 检查 xterm.js 渲染效果（ANSI 颜色、Unicode 字符、换行）",
+    "Step 7: 记录所有不兼容的命令或渲染问题"
+  ],
+  "convergence": {
+    "criteria": [
+      "maestro --version 输出版本号（退出码 0）",
+      "maestro search 输出搜索结果（退出码 0）",
+      "maestro ralph skills 输出有效 JSON（退出码 0）",
+      "maestro spec load 输出规格内容（退出码 0）",
+      "ANSI 颜色和 Unicode 在 xterm.js 中正确渲染（无乱码）"
+    ]
+  }
+}
