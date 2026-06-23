@@ -1,0 +1,90 @@
+{
+  "plan_id": "PLN-009",
+  "phase": 0,
+  "milestone": "F1",
+  "scope": "phase",
+  "summary": "Phase 0 Environment Bootstrap — 让 Superset 在 Windows 上可构建运行，提取概念翻译层设计文档，归档 oh-my-maestro。4 个任务，3 个 Wave：Wave 1 并行执行构建修复 + Shell 适配，Wave 2 提取翻译层设计文档，Wave 3 归档 oh-my-maestro。",
+  "approach": "按依赖关系分 3 个 Wave。Wave 1 并行执行两个独立任务：TASK-001 修复 Windows 构建环境（root package.json、bun install、字体路径、macos-process-metrics stub）和 TASK-002 适配 Shell 环境（getDefaultShell PowerShell 支持、Windows env vars、setup.local.ps1）。Wave 2 单独执行 TASK-003 提取概念翻译层设计文档到 Superset 仓库（依赖 oh-my-maestro 仍存在）。Wave 3 执行 TASK-004 归档 oh-my-maestro（依赖 TASK-003 完成）。所有任务可独立验证。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003", "TASK-004"],
+  "task_count": 4,
+  "complexity": "low",
+  "estimated_total_minutes": 150,
+  "waves": [
+    {
+      "id": "wave-1",
+      "task_ids": ["TASK-001", "TASK-002"],
+      "label": "构建修复 + Shell 适配",
+      "parallel": true
+    },
+    {
+      "id": "wave-2",
+      "task_ids": ["TASK-003"],
+      "label": "翻译层文档提取",
+      "parallel": false
+    },
+    {
+      "id": "wave-3",
+      "task_ids": ["TASK-004"],
+      "label": "oh-my-maestro 归档",
+      "parallel": false
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "Wave 1: root package.json → bun install → bun.lock 生成 → 字体路径 Windows 适配 → macos-process-metrics Windows stub",
+      "Wave 1: getDefaultShell() 返回 powershell.exe → COMSpec/PATHEXT 透传 → setup.local.ps1 脚本",
+      "Wave 2: 读取 oh-my-maestro translations.ts + translator.ts → 提取设计理念 → 写入 Superset docs/",
+      "Wave 3: git checkout -b archive/oh-my-maestro → git push → git rm -rf oh-my-maestro/ → git commit"
+    ]
+  },
+  "design_decisions": [
+    "root package.json 使用 Bun workspaces 配置，范围 `apps/*`（Superset 仓库无 packages/ 目录）",
+    "字体路径添加 C:\\Windows\\Fonts 搜索，同时保留 darwin 守卫中已有的 macOS 路径",
+    "getDefaultShell() 已有 win32 分支返回 COMSPEC 或 powershell.exe，只需微调优先级：优先 PowerShell 而非 CMD",
+    "macos-process-metrics 用空 stub 模块替代 — 维持 require() try/catch 不报错",
+    "setup.local.ps1 仅做 Windows 最小化设置 — 不包含 Docker/Postgres/Caddy（Phase 1+ 再处理）",
+    "归档分支命名 archive/oh-my-maestro — git history 完整保留，工作目录删除"
+  ],
+  "shared_context": {
+    "patterns": [
+      "process.platform === 'win32' 条件分支（代码库已有 22+ 处）",
+      "try/catch 优雅降级（macOS 专属依赖已保护）",
+      "Bun workspace:* 协议（隐式 monorepo 解析）",
+      "default-shell npm 包用于跨平台 shell 检测"
+    ],
+    "conventions": [
+      "electron-vite 构建管道",
+      "ESM 模块导入（.js 扩展名）",
+      "TypeScript strict 模式",
+      "node-pty 1.1.0 ConPTY（Windows 原生终端）"
+    ],
+    "dependencies": [
+      "bun 1.3.11+",
+      "electron 40.8.5",
+      "electron-vite 4.0.1",
+      "node-pty 1.1.0",
+      "default-shell 2.2.0",
+      "electron-builder 26.8.1（已配置 Windows NSIS）"
+    ]
+  },
+  "confidence": {
+    "overall": 0.83,
+    "feasibility": 0.80,
+    "impact": 0.95,
+    "risk": 0.75,
+    "complexity": 0.85,
+    "dependencies": 0.80
+  },
+  "_metadata": {
+    "timestamp": "2026-06-22T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "bootstrap",
+    "milestone": "F1",
+    "phase": "Phase 0 Environment Bootstrap",
+    "previous_analysis": "ANL-008",
+    "superset_repo": "D:/WorkSpace/GitRepoes/superset",
+    "oh_my_maestro_repo": "D:/WorkSpace/VsCode/oh-my-maestro"
+  }
+}

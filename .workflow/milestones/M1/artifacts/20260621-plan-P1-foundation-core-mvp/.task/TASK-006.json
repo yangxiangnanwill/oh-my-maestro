@@ -1,0 +1,130 @@
+{
+  "id": "TASK-006",
+  "title": "Workflow Commander — Card List + Execution Panel Component",
+  "description": "Build the Workflow Commander frontend component: a card-based workflow list that fetches available workflows from GET /api/workflows, and an execution panel that shows step-by-step progress when a workflow is triggered via POST /api/workflows/execute. Reads active workflow state from the activeWorkflows store and receives real-time updates via WebSocket.",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "Create src/lib/client/components/WorkflowCommander.svelte with two sub-views: (1) Workflow card list fetched from /api/workflows, each card shows workflow name/category/description with 'Run' button, (2) Execution panel showing step progress for active workflow from activeWorkflows store. On 'Run' click, POST to /api/workflows/execute with workflowId and params. Real-time step updates come from activeWorkflows store (fed by WebSocket). Replace the placeholder content area in +page.svelte with this component.",
+  "status": "completed",
+  "completed_at": "2026-06-20T23:53:27.088Z",
+  "actual_duration": null,
+  "scope": "src/lib/client/components",
+  "focus_paths": [
+    "src/lib/client/components/WorkflowCommander.svelte",
+    "src/routes/+page.svelte"
+  ],
+  "read_first": [
+    "src/routes/+page.svelte",
+    "src/lib/client/stores/index.ts",
+    "src/lib/client/services/ws-client.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/shared/events.ts",
+    "src/lib/shared/translations.ts"
+  ],
+  "depends_on": [],
+  "wave": 3,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/client/components/WorkflowCommander.svelte exists",
+      "Component script section contains fetch(\"/api/workflows\") or fetch(\"api/workflows\")",
+      "Each workflow rendered as a card with name, category, description, and 'Run' button",
+      "Clicking 'Run' sends POST /api/workflows/execute with {workflowId, params}",
+      "Execution panel shows step-by-step progress for active workflow from activeWorkflows store",
+      "Step status indicators match: pending=yellow, running=blue with spinner, complete=green check, failed=red X",
+      "Component uses translatedName ?? name for all user-visible labels",
+      "Component uses (translatedName ?? name) for all user-visible labels — template contains translatedName",
+      "grep -E \"\b(delegate|session|skill)\b\" src/lib/client/components/WorkflowCommander.svelte returns 0 matches in user-visible string literals (not import paths or comments)",
+      "npx vite build exits 0"
+    ],
+    "verification": "npx vite build && manual visual check in browser",
+    "definition_of_done": "Workflow Commander displays available workflows as cards, triggers execution via API, and shows real-time step progress from WebSocket updates"
+  },
+  "files": [
+    {
+      "path": "src/lib/client/components/WorkflowCommander.svelte",
+      "action": "create",
+      "target": "WorkflowCommander component",
+      "change": "Create Svelte 5 component with workflow card list + execution panel. Fetches /api/workflows on mount. POSTs /api/workflows/execute on Run click. Reads activeWorkflows store for real-time step progress. Two views: list view (cards) and execution view (step progress)."
+    }
+  ],
+  "implementation": [
+    "Create src/lib/client/components/WorkflowCommander.svelte. Script section: import activeWorkflows, displayMode, connectionState from '$lib/client/stores/index.js'. Import type WorkflowExecution, WorkflowMeta from '$lib/shared/types.js'.",
+    "Define state: let workflows = $state<WorkflowMeta[]>([]), let loading = $state(true), let error = $state<string|null>(null), let activeView = $state<'list'|'execution'>('list'), let currentExecutionId = $state<string|null>(null).",
+    "On mount ($effect): fetch('/api/workflows').then(r=>r.json()).then(data=>{workflows=data.workflows;loading=false}).catch(err=>{error=err.message;loading=false}).",
+    "Define runWorkflow(workflowId:string): fetch('/api/workflows/execute',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({workflowId,params:{}})}).then(r=>r.json()).then(data=>{currentExecutionId=data.executionId;activeView='execution'}).",
+    "Derived: let currentExecution = $derived($activeWorkflows.find(w=>w.id===currentExecutionId)).",
+    "Template - list view: grid of workflow cards. Each card: div with class 'workflow-card', shows workflow.translatedName??workflow.name (use translate helper), category badge, description, 'Run' button (disabled if !connected).",
+    "Template - execution view: header with workflow name + back button. Step list: iterate currentExecution.steps. Each step: status indicator (icon based on step.status), step.translatedName??step.name, output preview if available. Progress bar based on completed/total steps.",
+    "Status icon helper: stepStatusIcon(status:StepStatus): string. 'pending'->'○', 'running'->'◉' (with CSS animation pulse), 'complete'->'✓', 'failed'->'✗', 'skipped'->'—'.",
+    "Styling: workflow-card: background #313244, border-radius 8px, padding 16px, margin-bottom 12px. Run button: background #cba6f7, color #1e1e2e, border-radius 6px. Step list: similar to tree but flat, 40px row height. Progress bar: height 4px, background #45475a, fill #a6e3a1 for complete, #89b4fa for running.",
+    "Note: +page.svelte wiring is handled by TASK-004"
+  ],
+  "test": {
+    "commands": [
+      "npx vite build"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "Build succeeds with no errors",
+      "Component renders in browser, fetches workflows, and shows execution progress"
+    ]
+  },
+  "reference": {
+    "pattern": "Svelte 5 runes + store subscription from +page.svelte and stores/index.ts. Fetch pattern for API calls. Color scheme from existing CSS.",
+    "files": [
+      "src/routes/+page.svelte",
+      "src/lib/client/stores/index.ts",
+      "src/lib/client/services/ws-client.ts",
+      "src/lib/shared/types.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Two-view design (list + execution) keeps the UI simple for MVP. Card-based list is familiar and scannable. Execution panel with step progress provides the real-time feedback required by SC-2. Direct fetch() calls for API routes keep the data flow transparent.",
+    "decision_factors": [
+      "SC-2 requires real-time step progress updates",
+      "Card layout is standard for workflow/action selection",
+      "activeWorkflows store already receives WebSocket updates"
+    ],
+    "tradeoffs": "No workflow parameter form in MVP — params are empty {}. Parameter configuration can be added in Phase 2 when workflow schemas are better understood."
+  },
+  "risks": [
+    {
+      "risk": "/api/workflows returns empty list if maestro CLI not available",
+      "mitigation": "Show empty state with message 'No workflows available. Ensure maestro CLI is installed and a project is open.'"
+    },
+    {
+      "risk": "WebSocket updates may lag behind execution start",
+      "mitigation": "Execution panel shows 'Starting...' state immediately after POST, then transitions to step progress when WebSocket updates arrive"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "Workflow Commander",
+      "Workflow Execution UI"
+    ],
+    "affected_components": [
+      "client",
+      "frontend"
+    ],
+    "affected_requirements": [
+      "SC-2",
+      "SC-3"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "60-90 min",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

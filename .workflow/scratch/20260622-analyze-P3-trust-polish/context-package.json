@@ -1,0 +1,48 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "analyze",
+    "artifact_id": "ANL-003",
+    "session_path": "scratch/20260622-analyze-P3-trust-polish/",
+    "generated_at": "2026-06-22T10:30:00+08:00"
+  },
+  "requirements": [
+    {
+      "id": "REQ-007",
+      "title": "Approval Gate",
+      "acceptance": "文件修改类工作流步骤必须经过用户确认后才执行（内联面板，非 modal）；审批面板展示 diff 预览，高风险操作标红",
+      "ref": "roadmap.md"
+    }
+  ],
+  "constraints": [
+    {"area": "architecture", "status": "locked", "title": "GateManager 5 状态线性流转", "ref": "context.md#Locked"},
+    {"area": "frontend", "status": "locked", "title": "内联展开审批面板", "ref": "context.md#Locked"},
+    {"area": "architecture", "status": "locked", "title": "MAINT-002 SessionManager 基类提取", "ref": "context.md#Locked"},
+    {"area": "performance", "status": "locked", "title": "性能优化渐进交付 P0→P1→P2", "ref": "context.md#Locked"},
+    {"area": "architecture", "status": "locked", "title": "Diff 预览使用 Delegate dry-run", "ref": "context.md#Locked"},
+    {"area": "architecture", "status": "locked", "title": "所有写操作触发门控", "ref": "context.md#Locked"},
+    {"area": "frontend", "status": "open", "title": "审批面板 UI 样式细节", "ref": "context.md#Free"},
+    {"area": "architecture", "status": "open", "title": "SessionManager 泛型设计细节", "ref": "context.md#Free"},
+    {"area": "performance", "status": "open", "title": "P1/P2 优化实现细节", "ref": "context.md#Free"}
+  ],
+  "domain": {},
+  "non_goals": [
+    {"title": "用户可配置门控规则", "rationale": "推迟到 v0.4.0+", "ref": "context.md#Deferred"},
+    {"title": "审批历史记录", "rationale": "推迟到 v0.4.0+", "ref": "context.md#Deferred"},
+    {"title": "批量审批", "rationale": "推迟到 v0.4.0+", "ref": "context.md#Deferred"}
+  ],
+  "insights": [
+    {"role": "analyzer", "area": "architecture", "summary": "GateEvents/ApprovalGate 类型在 M1 阶段已预定义，显示架构前瞻性。GateManager 需从零构建但模式清晰（复用 EventBus + DelegateExecutor 模式）"},
+    {"role": "analyzer", "area": "platform", "summary": "Windows 兼容性有 3 个精确问题：SIGINT 失效、SHELL_WHITELIST 缺 wsl.exe、ConPTY resize 回环风险"},
+    {"role": "analyzer", "area": "performance", "summary": "4 个性能热点精确识别：33ms setInterval、EventBus 同步广播、WSGateway 重复序列化、客户端 polling"}
+  ],
+  "open_questions": [
+    {"area": "architecture", "question": "Dry-run CLI 输出格式是否满足 diff 预览需求？", "options": ["验证 --mode analysis 输出", "fallback 到命令预览"]},
+    {"area": "platform", "question": "ConPTY 兼容性修复是否需要 Windows 物理机测试？", "options": ["CI 中配置 Windows runner", "手动验证"]}
+  ],
+  "references": [
+    {"type": "analysis", "path": "context.md"},
+    {"type": "conclusions", "path": "conclusions.json"},
+    {"type": "exploration", "path": "exploration-codebase.json"}
+  ]
+}

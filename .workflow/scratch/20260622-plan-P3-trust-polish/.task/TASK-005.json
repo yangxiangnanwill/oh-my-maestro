@@ -1,0 +1,147 @@
+{
+  "id": "TASK-005",
+  "title": "P1 性能优化 + 翻译增强",
+  "description": "实施 P1 性能优化和翻译边缘情况修复：(1) TerminalManager throttle timer 改为动态启停 — 有数据活动时启动，空闲时停止，无终端活动时 CPU 接近 0；(2) WSGateway 预计算 JSON.stringify 复用 — 批量广播时同一消息只序列化一次；(3) 客户端连接状态从 500ms 轮询改为事件驱动 — 消除不必要的定时器开销；(4) TranslatorMiddleware.isDialogPayload() 收紧判断 — 防止 Gate payload（也含 sessionId 类字段）被错误跳过翻译；(5) translations.ts translateString() 修复复合词边界误替换 — 使用词边界正则确保完整匹配。",
+  "type": "feature",
+  "priority": "low",
+  "effort": "medium",
+  "action": "修改 src/lib/server/terminal-manager.ts — startFrameThrottle() 改为动态启停：throttle timer 仅在 buffer 非空时运行；在 pty.onData 回调中，如果 throttle timer 未启动则启动；在 throttle tick 中，如果连续 3 次（约 100ms）buffer 为空则清除 timer；添加 _throttleActive: boolean 和 _idleTicks: number 字段到 ActiveTerminal。修改 src/lib/server/ws-gateway.ts — broadcastEvent() 中预计算 JSON.stringify(message) 结果，循环内复用而非每个客户端重新序列化；对非翻译事件直接使用预序列化字符串。修改 src/lib/client/stores/index.ts — 移除 setInterval 轮询（第 23-35 行），改为在 wsClient 上注册 connected/mode 变更回调；WSClient 添加 onStateChange(callback: (state: { connected: boolean; mode: DisplayMode; clientId: string | null }) => void): () => void 方法 — 在 connected/mode/clientId 的 $state setter 中调用所有注册的回调，返回 unsubscribe 函数。修改 src/lib/server/translator.ts — isDialogPayload() 方法增加 payload.type 字段检查：只有当 payload 包含 StreamChunk 类型字段（'text'|'tool_use'|'tool_result'|'error'）或 intent 字段（workflowId/confidence）时才视为 Dialog payload；否则不跳过翻译。修改 src/lib/shared/translations.ts — translateString() 函数修复复合词边界问题：将正则替换从简单 \\b 改为负向前瞻/后顾确保不匹配复合词中的子串（如 'delegate' 不匹配 'delegate-executor' 中的部分）。",
+  "scope": "src/lib/server/terminal-manager.ts, src/lib/server/ws-gateway.ts, src/lib/client/stores/index.ts, src/lib/server/translator.ts, src/lib/shared/translations.ts",
+  "focus_paths": [
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/client/stores/index.ts",
+    "src/lib/server/translator.ts",
+    "src/lib/shared/translations.ts"
+  ],
+  "read_first": [
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/client/stores/index.ts",
+    "src/lib/client/services/ws-client.ts",
+    "src/lib/server/translator.ts",
+    "src/lib/shared/translations.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/shared/events.ts",
+    "src/lib/shared/__tests__/translator.test.ts"
+  ],
+  "depends_on": [
+    "TASK-003"
+  ],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "grep -r '_throttleActive' src/lib/server/terminal-manager.ts 返回至少 3 行（字段定义、启动设置、停止清除）",
+      "grep -r '_idleTicks' src/lib/server/terminal-manager.ts 返回至少 2 行（字段定义、递增/重置逻辑）",
+      "grep -r 'JSON.stringify' src/lib/server/ws-gateway.ts 返回 broadcastEvent() 中只有 1 次 stringify 调用（预计算复用）",
+      "grep -r 'setInterval' src/lib/client/stores/index.ts 返回 0 行（轮询已移除）",
+      "grep -r 'onStateChange' src/lib/client/stores/index.ts 返回至少 1 行（事件驱动回调注册）",
+      "grep -r \"payload.type === 'text'\" src/lib/server/translator.ts 返回 isDialogPayload() 中的类型检查",
+      "npx vitest run src/lib/shared/__tests__/translator.test.ts 全部通过，且测试套件包含复合词边界测试（如 'delegate-executor' 中的 'delegate' 不被替换）",
+      "npx vitest run src/lib/shared/__tests__/translator.test.ts 全部通过，且测试套件包含术语泄漏检测（grep -r 'maestro' 在 translated 输出中返回 0 行）"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts src/lib/server/__tests__/ws-gateway.test.ts src/lib/shared/__tests__/translator.test.ts && npx tsc --noEmit",
+    "definition_of_done": "无终端活动时 throttle timer 停止（CPU 接近 0），批量广播只序列化一次，客户端连接状态事件驱动（无轮询），Gate payload 不被错误跳过翻译，复合词不被误替换"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "modify",
+      "target": "ActiveTerminal interface and startFrameThrottle()",
+      "change": "添加 _throttleActive 和 _idleTicks 字段；throttle 改为动态启停"
+    },
+    {
+      "path": "src/lib/server/ws-gateway.ts",
+      "action": "modify",
+      "target": "broadcastEvent()",
+      "change": "预计算 JSON.stringify 复用，循环内直接使用预序列化字符串"
+    },
+    {
+      "path": "src/lib/client/stores/index.ts",
+      "action": "modify",
+      "target": "connectionState polling (lines 23-35)",
+      "change": "移除 setInterval 轮询，改为事件驱动回调"
+    },
+    {
+      "path": "src/lib/server/translator.ts",
+      "action": "modify",
+      "target": "isDialogPayload()",
+      "change": "增加 payload.type 字段检查，收紧 Dialog payload 识别"
+    },
+    {
+      "path": "src/lib/shared/translations.ts",
+      "action": "modify",
+      "target": "translateString()",
+      "change": "修复复合词边界误替换正则"
+    }
+  ],
+  "implementation": [
+    "修改 TerminalManager ActiveTerminal 接口 — 添加 _throttleActive: boolean 和 _idleTicks: number 字段",
+    "修改 startFrameThrottle() — 初始化 _throttleActive = true, _idleTicks = 0；throttle tick 中如果 buffer 为空则 _idleTicks++，>= 3 时 clearInterval 并设置 _throttleActive = false",
+    "修改 pty.onData 回调 — 数据到达时如果 !_throttleActive 则重新启动 throttle timer，重置 _idleTicks = 0",
+    "修改 WSGateway.broadcastEvent() — 在循环前调用 JSON.stringify(message) 存入 preSerialized 变量；循环内对非翻译事件使用 ws.send(preSerialized)；翻译事件仍需按客户端单独序列化",
+    "修改 src/lib/client/stores/index.ts — 删除第 23-35 行的 setInterval 轮询代码",
+    "在 WSClient 类中添加 onStateChange(callback: (state: { connected: boolean; mode: DisplayMode; clientId: string | null }) => void) 方法",
+    "在 stores/index.ts 中调用 wsClient.onStateChange() 替代轮询，回调中直接 connectionWritable.set()",
+    "修改 TranslatorMiddleware.isDialogPayload() — 在 sessionId 检查基础上增加：payload.type 必须是 'text'|'tool_use'|'tool_result'|'error' 之一，或 payload 包含 workflowId/confidence 字段",
+    "修改 translations.ts translateString() — 将 replace 正则从 new RegExp(`\\\\b${term}\\\\b`, 'g') 改为使用负向前瞻/后顾确保不匹配复合词中的子串",
+    "在 translator.test.ts 中添加 isDialogPayload 收紧测试 — Gate payload 不应被识别为 Dialog payload",
+    "在 translator.test.ts 中添加复合词边界测试 — 'delegate-executor' 中的 'delegate' 不应被替换"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts",
+      "npx vitest run src/lib/server/__tests__/ws-gateway.test.ts",
+      "npx vitest run src/lib/shared/__tests__/translator.test.ts",
+      "npx tsc --noEmit"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/terminal-manager.test.ts",
+      "src/lib/server/__tests__/ws-gateway.test.ts",
+      "src/lib/shared/__tests__/translator.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "throttle 动态启停测试通过 — 空闲 3 个 tick 后 timer 停止，新数据到达后重启",
+      "预序列化优化不影响现有广播测试",
+      "translator 测试全部通过 — 包含新增的边界情况测试",
+      "TypeScript 编译零错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Follow existing throttle pattern in terminal-manager.ts, existing broadcast pattern in ws-gateway.ts, existing translateString pattern in translations.ts",
+    "files": [
+      "src/lib/server/terminal-manager.ts",
+      "src/lib/server/ws-gateway.ts",
+      "src/lib/client/stores/index.ts",
+      "src/lib/server/translator.ts",
+      "src/lib/shared/translations.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "P1 优化在 P0 基础上渐进叠加 — throttle 动态启停减少空闲 CPU 消耗，预序列化减少 GC 压力，事件驱动消除轮询开销。翻译修复针对已识别的两个边缘情况（isDialogPayload 过于宽松、复合词边界误替换）。",
+    "decision_factors": [
+      "throttle 动态启停是低成本高收益优化 — 空闲时完全停止 timer",
+      "预序列化在广播场景（多客户端同一消息）中效果显著",
+      "500ms 轮询在空闲时造成不必要的 CPU 唤醒",
+      "isDialogPayload 的 sessionId 检查过于宽松 — Gate payload 也包含 gateId 类字段",
+      "复合词边界问题在 'delegate-executor' 等场景中会导致错误翻译"
+    ],
+    "tradeoffs": "throttle 动态启停增加了状态管理复杂度（_throttleActive + _idleTicks），但收益（空闲 CPU 接近 0）值得。事件驱动连接状态需要 WSClient 支持回调注册。"
+  },
+  "risks": [
+    "throttle 动态启停可能在频繁启停场景（快速输入）中造成抖动 — _idleTicks >= 3 的阈值提供缓冲",
+    "WSClient.onStateChange 需要修改 ws-client.ts — 如果 ws-client.ts 结构不支持回调，可能需要调整方案"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "2h",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 3,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

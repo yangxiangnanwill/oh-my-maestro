@@ -1,0 +1,69 @@
+PURPOSE: Implement task TASK-003: DialogManager — Claude Code CLI subprocess management + NDJSON streaming + intent routing; success = all convergence criteria pass
+TASK: Create src/lib/server/dialog-manager.ts with DialogManager class | Modify src/lib/shared/types.ts to add StreamChunk and IntentResult types | Create src/lib/server/__tests__/dialog-manager.test.ts with 8 test cases | Read existing code first | Verify convergence criteria after changes
+MODE: write
+CONTEXT: @src/lib/server/delegate-executor.ts @src/lib/server/event-bus.ts @src/lib/shared/events.ts @src/lib/shared/types.ts @src/lib/server/index.ts @src/lib/server/ws-gateway.ts
+EXPECTED: Working DialogManager class + passing tests, all convergence criteria verified, summary of what was done
+CONSTRAINTS: Scope limited to task files | Follow project specs | Reuse DelegateExecutor spawn/parseLine/emitEvent pattern | NDJSON protocol for Claude Code CLI | Max 5 concurrent sessions | SpawnFn DI pattern
+
+## Task Definition
+
+**Scope**: src/lib/server | **Action**: Create DialogManager: Claude Code CLI subprocess management, NDJSON streaming parse, intent recognition routing, 5 session limit, spawnFn DI
+
+### Files
+- src/lib/server/dialog-manager.ts: Create DialogManager: Claude Code CLI subprocess management, NDJSON streaming parse, intent recognition routing, 5 session limit, spawnFn DI
+- src/lib/shared/types.ts: Add StreamChunk interface: { type: text|tool_use|tool_result|error; content: string; timestamp: string }. Add IntentResult interface: { workflowId: string|null; confidence: number; candidates: Array<{workflowId: string; score: number}> }. Add IntentCandidate interface: { workflowId: string; score: number }.
+- src/lib/server/__tests__/dialog-manager.test.ts: Mock child_process.spawn and workflowRegistry. Tests: createSession emits SESSION_CREATED, sendMessage starts CLI and emits STREAM_CHUNK, intent confidence >= 80% direct route, 50-80% disambiguation list, max sessions enforce, closeSession emits SESSION_CLOSED
+
+### Read First
+- src/lib/server/delegate-executor.ts
+- src/lib/server/event-bus.ts
+- src/lib/shared/events.ts
+- src/lib/shared/types.ts
+- src/lib/server/index.ts
+- src/lib/server/ws-gateway.ts
+
+### Implementation Steps
+1. Create src/lib/server/dialog-manager.ts. Import { spawn, ChildProcess } from node:child_process. Import { EventBus } from ./event-bus.js. Import { DialogSession, WorkflowMeta, StreamChunk, IntentResult } from ../shared/types.js. Import { Channels, DialogEvents } from ../shared/events.js. Define SpawnFn type: (command: string, args?: readonly string[], options?: Parameters<typeof spawn>[2]) => ChildProcess (compatible with node:child_process.spawn full signature).
+2. Define local types. StreamChunk: { type: text | tool_use | tool_result | error; content: string; timestamp: string }. IntentResult: { workflowId: string | null; confidence: number; candidates: Array<{ workflowId: string; score: number }> }. IntentCandidate: { workflowId: string; score: number }. ActiveDialog: { process: ChildProcess | null; session: DialogSession; buffer: string }.
+3. Implement DialogManager class. Constructor signature: constructor(private eventBus: EventBus, private spawnFn: SpawnFn = spawn, private workflowRegistry: WorkflowMeta[] = []). Private members: private sessions = new Map(), private sessionCounter = 0, private readonly MAX_SESSIONS = 5.
+4. Implement createSession(clientId: string): DialogSession. Check this.sessions.size >= this.MAX_SESSIONS, throw Error if so. Generate sessionId = dialog-{++this.sessionCounter}-{Date.now()}. Create DialogSession: { sessionId, cliProcessId: null, createdAt: new Date().toISOString(), lastActivityAt: new Date().toISOString(), status: active }. Store to sessions. Emit SESSION_CREATED: this.eventBus.publish(DialogEvents.SESSION_CREATED, Channels.DIALOG, { sessionId, clientId, session }, server). Return session.
+5. Implement sendMessage(sessionId: string, message: string): void. Get activeDialog, throw Error if not found. Update lastActivityAt. If process is null, call this.spawnClaudeCLI(sessionId) to start. Write message + newline to activeDialog.process.stdin. Call this.detectIntent(message) for intent recognition.
+6. Implement spawnClaudeCLI(sessionId: string): ChildProcess. const childProcess = this.spawnFn(claude, [--output-format, stream-json, --verbose]). Store to sessions process field. Set stdout data handler: split by lines, call parseChunk to parse, emitStreamChunk to emit. Set stderr handler: log error. Set exit handler: update session.status to closed, emit SESSION_CLOSED: this.eventBus.publish(DialogEvents.SESSION_CLOSED, Channels.DIALOG, { sessionId, exitCode: code }, server). Return childProcess.
+7. Implement parseChunk(line: string): StreamChunk | null. Trim then return null if empty. try JSON.parse. Validate type field in [text, tool_use, tool_result, error]. Return { type: parsed.type, content: parsed.content ?? parsed.text ?? , timestamp: parsed.timestamp ?? new Date().toISOString() }. catch return null.
+8. Implement emitStreamChunk(sessionId: string, chunk: StreamChunk): void. this.eventBus.publish(DialogEvents.STREAM_CHUNK, Channels.DIALOG, { sessionId, ...chunk }, server).
+9. Implement detectIntent(message: string): IntentResult. If workflowRegistry is empty return { workflowId: null, confidence: 0, candidates: [] }. For each workflow compute keyword match score: (1) check if message contains workflow.name (case-insensitive) — +0.5; (2) check if contains keywords from workflow.description — each match +0.1; (3) check if contains workflow.category — +0.2. Normalize scores to 0-1. Sort candidates. If top score >= 0.8: emit INTENT_ROUTED (workflowId = candidates[0].workflowId, confidence). If top score 0.5-0.8: emit INTENT_ROUTED (workflowId = null, confidence = top score, candidates = top 3). Return { workflowId: bestMatch?.workflowId ?? null, confidence: bestMatch?.score ?? 0, candidates: top 3 }.
+10. Implement closeSession(sessionId: string): void. Get activeDialog, silently return if not found. If process exists then process.kill(). Delete from sessions. Emit SESSION_CLOSED.
+11. Create src/lib/server/__tests__/dialog-manager.test.ts. Use vi.mock(node:child_process) mock spawn. Construct mock workflowRegistry: [{ id: test-build, name: build, category: deploy, description: build the project, params: [] }, { id: test-lint, name: lint, category: quality, description: run linter, params: [] }]. Tests: (1) createSession returns DialogSession and emits SESSION_CREATED; (2) createSession 6th call throws Error; (3) sendMessage first call starts CLI subprocess; (4) stdout NDJSON line emits STREAM_CHUNK; (5) detectIntent build this project computes confidence >= 0.8 for test-build and emits INTENT_ROUTED; (6) detectIntent do something confidence 0.5-0.8 emits INTENT_ROUTED with candidates; (7) detectIntent xyzzy confidence < 0.5 only streams output no INTENT_ROUTED; (8) closeSession kills subprocess and emits SESSION_CLOSED.
+
+### Convergence Criteria
+- src/lib/server/dialog-manager.ts contains export class DialogManager
+- DialogManager constructor accepts (eventBus: EventBus, spawnFn?: SpawnFn, workflowRegistry?: WorkflowMeta[]) params
+- createSession(clientId) returns DialogSession object (with sessionId, cliProcessId: null, createdAt, status: active)
+- createSession throws Error(Maximum dialog sessions (5) reached) when exceeding maxSessions=5
+- sendMessage(sessionId, message) starts CLI via spawnClaudeCLI if not started, then writes message to process.stdin
+- spawnClaudeCLI calls spawnFn(claude, [--output-format, stream-json, --verbose])
+- stdout line parsing: parseChunk parses NDJSON lines, extracts type/content/timestamp fields, invalid lines return null
+- STREAM_CHUNK event emission: eventBus.publish(DialogEvents.STREAM_CHUNK, Channels.DIALOG, { sessionId, type, content, timestamp }, server)
+- detectIntent(message) returns IntentResult object: { workflowId: string | null; confidence: number; candidates: { workflowId, score }[] }
+- confidence >= 0.8 emits DialogEvents.INTENT_ROUTED: { sessionId, workflowId, confidence }
+- confidence 0.5-0.8 emits same event with candidates disambiguation list: { sessionId, workflowId: null, confidence, candidates }
+- closeSession(sessionId) kills subprocess, deletes session, emits DialogEvents.SESSION_CLOSED
+- updateWorkflowRegistry(workflows: WorkflowMeta[]) updates internal workflowRegistry array
+- src/lib/server/__tests__/dialog-manager.test.ts exists and all tests pass
+
+### Reference
+- Pattern: DelegateExecutor spawn/parseLine/emitEvent three-stage pattern + SpawnFn DI + NDJSON line parsing. EventBus.publish(channel, type, payload, source) call signature.
+- Files: src/lib/server/delegate-executor.ts, src/lib/server/event-bus.ts, src/lib/shared/events.ts, src/lib/shared/types.ts
+
+## Phase Context
+- Goal: Phase 2 Interaction Surfaces: Terminal Bridge + AI Dialog + EventBus optimization + orchestration integration
+- Success criteria: DialogManager manages Claude Code CLI subprocesses, streams NDJSON output to EventBus, supports keyword-based intent recognition (>=80% direct route, 50-80% disambiguation list), max 5 concurrent sessions
+
+## Project Specs
+- ESM imports with .js extension
+- TypeScript strict mode
+- Vitest for testing (describe/it/expect/beforeEach)
+- Constructor injection (EventBus injected into DialogManager)
+- SpawnFn DI (DialogManager accepts optional spawn function for testing)
+- NDJSON line parsing (parseLine() returns null for invalid lines, stream-safe)
+- Follow existing code style: DelegateExecutor pattern

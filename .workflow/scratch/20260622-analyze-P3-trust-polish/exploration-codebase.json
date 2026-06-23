@@ -1,0 +1,538 @@
+{
+  "relevant_files": [
+    {
+      "path": "src/lib/server/index.ts",
+      "relevance": 1.0,
+      "rationale": "服务端入口，统领审批门控(GateEvents通道已定义)、性能(SIGINT处理仅Linux)、Windows兼容性(SIGINT无Win32备选)三个维度——是Phase 3三子任务的中央集成点和最大风险区",
+      "role": "integration_point",
+      "discovery_source": "cli-analysis",
+      "key_code": [
+        {
+          "symbol": "MaestroIDEServer.start()",
+          "location": "src/lib/server/index.ts:225-243",
+          "description": "启动HTTP/WS/StateSync。SIGINT处理器仅监听process.on('SIGINT',...)——Windows平台下SIGINT在非控制台进程中不被传递，导致优雅关闭完全失效"
+        },
+        {
+          "symbol": "MaestroIDEServer.stop()",
+          "location": "src/lib/server/index.ts:248-256",
+          "description": "优雅关闭链：terminalManager.destroyAll → dialogManager.closeAll → stateSync.stop → wsGateway.stop → httpServer.close → eventBus.clear。依赖SIGINT触发，Windows无该事件"
+        },
+        {
+          "symbol": "SIGINT handler (auto-start)",
+          "location": "src/lib/server/index.ts:269-273",
+          "description": "仅注册SIGINT监听，无SIGTERM/SIGBREAK备选；无process.on('exit')兜底；无Windows PowerShell Ctrl+C(sc- key)处理"
+        },
+        {
+          "symbol": "server.setupRoutes() - POST /api/workflows/execute",
+          "location": "src/lib/server/index.ts:92-100",
+          "description": "工作流执行入口——直接调用delegateExecutor.execute()，无审批门控拦截。Phase 3需在此插入gate:pending检查"
+        }
+      ],
+      "topic_relation": "Phase 3 Trust & Polish的核心集成点：(1)审批门控需在/api/workflows/execute路由前插入Gate拦截层；(2)性能优化需评估33ms SetInterval替代方案；(3)Windows兼容性需添加SIGBREAK/exit兜底处理"
+    },
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "relevance": 1.0,
+      "rationale": "PTY终端管理核心——包含Phase 3全部三个关注点：Windows ConPTY兼容性(win32 shell路径、SHELL_WHITELIST)、性能(33ms setInterval帧节流)、以及间接的审批门控(与DialogManager共享41%的session管理代码模式)",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "TerminalManager.createTerminal() - Windows shell detection",
+          "location": "src/lib/server/terminal-manager.ts:114",
+          "description": "process.platform === 'win32' 分支选择powershell.exe——但未处理ConPTY特有的resize事件延迟、PTY退出码映射、以及win32下SIGINT→PTY的信号传递"
+        },
+        {
+          "symbol": "SHELL_WHITELIST",
+          "location": "src/lib/server/terminal-manager.ts:41-50",
+          "description": "白名单包含powershell.exe/cmd.exe/pwsh.exe/bash/zsh/sh/fish/dash——但缺少wsl.exe(Windows Subsystem for Linux常用入口)"
+        },
+        {
+          "symbol": "TerminalManager.startFrameThrottle()",
+          "location": "src/lib/server/terminal-manager.ts:261-295",
+          "description": "33ms(约30fps)setInterval帧节流——每帧通过EventBus发布term:output事件。高频输出场景下可能产生每秒~30次EventBus.publish调用，缺乏backpressure机制"
+        },
+        {
+          "symbol": "TerminalManager.MAX_SESSIONS = 5",
+          "location": "src/lib/server/terminal-manager.ts:64",
+          "description": "硬编码最大PTY会话数=5，与DialogManager.MAX_SESSIONS=5重复定义——Phase 3建议提取到共享配置"
+        },
+        {
+          "symbol": "MAINT-002 TODO comment",
+          "location": "src/lib/server/terminal-manager.ts:59",
+          "description": "PR #cedbf89添加的技术债务标记：与DialogManager共享~40% session CRUD模式，建议Phase 3提取泛型SessionManager<T>基类"
+        }
+      ],
+      "topic_relation": "Phase 3三个子任务均涉及：(1)ConPTY兼容需要win32特殊处理和shell白名单扩展；(2)33ms setInterval是主要性能热点；(3)SessionManager基类提取减少与DialogManager的代码重复(~40%)"
+    },
+    {
+      "path": "src/lib/shared/events.ts",
+      "relevance": 0.95,
+      "rationale": "事件类型定义——GateEvents通道(PENDING/RESOLVED/APPROVED/REJECTED)已定义但无任何实现消费，是审批门控的接口契约层。Channels.GATE通道已声明但无生产者/消费者",
+      "role": "type_definition",
+      "discovery_source": "cli-analysis",
+      "key_code": [
+        {
+          "symbol": "GateEvents",
+          "location": "src/lib/shared/events.ts:49-51",
+          "description": "审批门控事件类型完整定义：PENDING/RESOLVED/APPROVED/REJECTED——但整个代码库中无任何模块发布或订阅这些事件"
+        },
+        {
+          "symbol": "Channels.GATE",
+          "location": "src/lib/shared/events.ts:9",
+          "description": "GATE通道常量已声明但未被任何WS客户端订阅(ws-client.ts subscribe列表仅包含WORKFLOW/PROJECT/DIALOG/TERMINAL/STATE)"
+        }
+      ],
+      "topic_relation": "审批门控的核心事件契约已就绪但无实现——Phase 3需要补齐GateManager模块订阅并发布GateEvents"
+    },
+    {
+      "path": "src/lib/shared/types.ts",
+      "relevance": 0.9,
+      "rationale": "类型定义层——ApprovalGate接口(diff/dryRunResult/gateId/executionId)已完整定义但零使用。StateSyncEvent/DelegateEvent的字段覆盖直接影响数据流准确性",
+      "role": "type_definition",
+      "discovery_source": "cli-analysis",
+      "key_code": [
+        {
+          "symbol": "ApprovalGate interface",
+          "location": "src/lib/shared/types.ts:87-97",
+          "description": "包含gateId/executionId/stepIndex/status(GateStatus)/diff?/dryRunResult?/createdAt/resolvedAt——完整的审批门控数据模型但无任何代码引用"
+        },
+        {
+          "symbol": "GateStatus type",
+          "location": "src/lib/shared/types.ts:7",
+          "description": "'pending'|'presented'|'approved'|'rejected'|'expired'——五种状态完整但与GateEvents的映射关系需要定义"
+        }
+      ],
+      "topic_relation": "ApprovalGate类型已完整定义，Phase 3审批门控实现可直接使用——核心缺的是GateManager模块和/api/workflows/execute的拦截逻辑"
+    },
+    {
+      "path": "src/lib/server/event-bus.ts",
+      "relevance": 0.9,
+      "rationale": "EventBus是Phase 3性能优化的核心瓶颈点——高频率事件(terminal output每33ms一次)通过同步publish→遍历所有wildcard+type-specific subscribers。WSGateway.onAny()订阅所有事件并逐个广播，缺乏批处理和backpressure",
+      "role": "modify_target",
+      "discovery_source": "dependency-trace",
+      "key_code": [
+        {
+          "symbol": "EventBus.publish()",
+          "location": "src/lib/server/event-bus.ts:59-102",
+          "description": "同步调用：每次publish遍历type-specific subcribers + wildcard subscribers。高频事件下(terminal每33ms)产生大量同步迭代"
+        },
+        {
+          "symbol": "EventBus.MAX_HISTORY = 1000",
+          "location": "src/lib/server/event-bus.ts:26",
+          "description": "事件历史上限1000条——与StateSyncEngine.maxBufferSize=500和TerminalManager.RING_BUFFER_CAPACITY=1000不一致"
+        },
+        {
+          "symbol": "EventBus.getSubscriberCount()",
+          "location": "src/lib/server/event-bus.ts:125-135",
+          "description": "提供订阅者统计但无任何模块调用——可用于性能监控但未被集成"
+        }
+      ],
+      "topic_relation": "Phase 3性能优化需评估：(1)EventBus批处理发布(合并同一帧内事件)；(2)WSGateway广播时按channel过滤避免全量wildcard；(3)历史容量统一"
+    },
+    {
+      "path": "src/lib/server/ws-gateway.ts",
+      "relevance": 0.9,
+      "rationale": "WebSocket网关——每收到一个EventBus事件(onAny订阅)就对所有subscribedClients逐个遍历并调用translator.translate()。高频terminal output时成为CPU热点",
+      "role": "modify_target",
+      "discovery_source": "dependency-trace",
+      "key_code": [
+        {
+          "symbol": "WSGateway.broadcastEvent()",
+          "location": "src/lib/server/ws-gateway.ts:124-145",
+          "description": "对每个client执行subscribe过滤+translator.translate翻译+JSON.stringify序列化+send——高频terminal output下每33ms对所有client执行此链路"
+        },
+        {
+          "symbol": "WSGateway.sendToClient() - bufferedAmount检查缺失",
+          "location": "src/lib/server/ws-gateway.ts:150-153",
+          "description": "仅在readyState===OPEN时发送，未检查ws.bufferedAmount——高频输出时可能导致客户端缓冲区堆积"
+        }
+      ],
+      "topic_relation": "Phase 3性能优化关键瓶颈：broadcastEvent对每个事件遍历所有client+translator翻译+JSON序列化——需批处理和bufferedAmount backpressure"
+    },
+    {
+      "path": "src/lib/server/translator.ts",
+      "relevance": 0.85,
+      "rationale": "翻译中间件——translatePayload()的label-like字段匹配(endsWith 'Name'/'Label'/'Title')和DIALOG payload会话ID检测(isDialogPayload检查sessionId)存在边缘情况风险。translateString()逐词替换性能与TRANSLATIONS数组线性查找O(n*m)",
+      "role": "modify_target",
+      "discovery_source": "cli-analysis",
+      "key_code": [
+        {
+          "symbol": "TranslatorMiddleware.shouldTranslateChannel()",
+          "location": "src/lib/server/translator.ts:46-48",
+          "description": "通道白名单仅检查Channels.DIALOG——Gate通道是否需要翻译取决于具体payload，当前无处理"
+        },
+        {
+          "symbol": "TranslatorMiddleware.isDialogPayload()",
+          "location": "src/lib/server/translator.ts:78-83",
+          "description": "通过检查payload.sessionId判断DIALOG payload——脆弱检测：任何包含sessionId字段的payload(包括未来的Gate payload)会被错误跳过翻译"
+        },
+        {
+          "symbol": "TranslatorMiddleware.translate()",
+          "location": "src/lib/server/translator.ts:58-71",
+          "description": "对每个client每次事件都执行translatePayload——缺少结果缓存。同一payload对多个同mode client重复计算"
+        }
+      ],
+      "topic_relation": "Phase 3需关注的翻译边缘情况：(1)isDialogPayload的sessionId检测过于宽松；(2)每client每事件重复翻译无缓存；(3)Gate通道翻译策略未定义"
+    },
+    {
+      "path": "src/lib/shared/translations.ts",
+      "relevance": 0.85,
+      "rationale": "翻译注册表——10条固定翻译+translatePayload()的字符串内嵌替换逐词遍历regex。hiddenInSimpleMode机制和alias替换的边界(full-word regex)可能在复合词场景失效",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "TRANSLATIONS registry",
+          "location": "src/lib/shared/translations.ts:22-103",
+          "description": "10条翻译：chain/skill/delegate/session/milestone/phase/artifact/analyze/plan/execute——覆盖core/technical/business三类。hiddenInSimpleMode字段控制简单模式完全隐藏"
+        },
+        {
+          "symbol": "translateString() regex replacement",
+          "location": "src/lib/shared/translations.ts:170-184",
+          "description": "使用\\b边界regex逐词替换——可能误替换复合词。例如'chain'→'Workflow'会错误替换'chain-link'为'Workflow-link'"
+        },
+        {
+          "symbol": "translatePayload() label detection",
+          "location": "src/lib/shared/translations.ts:145",
+          "description": "仅处理key以Name/Label/Title结尾或key==='description'的字段——其他包含术语的字段(如output/detail/summary)不会被翻译"
+        }
+      ],
+      "topic_relation": "Phase 3翻译覆盖度增强：(1)expand label-like字段检测范围；(2)修复复合词边界误替换；(3)增加术语覆盖率(当前仅10条)"
+    },
+    {
+      "path": "src/lib/client/components/WorkflowCommander.svelte",
+      "relevance": 0.85,
+      "rationale": "工作流执行UI——executeWorkflow()直接POST到/api/workflows/execute无任何确认拦截。是审批门控前端交互的插入点",
+      "role": "modify_target",
+      "discovery_source": "cli-analysis",
+      "key_code": [
+        {
+          "symbol": "WorkflowCommander.executeWorkflow()",
+          "location": "src/lib/client/components/WorkflowCommander.svelte:33-48",
+          "description": "直接POST /api/workflows/execute——无确认弹窗、diff预览、dry-run选择。Phase 3需在此插入审批门控UI(确认对话框+diff展示)"
+        },
+        {
+          "symbol": "getDisplayName()",
+          "location": "src/lib/client/components/WorkflowCommander.svelte:68-70",
+          "description": "使用item.translatedName??item.name获取显示名——但未使用shared/translations.ts的translate函数，仅依赖服务端翻译后的payload"
+        }
+      ],
+      "topic_relation": "审批门控前端交互的插入点：executeWorkflow()需先触发门控确认(展示diff/参数预览)再实际执行"
+    },
+    {
+      "path": "src/lib/server/state-sync.ts",
+      "relevance": 0.8,
+      "rationale": "状态同步引擎——100ms debounce处理文件系统事件，500条maxBufferSize。in-process事件和filesystem事件双源合并的准确性依赖event type匹配",
+      "role": "pattern_reference",
+      "discovery_source": "cli-analysis",
+      "key_code": [
+        {
+          "symbol": "StateSyncEngine.maxBufferSize = 500",
+          "location": "src/lib/server/state-sync.ts:24",
+          "description": "与EventBus.maxHistory=1000不一致——状态同步buffer仅500条而EventBus历史1000条"
+        },
+        {
+          "symbol": "StateSyncEngine.debounceMs = 100",
+          "location": "src/lib/server/state-sync.ts:27",
+          "description": "文件系统事件debounce 100ms——与TerminalManager的THROTTLE_MS=33ms不一致"
+        },
+        {
+          "symbol": "StateSyncEngine.emitInProcessEvent()",
+          "location": "src/lib/server/state-sync.ts:73-91",
+          "description": "将in-process事件的executionId提取到StateSyncEvent——但仅当payload.executionId为string时才提取，数字类型executionId会被丢失"
+        }
+      ],
+      "topic_relation": "Phase 3准确性：(1)统一各模块的buffer/history容量常量；(2)executionId类型兼容性(number→string)；(3)debounce时间与其他模块协调"
+    },
+    {
+      "path": "src/lib/client/stores/index.ts",
+      "relevance": 0.8,
+      "rationale": "前端状态管理——500ms setInterval轮询WSClient连接状态(event-bus/ws-gateway没有推送连接状态变化的机制需polling)。DelegateEvent到WorkflowExecution的累积逻辑是状态同步准确性的客户端侧",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "connectionState syncInterval (500ms polling)",
+          "location": "src/lib/client/stores/index.ts:25-34",
+          "description": "每500ms通过setInterval检查wsClient.isConnected——当多标签页或快速重连时可能延迟最多500ms检测状态变化。建议改为事件驱动"
+        },
+        {
+          "symbol": "DelegateEvent → WorkflowExecution accumulation",
+          "location": "src/lib/client/stores/index.ts:98-175",
+          "description": "将DelegateEvent(stream)累积为WorkflowExecution对象——包含STEP_STATUS_MAP映射和terminal status保护逻辑。这是状态同步准确性的客户端侧核心"
+        },
+        {
+          "symbol": "STEP_STATUS_MAP",
+          "location": "src/lib/client/stores/index.ts:137-142",
+          "description": "queued→pending, started→running, completed→complete, failed→failed——与DelegateExecutor的DELEGATE_TO_WORKFLOW_EVENT映射不一致"
+        }
+      ],
+      "topic_relation": "Phase 3性能：(1)500ms polling改为事件驱动连接状态；(2)STEP_STATUS_MAP与服务器端映射一致性审核"
+    },
+    {
+      "path": "src/lib/server/delegate-executor.ts",
+      "relevance": 0.8,
+      "rationale": "Delegate执行器——spawn('maestro',['delegate',...])子进程管理。是审批门控的拦截点(dry-run或--mode write需门控确认)",
+      "role": "modify_target",
+      "discovery_source": "dependency-trace",
+      "key_code": [
+        {
+          "symbol": "DelegateExecutor.execute() - spawn args",
+          "location": "src/lib/server/delegate-executor.ts:60-67",
+          "description": "硬编码spawn('maestro',['delegate',prompt,'--to',tool,'--mode','write'])。审批门控需在execute前检查gate状态，dry-run模式需--mode analysis"
+        },
+        {
+          "symbol": "DelegateExecutor.parseLine()",
+          "location": "src/lib/server/delegate-executor.ts:144-163",
+          "description": "NDJSON逐行解析DelegateEvent——不完整行(跨chunk)被直接丢弃。与DialogManager.parseChunk()的行缓冲对比，DelegateExecutor缺少不完整行缓存"
+        }
+      ],
+      "topic_relation": "审批门控的拦截点和NDJSON解析鲁棒性——execute()需在spawn前插入gate检查，parseLine()需补全行缓冲"
+    },
+    {
+      "path": "src/lib/server/dialog-manager.ts",
+      "relevance": 0.75,
+      "rationale": "AI对话管理——MAINT-002标记与TerminalManager共享Session管理模式。intent routing机制可能与审批门控集成(用户意图→推荐workflow→触发gate确认)",
+      "role": "pattern_reference",
+      "discovery_source": "cli-analysis",
+      "key_code": [
+        {
+          "symbol": "MAINT-002 TODO comment",
+          "location": "src/lib/server/dialog-manager.ts:29",
+          "description": "与TerminalManager共享~40% session管理模式(CRUD+MAX_SESSIONS+EventBus集成)——Phase 3考虑提取泛型SessionManager<T>基类"
+        },
+        {
+          "symbol": "DialogManager.detectIntent() scoring",
+          "location": "src/lib/server/dialog-manager.ts:220-268",
+          "description": "关键词意图检测(name+0.5, category+0.2, descKeywords+0.1)——简单score相加可能导致score>1.0(已clamp)，但无词频归一化"
+        }
+      ],
+      "topic_relation": "Phase 3架构重构：(1)提取SessionManager基类；(2)Intent路由与审批门控联动(用户确认推荐workflow)"
+    },
+    {
+      "path": "src/lib/client/services/ws-client.ts",
+      "relevance": 0.7,
+      "rationale": "前端WebSocket客户端——exponential backoff重连(max 30s)。缺少bufferedAmount检查和GATE通道订阅",
+      "role": "dependency",
+      "discovery_source": "cli-analysis",
+      "key_code": [
+        {
+          "symbol": "WSClient.connect() - channel subscriptions",
+          "location": "src/lib/client/services/ws-client.ts:36-41",
+          "description": "订阅WORKFLOW/PROJECT/DIALOG/TERMINAL/STATE通道——未订阅GATE通道。Phase 3审批门控前端需要GATE通道事件"
+        },
+        {
+          "symbol": "WSClient.scheduleReconnect() exponential backoff",
+          "location": "src/lib/client/services/ws-client.ts:130-138",
+          "description": "重连延迟1000ms→2000ms→4000ms...→30000ms。clientId在重连后重置为新ID——无session恢复机制"
+        }
+      ],
+      "topic_relation": "Phase 3前端基础设施：(1)GATE通道订阅；(2)重连后state:reconnect恢复gate状态"
+    },
+    {
+      "path": "src/lib/server/cli-adapter.ts",
+      "relevance": 0.65,
+      "rationale": "CLI版本适配层——parseDelegateOutput直接throw on invalid JSON，与DelegateExecutor的try-catch解析不一致。版本检测使用child_process.exec(非流式)",
+      "role": "dependency",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "DefaultCLIAdapter.parseDelegateOutput()",
+          "location": "src/lib/server/cli-adapter.ts:48-64",
+          "description": "直接throw on invalid JSON——与DelegateExecutor.parseLine()的try-catch+null返回不一致，错误处理策略不统一"
+        }
+      ],
+      "topic_relation": "Phase 3代码一致性和错误处理统一"
+    },
+    {
+      "path": "src/lib/client/components/TerminalBridge.svelte",
+      "relevance": 0.65,
+      "rationale": "前端xterm.js终端组件——Ctrl+C通过attachCustomKeyEventHandler发送ETX(0x03)。ResizeObserver触发fitAddon.fit()和服务器端resizeTerminal()",
+      "role": "integration_point",
+      "discovery_source": "cli-analysis",
+      "key_code": [
+        {
+          "symbol": "TerminalBridge Ctrl+C handler",
+          "location": "src/lib/client/components/TerminalBridge.svelte:81-92",
+          "description": "用户Ctrl+C时发送\x03(ETX)到PTY——Windows ConPTY下ETX可能不触发SIGINT，需验证conhost行为"
+        }
+      ],
+      "topic_relation": "Phase 3 Windows兼容性——验证Ctrl+C在ConPTY下的信号传递行为"
+    },
+    {
+      "path": "src/lib/server/__tests__/terminal-manager.test.ts",
+      "relevance": 0.7,
+      "rationale": "TerminalManager测试——覆盖create/write/resize/destroy/ringbuffer/EventBus集成。使用vi.useFakeTimers()精确控制33ms节流。缺少Windows特定测试",
+      "role": "test_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Test pattern: vi.useFakeTimers() + vi.advanceTimersByTime(33)",
+          "location": "src/lib/server/__tests__/terminal-manager.test.ts:80,167",
+          "description": "使用vitest fake timers精确控制33ms帧节流——测试模式可直接复用于Phase 3性能测试"
+        },
+        {
+          "symbol": "createMockPty() pattern",
+          "location": "src/lib/server/__tests__/terminal-manager.test.ts:26-57",
+          "description": "Mock PTY工厂模式：dataListeners/exitListeners数组+calls记录——可复用为Phase 3 ConPTY兼容测试的mock基础"
+        }
+      ],
+      "topic_relation": "Phase 3测试参考——现有测试覆盖度高(vitest+fake timers)，可直接扩展Windows兼容性测试"
+    },
+    {
+      "path": "src/lib/server/__tests__/event-bus.test.ts",
+      "relevance": 0.6,
+      "rationale": "EventBus测试——覆盖publish/subscribe/unsubscribe/wildcard/history/error isolation。缺少性能基准测试(吞吐量/延迟)",
+      "role": "test_target",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "src/lib/server/__tests__/state-sync.test.ts",
+      "relevance": 0.6,
+      "rationale": "StateSyncEngine测试——覆盖debounce/event buffer/watcher lifecycle。显式使用vi.mock('chokidar')模式",
+      "role": "test_target",
+      "discovery_source": "bash-scan"
+    }
+  ],
+  "call_chains": [
+    {
+      "entry": "WorkflowCommander.svelte: executeWorkflow()",
+      "path": [
+        "WorkflowCommander.svelte:33-48 → fetch POST /api/workflows/execute",
+        "server/index.ts:92-100 → POST /api/workflows/execute → delegateExecutor.execute(workflowId, params)",
+        "delegate-executor.ts:50-67 → execute() → spawnFn('maestro',['delegate',prompt,'--to',tool,'--mode','write'])",
+        "delegate-executor.ts:79-87 → stdout.on('data') → parseLine() → emitEvent() → eventBus.publish(WorkflowEvents.*)"
+      ],
+      "description": "工作流执行链路：前端fetch → Hono路由 → DelegateExecutor.spawn → NDJSON stdout解析 → EventBus发布 → StateSyncEngine/WSGateway广播。当前无审批门控拦截点——Phase 3需在路由层(delegateExecutor.execute前)插入GateManager.checkAndPresentGate()"
+    },
+    {
+      "entry": "TerminalManager.createTerminal() → startFrameThrottle()",
+      "path": [
+        "terminal-manager.ts:149 → startFrameThrottle(terminalId, pty) → pty.onData(accumulate to buffer)",
+        "terminal-manager.ts:271-294 → setInterval(33ms) → buffer.join → eventBus.publish(TerminalEvents.OUTPUT)",
+        "event-bus.ts:59-102 → publish() → notify type-specific subscribers + wildcard subscribers",
+        "ws-gateway.ts:81-83 → eventBus.onAny((payload,event) → broadcastEvent(event) → for each client → translator.translate → JSON.stringify → ws.send",
+        "terminal-bridge.svelte:212-213 → wsClient.on(Channels.TERMINAL, OUTPUT) → xterm.write(data)"
+      ],
+      "description": "终端输出帧节流完整链路：PTY onData累积buffer→33ms setInterval flush→EventBus.publish→WSGateway.broadcastEvent逐个client遍历+翻译+序列化→WS发送→前端xterm.write。性能热点在WSGateway.broadcastEvent：每33ms对所有subscribed clients执行translator.translate+JSON.stringify"
+    },
+    {
+      "entry": "WSGateway.broadcastEvent() → TranslatorMiddleware.translate()",
+      "path": [
+        "ws-gateway.ts:124-145 → for each client → check subscribedChannels → translator.translate(payload, client.id)",
+        "translator.ts:58-71 → isDialogPayload(payload) → getClientMode(clientId) → translatePayload(payload, mode)",
+        "translations.ts:135-164 → translatePayload → for each [key,value] → label-like detection → translateString(value, mode)",
+        "translations.ts:170-184 → translateString → for each TRANSLATIONS entry → regex \\b replacement"
+      ],
+      "description": "翻译链路：每个事件×每个客户端都执行完整的translatePayload+translateString。translateString逐项遍历TRANSLATIONS(10条)并使用regex替换——复杂度O(events × clients × translations × string_length)。Phase 3需：(1)缓存同mode同payload翻译结果；(2)预编译regex"
+    },
+    {
+      "entry": "server/index.ts SIGINT handler",
+      "path": [
+        "index.ts:269 → process.on('SIGINT', () => { server.stop(); process.exit(0); })",
+        "index.ts:248-256 → stop() → terminalManager.destroyAll() → dialogManager.closeAll() → stateSync.stop() → wsGateway.stop() → httpServer.close() → eventBus.clear()"
+      ],
+      "description": "优雅关闭链路仅依赖SIGINT——Windows下：(1)非控制台进程(如VSCode集成终端)SIGINT不传递；(2)Ctrl+C在VSCode终端发送SIGBREAK而非SIGINT；(3)无process.on('exit')兜底。Phase 3需添加SIGBREAK监听到Windows兼容"
+    },
+    {
+      "entry": "StateSyncEngine: in-process event → state:sync publish",
+      "path": [
+        "state-sync.ts:40-48 → eventBus.subscribe('workflow:step-update', callback) → emitInProcessEvent()",
+        "state-sync.ts:73-91 → emitInProcessEvent() → create StateSyncEvent(id,source:'in-process',type,payload,executionId) → bufferEvent() → eventBus.publish('state:sync')",
+        "event-bus.ts:59-102 → publish('state:sync',Channels.STATE,{event:syncEvent}) → notify subscribers + wildcard(WSGateway.onAny)",
+        "ws-gateway.ts:124-145 → broadcastEvent → for each client subscribed to 'state' → translator.translate → send",
+        "stores/index.ts:84-94 → wsClient.on(Channels.STATE, handler) → extract event.payload → projectState.set(state)"
+      ],
+      "description": "状态同步完整链路：工作流事件→StateSyncEngine转发为state:sync→EventBus→WSGateway→前端store更新。executionId类型兼容性(仅string类型被提取)需审核"
+    }
+  ],
+  "data_flows": [
+    {
+      "from": "DelegateExecutor (server)",
+      "to": "WorkflowCommander (client)",
+      "through": "DelegateExecutor.parseLine() → eventBus.publish(WorkflowEvents.*) → StateSyncEngine → eventBus.publish('state:sync') → WSGateway.broadcastEvent → wsClient → stores.activeWorkflows",
+      "description": "工作流执行状态流：Delegate executor子进程NDJSON输出→DelegateEvent→EventBus→StateSyncEngine双源(标注source:'in-process')→WSGateway广播→前端stores累积为WorkflowExecution。缺失环节：无Gate拦截(审批门控)"
+    },
+    {
+      "from": "TerminalManager (server)",
+      "to": "TerminalBridge (client)",
+      "through": "PTY.onData → buffer accumulation → 33ms setInterval flush → eventBus.publish(term:output) → WSGateway.broadcastEvent → wsClient → TerminalBridge.handleTermOutput → xterm.write",
+      "description": "终端输出数据流：PTY→33ms帧buffer→EventBus→WSGateway逐client广播→前端xterm.write。反方向(input)：TerminalBridge key event→wsClient.send(term:input)→EventBus→TerminalManager constructor订阅→pty.write"
+    },
+    {
+      "from": "DialogManager (server)",
+      "to": "AIDialog (client)",
+      "through": "spawn('claude',['--output-format','stream-json']) → stdout NDJSON → parseChunk → eventBus.publish(DialogEvents.STREAM_CHUNK) → WSGateway.broadcastEvent → wsClient → stores.dialogMessages → AIDialog renderMarkdown",
+      "description": "AI对话流：Claude CLI子进程NDJSON stream→StreamChunk→EventBus→WSGateway→前端messages累积→marked渲染+DOMPurify sanitize。DIALOG payload被translator.isDialogPayload漏过(检查sessionId)"
+    },
+    {
+      "from": "StateSyncEngine filesystem watcher",
+      "to": "client stores",
+      "through": "chokidar.watch → handleFilesystemEvent(100ms debounce) → eventBus.publish('state:sync',Channels.STATE,{event:syncEvent}) → WSGateway → client stores",
+      "description": "文件系统变更流：chokidar监听→100ms debounce去重→EventBus→WSGateway→前端。注意事件体标注source:'filesystem'+externallyTriggered:true用于区分in-process事件"
+    }
+  ],
+  "code_anchors": [
+    {
+      "file": "src/lib/server/index.ts",
+      "lines": "225-277",
+      "snippet": "  async start(): Promise<void> {\n    await this.init();\n    // Start WebSocket gateway\n    this.wsGateway.start(this.options.wsPort);\n    // Start State Sync Engine\n    this.stateSync.start();\n    // Start HTTP server\n    this.httpServer = serve({\n      fetch: this.app.fetch,\n      port: this.options.httpPort,\n    });\n    console.log(\n      `[Maestro IDE] Server started — HTTP:${this.options.httpPort} WS:${this.options.wsPort}`\n    );\n  }\n  stop(): void {\n    this.terminalManager.destroyAll();\n    this.dialogManager.closeAll();\n    this.stateSync.stop();\n    this.wsGateway.stop();\n    this.httpServer?.close();\n    this.eventBus.clear();\n    console.log('[Maestro IDE] Server stopped');\n  }\n// ...\nif (import.meta.url === `file://${process.argv[1]}`) {\n  const server = new MaestroIDEServer({\n    httpPort: 3000,\n    wsPort: 3001,\n    watchPaths: process.env.MAESTRO_PROJECT_DIR\n      ? [process.env.MAESTRO_PROJECT_DIR + '/.workflow']\n      : [],\n  });\n  server.start().then(() => {\n    process.on('SIGINT', () => {\n      server.stop();\n      process.exit(0);\n    });\n  }).catch(err => {\n    console.error('[Maestro IDE] Failed to start:', err);\n    process.exit(1);\n  });\n}",
+      "finding": "Phase 3关键发现#1——Windows兼容性缺口：(1)第269行process.on('SIGINT')在Windows非控制台进程中不触发，需添加'beforeExit'/'SIGBREAK'/'SIGTERM'多事件监听；(2)第248行的stop()本身设计良好(完整资源清理链)但无法被Windows Ctrl+C触发；(3)缺少process.on('exit')兜底清理"
+    },
+    {
+      "file": "src/lib/server/terminal-manager.ts",
+      "lines": "114-128",
+      "snippet": "    const shell =\n      options?.shell ??\n      (process.platform === 'win32' ? 'powershell.exe' : (process.env.SHELL ?? '/bin/bash'));\n\n    // Validate shell against whitelist (extract filename to prevent path traversal)\n    const shellName = shell.split('/').pop()?.split('\\\\').pop() ?? shell;\n    if (!SHELL_WHITELIST.has(shellName)) {\n      throw new Error(\n        `Shell not allowed: ${shellName}. Allowed shells: ${[...SHELL_WHITELIST].join(', ')}`,\n      );\n    }\n\n    const pty = this.spawnPty(shell, [], {\n      name: 'xterm-256color',\n      cols,\n      rows,\n      cwd,\n    });",
+      "finding": "Phase 3关键发现#2——ConPTY兼容：(1)win32默认powershell.exe——但node-pty在Windows下使用ConPTY后端，需要验证PTY term name 'xterm-256color'是否与ConPTY兼容；(2)SHELL_WHITELIST缺少'wsl.exe'(Windows Subsystem for Linux常用入口)；(3)shellName提取的split('/').pop()?.split('\\\\').pop()逻辑在windows路径'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'时能正确提取'powershell.exe'"
+    },
+    {
+      "file": "src/lib/server/terminal-manager.ts",
+      "lines": "261-295",
+      "snippet": "  private startFrameThrottle(terminalId: string, pty: IPty): void {\n    const active = this.sessions.get(terminalId);\n    if (!active) return;\n\n    // Register PTY data listener — accumulates to buffer\n    pty.onData((data: string) => {\n      active.buffer.push(data);\n    });\n\n    // Set up throttle timer\n    active.throttleTimer = setInterval(() => {\n      if (active.buffer.length > 0) {\n        const combined = active.buffer.join('');\n        active.buffer = [];\n\n        // Emit OUTPUT event\n        this.eventBus.publish(\n          TerminalEvents.OUTPUT,\n          Channels.TERMINAL,\n          { terminalId, data: combined, timestamp: new Date().toISOString() },\n          'server',\n        );\n\n        // Append to ring buffer, evict oldest if at capacity\n        this.ringBuffer.push({\n          terminalId,\n          data: combined,\n          timestamp: new Date().toISOString(),\n        });\n        if (this.ringBuffer.length > this.RING_BUFFER_CAPACITY) {\n          this.ringBuffer.shift();\n        }\n      }\n    }, this.THROTTLE_MS);\n  }",
+      "finding": "Phase 3关键发现#3——性能热点：(1)33ms fixed-rate setInterval——即使buffer为空也保持timer活动(虽然空buffer直接return)；(2)高频输出时每33ms触发一次EventBus.publish→WSGateway.broadcastEvent→遍历所有client→translator.translate→JSON.stringify链路；(3)数据以full combined string传递(无分片)——大块输出可能在WS层触发内存压力"
+    },
+    {
+      "file": "src/lib/server/event-bus.ts",
+      "lines": "59-102",
+      "snippet": "  publish<T = unknown>(\n    type: EventType | string,\n    channel: string,\n    payload: T,\n    source: 'server' | 'client' = 'server'\n  ): InternalEvent<T> {\n    const event: InternalEvent<T> = {\n      id: `evt-${++this.eventCounter}-${Date.now()}`,\n      type,\n      channel,\n      payload,\n      timestamp: new Date().toISOString(),\n      source,\n    };\n\n    // Store in history\n    this.history.push(event as InternalEvent);\n    if (this.history.length > this.maxHistory) {\n      this.history = this.history.slice(-this.maxHistory);\n    }\n\n    // Notify type-specific subscribers\n    const subs = this.subscribers.get(type);\n    if (subs) {\n      for (const cb of subs) {\n        try {\n          cb(payload, event as InternalEvent);\n        } catch (err) {\n          console.error(`[EventBus] Error in subscriber for ${type}:`, err);\n        }\n      }\n    }\n\n    // Notify wildcard subscribers\n    for (const cb of this.wildcardSubscribers) {\n      try {\n        cb(payload, event as InternalEvent);\n      } catch (err) {\n        console.error(`[EventBus] Error in wildcard subscriber:`, err);\n      }\n    }\n\n    return event;\n  }",
+      "finding": "Phase 3关键发现#4——EventBus同步发布瓶颈：(1)每次publish同步遍历所有wildcard subscribers——WSGateway.onAny()订阅所有事件，高频terminal output(每33ms)导致每帧对WSGateway全量触发；(2)history.slice(-this.maxHistory)每次创建新数组copy——1000条limit下频繁slice产生GC压力；(3)无批量发布机制——建议引入microtask batch合并同一事件循环内多次publish"
+    },
+    {
+      "file": "src/lib/server/ws-gateway.ts",
+      "lines": "124-153",
+      "snippet": "  private broadcastEvent(event: InternalEvent): void {\n    for (const client of this.clients.values()) {\n      const message: WSMessage = {\n        channel: event.channel,\n        type: event.type,\n        payload: event.payload,\n        timestamp: event.timestamp,\n      };\n\n      if (client.subscribedChannels.has(event.channel) || client.subscribedChannels.has('*')) {\n        // Apply translation for this client\n        if (typeof event.payload === 'object' && event.payload !== null) {\n          const { translated } = this.translator.translate(\n            event.payload as Record<string, unknown>,\n            client.id\n          );\n          message.payload = translated;\n        }\n        this.sendToClient(client, message);\n      }\n    }\n  }\n  private sendToClient(client: ClientConnection, message: WSMessage): void {\n    if (client.ws.readyState === WebSocket.OPEN) {\n      client.ws.send(JSON.stringify(message));\n    }\n  }",
+      "finding": "Phase 3关键发现#5——WSGateway广播性能：(1)N个client时每个事件执行N次translator.translate+JSON.stringify——translator未缓存结果导致相同payload对不同client重复翻译；(2)sendToClient未检查ws.bufferedAmount——高频输出可能导致backpressure堆积；(3)无事件批处理——多个同一帧内事件各自触发完整广播循环"
+    },
+    {
+      "file": "src/lib/shared/translations.ts",
+      "lines": "170-184",
+      "snippet": "function translateString(str: string, mode: DisplayMode): string {\n  let result = str;\n  for (const entry of TRANSLATIONS) {\n    const termsToReplace = [entry.term, ...entry.aliases];\n    for (const term of termsToReplace) {\n      // Replace whole-word occurrences\n      const regex = new RegExp(`\\\\b${term}\\\\b`, 'g');\n      const replacement = mode === 'simple'\n        ? (entry.hiddenInSimpleMode ? 'Processing' : entry.simpleLabel)\n        : entry.advancedLabel;\n      result = result.replace(regex, replacement);\n    }\n  }\n  return result;\n}",
+      "finding": "Phase 3关键发现#6——翻译性能与正确性：(1)每次translateString调用创建与TRANSLATIONS×aliases数量相等的新RegExp——应在加载时预编译；(2)逐个entry顺序替换可能导致替换链错序(如'chain'先替换为'Workflow'，然后'Workflow'被后续规则误匹配)；(3)translatePayload仅检测key以Name/Label/Title结尾——其他字段类型中嵌入的术语(name/summary/detail/comment等)不会被翻译"
+    },
+    {
+      "file": "src/lib/shared/events.ts",
+      "lines": "1-11,48-54",
+      "snippet": "export const Channels = {\n  WORKFLOW: 'workflow',\n  PROJECT: 'project',\n  DIALOG: 'dialog',\n  TERMINAL: 'terminal',\n  GATE: 'gate',\n  STATE: 'state',\n} as const;\n// ...\nexport const GateEvents = {\n  PENDING: 'gate:pending',\n  RESOLVED: 'gate:resolved',\n  APPROVED: 'gate:approved',\n  REJECTED: 'gate:rejected',\n} as const;",
+      "finding": "Phase 3关键发现#7——审批门控接口已定义但无实现：(1)Channels.GATE和GateEvents完整定义了事件契约(5个事件类型：PENDING/RESOLVED/APPROVED/REJECTED)和GateStatus(5种状态：pending/presented/approved/rejected/expired)；(2)整个代码库零发布零订阅——GateEvents从未被任何模块使用；(3)Phase 3需创建GateManager+前端GateDialog组件"
+    },
+    {
+      "file": "src/lib/server/translator.ts",
+      "lines": "78-83,46-48",
+      "snippet": "  private isDialogPayload(payload: Record<string, unknown>): boolean {\n    // Stream chunk: { sessionId, type: 'text'|'tool_use'|..., content }\n    // Intent routed: { sessionId, workflowId, confidence }\n    // Session created/closed: { sessionId, ... }\n    return typeof payload.sessionId === 'string';\n  }\n  shouldTranslateChannel(channel: string): boolean {\n    return channel !== Channels.DIALOG;\n  }",
+      "finding": "Phase 3关键发现#8——翻译边缘情况：(1)isDialogPayload通过检查sessionId字段判断是否为DIALOG payload——过于宽松：任何包含sessionId的payload(包括未来的Gate payload可能携带sessionId)会被错误跳过翻译；(2)shouldTranslateChannel仅白名单DIALOG为跳过通道——GATE通道翻译策略未定义；(3)translate()每client每事件执行无缓存优化"
+    },
+    {
+      "file": "src/lib/client/stores/index.ts",
+      "lines": "98-175",
+      "snippet": "wsClient.on(Channels.WORKFLOW, (message) => {\n  if (message.type === 'workflow:step-update') {\n    const event = (message.payload as unknown) as DelegateEvent;\n    const { executionId, type, stepIndex, stepName, output, timestamp } = event;\n    let execution = executionMap.get(executionId);\n    if (!execution) {\n      execution = {\n        id: executionId, workflowId: '', params: {},\n        status: 'running' as WorkflowStatus, steps: [],\n        startedAt: timestamp, completedAt: null,\n      };\n    }\n    if (execution.status !== 'completed' && execution.status !== 'failed' && execution.status !== 'cancelled') {\n      switch (type) {\n        case 'queued': case 'started': execution.status = 'running'; break;\n        case 'completed': execution.status = 'completed'; execution.completedAt = timestamp; break;\n        case 'failed': execution.status = 'failed'; execution.completedAt = timestamp; break;\n      }\n    }\n    if (stepIndex !== undefined && stepName !== undefined) {\n      const STEP_STATUS_MAP: Record<string, StepStatus> = {\n        queued: 'pending', started: 'running', completed: 'complete', failed: 'failed',\n      };\n      const step: ExecutionStep = {\n        index: stepIndex, name: stepName, status: STEP_STATUS_MAP[type] ?? 'pending',\n        output, startedAt: timestamp, completedAt: timestamp,\n      };\n      const existingIdx = execution.steps.findIndex((s) => s.index === stepIndex);\n      if (existingIdx >= 0) { execution.steps[existingIdx] = step; }\n      else { execution.steps.push(step); }\n    }\n    executionMap.set(executionId, execution);\n    activeWorkflows.update((workflows) => { /* ... */ });\n  }\n});",
+      "finding": "Phase 3关键发现#9——客户端状态累积：(1)DelegateEvent流累积为WorkflowExecution——terminal status保护(completed/failed/cancelled不覆盖)防止out-of-order事件；(2)STEP_STATUS_MAP仅在组件内定义，与服务器端DELEGATE_TO_WORKFLOW_EVENT映射语义不同(delegate:queued→workflow:execution-started, delegate:completed→workflow:execution-completed)——step的status映射与execution的status映射使用不同逻辑；(3)executionMap无大小限制——长期运行可能内存泄漏"
+    },
+    {
+      "file": "src/lib/shared/types.ts",
+      "lines": "87-97",
+      "snippet": "export interface ApprovalGate {\n  gateId: string;\n  executionId: string;\n  stepIndex: number;\n  status: GateStatus;\n  diff?: string;\n  dryRunResult?: string;\n  createdAt: string;\n  resolvedAt: string | null;\n}",
+      "finding": "Phase 3关键发现#10——Gate数据模型已就绪：(1)ApprovalGate包含完整的门控数据结构(diff/dryRunResult)；(2)GateStatus五态(pending→presented→approved/rejected/expired)是标准workflow；(3)当前零代码引用——所有实现需要Phase 3从零构建(GateManager+GateDialog+路由拦截)"
+    }
+  ]
+}

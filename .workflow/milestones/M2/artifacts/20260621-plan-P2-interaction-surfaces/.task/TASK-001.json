@@ -1,0 +1,140 @@
+{
+  "id": "TASK-001",
+  "title": "TerminalManager — node-pty PTY 会话管理 + 帧节流 + 环形缓冲区",
+  "description": "创建 TerminalManager 服务端模块：使用 node-pty 管理 PTY 会话生命周期（create/resize/write/destroy），通过 EventBus 的 TerminalEvents channel 发射 ANSI 输出事件。PTY 输出做 33ms 帧节流（≈30fps），终端事件使用独立环形缓冲区（容量 1000）而非 EventBus 线性历史。限制最多 5 个并发会话。构造器接受 EventBus + 可选的 spawn 函数用于测试注入。",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "创建 src/lib/server/terminal-manager.ts，包含 TerminalManager 类。构造器签名：constructor(eventBus: EventBus, spawnPty?: (file: string, args: string[], options: { name: string; cols: number; rows: number; cwd: string }) => IPty)。方法：createTerminal(terminalId: string, options: { cwd?: string; cols?: number; rows?: number; shell?: string }): TerminalSession —— 创建 PTY 进程，存储会话，启动帧节流器，发射 TerminalEvents.CREATED。方法：writeToTerminal(terminalId: string, data: string): void —— 写入 PTY 标准输入。方法：resizeTerminal(terminalId: string, cols: number, rows: number): void —— 调整 PTY 窗口大小，发射 TerminalEvents.RESIZE。方法：destroyTerminal(terminalId: string): void —— 杀死 PTY 进程，清理资源，发射 TerminalEvents.EXIT。私有方法：startFrameThrottle(terminalId: string, pty: IPty): void —— 33ms setInterval 累积输出缓冲区，flush 时发射 TerminalEvents.OUTPUT 到 EventBus（channel: Channels.TERMINAL）。私有成员：sessions Map<string, { pty: IPty; session: TerminalSession; buffer: string[]; throttleTimer: ReturnType<typeof setInterval> }>。私有成员：ringBuffer TerminalOutputEntry[]（容量 1000，push 时 shift 最旧条目）。私有成员：maxSessions = 5。",
+  "status": "completed",
+  "completed_at": "2026-06-21T18:50:00+08:00",
+  "actual_duration": "50 min",
+  "scope": "src/lib/server",
+  "focus_paths": [
+    "src/lib/server/terminal-manager.ts"
+  ],
+  "read_first": [
+    "src/lib/server/event-bus.ts",
+    "src/lib/shared/events.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/server/delegate-executor.ts",
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/server/index.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave1-server",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/server/terminal-manager.ts 包含 'export class TerminalManager'",
+      "TerminalManager 构造器接受 (eventBus: EventBus, spawnPty?) 参数",
+      "createTerminal(terminalId, options) 调用 node-pty spawn 并返回 TerminalSession 对象（含 terminalId, ptyPid, cwd, cols, rows, status: 'running'）",
+      "createTerminal 超过 maxSessions=5 时抛出 Error('Maximum terminal sessions (5) reached')",
+      "PTY data 事件处理器累积输出到缓冲区，33ms setInterval flush 时发射 TerminalEvents.OUTPUT 到 EventBus（channel: 'terminal', type: 'term:output'）",
+      "EventBus.publish 调用签名：eventBus.publish(TerminalEvents.OUTPUT, Channels.TERMINAL, { terminalId, data: string, timestamp }, 'server')",
+      "writeToTerminal(terminalId, data) 调用 pty.write(data)",
+      "resizeTerminal(terminalId, cols, rows) 调用 pty.resize(cols, rows) 并发射 TerminalEvents.RESIZE",
+      "destroyTerminal(terminalId) 杀死 PTY 进程、清除 throttle timer、删除 session、发射 TerminalEvents.EXIT",
+      "destroyTerminal 对不存在的 terminalId 静默无操作（不抛异常）",
+      "ringBuffer 为 TerminalOutputEntry[]（{ terminalId, data, timestamp }），push 时若 length >= 1000 则 shift()",
+      "TerminalManager 构造器中订阅 EventBus Channels.TERMINAL 的 term:input 事件：grep 'subscribe.*Channels.TERMINAL' src/lib/server/terminal-manager.ts 返回匹配，grep 'TerminalEvents.INPUT' src/lib/server/terminal-manager.ts 返回匹配",
+      "src/lib/server/__tests__/terminal-manager.test.ts 存在且所有测试通过"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts",
+    "definition_of_done": "TerminalManager 可通过 node-pty 创建/写入/调整大小/销毁 PTY 会话，输出经 33ms 帧节流后发射到 EventBus，事件历史存储在独立环形缓冲区（容量 1000），最多 5 个并发会话"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "create",
+      "target": "TerminalManager class",
+      "change": "创建 TerminalManager：PTY spawn 管理、33ms 帧节流、环形缓冲区、会话生命周期（create/write/resize/destroy）、5 会话上限"
+    },
+    {
+      "path": "src/lib/server/__tests__/terminal-manager.test.ts",
+      "action": "create",
+      "target": "TerminalManager unit tests",
+      "change": "Mock node-pty spawn 返回 EventEmitter-based IPty。测试：create PTY emits CREATED、data emits OUTPUT per throttle、max sessions enforced、resize emits RESIZE、destroy emits EXIT、ring buffer evicts oldest at 1000"
+    }
+  ],
+  "implementation": [
+    "创建 src/lib/server/terminal-manager.ts。导入 { IPty, spawn as ptySpawn } from 'node-pty'。导入 { EventBus } from './event-bus.js'。导入 { TerminalSession, TerminalStatus } from '../shared/types.js'。导入 { Channels, TerminalEvents } from '../shared/events.js'。",
+    "定义 TerminalOutputEntry 接口：{ terminalId: string; data: string; timestamp: string }。",
+    "定义 ActiveTerminal 接口（内部）：{ pty: IPty; session: TerminalSession; buffer: string[]; throttleTimer: ReturnType<typeof setInterval> | null }。",
+    "定义 SpawnPtyFn 类型：(file: string, args: string[], options: { name: string; cols: number; rows: number; cwd: string }) => IPty。",
+    "实现 TerminalManager 类。构造器签名：constructor(private eventBus: EventBus, private spawnPty: SpawnPtyFn = ptySpawn)。私有成员：private sessions = new Map<string, ActiveTerminal>()。私有成员：private ringBuffer: TerminalOutputEntry[] = []。私有成员：private readonly MAX_SESSIONS = 5。私有成员：private readonly THROTTLE_MS = 33。在构造器中订阅 EventBus 的 term:input 事件：this.eventBus.subscribe(Channels.TERMINAL, (event) => { if (event.type === TerminalEvents.INPUT) { this.writeToTerminal(event.payload.terminalId, event.payload.data); } })，确保 WebSocket 路径的终端输入能到达 PTY。",
+    "实现 createTerminal(terminalId: string, options?: { cwd?: string; cols?: number; rows?: number; shell?: string }): TerminalSession。检查 this.sessions.size >= this.MAX_SESSIONS，是则抛 Error。解析默认值：cwd = options?.cwd ?? process.cwd()，cols = options?.cols ?? 80，rows = options?.rows ?? 24，shell = options?.shell ?? (process.platform === 'win32' ? 'powershell.exe' : process.env.SHELL ?? '/bin/bash')。调用 this.spawnPty(shell, [], { name: 'xterm-256color', cols, rows, cwd })。创建 TerminalSession：{ terminalId, ptyPid: pty.pid, cwd, cols, rows, status: 'running' }。调用 this.startFrameThrottle(terminalId, pty)。存储到 this.sessions。发射 TerminalEvents.CREATED：this.eventBus.publish(TerminalEvents.CREATED, Channels.TERMINAL, { terminalId, session }, 'server')。返回 session。",
+    "实现 writeToTerminal(terminalId: string, data: string): void。从 this.sessions 获取 activeTerminal。若不存在则静默返回。调用 activeTerminal.pty.write(data)。发射 TerminalEvents.INPUT：this.eventBus.publish(TerminalEvents.INPUT, Channels.TERMINAL, { terminalId, data, timestamp: new Date().toISOString() }, 'server')。",
+    "实现 resizeTerminal(terminalId: string, cols: number, rows: number): void。获取 activeTerminal，不存在则静默返回。调用 activeTerminal.pty.resize(cols, rows)。更新 session.cols、session.rows。发射 TerminalEvents.RESIZE。",
+    "实现 destroyTerminal(terminalId: string): void。获取 activeTerminal，不存在则静默返回。清除 throttleTimer（clearInterval）。调用 activeTerminal.pty.kill()。从 this.sessions 删除。发射 TerminalEvents.EXIT：this.eventBus.publish(TerminalEvents.EXIT, Channels.TERMINAL, { terminalId, exitCode: null, timestamp: new Date().toISOString() }, 'server')。",
+    "实现私有 startFrameThrottle(terminalId: string, pty: IPty): void。获取 activeTerminal。设置 pty.onData((data: string) => { activeTerminal.buffer.push(data); })。创建 throttleTimer = setInterval(() => { 若 buffer 非空：合并 buffer.join('')，发射 this.eventBus.publish(TerminalEvents.OUTPUT, Channels.TERMINAL, { terminalId, data: combined, timestamp: new Date().toISOString() }, 'server')，追加到 this.ringBuffer（若 length >= 1000 则 shift），清空 buffer。}, this.THROTTLE_MS)。存储到 activeTerminal.throttleTimer。",
+    "创建 src/lib/server/__tests__/terminal-manager.test.ts。Mock node-pty spawn：返回 { pid: 12345, write: vi.fn(), resize: vi.fn(), kill: vi.fn(), onData: vi.fn() }。使用真实 EventBus 实例。测试：(1) createTerminal 返回 TerminalSession 并发射 CREATED；(2) createTerminal 第 6 次调用抛 Error；(3) data 回调累积到缓冲区，33ms 后 flush 发射 OUTPUT；(4) writeToTerminal 调用 pty.write；(5) resizeTerminal 调用 pty.resize 并更新 cols/rows；(6) destroyTerminal 调用 pty.kill 并发射 EXIT；(7) ringBuffer push 超过 1000 条时 shift 最旧条目；(8) destroyTerminal 后 writeToTerminal 静默无操作；(9) throttle timer 在 destroy 时清除。"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/terminal-manager.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "所有 9 个测试用例通过",
+      "src/lib/server/terminal-manager.ts 无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "DelegateExecutor 的构造函数注入模式（eventBus + spawnFn），以及 emitEvent 的 EventBus.publish(channel, type, payload, source) 调用签名",
+    "files": [
+      "src/lib/server/delegate-executor.ts",
+      "src/lib/server/event-bus.ts",
+      "src/lib/shared/events.ts",
+      "src/lib/shared/types.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "在每个 PTY 会话内部使用 setInterval 做帧节流（而非全局节流），确保每个终端独立节流且生命周期绑定。环形缓冲区仅在 OUTPUT flush 时追加，避免高频 data 事件撑爆内存。maxSessions=5 在 createTerminal 时 enforce，fail-fast 优于静默限制。",
+    "decision_factors": [
+      "C-4 约束：PTY 输出必须 33ms 帧节流",
+      "C-7 约束：终端事件使用独立环形缓冲区",
+      "自由选择：多会话上限 5（MVP）",
+      "DelegateExecutor DI 模式已在代码库验证"
+    ],
+    "tradeoffs": "setInterval 不如 requestAnimationFrame 精确，但服务端无 DOM API；33ms 略有延迟但对终端显示可接受（人眼感知阈值 ~50ms）"
+  },
+  "risks": [
+    {
+      "risk": "node-pty Windows ConPTY 兼容性问题（SIGINT 不可靠、resize 错误）",
+      "mitigation": "Phase 3 统一处理 Windows 兼容；当前 destroyTerminal 用 pty.kill() 而非 SIGTSTP，resize 错误捕获后静默恢复"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "Terminal Bridge",
+      "PTY Management",
+      "Frame Throttle"
+    ],
+    "affected_components": [
+      "server"
+    ],
+    "affected_requirements": [
+      "REQ-004"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "90-120 min",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

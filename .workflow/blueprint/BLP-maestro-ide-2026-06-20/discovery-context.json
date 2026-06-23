@@ -1,0 +1,48 @@
+{
+  "session_id": "BLP-maestro-ide-2026-06-20",
+  "codebase_exploration": {
+    "source_repo": "D:/WorkSpace/Source/maestro-flow",
+    "tech_stack": {
+      "runtime": "Node.js",
+      "language": "TypeScript",
+      "framework": ["Hono (HTTP)", "Ink (CLI TUI)", "Commander (CLI)"],
+      "database": ["SQLite (better-sqlite3)", "PostgreSQL (pg + drizzle-orm)"],
+      "realtime": "ws (WebSocket)",
+      "mcp": "@modelcontextprotocol/sdk",
+      "ai": "@anthropic-ai/claude-agent-sdk",
+      "watcher": "chokidar"
+    },
+    "relevant_modules": {
+      "cli.ts": "CLI 入口，命令注册",
+      "commands/": "所有 CLI 命令实现",
+      "ralph/": "Ralph 生命周期引擎（核心编排）",
+      "coordinator/": "任务协调器",
+      "services/": "业务服务层",
+      "routes/": "HTTP API 路由（Hono）",
+      "mcp/": "MCP 服务器实现",
+      "core/": "核心工具函数",
+      "graph/": "知识图谱",
+      "db/": "数据库层",
+      "hooks/": "钩子系统",
+      "i18n/": "国际化"
+    },
+    "key_binaries": ["maestro (主CLI)", "maestro-mcp (MCP服务器)", "maestro-statusline", "maestro-context-monitor"],
+    "integration_points": [
+      "maestro ralph skills --json --quiet → 结构化命令目录",
+      "maestro delegate → 分派外部 AI 工具",
+      "maestro search → 知识搜索",
+      "maestro spec load → 规格加载",
+      "maestro kg search/context → 知识图谱查询",
+      "WebSocket routes → 实时状态推送已有基础",
+      "Hono HTTP routes → REST API 已有基础"
+    ],
+    "patterns": [
+      "CLI-first architecture with HTTP/MCP secondary",
+      "Event-driven state management via chokidar file watcher",
+      "Adapter pattern for CLI output parsing",
+      "Session-based workflow execution tracking"
+    ]
+  },
+  "upstream_loaded": true,
+  "phase1_completed_at": "2026-06-20T20:40:00+08:00"
+}

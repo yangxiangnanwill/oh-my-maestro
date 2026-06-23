@@ -1,0 +1,146 @@
+{
+  "id": "TASK-002",
+  "title": "TerminalBridge 前端面板 — xterm.js 集成 + 多会话 Tab + 双模式显示",
+  "description": "创建 TerminalBridge.svelte 组件：嵌入 xterm.js 终端，支持多会话 Tab 切换、简单/高级模式切换、PTY 输入转发、窗口 resize 同步。组件通过 WSClient 订阅 TERMINAL channel 事件，将 ANSI 输出写入 xterm.js。简单模式下（displayMode='simple'），对输出做注释化处理（可通过 Translator 概念替换）。高级模式下显示原始 ANSI 输出。复用 WorkflowCommander 的样式模式（Catppuccin Mocha 主题）。",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "创建 src/lib/client/components/TerminalBridge.svelte。使用 Svelte 5 runes：$state 管理 terminals 数组（{ id, name, status }）、activeTerminalId、displayMode。$effect 生命周期：创建 xterm.js Terminal 实例（options: { cursorBlink: true, fontSize: 13, fontFamily: 'JetBrains Mono, monospace', theme: { background: '#1e1e2e', foreground: '#cdd6f4', cursor: '#f5e0dc' }, cols: 80, rows: 24 }），使用 FitAddon 自适应容器尺寸。通过 WSClient 发送 'term:input' 消息（channel: 'terminal', type: 'term:input', payload: { terminalId, data }）。监听 'term:output' 消息写入 xterm.write(data)。监听 'term:exit' 更新会话状态。监听 'term:created' 添加到会话列表。支持多会话 Tab：最多 5 个标签页，每个标签页关联一个 xterm.js 实例。支持 Ctrl+C 快捷键（向 PTY 写入 \\x03）。resize 时触发 FitAddon.fit() 并发送 resize 消息（payload: { terminalId, cols, rows }）。displayMode 控制是否对输出应用概念翻译（从 stores 读取 displayMode store）。",
+  "status": "completed",
+  "completed_at": "2026-06-21T18:55:00+08:00",
+  "actual_duration": "30 min",
+  "scope": "src/lib/client/components",
+  "focus_paths": [
+    "src/lib/client/components/TerminalBridge.svelte"
+  ],
+  "read_first": [
+    "src/lib/client/components/WorkflowCommander.svelte",
+    "src/lib/client/stores/index.ts",
+    "src/lib/client/services/ws-client.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/shared/events.ts"
+  ],
+  "depends_on": [
+    "TASK-001"
+  ],
+  "wave": 2,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/client/components/TerminalBridge.svelte 包含 '<script lang=\"ts\">' 和 Svelte 5 $state/$effect runes",
+      "组件创建 xterm.js Terminal 实例：new Terminal({ cursorBlink: true, fontSize: 13, fontFamily: 'JetBrains Mono, monospace', theme: { background: '#1e1e2e', foreground: '#cdd6f4' } })",
+      "Terminal.open() 挂载到 DOM 容器元素（通过 bind:this 或 document.getElementById）",
+      "使用 FitAddon：const fitAddon = new FitAddon(); terminal.loadAddon(fitAddon); fitAddon.fit()",
+      "组件监听 WSClient TERMINAL channel 事件：wsClient.on(Channels.TERMINAL, handler) 并在 $effect 返回 cleanup 取消订阅",
+      "term:output 事件处理：调用 terminal.write(event.payload.data)",
+      "用户键盘输入转发：terminal.onData((data) => { wsClient.send({ channel: Channels.TERMINAL, type: 'term:input', payload: { terminalId: activeTerminalId, data }, timestamp }) })",
+      "终端 resize 同步：ResizeObserver 或 window resize 事件触发 fitAddon.fit() 并发送 resize 消息（payload: { terminalId, cols: terminal.cols, rows: terminal.rows }）",
+      "多会话 Tab UI：grep 'terminal-tab' src/lib/client/components/TerminalBridge.svelte 返回匹配，grep 'terminals.length' src/lib/client/components/TerminalBridge.svelte 返回匹配",
+      "会话上限 5：创建新终端按钮在 terminals.length >= 5 时 disabled",
+      "displayMode 切换：当 $displayMode === 'simple' 时，在 xterm.js 输出上方添加注释化标签层（可选：通过 CSS overlay），高级模式显示原始输出",
+      "Ctrl+C 快捷键：terminal.attachCustomKeyEventHandler 或全局 keydown 监听，发送 \\x03 到当前终端",
+      "组件样式遵循 Catppuccin Mocha 主题：grep -cE '#1e1e2e|#313244|#45475a|#cdd6f4' src/lib/client/components/TerminalBridge.svelte 返回 >= 4"
+    ],
+    "verification": "运行应用（npm run dev），打开浏览器 DevTools 确认：(1) 嵌入终端渲染正常，(2) 键盘输入转发到服务端，(3) Tab 切换正常，(4) resize 同步正常",
+    "definition_of_done": "TerminalBridge 组件嵌入 xterm.js 终端，支持多会话 Tab 切换（上限 5），键盘输入通过 WebSocket 转发到服务端 PTY，ANSI 输出实时渲染，窗口 resize 自动同步，简单/高级模式可切换"
+  },
+  "files": [
+    {
+      "path": "src/lib/client/components/TerminalBridge.svelte",
+      "action": "create",
+      "target": "TerminalBridge Svelte 5 component",
+      "change": "创建集成 xterm.js + FitAddon 的终端面板组件，包含多会话 Tab、输入转发、resize 同步、双模式显示"
+    },
+    {
+      "path": "src/lib/client/stores/index.ts",
+      "action": "modify",
+      "target": "stores/index.ts — 添加 TERMINAL channel 事件监听 + terminalSessions store",
+      "change": "添加 terminalSessions writable store，订阅 Channels.TERMINAL 事件，累积 term:created/term:output/term:exit 事件到 store"
+    }
+  ],
+  "implementation": [
+    "安装 npm 依赖：npm install @xterm/xterm @xterm/addon-fit",
+    "导入：import { Terminal } from '@xterm/xterm'; import { FitAddon } from '@xterm/addon-fit'; import '@xterm/xterm/css/xterm.css'。导入 wsClient、displayMode store。导入 Channels、TerminalEvents。导入 TerminalSession 类型。",
+    "定义组件状态：let terminals = $state<Array<{ id: string; name: string; status: TerminalStatus; terminal: Terminal; fitAddon: FitAddon }>>([]); let activeTerminalId = $state<string | null>(null); let containerEl = $state<HTMLDivElement | null>(null);",
+    "实现 initTerminal(terminalId: string): { terminal: Terminal; fitAddon: FitAddon }：创建 Terminal({ cursorBlink: true, fontSize: 13, fontFamily: 'JetBrains Mono, monospace', theme: { background: '#1e1e2e', foreground: '#cdd6f4', cursor: '#f5e0dc', selectionBackground: '#585b70' }, cols: 80, rows: 24 })。创建 FitAddon()，terminal.loadAddon(fitAddon)。terminal.onData((data) => { wsClient.send({ channel: Channels.TERMINAL, type: TerminalEvents.INPUT, payload: { terminalId, data }, timestamp: new Date().toISOString() }) })。返回 { terminal, fitAddon }。",
+    "实现 createNewTerminal(): 向服务端发送创建终端消息：wsClient.send({ channel: Channels.TERMINAL, type: 'term:create', payload: { cwd: null, cols: 80, rows: 24 }, timestamp: new Date().toISOString() })。服务端响应 term:created 后触发事件处理。",
+    "实现 $effect setup 块：订阅 wsClient.on(Channels.TERMINAL, handler)。handler 处理：(a) term:created -> initTerminal + 挂载到 DOM + fitAddon.fit() + 添加到 terminals 数组 + 设为 activeTerminalId；(b) term:output -> 获取对应 terminal 实例调用 write()；(c) term:exit -> 更新 status 为 'exited'，关闭对应 terminal；(d) term:resize -> 调用 terminal.resize()。$effect 返回 cleanup 函数取消订阅。",
+    "实现 resize 处理：使用 ResizeObserver 监听 containerEl，回调中遍历所有 terminals 调用 fitAddon.fit()，对 active terminal 发送 resize 消息。",
+    "实现 Tab UI：div.terminal-tabs 包含 {#each terminals as t} button.terminal-tab（显示 t.name 和状态圆点），点击切换 activeTerminalId。创建按钮 '+' 在 terminals.length < 5 时可用。",
+    "实现双模式显示：simple 模式下，在 xterm.js 上方叠加一个半透明注释层（div.annotation-overlay），通过 CSS display 控制显示/隐藏。通过 $derived 读取 $displayMode。",
+    "实现 Ctrl+C 快捷键：terminal.attachCustomKeyEventHandler((e) => { if (e.ctrlKey && e.key === 'c' && e.type === 'keydown') { wsClient.send({ channel: Channels.TERMINAL, type: TerminalEvents.INPUT, payload: { terminalId: activeTerminalId, data: '\\x03' }, timestamp: new Date().toISOString() }); return false; } return true; })。",
+    "编写 CSS：遵循 Catppuccin Mocha 主题，复用 WorkflowCommander 的变量命名和间距模式。terminal-container 设置 flex: 1, overflow: hidden。xterm 元素设置 height: 100%。Tab 样式参考 WorkflowCommander 的 exec-tab 类。"
+  ],
+  "test": {
+    "commands": [
+      "npm run dev"
+    ],
+    "unit": [],
+    "integration": [
+      "手动验证：打开应用 -> 创建终端 -> 输入命令 -> 观察输出 -> 切换 Tab -> 切换模式 -> 测试 Ctrl+C"
+    ],
+    "success_metrics": [
+      "xterm.js 终端在页面中正确渲染",
+      "键盘输入经 WebSocket 转发后在 PTY 中执行",
+      "多 Tab 切换时终端状态保持独立",
+      "resize 后终端列数/行数正确同步",
+      "简单/高级模式切换后 UI 响应正确"
+    ]
+  },
+  "reference": {
+    "pattern": "WorkflowCommander.svelte 的 Svelte 5 runes 模式（$state, $derived, $effect）+ WSClient 事件订阅 + Catppuccin Mocha 样式主题",
+    "files": [
+      "src/lib/client/components/WorkflowCommander.svelte",
+      "src/lib/client/stores/index.ts",
+      "src/lib/client/services/ws-client.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "每个 Tab 独立持有 Terminal + FitAddon 实例，避免共享实例在切换时的 DOM 卸载/重新挂载复杂性。activeTerminalId 驱动 DOM 显示/隐藏（display: none/block）而非 destroy/recreate。双模式注释层用 CSS overlay 而非修改 xterm.js 输出内容（保持 ANSI 完整性）。",
+    "decision_factors": [
+      "xterm.js onData 回调只能绑定一次，每实例一个监听器",
+      "Svelte 5 $effect 的 cleanup 返回 unsubscribe 是已建立模式",
+      "Catppuccin Mocha 主题已在 WorkflowCommander 中验证"
+    ],
+    "tradeoffs": "5 个 Terminal 实例同时存在会占用 ~50MB 内存（每个 ~10MB），MVP 单用户可接受"
+  },
+  "risks": [
+    {
+      "risk": "xterm.js FitAddon 在容器 display:none 时 fit() 返回错误尺寸",
+      "mitigation": "Tab 切换时延迟 50ms 再调用 fitAddon.fit()，等待 DOM 重排完成"
+    },
+    {
+      "risk": "@xterm/xterm CSS 可能与项目全局样式冲突",
+      "mitigation": "使用 CSS Modules 或 scoped style，确认 xterm.css 在组件作用域内加载"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "Terminal Bridge UI",
+      "xterm.js Integration"
+    ],
+    "affected_components": [
+      "client"
+    ],
+    "affected_requirements": [
+      "REQ-004"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "90-120 min",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

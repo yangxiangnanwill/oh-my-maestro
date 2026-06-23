@@ -1,0 +1,107 @@
+{
+  "id": "TASK-005",
+  "title": "修复 AIDialog.svelte XSS 防护 — 用 DOMPurify 替代手写正则",
+  "description": "修复 SEC-005：AIDialog.svelte:43 sanitizeHtml 使用手写正则进行 HTML 过滤，存在多种 XSS 绕过向量（无引号属性、HTML 实体编码、SVG/IMG 标签等）。修复方案：用 DOMPurify 替代手写正则，同时移除 sanitizeHtml 函数，直接在 renderMarkdown 中对 marked 输出调用 DOMPurify.sanitize()。",
+  "issue_id": "SEC-005",
+  "issue_refs": [],
+  "type": "bugfix",
+  "priority": "high",
+  "effort": "small",
+  "action": "添加 dompurify 依赖（npm install dompurify @types/dompurify）；在 AIDialog.svelte 中 import DOMPurify from 'dompurify'；删除 sanitizeHtml 函数（第 41-48 行）；修改 renderMarkdown 函数使用 DOMPurify.sanitize(marked.parse(...)) 替代 sanitizeHtml()",
+  "status": "completed",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/lib/client/components/AIDialog.svelte + package.json",
+  "focus_paths": [
+    "src/lib/client/components/AIDialog.svelte",
+    "package.json"
+  ],
+  "read_first": [
+    "src/lib/client/components/AIDialog.svelte",
+    "package.json"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n \"dompurify\" package.json 返回匹配行（依赖已添加）",
+      "grep -n \"import DOMPurify\" src/lib/client/components/AIDialog.svelte 返回匹配行（导入存在）",
+      "grep -n \"DOMPurify.sanitize\" src/lib/client/components/AIDialog.svelte 返回匹配行（sanitize 调用存在）",
+      "grep -n \"function sanitizeHtml\" src/lib/client/components/AIDialog.svelte 无匹配（手写函数已删除）",
+      "grep -n \"\\.replace(/<script\" src/lib/client/components/AIDialog.svelte 无匹配（手写正则已删除）",
+      "npx tsc --noEmit 通过"
+    ],
+    "verification": "npx tsc --noEmit && npm ls dompurify",
+    "definition_of_done": "Markdown 渲染输出经过 DOMPurify 净化；手写正则过滤代码完全移除；XSS 测试向量被 DOMPurify 阻止"
+  },
+  "files": [
+    {
+      "path": "package.json",
+      "action": "modify",
+      "target": "dependencies / devDependencies",
+      "change": "添加 dompurify 和 @types/dompurify 依赖"
+    },
+    {
+      "path": "src/lib/client/components/AIDialog.svelte",
+      "action": "modify",
+      "target": "sanitizeHtml 函数 (第 41-48 行) + renderMarkdown 函数 (第 51-58 行)",
+      "change": "删除 sanitizeHtml 函数；在 renderMarkdown 中用 DOMPurify.sanitize() 替代 sanitizeHtml()"
+    }
+  ],
+  "implementation": [
+    "1. 安装依赖: npm install dompurify && npm install -D @types/dompurify",
+    "2. 打开 src/lib/client/components/AIDialog.svelte",
+    "3. 在 script 顶部添加导入: import DOMPurify from 'dompurify';",
+    "4. 删除 sanitizeHtml 函数（第 41-48 行）",
+    "5. 修改 renderMarkdown 函数第 53 行，将: const raw = marked.parse(text, { async: false }) as string; return sanitizeHtml(raw); 替换为: const raw = marked.parse(text, { async: false }) as string; return DOMPurify.sanitize(raw);",
+    "6. 修改 renderMarkdown 的 catch 分支第 56 行，将: return sanitizeHtml(text); 替换为: return DOMPurify.sanitize(text);",
+    "7. 运行 npx tsc --noEmit 验证类型检查"
+  ],
+  "test": {
+    "commands": [
+      "npx tsc --noEmit",
+      "npm ls dompurify"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "TypeScript 编译无错误",
+      "dompurify 依赖正确安装",
+      "sanitizeHtml 函数完全移除"
+    ]
+  },
+  "reference": {
+    "pattern": "使用 DOMPurify 作为标准 XSS 防护方案替代手写正则",
+    "files": [
+      "src/lib/client/components/AIDialog.svelte:41-48 (要删除的 sanitizeHtml 函数)",
+      "src/lib/client/components/AIDialog.svelte:51-58 (要修改的 renderMarkdown 函数)"
+    ],
+    "examples": "DOMPurify 标准用法:\nimport DOMPurify from 'dompurify';\nconst clean = DOMPurify.sanitize(dirty);\n\n注意: AIDialog.svelte 是纯客户端组件（SvelteKit ssr: false），DOMPurify 的 DOM 依赖不会导致 SSR 问题。"
+  },
+  "rationale": {
+    "chosen_approach": "DOMPurify 是业界标准的客户端 XSS 防护库，每周 npm 下载量 200 万+，经过大量安全审计。手写正则永远无法可靠防护 XSS（浏览器解析器行为复杂），使用成熟库是唯一正确的方案。",
+    "decision_factors": [
+      "DOMPurify 是 OWASP 推荐的 XSS 防护库",
+      "AIDialog.svelte 是纯客户端组件，无 SSR DOM 兼容性问题",
+      "库体积小（~50KB minified），性能影响可忽略"
+    ],
+    "tradeoffs": "新增一个依赖。但安全性收益远超依赖管理成本。"
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["AI Dialog Markdown 渲染"],
+    "affected_components": ["AIDialog.svelte"],
+    "affected_requirements": ["REQ-004: AI Dialog 流式输出和 Markdown 渲染"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

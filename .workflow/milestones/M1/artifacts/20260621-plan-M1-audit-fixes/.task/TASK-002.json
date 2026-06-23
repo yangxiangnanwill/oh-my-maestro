@@ -1,0 +1,87 @@
+{
+  "id": "TASK-002",
+  "title": "修复 HIGH：WSGateway 多客户端消息对象共享导致 payload 污染",
+  "description": "WSGateway.broadcastEvent() 方法在 for 循环外部创建了一个共享的 message 对象（第125-130行），然后在循环内对每个客户端执行 message.payload = translated（第140行）。当有多个客户端订阅同一 channel 时，后一个客户端的 translated payload 会覆盖前一个客户端正在发送的消息，导致所有客户端收到最后一个客户端的翻译结果。修复方法是将 message 对象创建移入 for 循环内部，确保每个客户端获得独立的消息副本。",
+  "issue_id": null,
+  "issue_refs": ["M1-audit-gap-3"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "low",
+  "action": "在 ws-gateway.ts 的 broadcastEvent 方法中，将 const message: WSMessage = { ... } 声明从 for 循环外部（第125行）移动到 for 循环内部（第132行之后），使每个客户端迭代创建独立的消息对象",
+  "status": "completed",
+  "completed_at": "2026-06-21T00:00:00Z",
+  "actual_duration": null,
+  "scope": "src/lib/server/ws-gateway.ts",
+  "focus_paths": ["src/lib/server/ws-gateway.ts"],
+  "read_first": [
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/shared/types.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave1-critical",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/server/ws-gateway.ts 的 broadcastEvent 方法中，const message: WSMessage = { ... } 声明位于 for (const client of this.clients.values()) 循环体内部",
+      "src/lib/server/ws-gateway.ts 的 broadcastEvent 方法中，message.payload = translated 赋值不再影响其他客户端的消息对象",
+      "TypeScript 编译无错误"
+    ],
+    "verification": "grep -n 'const message' src/lib/server/ws-gateway.ts && npx tsc --noEmit --pretty false 2>&1 | grep -c 'error'",
+    "definition_of_done": "多客户端广播时每个客户端收到独立的消息对象，payload 翻译结果不会跨客户端污染"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/ws-gateway.ts",
+      "action": "modify",
+      "target": "WSGateway.broadcastEvent 方法",
+      "change": "将 message 对象创建（WSMessage 字面量）从 for 循环前（第125-130行）移动到 for 循环内（第132行 client 迭代开始后），确保每个客户端迭代创建独立的消息副本"
+    }
+  ],
+  "implementation": [
+    "在 src/lib/server/ws-gateway.ts 的 broadcastEvent 方法中（约第124-145行）：",
+    "删除第125-130行的 const message: WSMessage = { channel: event.channel, type: event.type, payload: event.payload, timestamp: event.timestamp }",
+    "在第132行 for (const client of this.clients.values()) { 之后，第133行 if 条件之前，插入 const message: WSMessage = { channel: event.channel, type: event.type, payload: event.payload, timestamp: event.timestamp }",
+    "保持第140行 message.payload = translated 不变（现在每次迭代操作的是独立对象）",
+    "验证最终代码结构：for 循环内部第一行是 message 对象创建，然后是 subscription 检查，然后是 translation 和 sendToClient"
+  ],
+  "test": {
+    "commands": ["npx tsc --noEmit 2>&1"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "TypeScript 编译无错误",
+      "broadcastEvent 中 message 对象在 for 循环内部创建",
+      "每个客户端迭代使用独立的 message 对象"
+    ]
+  },
+  "reference": {
+    "pattern": "WSMessage 接口定义在 src/lib/shared/types.ts:100-105",
+    "files": ["src/lib/server/ws-gateway.ts", "src/lib/shared/types.ts"],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "将 message 对象创建移入循环体。这是最小修改量的修复方式，不改变任何逻辑结构，仅修正对象作用域。",
+    "decision_factors": [
+      "当前代码在循环外创建 message，循环内修改 message.payload，导致对象共享",
+      "修复只需移动 5 行代码，零风险",
+      "不需要改变 translator.translate() 或 sendToClient() 的接口"
+    ],
+    "tradeoffs": "每次迭代多一次对象分配（WSMessage 字面量），但客户端数量通常 < 10，性能影响可忽略"
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["WebSocket Message Broadcasting"],
+    "affected_components": ["WSGateway"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "10m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

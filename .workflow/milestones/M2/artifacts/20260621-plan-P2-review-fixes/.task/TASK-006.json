@@ -1,0 +1,105 @@
+{
+  "id": "TASK-006",
+  "title": "修复 terminal-manager.ts shell 参数白名单验证",
+  "description": "修复 SEC-001：terminal-manager.ts:84 createTerminal 的 shell 参数直接传递给 node-pty spawn，无白名单验证。攻击者可通过构造恶意 shell 路径执行任意命令。修复方案：在 createTerminal 中添加 SHELL_WHITELIST 静态白名单，对 options.shell 进行验证，不在白名单中的 shell 抛出 Error。",
+  "issue_id": "SEC-001",
+  "issue_refs": [],
+  "type": "bugfix",
+  "priority": "high",
+  "effort": "small",
+  "action": "在 terminal-manager.ts 中定义 SHELL_WHITELIST 常量（包含 Windows: powershell.exe, cmd.exe, pwsh.exe；Unix: bash, zsh, sh, fish, dash）；在 createTerminal 方法中 shell 变量赋值后添加白名单验证，不在列表中的 shell 抛出 Error",
+  "status": "completed",
+  "completed_at": "2026-06-21T17:16:00+08:00",
+  "actual_duration": "10m",
+  "scope": "src/lib/server/terminal-manager.ts",
+  "focus_paths": [
+    "src/lib/server/terminal-manager.ts"
+  ],
+  "read_first": [
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/__tests__/terminal-manager.test.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n \"SHELL_WHITELIST\" src/lib/server/terminal-manager.ts 返回匹配行（白名单常量定义）",
+      "grep -n \"SHELL_WHITELIST.includes\" src/lib/server/terminal-manager.ts 返回匹配行（白名单验证逻辑）",
+      "grep -n \"powershell.exe\" src/lib/server/terminal-manager.ts 返回匹配行（Windows shell 在白名单中）",
+      "grep -n \"cmd.exe\" src/lib/server/terminal-manager.ts 返回匹配行（cmd.exe 在白名单中）",
+      "grep -n \"pwsh.exe\" src/lib/server/terminal-manager.ts 返回匹配行（PowerShell Core 在白名单中）",
+      "grep -n \"bash\" src/lib/server/terminal-manager.ts 返回匹配行（bash 在白名单中）",
+      "grep -n \"zsh\" src/lib/server/terminal-manager.ts 返回匹配行（zsh 在白名单中）",
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts 通过"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts && npx tsc --noEmit",
+    "definition_of_done": "仅白名单中的 shell 可被用于创建终端；不在白名单中的 shell 参数抛出明确错误；默认 shell 选择逻辑不受影响（默认值本身在白名单中）"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "modify",
+      "target": "createTerminal 方法中 shell 变量赋值逻辑 (第 80-83 行)",
+      "change": "在 shell 变量赋值后添加白名单验证；在文件顶部添加 SHELL_WHITELIST 常量定义"
+    }
+  ],
+  "implementation": [
+    "1. 打开 src/lib/server/terminal-manager.ts，在 CreateTerminalOptions 接口之后（第 36 行后）添加:\nconst SHELL_WHITELIST = new Set([\n  'powershell.exe',\n  'cmd.exe',\n  'pwsh.exe',\n  'bash',\n  'zsh',\n  'sh',\n  'fish',\n  'dash',\n]);",
+    "2. 在 createTerminal 方法中，shell 变量赋值后（第 80-83 行之后），spawnPty 调用之前，添加验证:\nconst shellName = shell.split('/').pop()?.split('\\\\').pop() ?? shell;\nif (!SHELL_WHITELIST.has(shellName)) {\n  throw new Error(`Shell not allowed: ${shellName}. Allowed shells: ${[...SHELL_WHITELIST].join(', ')}`);\n}",
+    "3. 运行 npx vitest run src/lib/server/__tests__/terminal-manager.test.ts 验证现有测试通过",
+    "4. 运行 npx tsc --noEmit 验证类型"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts",
+      "npx tsc --noEmit"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/terminal-manager.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "所有现有 terminal-manager 测试通过",
+      "TypeScript 编译无错误",
+      "白名单外的 shell 参数抛出 Error"
+    ]
+  },
+  "reference": {
+    "pattern": "使用 Set 进行 O(1) 白名单查找",
+    "files": [
+      "src/lib/server/terminal-manager.ts:80-83 (shell 变量赋值)",
+      "src/lib/server/terminal-manager.ts:72-89 (createTerminal 方法)"
+    ],
+    "examples": "当前无验证的 shell 赋值:\nconst shell =\n  options?.shell ??\n  (process.platform === 'win32' ? 'powershell.exe' : (process.env.SHELL ?? '/bin/bash'));\n\n注意: 默认值 powershell.exe 和 /bin/bash 都在白名单中，不影响正常使用。"
+  },
+  "rationale": {
+    "chosen_approach": "使用 Set 白名单 + 提取文件名（split + pop）进行验证。Set 提供 O(1) 查找，split 提取文件名防止路径遍历攻击（如 ../../malicious.sh 会被提取为 malicious.sh 再检查）。",
+    "decision_factors": [
+      "白名单比黑名单更安全（默认拒绝）",
+      "Set 提供 O(1) 查找性能",
+      "提取文件名防止路径遍历绕过",
+      "覆盖主流 shell：Windows (powershell/cmd/pwsh) + Unix (bash/zsh/sh/fish/dash)"
+    ],
+    "tradeoffs": "白名单可能过于严格（如用户使用 /usr/bin/fish 的符号链接）。但安全优先，如有需要可后续扩展白名单。"
+  },
+  "risks": [
+    "如果用户通过符号链接使用非标准路径的 shell（如 /opt/homebrew/bin/bash），白名单仍然有效因为只检查文件名。",
+    "Windows 上的 Git Bash (bash.exe) 不在白名单中。如需要可后续添加。"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["Terminal 创建"],
+    "affected_components": ["TerminalManager"],
+    "affected_requirements": ["C-P2-1: PTY 会话管理"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

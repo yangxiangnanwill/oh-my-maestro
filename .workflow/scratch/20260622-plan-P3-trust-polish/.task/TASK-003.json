@@ -1,0 +1,128 @@
+{
+  "id": "TASK-003",
+  "title": "P0 性能优化 — skipHistory + backpressure",
+  "description": "实施 P0 性能优化：(1) EventBus.publish() 添加 skipHistory 选项，高频事件（term:output、dialog:stream-chunk）不写入 history 数组；(2) WSGateway.sendToClient() 添加 bufferedAmount 检查，慢客户端跳过广播防止内存积压；(3) TerminalManager OUTPUT 事件和 DialogManager STREAM_CHUNK 事件传入 skipHistory: true。目标：history 数组大小降低 90%+，慢客户端不导致服务端内存增长。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "修改 src/lib/server/event-bus.ts — publish() 方法签名增加 options?: { skipHistory?: boolean } 参数，当 skipHistory=true 时跳过 this.history.push()；maxHistory 从 1000 降至 100。修改 src/lib/server/ws-gateway.ts — sendToClient() 方法在 ws.send() 前检查 client.ws.bufferedAmount，如果 > 65536（64KB）则跳过该客户端并记录 warn 日志；broadcastEvent() 中对 term:output 和 dialog:stream-chunk 类型事件跳过翻译（直接传原始 payload 避免重复 JSON.stringify）。修改 src/lib/server/terminal-manager.ts — startFrameThrottle() 中 OUTPUT 事件的 eventBus.publish() 调用传入 { skipHistory: true }；cleanupSession() 中 flush buffer 的 OUTPUT 事件同样传入 { skipHistory: true }。修改 src/lib/server/dialog-manager.ts — emitStreamChunk() 中 STREAM_CHUNK 事件的 eventBus.publish() 调用传入 { skipHistory: true }。",
+  "scope": "src/lib/server/event-bus.ts, src/lib/server/ws-gateway.ts, src/lib/server/terminal-manager.ts, src/lib/server/dialog-manager.ts",
+  "focus_paths": [
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/dialog-manager.ts"
+  ],
+  "read_first": [
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/dialog-manager.ts",
+    "src/lib/server/__tests__/event-bus.test.ts",
+    "src/lib/server/__tests__/ws-gateway.test.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave-2",
+  "convergence": {
+    "criteria": [
+      "grep -r 'skipHistory' src/lib/server/event-bus.ts 返回至少 3 行（参数解构、条件判断、调用点注释）",
+      "grep -r 'bufferedAmount' src/lib/server/ws-gateway.ts 返回至少 1 行，sendToClient 中有 bufferedAmount 检查",
+      "grep -r 'skipHistory.*true' src/lib/server/terminal-manager.ts 返回至少 2 行（startFrameThrottle 和 cleanupSession 中的 OUTPUT 事件）",
+      "grep -r 'skipHistory.*true' src/lib/server/dialog-manager.ts 返回至少 1 行（emitStreamChunk 中的 STREAM_CHUNK 事件）",
+      "grep -r 'maxHistory' src/lib/server/event-bus.ts 返回 maxHistory = 100（从 1000 降至 100）",
+      "grep -r 'syncLatency' src/lib/server/__tests__/event-bus.test.ts 返回测试用例，验证 publish 到 broadcast 的端到端延迟 < 500ms",
+      "npx vitest run src/lib/server/__tests__/event-bus.test.ts src/lib/server/__tests__/ws-gateway.test.ts 全部通过"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/event-bus.test.ts src/lib/server/__tests__/ws-gateway.test.ts src/lib/server/__tests__/terminal-manager.test.ts src/lib/server/__tests__/dialog-manager.test.ts && npx tsc --noEmit",
+    "definition_of_done": "高频事件不写入 history 数组（大小降低 90%+），慢客户端（bufferedAmount > 64KB）被跳过不导致内存增长，所有现有测试通过"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/event-bus.ts",
+      "action": "modify",
+      "target": "publish() method and maxHistory",
+      "change": "添加 skipHistory 选项；maxHistory 从 1000 降至 100"
+    },
+    {
+      "path": "src/lib/server/ws-gateway.ts",
+      "action": "modify",
+      "target": "sendToClient() and broadcastEvent()",
+      "change": "添加 bufferedAmount 检查；高频事件跳过翻译优化"
+    },
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "modify",
+      "target": "startFrameThrottle() and cleanupSession() OUTPUT event publish calls",
+      "change": "OUTPUT 事件传入 { skipHistory: true }"
+    },
+    {
+      "path": "src/lib/server/dialog-manager.ts",
+      "action": "modify",
+      "target": "emitStreamChunk() STREAM_CHUNK event publish call",
+      "change": "STREAM_CHUNK 事件传入 { skipHistory: true }"
+    }
+  ],
+  "implementation": [
+    "修改 EventBus.publish() 签名 — 增加 options?: { skipHistory?: boolean } 参数，skipHistory=true 时跳过 history.push()",
+    "修改 EventBus.maxHistory — 从 1000 降至 100",
+    "修改 WSGateway.sendToClient() — 在 ws.send() 前检查 client.ws.bufferedAmount > 65536，超过则 console.warn 并 return",
+    "修改 WSGateway.broadcastEvent() — 对 type 为 'term:output' 或 'dialog:stream-chunk' 的事件，跳过 translator.translate() 调用，直接传原始 payload",
+    "修改 TerminalManager.startFrameThrottle() — OUTPUT 事件 publish 调用添加 { skipHistory: true }",
+    "修改 TerminalManager.cleanupSession() — flush buffer 的 OUTPUT 事件 publish 调用添加 { skipHistory: true }",
+    "修改 DialogManager.emitStreamChunk() — STREAM_CHUNK 事件 publish 调用添加 { skipHistory: true }",
+    "在 event-bus.test.ts 中添加 skipHistory 测试 — 验证 skipHistory=true 时事件不进入 history",
+    "在 ws-gateway.test.ts 中添加 backpressure 测试 — 验证 bufferedAmount 超限时跳过客户端"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/event-bus.test.ts",
+      "npx vitest run src/lib/server/__tests__/ws-gateway.test.ts",
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts",
+      "npx vitest run src/lib/server/__tests__/dialog-manager.test.ts",
+      "npx tsc --noEmit"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/event-bus.test.ts",
+      "src/lib/server/__tests__/ws-gateway.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "skipHistory 测试通过 — 高频事件不写入 history",
+      "backpressure 测试通过 — 慢客户端被跳过",
+      "所有现有测试无回归"
+    ]
+  },
+  "reference": {
+    "pattern": "Follow existing publish() call pattern — all callers pass channel, payload, source; options is a new optional 4th parameter",
+    "files": [
+      "src/lib/server/event-bus.ts",
+      "src/lib/server/ws-gateway.ts",
+      "src/lib/server/terminal-manager.ts",
+      "src/lib/server/dialog-manager.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "最小侵入性改动 — publish() 增加可选参数不影响现有调用者，bufferedAmount 检查在 send 前进行不改变消息流。skipHistory 针对 OUTPUT 和 STREAM_CHUNK 两个最高频事件类型，效果最大。",
+    "decision_factors": [
+      "OUTPUT 和 STREAM_CHUNK 占 history 写入量的 90%+",
+      "bufferedAmount 是 WebSocket 标准 API，无需额外依赖",
+      "maxHistory 100 对调试仍然足够",
+      "高频事件跳过翻译避免重复 JSON.stringify 和对象遍历"
+    ],
+    "tradeoffs": "skipHistory 意味着 OUTPUT/STREAM_CHUNK 事件无法通过 getHistory() 回溯 — 这是可接受的，因为这些事件的数据量大且实时性强"
+  },
+  "risks": [
+    "bufferedAmount 阈值 64KB 可能在某些网络条件下过于激进 — 可通过环境变量配置"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "1h 30m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": "wave-2",
+    "executor": "agent"
+  }
+}

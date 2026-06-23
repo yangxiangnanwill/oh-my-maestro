@@ -1,0 +1,129 @@
+{
+  "id": "TASK-003",
+  "title": "WSGateway + StateSyncEngine Unit Tests — 80%+ Coverage",
+  "description": "Write comprehensive unit tests for the already-implemented WSGateway and StateSyncEngine modules. Both currently have 0% test coverage. Tests must cover connection/disconnect, subscription management, mode switching, broadcast, dual-source merge, debounce, buffering, and replay scenarios.",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "test",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "Create src/lib/server/__tests__/ws-gateway.test.ts with tests for WSGateway: start/stop, client connect/disconnect, subscribe/unsubscribe channels, set-mode message handling, broadcastEvent routes to subscribed clients only, translation applied per client mode. Create src/lib/server/__tests__/state-sync.test.ts with tests for StateSyncEngine: start/stop, in-process event emission, filesystem event debouncing, event buffering with max size, getRecentEvents replay, addWatchPath, cleanup on stop.",
+  "status": "completed",
+  "completed_at": "2026-06-20T23:43:19.606Z",
+  "actual_duration": null,
+  "scope": "src/lib/server/__tests__",
+  "focus_paths": [
+    "src/lib/server/__tests__/ws-gateway.test.ts",
+    "src/lib/server/__tests__/state-sync.test.ts"
+  ],
+  "read_first": [
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/server/state-sync.ts",
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/translator.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/shared/events.ts",
+    "src/lib/server/__tests__/event-bus.test.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/server/__tests__/ws-gateway.test.ts exists",
+      "src/lib/server/__tests__/state-sync.test.ts exists",
+      "npx vitest run src/lib/server/__tests__/ws-gateway.test.ts exits 0 with all tests passing",
+      "npx vitest run src/lib/server/__tests__/state-sync.test.ts exits 0 with all tests passing",
+      "WSGateway test covers: client connect, client disconnect, subscribe to channels, unsubscribe from channels, set-mode message, broadcast to subscribed clients only, wildcard subscription, translation applied per client mode",
+      "StateSyncEngine test covers: in-process event triggers state:sync publish, filesystem event debounced (rapid events merged), event buffer respects maxBufferSize=500, getRecentEvents returns last N events, addWatchPath adds to watcher, stop closes watcher and clears debounce timers",
+      "WSGateway test: client reconnects after server restart and receives RECONNECT confirmation with buffered events via getRecentEvents",
+      "WSGateway test: broadcast latency from EventBus.publish to client.send < 500ms (measured with mock timers)",
+      "StateSyncEngine test: filesystem event triggers state:sync event within 5000ms of file change (debounce 100ms + processing overhead)"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/",
+    "definition_of_done": "WSGateway and StateSyncEngine both have comprehensive unit tests passing, overall server test coverage exceeds 80%"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/__tests__/ws-gateway.test.ts",
+      "action": "create",
+      "target": "WSGateway unit tests",
+      "change": "Test WSGateway with mock WebSocket server, mock EventBus, mock TranslatorMiddleware. Cover: start(port), client connection, client disconnect, subscribe/unsubscribe channels, set-mode, broadcast routing, wildcard subscriptions, translation per client mode, stop cleanup"
+    },
+    {
+      "path": "src/lib/server/__tests__/state-sync.test.ts",
+      "action": "create",
+      "target": "StateSyncEngine unit tests",
+      "change": "Test StateSyncEngine with real EventBus, mock chokidar. Cover: start subscribes to workflow/project events, in-process event emits state:sync, filesystem event debounced, buffer respects max size, getRecentEvents replay, addWatchPath, stop closes watcher and clears timers"
+    }
+  ],
+  "implementation": [
+    "Create src/lib/server/__tests__/ws-gateway.test.ts. Import WSGateway, EventBus, TranslatorMiddleware. Create mock WebSocket class that extends EventEmitter with send() method that records messages, readyState = WebSocket.OPEN, close() method. Create real EventBus and TranslatorMiddleware instances for each test.",
+    "WSGateway test cases: (1) start creates WebSocketServer on given port, (2) client connect registers client and sends RECONNECT confirmation, (3) client disconnect removes client and calls translator.removeClient, (4) subscribe message adds channels to client.subscribedChannels, (5) unsubscribe message removes channels, (6) set-mode message calls translator.setClientMode, (7) broadcastEvent sends to clients subscribed to event channel, (8) broadcastEvent skips clients not subscribed, (9) wildcard subscription (*) receives all events, (10) translation applied to payload before sending, (11) stop closes all connections and WebSocketServer.",
+    "For WSGateway tests, since the class creates its own WebSocketServer, use a real WebSocketServer on a random port, connect mock clients via ws library. Alternatively, test the internal methods by creating the gateway and manually triggering the connection handler through the wss instance.",
+    "Create src/lib/server/__tests__/state-sync.test.ts. Import StateSyncEngine, EventBus. Use vi.mock('chokidar') to mock FSWatcher. Create real EventBus instance.",
+    "StateSyncEngine test cases: (1) start subscribes to workflow:step-update, workflow:execution-started, workflow:execution-completed, project:state-update on EventBus, (2) in-process event (published to EventBus) triggers state:sync event on EventBus with source:'in-process', (3) filesystem event triggers state:sync with source:'filesystem' after debounce, (4) rapid filesystem events for same path are debounced (only one state:sync emitted), (5) event buffer stores events and respects maxBufferSize=500, (6) getRecentEvents(N) returns last N buffered events, (7) addWatchPath adds path to watcher, (8) stop closes watcher and clears all debounce timers, (9) in-process events are emitted immediately (no debounce), (10) filesystem events include externallyTriggered:true in payload."
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/ws-gateway.test.ts",
+      "npx vitest run src/lib/server/__tests__/state-sync.test.ts"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/ws-gateway.test.ts",
+      "src/lib/server/__tests__/state-sync.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "All test cases pass",
+      "Combined coverage > 80% for ws-gateway.ts and state-sync.ts"
+    ]
+  },
+  "reference": {
+    "pattern": "Vitest describe/it/expect/beforeEach pattern from event-bus.test.ts. Mock external dependencies (WebSocket, chokidar), use real EventBus.",
+    "files": [
+      "src/lib/server/__tests__/event-bus.test.ts",
+      "src/lib/server/ws-gateway.ts",
+      "src/lib/server/state-sync.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Mock external I/O (WebSocket, chokidar) but use real EventBus to test the actual event flow logic. This catches integration issues within the server layer while keeping tests fast and deterministic.",
+    "decision_factors": [
+      "0% test coverage on two critical modules",
+      "Follow existing test patterns (vitest, real EventBus)",
+      "Mock only I/O boundaries (ws, chokidar, child_process)"
+    ],
+    "tradeoffs": "Mock-based tests don't catch real WebSocket/chokidar integration bugs, but those are better covered by integration tests in a later phase."
+  },
+  "risks": [
+    {
+      "risk": "WSGateway tests need actual WebSocket server for realistic testing",
+      "mitigation": "Use random available port (port: 0) for test WebSocketServer, or mock the WebSocketServer creation entirely"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "WSGateway",
+      "StateSyncEngine",
+      "Test Coverage"
+    ],
+    "affected_components": [
+      "server"
+    ],
+    "affected_requirements": [
+      "SCOPE-3"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "45-60 min",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "session_id": "BLP-maestro-ide-2026-06-20",
+  "seed_input": "基于头脑风暴产出生成完整规格：Product Brief, PRD, Architecture, Epics, Issues。产品为maestro-flow的IDE-like封装，面向非CLI开发者，后端对接Claude Code",
+  "input_type": "context-package",
+  "timestamp": "2026-06-20T20:35:00+08:00",
+  "mode": "interactive",
+  "complexity": "moderate",
+  "depth": "standard",
+  "focus_areas": ["workflow-orchestration", "state-visualization", "ai-integration"],
+  "spec_type": "service",
+  "iteration_count": 0,
+  "iteration_history": [],
+  "seed_analysis": {
+    "problem_statement": "不习惯 CLI 的开发者在使用 maestro-flow 的 60+ 命令体系时面临命令记忆负担重、输入繁琐、缺少可视化状态追踪、缺少统一 AI 开发入口的痛点",
+    "target_users": ["maestro 现有用户（理解工作流但嫌 CLI 繁琐）", "Claude Code 新用户（想用 AI 辅助开发但不会 CLI）"],
+    "domain": "开发者工具 / AI 辅助开发",
+    "constraints": [
+      "仅对接 Claude Code",
+      "本地 Web 应用架构",
+      "不替代终端和编辑器",
+      "事件驱动 + WebSocket"
+    ],
+    "dimensions": ["workflow-orchestration", "state-visualization", "ai-interaction", "concept-translation", "terminal-integration"]
+  },
+  "has_codebase": true,
+  "upstream_context": {
+    "type": "brainstorm",
+    "artifact_id": "BRN-20260620-maestro-ide",
+    "context_package_path": ".workflow/scratch/20260620-brainstorm-maestro-ide/context-package.json"
+  },
+  "phasesCompleted": [
+    { "phase": 0, "name": "spec-study", "output_file": "blueprint-config.json", "completed_at": "2026-06-20T20:35:00+08:00" }
+  ]
+}

@@ -1,0 +1,139 @@
+{
+  "id": "TASK-005",
+  "title": "EventBus 性能优化 — skipHistory 选项 + 终端环形缓冲区 + ws.bufferedAmount backpressure",
+  "description": "对 EventBus 和 WSGateway 做三项性能优化：(1) EventBus.publish() 添加 skipHistory 选项，终端事件跳过线性历史存储；(2) WSGateway.sendToClient() 添加 ws.bufferedAmount backpressure 检查（16KB 阈值），超阈值时丢弃消息并记录；(3) 确认终端事件使用独立环形缓冲区（TASK-001 已实现），EventBus 不做修改。遵循 C-5 和 C-7 约束。",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "optimization",
+  "priority": "medium",
+  "effort": "small",
+  "action": "修改 src/lib/server/event-bus.ts：在 publish() 方法签名中添加 options?: { skipHistory?: boolean } 参数。当 skipHistory 为 true 时，跳过 this.history.push(event) 但保留 subscriber 通知。修改 src/lib/server/ws-gateway.ts：在 sendToClient() 方法中添加 backpressure 检查：if (client.ws.bufferedAmount > 16384) { console.warn('[WSGateway] Backpressure: dropping message for', client.id); return; }。不修改 TerminalManager（其环形缓冲区已在 TASK-001 中实现）。",
+  "status": "completed",
+  "completed_at": "2026-06-21T18:30:00+08:00",
+  "actual_duration": "15 min",
+  "scope": "src/lib/server",
+  "focus_paths": [
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/ws-gateway.ts"
+  ],
+  "read_first": [
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/__tests__/event-bus.test.ts",
+    "src/lib/server/__tests__/ws-gateway.test.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave1-server",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/server/event-bus.ts 中 EventBus.publish() 方法签名变更为 publish<T>(type, channel, payload, source?, options?: { skipHistory?: boolean })",
+      "publish() 中当 options?.skipHistory === true 时，不执行 this.history.push(event) 和 history 长度裁剪逻辑",
+      "publish() 中当 options?.skipHistory === true 时，subscriber 通知逻辑仍然正常执行",
+      "src/lib/server/ws-gateway.ts 中 sendToClient() 方法在 client.ws.send() 之前检查 client.ws.bufferedAmount > 16384",
+      "backpressure 检查触发时输出 console.warn 日志（包含 client.id），然后 return（不发送消息）",
+      "src/lib/server/__tests__/event-bus.test.ts 新增测试：publish with skipHistory=true 不追加到 history，getHistory() 不包含该事件",
+      "src/lib/server/__tests__/ws-gateway.test.ts 新增测试：bufferedAmount > 16384 时 sendToClient 不调用 ws.send()"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/event-bus.test.ts src/lib/server/__tests__/ws-gateway.test.ts",
+    "definition_of_done": "EventBus 支持 skipHistory 选项（终端事件不存储线性历史），WSGateway 在 bufferedAmount > 16KB 时丢弃消息防止内存泄漏，所有现有测试继续通过"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/event-bus.ts",
+      "action": "modify",
+      "target": "EventBus.publish() 方法 — 添加 skipHistory 选项",
+      "change": "publish() 签名添加 options?: { skipHistory?: boolean }；skipHistory 为 true 时跳过 history.push 和长度裁剪"
+    },
+    {
+      "path": "src/lib/server/ws-gateway.ts",
+      "action": "modify",
+      "target": "WSGateway.sendToClient() 方法 — 添加 backpressure 检查",
+      "change": "在 ws.send() 前检查 ws.bufferedAmount > 16384，超阈值时 warn 并 return"
+    },
+    {
+      "path": "src/lib/server/__tests__/event-bus.test.ts",
+      "action": "modify",
+      "target": "EventBus 测试 — 添加 skipHistory 测试用例",
+      "change": "新增测试：publish with skipHistory=true 不存入 history，subscriber 仍收到事件"
+    },
+    {
+      "path": "src/lib/server/__tests__/ws-gateway.test.ts",
+      "action": "modify",
+      "target": "WSGateway 测试 — 添加 backpressure 测试用例",
+      "change": "新增测试：mock ws.bufferedAmount > 16384 时 send 不被调用"
+    }
+  ],
+  "implementation": [
+    "修改 src/lib/server/event-bus.ts 第 59 行 publish() 方法签名：从 publish<T = unknown>(type, channel, payload, source = 'server') 改为 publish<T = unknown>(type, channel, payload, source = 'server', options?: { skipHistory?: boolean })。",
+    "在 publish() 方法体内（第 74-78 行 history 存储逻辑），添加条件：if (!options?.skipHistory) { this.history.push(event as InternalEvent); if (this.history.length > this.maxHistory) { this.history = this.history.slice(-this.maxHistory); } }。subscriber 通知逻辑（第 80-99 行）保持不变，不受 skipHistory 影响。",
+    "修改 src/lib/server/ws-gateway.ts 第 150-153 行 sendToClient() 方法：在 client.ws.send(JSON.stringify(message)) 之前添加：if (client.ws.bufferedAmount > 16384) { console.warn(`[WSGateway] Backpressure: dropping message for client ${client.id} (bufferedAmount=${client.ws.bufferedAmount})`); return; }。",
+    "修改 src/lib/server/__tests__/event-bus.test.ts：添加测试用例 'publish with skipHistory=true does not store event in history'。创建 EventBus 实例，调用 publish('test', 'test', {}, 'server', { skipHistory: true })，验证 getHistory() 返回空数组。添加测试用例 'publish with skipHistory=true still notifies subscribers'。注册 subscriber，publish with skipHistory=true，验证 subscriber 被调用。",
+    "修改 src/lib/server/__tests__/ws-gateway.test.ts：添加测试用例 'sendToClient drops message when bufferedAmount exceeds 16384'。创建 mock ws 对象 { readyState: WebSocket.OPEN, bufferedAmount: 20000, send: vi.fn() }。验证 send 未被调用。添加测试用例 'sendToClient sends message when bufferedAmount is below threshold'。bufferedAmount = 8000，验证 send 被调用。"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/event-bus.test.ts src/lib/server/__tests__/ws-gateway.test.ts"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/event-bus.test.ts",
+      "src/lib/server/__tests__/ws-gateway.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "所有现有 EventBus 测试继续通过（向后兼容：不传 options 时行为不变）",
+      "新增 skipHistory 测试通过",
+      "新增 backpressure 测试通过",
+      "所有现有 WSGateway 测试继续通过"
+    ]
+  },
+  "reference": {
+    "pattern": "EventBus.publish() 现有签名和 history 存储逻辑（event-bus.ts:59-101）；WSGateway.sendToClient() 现有实现（ws-gateway.ts:150-153）",
+    "files": [
+      "src/lib/server/event-bus.ts",
+      "src/lib/server/ws-gateway.ts",
+      "src/lib/server/__tests__/event-bus.test.ts",
+      "src/lib/server/__tests__/ws-gateway.test.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "最小侵入式修改：publish() 添加可选 options 参数（向后兼容），sendToClient() 添加前置检查（不改变消息格式）。skipHistory 由调用方（TerminalManager）在使用时决定是否跳过历史存储，EventBus 本身不感知终端 channel。backpressure 阈值 16KB 是 WebSocket 常见推荐值（ws 库默认 buffer 为 16KB-64KB）。",
+    "decision_factors": [
+      "C-5 约束：ws.bufferedAmount backpressure 检查（16KB 阈值）",
+      "C-7 约束：终端事件使用独立环形缓冲区（不在 EventBus 线性历史中）",
+      "向后兼容：不传 options 时行为完全不变"
+    ],
+    "tradeoffs": "skipHistory 意味着 getHistory() 无法查询终端事件，但终端事件量极大（数千/秒），存入线性历史会导致 OOM。环形缓冲区在 TerminalManager 内部维护，可通过 getRingBuffer() 方法查询。"
+  },
+  "risks": [
+    {
+      "risk": "backpressure 阈值 16KB 可能在高速输出时频繁丢弃消息",
+      "mitigation": "16KB 是保守阈值；ws.bufferedAmount 反映的是内核发送缓冲区未确认数据量，通常远小于实际输出量。可通过环境变量 WS_BACKPRESSURE_THRESHOLD 配置。"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "EventBus Performance",
+      "WebSocket Backpressure"
+    ],
+    "affected_components": [
+      "server"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "30-45 min",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

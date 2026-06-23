@@ -1,0 +1,70 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "brainstorm",
+    "artifact_id": "BRN-20260620-maestro-ide",
+    "session_path": "scratch/20260620-brainstorm-maestro-ide",
+    "generated_at": "2026-06-20T20:30:00+08:00"
+  },
+  "requirements": [
+    { "id": "F-001", "title": "Workflow Commander", "description": "工作流编排面板：一键触发完整链路，可视化选择工作流类型，意图驱动分类", "priority": "must", "acceptance": "用户可通过自然语言或分类选择触发工作流，实时展示步骤进度", "ref": "guidance-specification.md#§10" },
+    { "id": "F-002", "title": "Project Radar", "description": "项目状态仪表盘：实时展示里程碑/阶段/步骤进度，推荐下一步", "priority": "must", "acceptance": "仪表盘实时反映项目状态，推荐下一步操作", "ref": "guidance-specification.md#§10" },
+    { "id": "F-003", "title": "AI Dialog", "description": "AI 对话面板：与 Claude Code 自然语言交互，流式输出，意图识别路由", "priority": "must", "acceptance": "用户可用自然语言与 AI 交互，意图自动路由到工作流", "ref": "guidance-specification.md#§10" },
+    { "id": "F-004", "title": "Terminal Bridge", "description": "终端桥接：xterm.js 嵌入终端，实时 CLI 输出，进程生命周期管理", "priority": "must", "acceptance": "用户可看到实时 CLI 输出，支持多会话切换", "ref": "guidance-specification.md#§10" },
+    { "id": "F-005", "title": "State Sync Engine", "description": "状态同步引擎：WebSocket 实时推送 CLI 状态变更，事件驱动架构", "priority": "must", "acceptance": "状态变更 500ms 内推送到 UI，99% 准确率", "ref": "guidance-specification.md#§10" },
+    { "id": "F-006", "title": "Concept Translator", "description": "概念翻译层：技术概念映射为用户语言，分层展示模式", "priority": "should", "acceptance": "简单模式下无原始技术术语泄漏", "ref": "guidance-specification.md#§10" },
+    { "id": "F-007", "title": "Approval Gate", "description": "审批门控：工作流关键节点的确认/拒绝，diff 预览，dry-run 展示", "priority": "should", "acceptance": "破坏性操作必须经过审批，展示 diff 和 dry-run 结果", "ref": "guidance-specification.md#§10" }
+  ],
+  "constraints": [
+    { "id": "C-001", "area": "product", "constraint": "产品 MUST 定位为终端辅助工具，而非终端替代", "rationale": "用户仍需终端写代码；GUI 提供可视化控制台", "status": "locked", "ref": "guidance-specification.md#§4-PM-01" },
+    { "id": "C-002", "area": "product", "constraint": "MVP 核心价值 MUST 为工作流编排 + 状态可视化", "rationale": "maestro 工作流多且复杂，封装和可视化是最大痛点", "status": "locked", "ref": "guidance-specification.md#§4-PM-03" },
+    { "id": "C-003", "area": "architecture", "constraint": "产品 MUST 采用本地 Web 应用架构", "rationale": "最快 MVP 路径，跨平台，易于迭代", "status": "locked", "ref": "guidance-specification.md#§5-SA-01" },
+    { "id": "C-004", "area": "architecture", "constraint": "Claude Code 集成 MUST 采用渐进式策略：先 CLI 子进程", "rationale": "CLI 子进程最快验证", "status": "locked", "ref": "guidance-specification.md#§5-SA-02" },
+    { "id": "C-005", "area": "architecture", "constraint": "状态同步 MUST 采用事件驱动 + WebSocket 架构", "rationale": "实时性要求高", "status": "locked", "ref": "guidance-specification.md#§5-SA-03" },
+    { "id": "C-006", "area": "architecture", "constraint": "后端 MUST 使用 Node.js，前端 MUST 使用 SvelteKit", "rationale": "Node.js 原生支持 child_process/node-pty；SvelteKit 轻量高性能", "status": "locked", "ref": "guidance-specification.md#§5-SA-04" },
+    { "id": "C-007", "area": "architecture", "constraint": "CLI 输出解析 MUST 抽象为适配器层", "rationale": "防止 CLI 版本变更导致解析失败", "status": "locked", "ref": "guidance-specification.md#§5-SA-06" },
+    { "id": "C-008", "area": "ux", "constraint": "产品 MUST 隐藏 maestro 技术概念，采用意图驱动的交互模式", "rationale": "非 CLI 用户不应需要理解 chain/skill/delegate 等概念", "status": "locked", "ref": "guidance-specification.md#§6-UX-01" },
+    { "id": "C-009", "area": "ux", "constraint": "首要交互模式 MUST 为状态导向", "rationale": "展示当前状态 + 推荐下一步，降低决策负担", "status": "locked", "ref": "guidance-specification.md#§6-UX-02" },
+    { "id": "C-010", "area": "ux", "constraint": "用户 MUST 能通过自然语言描述需求，系统自动路由到对应工作流", "rationale": "消除选择正确命令的认知负担", "status": "locked", "ref": "guidance-specification.md#§6-UX-05" }
+  ],
+  "domain": {
+    "problem_statement": "不习惯 CLI 的开发者在使用 maestro-flow 的 60+ 命令体系时面临命令记忆负担重、输入繁琐、缺少可视化状态追踪、缺少统一 AI 开发入口的痛点",
+    "terminology": [
+      { "term": "maestro-flow", "definition": "AI 开发工作流编排 CLI 工具", "ref": "guidance-specification.md#§2" },
+      { "term": "chain", "definition": "从分析→规划→执行→测试的命令序列", "ref": "guidance-specification.md#§2" },
+      { "term": "skill", "definition": "maestro 中可调用的命令单元", "ref": "guidance-specification.md#§2" },
+      { "term": "delegate", "definition": "将任务分派给外部 AI 工具执行", "ref": "guidance-specification.md#§2" },
+      { "term": "milestone", "definition": "项目进度节点", "ref": "guidance-specification.md#§2" },
+      { "term": "phase", "definition": "里程碑内的执行阶段", "ref": "guidance-specification.md#§2" },
+      { "term": "artifact", "definition": "工作流步骤产生的文件输出", "ref": "guidance-specification.md#§2" }
+    ],
+    "audience": "不习惯 CLI 的开发者（maestro 现有用户 + Claude Code 新用户）",
+    "industry": "开发者工具 / AI 辅助开发"
+  },
+  "non_goals": [
+    { "title": "多模型后端支持", "rationale": "仅对接 Claude Code，不接入 OpenAI/Gemini 等", "ref": "guidance-specification.md#§3" },
+    { "title": "团队协作功能", "rationale": "不支持多人实时协作开发", "ref": "guidance-specification.md#§3" },
+    { "title": "完整代码编辑器", "rationale": "不内置编辑器，用户使用自己的编辑器", "ref": "guidance-specification.md#§3" },
+    { "title": "VS Code / JetBrains 集成", "rationale": "Phase 2 考虑，MVP 不涉及", "ref": "guidance-specification.md#§3" }
+  ],
+  "insights": [
+    { "role": "product-manager", "area": "prioritization", "summary": "基础先行：F-005 State Sync Engine 和 F-006 Concept Translator 是所有其他功能的前置依赖，必须先交付", "ref": "product-manager/analysis.md#§3" },
+    { "role": "system-architect", "area": "data-model", "summary": "五个核心实体：WorkflowExecution, ProjectState, DialogSession, TerminalSession, ApprovalGate", "ref": "system-architect/analysis.md#§3" },
+    { "role": "system-architect", "area": "state-machine", "summary": "Approval Gate 状态机：pending → presented → approved/rejected/expired；Workflow 执行状态机：queued → running → paused/completed/failed", "ref": "system-architect/analysis.md#§3" },
+    { "role": "ux-expert", "area": "interaction", "summary": "意图驱动交互 + 状态导向展示是核心 UX 范式；概念翻译层必须在所有用户可见文本上应用", "ref": "ux-expert/analysis.md#§3" },
+    { "role": "ui-designer", "area": "visual", "summary": "双栏布局（左导航 + 右内容），暗色主题默认，三面板切换（对话/工作流/终端）", "ref": "ui-designer/analysis.md#§3" }
+  ],
+  "open_questions": [
+    { "area": "intent-classification", "question": "意图分类策略选择：LLM-based（更准确但延迟高）vs rule-based（更快但 70% 阈值可能不满足）", "options": ["LLM-based", "rule-based + disambiguation fallback", "hybrid"], "ref": "product-manager/analysis.md#§5" },
+    { "area": "terminal-interactivity", "question": "Terminal Bridge 交互范围：完全交互式 PTY vs 只读日志视图", "options": ["fully-interactive PTY", "read-only log view", "mode-dependent (simple=read-only, advanced=interactive)"], "ref": "product-manager/analysis.md#§5" },
+    { "area": "approval-granularity", "question": "审批粒度模型：按步骤 vs 按工作流 vs 可配置", "options": ["per-step", "per-workflow", "configurable"], "ref": "product-manager/analysis.md#§5" }
+  ],
+  "references": [
+    { "type": "guidance", "path": "guidance-specification.md" },
+    { "type": "design-research", "path": "design-research.md" },
+    { "type": "role-analysis", "path": "product-manager/analysis.md" },
+    { "type": "role-analysis", "path": "system-architect/analysis.md" },
+    { "type": "role-analysis", "path": "ui-designer/analysis.md" },
+    { "type": "role-analysis", "path": "ux-expert/analysis.md" }
+  ]
+}

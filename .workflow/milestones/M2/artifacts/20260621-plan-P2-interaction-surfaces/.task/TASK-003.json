@@ -1,0 +1,151 @@
+{
+  "id": "TASK-003",
+  "title": "DialogManager — Claude Code CLI 子进程管理 + NDJSON 流式输出 + 意图路由",
+  "description": "创建 DialogManager 服务端模块：管理 Claude Code CLI 子进程（NDJSON 协议通信），流式解析 stdout 行事件并发射到 EventBus（DialogEvents channel）。实现意图识别路由：解析用户自然语言输入，匹配已知 workflow，置信度计算，低置信度（50-80%）时发射消歧列表。复用 DelegateExecutor 的 spawn/parseLine/emitEvent 三阶段模式和 constructor(spawnFn) DI 模式。限制最多 5 个并发对话。",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "创建 src/lib/server/dialog-manager.ts，包含 DialogManager 类。构造器签名：constructor(eventBus: EventBus, spawnFn?: SpawnFn, workflowRegistry?: WorkflowMeta[])。方法：createSession(clientId: string): DialogSession —— 创建对话会话，发射 DialogEvents.SESSION_CREATED。方法：sendMessage(sessionId: string, message: string): void —— 发送用户消息到 Claude Code CLI，启动流式输出处理。方法：closeSession(sessionId: string): void —— 关闭会话并终止子进程。方法：updateWorkflowRegistry(workflows: WorkflowMeta[]): void —— 更新内部 workflowRegistry 数组，供 TASK-004 在 WorkflowCommander 加载完成后调用。私有方法：spawnClaudeCLI(sessionId: string): ChildProcess —— 启动 Claude Code CLI：spawn('claude', ['--output-format', 'stream-json', '--verbose'])（或 'claude-code' CLI）。私有方法：parseChunk(line: string): StreamChunk | null —— NDJSON 行解析，返回 { type: 'text' | 'tool_use' | 'tool_result' | 'error'; content: string; timestamp: string } | null。私有方法：emitStreamChunk(sessionId: string, chunk: StreamChunk): void —— 发射 DialogEvents.STREAM_CHUNK 到 EventBus。私有方法：detectIntent(message: string): IntentResult —— 使用关键词匹配识别意图：{ workflowId: string | null; confidence: number; candidates: Array<{ workflowId: string; score: number }> }。confidence >= 80% 时直接路由（发射 DialogEvents.INTENT_ROUTED），50-80% 时发射消歧列表（包含 candidates），<50% 时不做特殊处理仅流式输出。私有成员：sessions Map<string, { process: ChildProcess | null; session: DialogSession; buffer: string }>。私有成员：maxSessions = 5。",
+  "status": "completed",
+  "completed_at": "2026-06-21T18:45:00+08:00",
+  "actual_duration": "45 min",
+  "scope": "src/lib/server",
+  "focus_paths": [
+    "src/lib/server/dialog-manager.ts"
+  ],
+  "read_first": [
+    "src/lib/server/delegate-executor.ts",
+    "src/lib/server/event-bus.ts",
+    "src/lib/shared/events.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/server/index.ts",
+    "src/lib/server/ws-gateway.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave1-server",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/server/dialog-manager.ts 包含 'export class DialogManager'",
+      "DialogManager 构造器接受 (eventBus: EventBus, spawnFn?: SpawnFn, workflowRegistry?: WorkflowMeta[]) 参数",
+      "createSession(clientId) 返回 DialogSession 对象（含 sessionId, cliProcessId: null, createdAt, status: 'active'）",
+      "createSession 超过 maxSessions=5 时抛出 Error('Maximum dialog sessions (5) reached')",
+      "sendMessage(sessionId, message) 若 CLI 未启动则调用 spawnClaudeCLI 启动子进程，然后写入 message 到 process.stdin",
+      "spawnClaudeCLI 调用 spawnFn('claude', ['--output-format', 'stream-json', '--verbose'])",
+      "stdout 行解析：parseChunk 解析 NDJSON 行，提取 type/content/timestamp 字段，无效行返回 null",
+      "STREAM_CHUNK 事件发射：eventBus.publish(DialogEvents.STREAM_CHUNK, Channels.DIALOG, { sessionId, type, content, timestamp }, 'server')",
+      "detectIntent(message) 返回 IntentResult 对象：{ workflowId: string | null; confidence: number; candidates: { workflowId, score }[] }",
+      "confidence >= 0.8 时发射 DialogEvents.INTENT_ROUTED：{ sessionId, workflowId, confidence }",
+      "confidence 在 0.5-0.8 之间时发射相同事件但附带 candidates 消歧列表：{ sessionId, workflowId: null, confidence, candidates }",
+      "closeSession(sessionId) 杀死子进程、删除会话、发射 DialogEvents.SESSION_CLOSED",
+      "updateWorkflowRegistry(workflows: WorkflowMeta[]) 更新内部 workflowRegistry 数组，供 TASK-004 在 WorkflowCommander 加载完成后调用",
+      "src/lib/server/__tests__/dialog-manager.test.ts 存在且所有测试通过"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/dialog-manager.test.ts",
+    "definition_of_done": "DialogManager 可通过 Claude Code CLI 子进程管理对话会话，流式解析 NDJSON 输出并发射到 EventBus，支持基于关键词的意图识别（>=80% 直接路由，50-80% 消歧列表），最多 5 个并发会话"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/dialog-manager.ts",
+      "action": "create",
+      "target": "DialogManager class",
+      "change": "创建 DialogManager：Claude Code CLI 子进程管理、NDJSON 流式解析、意图识别路由、5 会话上限、spawnFn DI"
+    },
+    {
+      "path": "src/lib/shared/types.ts",
+      "action": "modify",
+      "target": "types.ts — 添加 StreamChunk 和 IntentResult 类型",
+      "change": "新增 StreamChunk 接口：{ type: 'text'|'tool_use'|'tool_result'|'error'; content: string; timestamp: string }。新增 IntentResult 接口：{ workflowId: string|null; confidence: number; candidates: Array<{workflowId: string; score: number}> }。新增 IntentCandidate 接口：{ workflowId: string; score: number }。"
+    },
+    {
+      "path": "src/lib/server/__tests__/dialog-manager.test.ts",
+      "action": "create",
+      "target": "DialogManager unit tests",
+      "change": "Mock child_process.spawn 和 workflowRegistry。测试：createSession 发射 SESSION_CREATED、sendMessage 启动 CLI 并发射 STREAM_CHUNK、intent confidence >= 80% 直接路由、50-80% 消歧列表、max sessions enforce、closeSession 发射 SESSION_CLOSED"
+    }
+  ],
+  "implementation": [
+    "创建 src/lib/server/dialog-manager.ts。导入 { spawn, ChildProcess } from 'node:child_process'。导入 { EventBus } from './event-bus.js'。导入 { DialogSession, WorkflowMeta, StreamChunk, IntentResult } from '../shared/types.js'。导入 { Channels, DialogEvents } from '../shared/events.js'。定义 SpawnFn 类型：(command: string, args?: readonly string[], options?: Parameters<typeof spawn>[2]) => ChildProcess（兼容 node:child_process.spawn 的完整签名）。",
+    "定义本地类型。StreamChunk：{ type: 'text' | 'tool_use' | 'tool_result' | 'error'; content: string; timestamp: string }。IntentResult：{ workflowId: string | null; confidence: number; candidates: Array<{ workflowId: string; score: number }> }。IntentCandidate：{ workflowId: string; score: number }。ActiveDialog：{ process: ChildProcess | null; session: DialogSession; buffer: string }。",
+    "实现 DialogManager 类。构造器签名：constructor(private eventBus: EventBus, private spawnFn: SpawnFn = spawn, private workflowRegistry: WorkflowMeta[] = [])。私有成员：private sessions = new Map<string, ActiveDialog>()。私有成员：private sessionCounter = 0。私有成员：private readonly MAX_SESSIONS = 5。",
+    "实现 createSession(clientId: string): DialogSession。检查 this.sessions.size >= this.MAX_SESSIONS，是则抛 Error。生成 sessionId = `dialog-${++this.sessionCounter}-${Date.now()}`。创建 DialogSession：{ sessionId, cliProcessId: null, createdAt: new Date().toISOString(), lastActivityAt: new Date().toISOString(), status: 'active' }。存储到 sessions。发射 SESSION_CREATED：this.eventBus.publish(DialogEvents.SESSION_CREATED, Channels.DIALOG, { sessionId, clientId, session }, 'server')。返回 session。",
+    "实现 sendMessage(sessionId: string, message: string): void。获取 activeDialog，不存在则抛 Error。更新 lastActivityAt。若 process 为 null，调用 this.spawnClaudeCLI(sessionId) 启动。写入 message + '\\n' 到 activeDialog.process.stdin。调用 this.detectIntent(message) 做意图识别。",
+    "实现 spawnClaudeCLI(sessionId: string): ChildProcess。const childProcess = this.spawnFn('claude', ['--output-format', 'stream-json', '--verbose'])。存储到 sessions 的 process 字段。设置 stdout data handler：逐行分割，调用 parseChunk 解析，emitStreamChunk 发射。设置 stderr handler：log 错误。设置 exit handler：更新 session.status 为 'closed'，发射 SESSION_CLOSED：this.eventBus.publish(DialogEvents.SESSION_CLOSED, Channels.DIALOG, { sessionId, exitCode: code }, 'server')。返回 childProcess。",
+    "实现 parseChunk(line: string): StreamChunk | null。trim 后若空返回 null。try JSON.parse。验证 type 字段 in ['text', 'tool_use', 'tool_result', 'error']。返回 { type: parsed.type, content: parsed.content ?? parsed.text ?? '', timestamp: parsed.timestamp ?? new Date().toISOString() }。catch 返回 null。",
+    "实现 emitStreamChunk(sessionId: string, chunk: StreamChunk): void。this.eventBus.publish(DialogEvents.STREAM_CHUNK, Channels.DIALOG, { sessionId, ...chunk }, 'server')。",
+    "实现 detectIntent(message: string): IntentResult。若 workflowRegistry 为空则返回 { workflowId: null, confidence: 0, candidates: [] }。对每个 workflow 计算关键词匹配分数：(1) 检查 message 是否包含 workflow.name（不区分大小写）— +0.5；(2) 检查是否包含 workflow.description 中的关键词 — 每个匹配词 +0.1；(3) 检查是否包含 workflow.category — +0.2。标准化分数到 0-1。排序 candidates。若最高分 >= 0.8：发射 INTENT_ROUTED（workflowId = candidates[0].workflowId, confidence）。若最高分在 0.5-0.8：发射 INTENT_ROUTED（workflowId = null, confidence = 最高分, candidates = 前 3 名）。返回 { workflowId: bestMatch?.workflowId ?? null, confidence: bestMatch?.score ?? 0, candidates: top 3 }。",
+    "实现 closeSession(sessionId: string): void。获取 activeDialog，不存在则静默返回。若 process 存在则 process.kill()。从 sessions 删除。发射 SESSION_CLOSED。",
+    "创建 src/lib/server/__tests__/dialog-manager.test.ts。使用 vi.mock('node:child_process') mock spawn。构造 mock workflowRegistry：[{ id: 'test-build', name: 'build', category: 'deploy', description: 'build the project', params: [] }, { id: 'test-lint', name: 'lint', category: 'quality', description: 'run linter', params: [] }]。测试：(1) createSession 返回 DialogSession 并发射 SESSION_CREATED；(2) createSession 第 6 次抛 Error；(3) sendMessage 首次调用启动 CLI 子进程；(4) stdout NDJSON 行 '{\"type\":\"text\",\"content\":\"Hello\"}' 发射 STREAM_CHUNK；(5) detectIntent 'build this project' 对 'test-build' 计算 confidence >= 0.8 并发射 INTENT_ROUTED；(6) detectIntent 'do something' confidence 在 0.5-0.8 时发射 INTENT_ROUTED 带 candidates；(7) detectIntent 'xyzzy' confidence < 0.5 时仅流式输出不发射 INTENT_ROUTED；(8) closeSession 杀死子进程并发射 SESSION_CLOSED。"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/dialog-manager.test.ts"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/dialog-manager.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "所有 8 个测试用例通过",
+      "src/lib/server/dialog-manager.ts 无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "DelegateExecutor 的 spawn/parseLine/emitEvent 三阶段模式 + SpawnFn DI + NDJSON 行解析。EventBus.publish(channel, type, payload, source) 调用签名。",
+    "files": [
+      "src/lib/server/delegate-executor.ts",
+      "src/lib/server/event-bus.ts",
+      "src/lib/shared/events.ts",
+      "src/lib/shared/types.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "关键词匹配意图识别是 MVP 阶段最简实现（无需 NLP 模型），基于 workflow name/description/category 三字段计算加权分数，置信度分段处理。Claude Code CLI 输入通过 stdin pipe 发送（`claude --output-format stream-json`），stdout NDJSON 逐行解析为 StreamChunk。SendMessage 时自动启动 CLI（lazy init），closeSession 时统一清理。",
+    "decision_factors": [
+      "C-2 约束：DialogManager 复用 DelegateExecutor 的 spawn/parse/emit 模式",
+      "C-6 约束：NDJSON 协议用于 Claude Code CLI 通信",
+      "自由选择：marked.js + highlight.js 用于前端渲染（不在服务端）",
+      "自由选择：多会话上限 5（MVP）"
+    ],
+    "tradeoffs": "关键词匹配简单但准确性有限（粗粒度匹配），MVP 阶段可接受；后续可替换为 LLM-based routing 或向量相似度"
+  },
+  "risks": [
+    {
+      "risk": "Claude Code CLI 路径不在 PATH 中或 CLI 名称不同（如 'claude-code'）",
+      "mitigation": "构造器接受 spawnFn DI，测试用 mock；通过环境变量 CLAUDE_CLI_PATH 可配置路径；启动前尝试多个已知 CLI 名称"
+    },
+    {
+      "risk": "stdin 写入大文本时可能需处理 backpressure",
+      "mitigation": "使用 process.stdin.write() 检查返回值，若 false 则监听 'drain' 事件"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "AI Dialog",
+      "Intent Router",
+      "Streaming Chat"
+    ],
+    "affected_components": [
+      "server"
+    ],
+    "affected_requirements": [
+      "REQ-003"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "90-120 min",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

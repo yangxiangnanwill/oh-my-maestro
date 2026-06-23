@@ -1,0 +1,107 @@
+{
+  "id": "TASK-002",
+  "title": "Windows ConPTY 兼容性修复",
+  "description": "修复 3 个已识别的 Windows 兼容性问题：(1) index.ts 添加 SIGBREAK 信号处理 + process.on('exit') 兜底，确保 Windows 下 Ctrl+C 正常停止进程；(2) terminal-manager.ts SHELL_WHITELIST 添加 wsl.exe，使 Windows 用户可创建 WSL 终端；(3) terminal-manager.ts resizeTerminal() 添加 _resizing 标记防回环，避免 ConPTY resize 触发 INPUT 事件的二次写入。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "small",
+  "action": "修改 src/lib/server/index.ts:269-273 — SIGINT 处理器块增加 process.on('SIGBREAK', ...) 监听（Windows ConPTY 使用 SIGBREAK 而非 SIGINT）和 process.on('exit', ...) 兜底清理。修改 src/lib/server/terminal-manager.ts:41-50 — SHELL_WHITELIST Set 添加 'wsl.exe'。修改 src/lib/server/terminal-manager.ts:192-205 — resizeTerminal() 方法在调用 pty.resize() 前检查 this._resizing 标记，设置标记后调用 resize，在 setTimeout(0) 后清除标记；修改 ActiveTerminal 接口添加 _resizing?: boolean 字段。",
+  "scope": "src/lib/server/index.ts, src/lib/server/terminal-manager.ts",
+  "focus_paths": [
+    "src/lib/server/index.ts",
+    "src/lib/server/terminal-manager.ts"
+  ],
+  "read_first": [
+    "src/lib/server/index.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/__tests__/terminal-manager.test.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave-1",
+  "convergence": {
+    "criteria": [
+      "grep -r 'SIGBREAK' src/lib/server/index.ts 返回至少 1 行，process.on('SIGBREAK', ...) 已添加",
+      "grep -r \"process.on('exit'\" src/lib/server/index.ts 返回至少 1 行，exit 兜底处理器已添加",
+      "grep -r \"'wsl.exe'\" src/lib/server/terminal-manager.ts 返回 1 行，SHELL_WHITELIST 已包含 wsl.exe",
+      "grep -r '_resizing' src/lib/server/terminal-manager.ts 返回 ActiveTerminal 接口字段定义和 resizeTerminal() 方法中的防回环逻辑",
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts 全部通过，无回归"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts && npx tsc --noEmit",
+    "definition_of_done": "Windows 下 Ctrl+C 正常停止进程（SIGBREAK 处理 + exit 兜底），wsl.exe 可创建终端，resize 操作不会触发 INPUT 事件回环写入"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/index.ts",
+      "action": "modify",
+      "target": "SIGINT handler block at lines 269-273",
+      "change": "添加 process.on('SIGBREAK', ...) 和 process.on('exit', ...) 处理器"
+    },
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "modify",
+      "target": "SHELL_WHITELIST Set at lines 41-50",
+      "change": "添加 'wsl.exe' 到白名单"
+    },
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "modify",
+      "target": "ActiveTerminal interface and resizeTerminal() method",
+      "change": "ActiveTerminal 添加 _resizing?: boolean 字段；resizeTerminal() 添加 _resizing 防回环逻辑"
+    }
+  ],
+  "implementation": [
+    "修改 src/lib/server/index.ts:269-273 — 在 SIGINT 处理器之后添加 process.on('SIGBREAK', () => { server.stop(); process.exit(0); })",
+    "在 SIGBREAK 处理器之后添加 process.on('exit', (code) => { server.stop(); }) 作为兜底清理",
+    "修改 src/lib/server/terminal-manager.ts:41-50 — 在 SHELL_WHITELIST Set 构造函数中添加 'wsl.exe'",
+    "修改 src/lib/server/terminal-manager.ts ActiveTerminal 接口 — 添加 _resizing?: boolean 字段（与现有 _exiting?: boolean 并列）",
+    "修改 resizeTerminal() 方法 — 在方法开头检查 active._resizing，如果为 true 则直接 return",
+    "在 pty.resize() 调用前设置 active._resizing = true，在 setTimeout(() => { active._resizing = false }, 0) 中清除标记",
+    "在 terminal-manager.test.ts 中添加 resizeTerminal 防回环测试 — 连续调用 resize，验证第二次调用被跳过"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts",
+      "npx tsc --noEmit"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/terminal-manager.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "terminal-manager.test.ts 全部通过，无回归",
+      "resize 防回环测试通过（连续 resize 第二次被跳过）",
+      "TypeScript 编译零错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Follow existing _exiting flag pattern for _resizing guard, SIGINT handler pattern for SIGBREAK",
+    "files": [
+      "src/lib/server/terminal-manager.ts",
+      "src/lib/server/index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "最小改动修复 3 个已识别问题。SIGBREAK 和 exit 兜底遵循现有 SIGINT 处理器模式。wsl.exe 白名单只需添加一项。_resizing 防回环遵循现有 _exiting 防重复模式。",
+    "decision_factors": [
+      "ConPTY 在 Windows 上使用 SIGBREAK 而非 SIGINT 终止进程",
+      "process.on('exit') 作为兜底确保无论如何服务器资源都被清理",
+      "WSL 是 Windows 用户最常用的 Linux 终端方案",
+      "_resizing 模式与现有 _exiting 模式一致，降低认知负担"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "SIGBREAK 在非 Windows 平台上不存在，需确认不会导致运行时错误 — Node.js 在非 Windows 上忽略未知信号"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "45m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": "wave-1",
+    "executor": "agent"
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "id": "TASK-004",
+  "title": "修复 stores/index.ts DelegateEvent 步骤状态映射错误",
+  "description": "修复 CORR-003：stores/index.ts:140 中 type 非 'failed' 时步骤 status 被设为 'complete'，导致 queued/started 状态的步骤在前端显示为已完成。修复方案：使用完整的状态映射 — queued→pending, started→running, completed→complete, failed→failed。",
+  "issue_id": "CORR-003",
+  "issue_refs": [],
+  "type": "bugfix",
+  "priority": "high",
+  "effort": "small",
+  "action": "修改 stores/index.ts 第 140 行 step status 赋值逻辑：将 type === 'failed' ? 'failed' : 'complete' 替换为完整映射 { queued: 'pending', started: 'running', completed: 'complete', failed: 'failed' }",
+  "status": "completed",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/lib/client/stores/index.ts",
+  "focus_paths": [
+    "src/lib/client/stores/index.ts"
+  ],
+  "read_first": [
+    "src/lib/client/stores/index.ts",
+    "src/lib/shared/types.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n \"queued.*pending\" src/lib/client/stores/index.ts 返回匹配行（queued → pending 映射存在）",
+      "grep -n \"started.*running\" src/lib/client/stores/index.ts 返回匹配行（started → running 映射存在）",
+      "grep -n \"completed.*complete\" src/lib/client/stores/index.ts 返回匹配行（completed → complete 映射存在）",
+      "grep -n \"failed.*failed\" src/lib/client/stores/index.ts 返回匹配行（failed → failed 映射存在）",
+      "grep -n \"type === 'failed' ? 'failed' : 'complete'\" src/lib/client/stores/index.ts 无匹配（旧代码已替换）",
+      "npx tsc --noEmit 通过"
+    ],
+    "verification": "npx tsc --noEmit",
+    "definition_of_done": "queued 步骤显示为 pending 状态；started 步骤显示为 running 状态；completed 步骤显示为 complete 状态；failed 步骤显示为 failed 状态"
+  },
+  "files": [
+    {
+      "path": "src/lib/client/stores/index.ts",
+      "action": "modify",
+      "target": "第 140 行 step status 赋值",
+      "change": "将 status: type === 'failed' ? 'failed' : 'complete' 替换为基于映射表的正确状态转换"
+    }
+  ],
+  "implementation": [
+    "1. 打开 src/lib/client/stores/index.ts，定位到第 136-144 行的 ExecutionStep 创建代码",
+    "2. 在第 136 行之前添加状态映射常量:\nconst STEP_STATUS_MAP: Record<string, StepStatus> = {\n  queued: 'pending',\n  started: 'running',\n  completed: 'complete',\n  failed: 'failed',\n};",
+    "3. 将第 140 行 status: type === 'failed' ? 'failed' : 'complete' 替换为 status: STEP_STATUS_MAP[type] ?? 'pending'",
+    "4. 确认 import 中包含 StepStatus 类型（当前第 16 行已导入 StepStatus）",
+    "5. 运行 npx tsc --noEmit 验证类型检查通过"
+  ],
+  "test": {
+    "commands": [
+      "npx tsc --noEmit"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "TypeScript 编译无错误",
+      "STEP_STATUS_MAP 覆盖所有 DelegateEvent type 值"
+    ]
+  },
+  "reference": {
+    "pattern": "使用映射表替代条件表达式进行状态转换",
+    "files": [
+      "src/lib/client/stores/index.ts:136-144 (当前有 bug 的 step 创建代码)",
+      "src/lib/shared/types.ts:16 (StepStatus 类型定义: 'pending' | 'running' | 'complete' | 'failed' | 'skipped')",
+      "src/lib/shared/types.ts:136-143 (DelegateEvent 接口定义: type: 'queued' | 'started' | 'completed' | 'failed')"
+    ],
+    "examples": "当前有 bug 的代码:\nconst step: ExecutionStep = {\n  index: stepIndex,\n  name: stepName,\n  status: type === 'failed' ? 'failed' : 'complete',  // BUG: queued/started → 'complete'\n  output,\n  startedAt: timestamp,\n  completedAt: timestamp,\n};"
+  },
+  "rationale": {
+    "chosen_approach": "使用映射表（Record<string, StepStatus>）而非 if-else 链，因为：(1) 映射表是穷尽的且类型安全；(2) 易于扩展新状态；(3) 代码更简洁。默认值 'pending' 确保未知类型不会错误显示为完成。",
+    "decision_factors": [
+      "StepStatus 和 DelegateEvent.type 是两个不同的类型系统，需要显式映射",
+      "映射表方案比 switch-case 更简洁",
+      "默认值 'pending' 是安全的 fallback"
+    ],
+    "tradeoffs": "无。这是纯 bug 修复，不改变任何 API 或行为语义（除了修复错误行为）。"
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["Workflow 步骤状态显示"],
+    "affected_components": ["stores/index.ts"],
+    "affected_requirements": ["REQ-002: 工作流步骤进度可视化"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

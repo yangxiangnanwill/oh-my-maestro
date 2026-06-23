@@ -1,0 +1,100 @@
+{
+  "artifact_id": "ANL-008",
+  "scope": "micro",
+  "phase": 0,
+  "milestone": "F1",
+  "mode": "quick",
+  "recommendation": "GO",
+  "scope_verdict": "small",
+  "overall_confidence": 0.83,
+  "dimension_scores": {
+    "feasibility": { "score": 4, "confidence": 0.80 },
+    "impact": { "score": 5, "confidence": 0.95 },
+    "risk": { "score": 2, "confidence": 0.75 },
+    "complexity": { "score": 2, "confidence": 0.85 },
+    "dependencies": { "score": 2, "confidence": 0.80 },
+    "alternatives": { "score": null, "confidence": 0.90 }
+  },
+  "recommendations": [
+    {
+      "id": "REC-P0-1",
+      "title": "修复 Windows 构建系统",
+      "priority": "high",
+      "rationale": "bun install 需要能解析 monorepo workspace 依赖",
+      "action": "验证 bun workspaces 配置，修复缺失的 package.json，生成 bun.lock",
+      "review_status": "proposed"
+    },
+    {
+      "id": "REC-P0-2",
+      "title": "适配 Shell 环境",
+      "priority": "high",
+      "rationale": "Windows 默认使用 PowerShell/CMD，非 zsh/bash",
+      "action": "扩展 getDefaultShell() 支持 Windows，添加 PowerShell profile 支持",
+      "review_status": "proposed"
+    },
+    {
+      "id": "REC-P0-3",
+      "title": "修复系统字体路径",
+      "priority": "medium",
+      "rationale": "字体查找硬编码 macOS 路径",
+      "action": "为 Windows 添加 C:\\Windows\\Fonts 路径支持",
+      "review_status": "proposed"
+    },
+    {
+      "id": "REC-P0-4",
+      "title": "提取概念翻译层设计文档",
+      "priority": "high",
+      "rationale": "oh-my-maestro 的核心差异化设计，必须在删除前保留",
+      "action": "将 translations.ts + translator.ts + 设计理念文档化到 Superset 文档",
+      "review_status": "proposed"
+    },
+    {
+      "id": "REC-P0-5",
+      "title": "归档 oh-my-maestro",
+      "priority": "high",
+      "rationale": "用户已确认删除，Superset 已替代其核心愿景",
+      "action": "创建归档分支，删除工作目录，保留 git history",
+      "review_status": "proposed"
+    }
+  ],
+  "risks": [
+    { "id": "RSK-P0-1", "title": "Bun workspace 在 Windows 上行为差异", "probability": 0.3, "impact": 3, "mitigation": "测试 bun install --frozen-lockfile，必要时手动指定 workspace 路径" },
+    { "id": "RSK-P0-2", "title": "node-pty ConPTY 边界情况", "probability": 0.2, "impact": 2, "mitigation": "oh-my-maestro 已有 ConPTY 修复经验，可复用" },
+    { "id": "RSK-P0-3", "title": "原生模块编译失败", "probability": 0.4, "impact": 2, "mitigation": "安装 VS Build Tools，使用 windows-build-tools" }
+  ],
+  "decision_trail": [
+    "采用 quick mode — Phase 0 范围明确无需交互式讨论",
+    "选择方案 A：直接修复 Windows 兼容性",
+    "scope_verdict = small：20-25 变更点，单项目范围"
+  ],
+  "implementation_scope": [
+    {
+      "objective": "Windows 构建环境修复",
+      "rationale": "bun install 能成功解析并安装所有 monorepo 依赖",
+      "priority": "high",
+      "target_files": ["apps/desktop/package.json", "apps/api/package.json", "apps/admin/package.json"],
+      "acceptance_criteria": "bun install 在 Windows 上成功完成，bun run dev 启动 API + Desktop"
+    },
+    {
+      "objective": "Shell 环境适配",
+      "rationale": "Windows 终端默认使用 PowerShell/CMD，需要适配",
+      "priority": "high",
+      "target_files": ["apps/desktop/src/main/lib/terminal/env.ts", "apps/desktop/src/main/lib/agent-setup/utils.ts"],
+      "acceptance_criteria": "终端面板在 Windows 上正常显示 shell 提示符，可执行命令"
+    },
+    {
+      "objective": "概念翻译层设计文档提取",
+      "rationale": "保留 oh-my-maestro 的核心设计资产",
+      "priority": "high",
+      "target_files": ["src/lib/shared/translations.ts", "src/lib/server/translator.ts"],
+      "acceptance_criteria": "设计文档写入 Superset 仓库，包含翻译注册表结构和 DisplayMode 逻辑"
+    },
+    {
+      "objective": "oh-my-maestro 归档",
+      "rationale": "用户确认删除，后续所有工作在 Superset 上进行",
+      "priority": "high",
+      "target_files": [],
+      "acceptance_criteria": "oh-my-maestro 目录删除，git 历史保留在归档分支"
+    }
+  ]
+}

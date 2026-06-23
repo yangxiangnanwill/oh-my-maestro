@@ -1,0 +1,131 @@
+{
+  "session_id": "ANL-P1-foundation-core-mvp-2026-06-21",
+  "generated_at": "2026-06-21T09:40:00+08:00",
+  "decision_trail": [
+    {
+      "round": 1,
+      "decision": "Progressive mode with 3 milestones",
+      "reason": "Blueprint PM already defined 4-phase delivery order, mapping to MVP/Usable/Refined",
+      "impact": "3 milestones × 1 phase each, minimizing synchronization barriers"
+    },
+    {
+      "round": 1,
+      "decision": "CLI Adapter as Phase 1 Wave 1 priority",
+      "reason": "Without adapter, no integration with maestro-flow is possible",
+      "impact": "Shifts project from "scaffold done" to "actually functional""
+    },
+    {
+      "round": 1,
+      "decision": "Per-client translation is acceptable for MVP (<100 clients)",
+      "reason": "MVP is single-user local app, not multi-tenant SaaS",
+      "impact": "No architectural change needed; defer perf optimization to Refined milestone"
+    },
+    {
+      "round": 1,
+      "decision": "Windows ConPTY risk is medium, not blocking",
+      "reason": "Phase 1 doesn't require interactive PTY (Terminal Bridge is Phase 2)",
+      "impact": "Defer to Phase 2 validation; Phase 1 uses child_process.spawn for delegate commands"
+    }
+  ],
+  "key_conclusions": [
+    {
+      "id": "C-1",
+      "conclusion": "Phase 1 architecture is sound — EventBus → WSGateway → StateSync → Translator 分层合理，依赖方向正确",
+      "evidence": ["anchor-1-eventbus-pubsub", "anchor-2-ws-message-routing", "anchor-3-state-sync-dual-source", "anchor-4-translator-middleware"],
+      "confidence": "high"
+    },
+    {
+      "id": "C-2",
+      "conclusion": "CLI Adapter Layer 是 Phase 1 最大缺口 — 当前实现无法与 maestro-flow 交互",
+      "evidence": ["exploration-codebase.json: no cli-adapter.ts file found", "maestro-flow/src/ralph/cmd-skills.ts: NDJSON output format documented"],
+      "confidence": "high"
+    },
+    {
+      "id": "C-3",
+      "conclusion": "测试覆盖不均匀 — EventBus 和 Translator 有完整测试，WSGateway/StateSync/Server 无测试",
+      "evidence": ["anchor-1 6 tests pass", "anchor-4 12 tests pass", "exploration-codebase.json: no __tests__ for ws-gateway, state-sync, index"],
+      "confidence": "high"
+    },
+    {
+      "id": "C-4",
+      "conclusion": "maestro-flow 集成点已识别但未对接 — ralph skills NDJSON + delegate broker 需在 plan 阶段细化",
+      "evidence": ["anchor delegate-broker.js trace", "anchor cmd-skills.ts NDJSON format"],
+      "confidence": "medium"
+    }
+  ],
+  "recommendations": [
+    {
+      "id": "R-1",
+      "action": "实现 CLI Adapter Layer — 解析 maestro ralph skills --json NDJSON 输出，封装为 WorkflowMeta[]",
+      "rationale": "Workflow Commander 和 Project Radar 的数据源完全依赖此适配器",
+      "priority": "high",
+      "next_action": "plan 阶段设为 Wave 1 首个任务"
+    },
+    {
+      "id": "R-2",
+      "action": "实现 maestro delegate 子进程管理 — spawn + 输出流解析 + 事件发射",
+      "rationale": "工作流执行必须通过 delegate 命令触发，这是 Phase 1 的核心功能",
+      "priority": "high",
+      "next_action": "plan 阶段设为 Wave 3 任务（依赖 CLI Adapter）"
+    },
+    {
+      "id": "R-3",
+      "action": "补充 WSGateway 和 StateSyncEngine 单元测试",
+      "rationale": "当前 0% 覆盖率，集成风险高",
+      "priority": "medium",
+      "next_action": "与对应模块开发同步完成"
+    },
+    {
+      "id": "R-4",
+      "action": "基准测试 WS per-client 翻译性能 — 100 clients × 10 events/sec",
+      "rationale": "确认单用户场景下无瓶颈，为多用户扩展做准备",
+      "priority": "medium",
+      "next_action": "Phase 1 末尾验证阶段"
+    },
+    {
+      "id": "R-5",
+      "action": "设计 maestro-flow 版本检测机制 — 启动时 maestro --version 解析 + 适配器选择",
+      "rationale": "防止 CLI 输出格式变更导致适配器失败",
+      "priority": "medium",
+      "next_action": "与 CLI Adapter 同步设计"
+    }
+  ],
+  "implementation_scope": [
+    {
+      "id": "SCOPE-1",
+      "objective": "实现 CLI Adapter Layer — NDJSON 解析 + 版本检测",
+      "acceptance_criteria": [
+        "能正确解析 maestro ralph skills --json --quiet 输出",
+        "启动时检测 maestro 版本并选择匹配适配器",
+        "版本不匹配时 fail-fast 并返回清晰错误"
+      ],
+      "priority": "high",
+      "target_files": ["src/lib/server/cli-adapter.ts"],
+      "ref": "R-1, R-5"
+    },
+    {
+      "id": "SCOPE-2",
+      "objective": "实现 delegate 子进程管理 + 输出流解析",
+      "acceptance_criteria": [
+        "能 spawn maestro delegate 子进程并捕获 stdout/stderr",
+        "能解析 delegate broker 事件（queued, started, completed, failed）",
+        "进程退出时正确清理资源"
+      ],
+      "priority": "high",
+      "target_files": ["src/lib/server/delegate-executor.ts"],
+      "ref": "R-2"
+    },
+    {
+      "id": "SCOPE-3",
+      "objective": "补充 WSGateway + StateSyncEngine 单元测试",
+      "acceptance_criteria": [
+        "WSGateway 测试覆盖：连接/断开/订阅/取消订阅/模式切换/广播",
+        "StateSyncEngine 测试覆盖：双源合并/debounce/缓冲区/replay",
+        "整体覆盖率 > 80%"
+      ],
+      "priority": "medium",
+      "target_files": ["src/lib/server/__tests__/ws-gateway.test.ts", "src/lib/server/__tests__/state-sync.test.ts"],
+      "ref": "R-3"
+    }
+  ]
+}

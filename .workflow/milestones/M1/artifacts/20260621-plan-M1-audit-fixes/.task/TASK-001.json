@@ -1,0 +1,105 @@
+{
+  "id": "TASK-001",
+  "title": "修复 CRITICAL 运行时阻断：缺少依赖 + DelegateEvent→WorkflowExecution 数据契约不匹配",
+  "description": "修复两个 CRITICAL 问题：(1) package.json 缺少 @hono/node-server 依赖导致 server/index.ts 第4行 import 失败；(2) stores/index.ts 中 workflow:step-update 处理将 DelegateEvent 强制转换为 WorkflowExecution，但 DelegateEvent（{type, executionId, stepIndex?, stepName?, output?, timestamp}）没有 .id 和 .steps 字段，导致 activeWorkflows store 中对象字段为 undefined。通过在 stores 中维护 executionMap 将逐步到达的 DelegateEvent 累积为完整的 WorkflowExecution。",
+  "issue_id": null,
+  "issue_refs": ["M1-audit-gap-1", "M1-audit-gap-2", "M1-audit-gap-4"],
+  "type": "fix",
+  "priority": "critical",
+  "effort": "medium",
+  "action": "在 package.json dependencies 中添加 \"@hono/node-server\": \"^1.13.0\"；在 stores/index.ts 中创建 Map<executionId, WorkflowExecution> 累积 DelegateEvent 流，将每个 event 转换为 ExecutionStep 推入 steps 数组后更新 activeWorkflows store",
+  "status": "completed",
+  "completed_at": "2026-06-21T00:00:00Z",
+  "actual_duration": null,
+  "scope": "src/lib/client/stores/index.ts, package.json",
+  "focus_paths": ["src/lib/client/stores/index.ts", "package.json"],
+  "read_first": [
+    "src/lib/shared/types.ts",
+    "src/lib/shared/events.ts",
+    "src/lib/server/delegate-executor.ts",
+    "src/lib/client/stores/index.ts",
+    "package.json"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave1-critical",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "package.json dependencies 包含 \"@hono/node-server\": \"^1.13.0\"",
+      "src/lib/client/stores/index.ts 包含类型为 Map<string, WorkflowExecution> 的 executionMap",
+      "src/lib/client/stores/index.ts 的 workflow:step-update 处理器从 message.payload 中提取 DelegateEvent 字段（type, executionId, stepIndex, stepName, output, timestamp）而非将其视为 WorkflowExecution",
+      "src/lib/client/stores/index.ts 中对 executionMap 的更新操作使用 executionMap.get(executionId) 和 executionMap.set(executionId, updatedExecution)",
+      "npm install 成功完成且无错误"
+    ],
+    "verification": "grep -n '\"@hono/node-server\"' package.json && grep -n 'executionMap' src/lib/client/stores/index.ts && grep -n 'Map<string, WorkflowExecution>' src/lib/client/stores/index.ts && npm install 2>&1 | tail -5",
+    "definition_of_done": "服务器可以正常启动（import @hono/node-server 不报错），DelegateEvent 被正确转换为 WorkflowExecution 并发布到 activeWorkflows store"
+  },
+  "files": [
+    {
+      "path": "package.json",
+      "action": "modify",
+      "target": "dependencies",
+      "change": "添加 \"@hono/node-server\": \"^1.13.0\" 到 dependencies 对象中"
+    },
+    {
+      "path": "src/lib/client/stores/index.ts",
+      "action": "modify",
+      "target": "workflow:step-update 处理器和全局状态",
+      "change": "添加 const executionMap = new Map<string, WorkflowExecution>()；重构 wsClient.on(Channels.WORKFLOW, ...) 处理器：从 message.payload 提取 DelegateEvent 字段，在 executionMap 中查找/创建 WorkflowExecution，将 DelegateEvent 转换为 ExecutionStep 并推入 steps 数组，然后将完整的 WorkflowExecution 写入 activeWorkflows store"
+    }
+  ],
+  "implementation": [
+    "在 package.json 的 dependencies 对象中添加 \"@hono/node-server\": \"^1.13.0\"（按字母顺序插入 hono 之前）",
+    "运行 npm install 安装新依赖",
+    "在 stores/index.ts 中，activeWorkflows writable 声明之后添加 const executionMap = new Map<string, WorkflowExecution>()",
+    "重构 wsClient.on(Channels.WORKFLOW, ...) 回调（约第68-81行）：",
+    "  - 从 message.payload 中解构 DelegateEvent 字段：{ executionId, type, stepIndex, stepName, output, timestamp }",
+    "  - 用 executionMap.get(executionId) 查找或创建 WorkflowExecution：若未找到则新建 { id: executionId, workflowId: '', params: {}, status: 'running', steps: [], startedAt: timestamp, completedAt: null }",
+    "  - 根据 type 更新 status：'queued'/'started' → 'running', 'completed' → 'completed' 并设 completedAt, 'failed' → 'failed' 并设 completedAt",
+    "  - 若有 stepIndex 和 stepName，创建 ExecutionStep { index: stepIndex, name: stepName, status: type === 'failed' ? 'failed' : 'complete', output, startedAt: timestamp, completedAt: timestamp }，推入 execution.steps",
+    "  - executionMap.set(executionId, execution)",
+    "  - 更新 activeWorkflows：activeWorkflows.update(workflows => { const idx = workflows.findIndex(w => w.id === executionId); if (idx >= 0) workflows[idx] = execution; else workflows.push(execution); return workflows; })"
+  ],
+  "test": {
+    "commands": ["npm install 2>&1", "npx tsc --noEmit 2>&1 | head -30"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "npm install 退出码为 0",
+      "TypeScript 编译无类型错误",
+      "DelegateEvent 到 WorkflowExecution 的转换逻辑覆盖所有 type 值（queued/started/completed/failed）"
+    ]
+  },
+  "reference": {
+    "pattern": "现有的 WorkflowExecution 接口定义在 src/lib/shared/types.ts:19-27，ExecutionStep 在 :29-37，DelegateEvent 在 :128-135",
+    "files": ["src/lib/shared/types.ts", "src/lib/client/stores/index.ts"],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "在客户端 stores 层通过 Map 累积 DelegateEvent 为 WorkflowExecution，而非修改 DelegateExecutor 的 emit 逻辑。原因：(1) DelegateExecutor 按设计逐个 emit 步骤事件，不应改变其契约；(2) 累积逻辑是展示层关注点，放在 stores 层符合分层架构；(3) 不需要修改服务端任何代码。",
+    "decision_factors": [
+      "DelegateExecutor.emitEvent() 发布的是 DelegateEvent 而非 WorkflowExecution，这是其设计契约",
+      "前端需要完整的 WorkflowExecution 对象来渲染工作流状态",
+      "stores 层是数据适配的自然位置"
+    ],
+    "tradeoffs": "Map 会随时间增长，但 M1 MVP 范围内单次执行数量有限，暂不引入清理逻辑"
+  },
+  "risks": [
+    "如果 DelegateEvent 到达顺序与预期不一致（例如 completed 到达后还有 step 事件），WorkflowExecution 的 status 可能被错误覆盖。缓解：在 push step 之前检查 status 是否已为 terminal 状态"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["Workflow Execution Visualization"],
+    "affected_components": ["Client Stores", "Server Dependencies"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

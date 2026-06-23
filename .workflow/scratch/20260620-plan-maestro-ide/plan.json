@@ -1,0 +1,25 @@
+{
+  "session_id": "maestro-20260620-184400",
+  "plan_slug": "maestro-ide",
+  "phase": "foundation",
+  "source_artifact": "BLP-maestro-ide-2026-06-20",
+  "created_at": "2026-06-20T21:35:00+08:00",
+  "scope": "standalone",
+  "milestone_id": "M-adhoc-20260620-213500",
+  "task_ids": ["IMPL-001","IMPL-002","IMPL-003","IMPL-004","IMPL-005","IMPL-006","IMPL-007","IMPL-008","IMPL-009","IMPL-010","IMPL-011","IMPL-012","IMPL-013"],
+  "waves": [
+    {"wave": 1, "tasks": ["IMPL-001","IMPL-002","IMPL-003"], "parallel": true},
+    {"wave": 2, "tasks": ["IMPL-004","IMPL-005","IMPL-006"], "parallel": true},
+    {"wave": 3, "tasks": ["IMPL-007","IMPL-008","IMPL-009"], "parallel": false},
+    {"wave": 4, "tasks": ["IMPL-010","IMPL-011","IMPL-012","IMPL-013"], "parallel": true}
+  ],
+  "acceptance_criteria": [
+    "EventBus publish/subscribe works with typed events",
+    "WebSocket connection established, auto-reconnect on disconnect",
+    "State Sync Engine merges CLI events + filesystem events within 500ms",
+    "Concept Translator no terminology leak in simple mode",
+    "Frontend display mode toggle switches simple/advanced",
+    "All tests pass"
+  ],
+  "status": "pending"
+}

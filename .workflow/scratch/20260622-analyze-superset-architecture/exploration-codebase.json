@@ -1,0 +1,94 @@
+{
+  "exploration_type": "3-layer",
+  "project": "Superset",
+  "path": "D:/WorkSpace/GitRepoes/superset",
+  "explored_at": "2026-06-22T18:10:00+08:00",
+  "architecture_summary": "Superset 是一个 Electron 桌面应用（macOS），用于并行编排多个 CLI 编码代理（Claude Code、Codex、Gemini CLI 等），通过隔离的 git worktree 实现并行开发。采用 3 层架构：Electron Main Process（管理应用生命周期、PTY 会话、tRPC API）、Electron Renderer（React 19 + TanStack Router + xterm.js）、Host Service（Hono HTTP 服务器，管理 workspace 生命周期、git 操作、agent 编排）。技术栈：Electron 40 + React 19 + TypeScript 6 + Bun + Drizzle ORM + tRPC 11 + xterm.js + Hono + MCP SDK + node-pty。",
+  "relevant_files": [
+    {"path": "apps/desktop/src/main/index.ts", "description": "Electron 主进程入口，应用生命周期管理", "significance": "critical"},
+    {"path": "apps/desktop/src/main/lib/agent-setup/desktop-agent-capabilities.ts", "description": "定义 11 种支持的代理类型及设置操作", "significance": "critical"},
+    {"path": "apps/desktop/src/main/lib/host-service-coordinator.ts", "description": "管理 host-service 子进程的生成和生命周期", "significance": "critical"},
+    {"path": "apps/desktop/src/main/terminal-host/index.ts", "description": "持久化终端守护进程，使用 Unix domain socket", "significance": "critical"},
+    {"path": "apps/desktop/src/lib/trpc/routers/index.ts", "description": "主 tRPC 路由器，组合 30+ 子路由器", "significance": "critical"},
+    {"path": "packages/db/src/schema/schema.ts", "description": "云 PostgreSQL 数据库 schema", "significance": "critical"},
+    {"path": "packages/local-db/src/schema/schema.ts", "description": "本地 SQLite 数据库 schema", "significance": "critical"},
+    {"path": "packages/host-service/src/app.ts", "description": "Host Service Hono 应用工厂", "significance": "critical"},
+    {"path": "packages/mcp-v2/src/server.ts", "description": "MCP v2 服务器，28 个工具", "significance": "important"},
+    {"path": "apps/desktop/src/renderer/index.tsx", "description": "渲染进程入口", "significance": "important"}
+  ],
+  "call_chains": [
+    {
+      "entry_point": "Agent Launch",
+      "chain": ["renderer: AgentSessionOrchestrator → terminal-adapter.ts: writeTaskPromptFile() → launchCommandInPane() → main: DaemonTerminalManager.createOrAttach() → terminal-host: TerminalHost.createSession() → notify-hook.template.sh → host-service: TerminalAgentStore"],
+      "description": "代理启动流程：从 UI 触发到 PTY 会话创建到生命周期事件通知"
+    },
+    {
+      "entry_point": "Worktree Creation",
+      "chain": ["renderer: createWorkspace mutation → main: workspaces/procedures/create.ts → git.ts: createWorktreeFromPr() → workspace-init-manager.ts: startJob() → db-helpers.ts: insert records"],
+      "description": "工作树创建流程：从 UI 触发到 git worktree 创建到数据库记录"
+    },
+    {
+      "entry_point": "IPC Communication",
+      "chain": ["Renderer (React) → trpc-client.ts: ipcLink → Electron IPC (contextBridge) → Preload: exposeElectronTRPC() → Main: tRPC routers → local-db / host-service-coordinator / terminal-host"],
+      "description": "IPC 通信架构：tRPC over Electron IPC"
+    }
+  ],
+  "data_flows": [
+    {"from": "Renderer (React)", "to": "Main Process", "mechanism": "tRPC over Electron IPC", "data_type": "Typed RPC"},
+    {"from": "Main Process", "to": "Host Service", "mechanism": "HTTP (localhost) with PSK", "data_type": "REST + tRPC"},
+    {"from": "Main Process", "to": "Terminal Host", "mechanism": "Unix domain socket (NDJSON)", "data_type": "PTY I/O"},
+    {"from": "Agent CLI (PTY)", "to": "Host Service", "mechanism": "HTTP POST (notify.sh)", "data_type": "Lifecycle events"},
+    {"from": "Host Service", "to": "Cloud API", "mechanism": "HTTP (JWT)", "data_type": "Sync"}
+  ],
+  "code_anchors": [
+    {
+      "file": "apps/desktop/src/main/lib/agent-setup/desktop-agent-capabilities.ts",
+      "lines": "40-102",
+      "snippet": "DESKTOP_AGENT_SETUP_TARGETS = [{id: 'claude', setupActions: ['claude-settings-json', 'claude-wrapper']}, {id: 'codex', ...}, ...] — 11 种代理的注册表",
+      "significance": "代理扩展点：添加新代理需在此注册 + 实现 wrapper/hook"
+    },
+    {
+      "file": "apps/desktop/src/main/lib/host-service-coordinator.ts",
+      "lines": "341-437",
+      "snippet": "spawn(organizationId, config, preferredPorts) — 使用 childProcess.spawn 启动 host-service，PSK 认证，健康检查轮询",
+      "significance": "进程编排核心：每个组织一个 host-service 进程"
+    }
+  ],
+  "key_findings": [
+    {
+      "finding": "Superset 是 Electron + React + Bun 全栈应用，核心是并行代理编排 + git worktree 隔离",
+      "evidence_files": ["apps/desktop/src/main/index.ts", "apps/desktop/src/renderer/index.tsx"],
+      "confidence": "high"
+    },
+    {
+      "finding": "代理系统通过 DESKTOP_AGENT_SETUP_TARGETS 注册表扩展，支持 11 种 CLI 代理",
+      "evidence_files": ["apps/desktop/src/main/lib/agent-setup/desktop-agent-capabilities.ts"],
+      "confidence": "high"
+    },
+    {
+      "finding": "通信架构使用 tRPC over Electron IPC + Host Service HTTP + Terminal Host Unix Socket 三层",
+      "evidence_files": ["apps/desktop/src/lib/trpc/routers/index.ts", "apps/desktop/src/main/terminal-host/index.ts"],
+      "confidence": "high"
+    },
+    {
+      "finding": "数据层使用 Drizzle ORM，本地 SQLite + 云端 PostgreSQL 双数据库",
+      "evidence_files": ["packages/db/src/schema/schema.ts", "packages/local-db/src/schema/schema.ts"],
+      "confidence": "high"
+    },
+    {
+      "finding": "MCP v2 提供 28 个工具，支持外部 MCP 客户端集成",
+      "evidence_files": ["packages/mcp-v2/src/server.ts", "packages/mcp-v2/src/tools/register.ts"],
+      "confidence": "high"
+    },
+    {
+      "finding": "终端系统使用持久化守护进程 (terminal-host)，PTY 会话在应用重启后仍存活",
+      "evidence_files": ["apps/desktop/src/main/terminal-host/index.ts"],
+      "confidence": "high"
+    },
+    {
+      "finding": "工作树隔离机制完整：文件系统隔离 + 分支隔离 + 端口隔离 + 环境变量注入",
+      "evidence_files": ["apps/desktop/src/lib/trpc/routers/workspaces/procedures/create.ts"],
+      "confidence": "high"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "task_id": "TASK-005",
+  "phase": 0,
+  "milestone": "F1",
+  "title": "oh-my-maestro 项目归档与清理",
+  "type": "docs",
+  "complexity": "low",
+  "estimated_minutes": 10,
+  "depends_on": ["TASK-004"],
+  "files": [],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/.workflow/state.json",
+    "D:/WorkSpace/VsCode/oh-my-maestro/.workflow/roadmap.md"
+  ],
+  "action": "将 oh-my-maestro 项目归档：(1) 创建 archive/oh-my-maestro 分支保存完整历史；(2) 删除 D:/WorkSpace/VsCode/oh-my-maestro 工作目录中除 .git 外的所有文件；(3) 更新 state.json 项目描述指向 Superset 融合项目；(4) 保留 .workflow/ 目录用于后续融合工作追踪。",
+  "implementation": [
+    "Step 1: cd D:/WorkSpace/VsCode/oh-my-maestro && git checkout -b archive/oh-my-maestro",
+    "Step 2: git add -A && git commit -m \"归档: oh-my-maestro 项目 — 融合至 Superset + Maestro-flow\"",
+    "Step 3: git checkout master（或 main）",
+    "Step 4: 删除 src/ 目录、package.json、svelte.config.js、vite.config.ts 等源文件",
+    "Step 5: 保留 .workflow/、.git/、README.md（更新为指向新项目）",
+    "Step 6: git add -A && git commit -m \"清理: 移除 oh-my-maestro 源码，转向 Superset 融合项目\""
+  ],
+  "convergence": {
+    "criteria": [
+      "git branch 包含 archive/oh-my-maestro",
+      "D:/WorkSpace/VsCode/oh-my-maestro/src/ 目录不存在",
+      "D:/WorkSpace/VsCode/oh-my-maestro/.workflow/ 目录存在（保留）",
+      "git log -1 --oneline 包含 '归档' 或 'oh-my-maestro'"
+    ]
+  }
+}

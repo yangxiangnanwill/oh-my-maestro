@@ -1,0 +1,123 @@
+{
+  "id": "TASK-001",
+  "title": "修复终端事件契约：添加 CREATE/DESTROY 常量 + ws-gateway 事件转发 + TerminalManager 订阅",
+  "description": "修复 ARCH-001（TerminalEvents 缺少 CREATE/DESTROY）、CORR-004（ws-gateway 无 term:create handler）、CORR-005（ws-gateway 无 term:destroy handler）。TerminalBridge.svelte 通过 WebSocket 发送 term:create/term:destroy，当前 ws-gateway 的 default 分支将它们转发到 EventBus，但 TerminalManager 构造器仅订阅 INPUT，未订阅 CREATE/DESTROY。修复方案：在 events.ts 添加常量定义，在 TerminalManager 构造器中订阅 CREATE 和 DESTROY 事件。",
+  "issue_id": "ARCH-001",
+  "issue_refs": ["CORR-004", "CORR-005"],
+  "type": "bugfix",
+  "priority": "critical",
+  "effort": "medium",
+  "action": "在 events.ts TerminalEvents 中添加 CREATE: 'term:create' 和 DESTROY: 'term:destroy'；在 terminal-manager.ts 构造器中添加 this.eventBus.subscribe(TerminalEvents.CREATE, ...) 调用 createTerminal() 和 this.eventBus.subscribe(TerminalEvents.DESTROY, ...) 调用 destroyTerminal()；在 TerminalBridge.svelte:118 将 type: 'term:create' 改为 type: TerminalEvents.CREATE，在 :136 将 type: 'term:destroy' 改为 type: TerminalEvents.DESTROY",
+  "status": "completed",
+  "completed_at": "2026-06-21T17:07:00Z",
+  "actual_duration": "15m",
+  "scope": "src/lib/shared/events.ts + src/lib/server/terminal-manager.ts + src/lib/client/components/TerminalBridge.svelte",
+  "focus_paths": [
+    "src/lib/shared/events.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/client/components/TerminalBridge.svelte"
+  ],
+  "read_first": [
+    "src/lib/shared/events.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/client/components/TerminalBridge.svelte",
+    "src/lib/shared/types.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n \"CREATE.*term:create\" src/lib/shared/events.ts 返回匹配行",
+      "grep -n \"DESTROY.*term:destroy\" src/lib/shared/events.ts 返回匹配行",
+      "grep -n \"TerminalEvents.CREATE\" src/lib/server/terminal-manager.ts 返回匹配行（构造器订阅）",
+      "grep -n \"TerminalEvents.DESTROY\" src/lib/server/terminal-manager.ts 返回匹配行（构造器订阅）",
+      "grep -n \"TerminalEvents.CREATE\" src/lib/client/components/TerminalBridge.svelte 返回匹配行（替换硬编码字符串）",
+      "grep -n \"TerminalEvents.DESTROY\" src/lib/client/components/TerminalBridge.svelte 返回匹配行（替换硬编码字符串）",
+      "grep -rn \"'term:create'\" src/lib/client/components/TerminalBridge.svelte 无匹配（硬编码字符串已消除）",
+      "grep -rn \"'term:destroy'\" src/lib/client/components/TerminalBridge.svelte 无匹配（硬编码字符串已消除）",
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts 通过"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts && npx tsc --noEmit",
+    "definition_of_done": "点击 '+ Create Terminal' 按钮通过 WebSocket 触发 TerminalManager.createTerminal()；关闭终端标签通过 WebSocket 触发 TerminalManager.destroyTerminal()；TerminalBridge.svelte 不使用硬编码事件字符串"
+  },
+  "files": [
+    {
+      "path": "src/lib/shared/events.ts",
+      "action": "modify",
+      "target": "TerminalEvents const object",
+      "change": "在 CREATED 行后添加 CREATE: 'term:create', 和 DESTROY: 'term:destroy', 两个常量"
+    },
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "modify",
+      "target": "TerminalManager constructor",
+      "change": "在现有 this.eventBus.subscribe(TerminalEvents.INPUT, ...) 之后，添加 this.eventBus.subscribe(TerminalEvents.CREATE, ...) 和 this.eventBus.subscribe(TerminalEvents.DESTROY, ...)"
+    },
+    {
+      "path": "src/lib/client/components/TerminalBridge.svelte",
+      "action": "modify",
+      "target": "createNewTerminal() and destroyTerminal() functions",
+      "change": "第 118 行 type: 'term:create' 改为 type: TerminalEvents.CREATE；第 136 行 type: 'term:destroy' 改为 type: TerminalEvents.DESTROY"
+    }
+  ],
+  "implementation": [
+    "1. 编辑 src/lib/shared/events.ts 第 43 行后，在 TerminalEvents 对象中添加: CREATE: 'term:create', 和 DESTROY: 'term:destroy', （保持 CREATED: 'term:created' 不变，三者为不同语义）",
+    "2. 编辑 src/lib/server/terminal-manager.ts，在 constructor 中现有的 this.eventBus.subscribe(TerminalEvents.INPUT, ...) 块之后，添加两个订阅: \n- this.eventBus.subscribe(TerminalEvents.CREATE, (payload) => { const { terminalId, options } = payload as { terminalId: string; options?: Record<string, unknown> }; this.createTerminal(terminalId, options as CreateTerminalOptions); });\n- this.eventBus.subscribe(TerminalEvents.DESTROY, (payload) => { const { terminalId } = payload as { terminalId: string }; this.destroyTerminal(terminalId); });",
+    "3. 编辑 src/lib/client/components/TerminalBridge.svelte 第 118 行: 将 type: 'term:create' 改为 type: TerminalEvents.CREATE",
+    "4. 编辑 src/lib/client/components/TerminalBridge.svelte 第 136 行: 将 type: 'term:destroy' 改为 type: TerminalEvents.DESTROY",
+    "5. 运行 npx vitest run src/lib/server/__tests__/terminal-manager.test.ts 验证现有测试通过",
+    "6. 运行 npx tsc --noEmit 验证类型检查通过"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts",
+      "npx tsc --noEmit"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/terminal-manager.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "所有现有 terminal-manager 测试通过",
+      "TypeScript 编译无错误",
+      "TerminalBridge.svelte 中无硬编码的 'term:create' 和 'term:destroy' 字符串"
+    ]
+  },
+  "reference": {
+    "pattern": "遵循现有 TerminalManager 构造器订阅 TerminalEvents.INPUT 的模式，添加 CREATE/DESTROY 订阅",
+    "files": [
+      "src/lib/server/terminal-manager.ts:58-64 (现有 INPUT 订阅模式)",
+      "src/lib/shared/events.ts:38-44 (现有 TerminalEvents 定义)",
+      "src/lib/client/components/TerminalBridge.svelte:113-122 (createNewTerminal 函数)"
+    ],
+    "examples": "TerminalManager 构造器中现有的 INPUT 订阅:\nthis.eventBus.subscribe(TerminalEvents.INPUT, (payload) => {\n  const { terminalId, data } = payload as { terminalId: string; data: string };\n  const active = this.sessions.get(terminalId);\n  if (active) { active.pty.write(data); }\n});"
+  },
+  "rationale": {
+    "chosen_approach": "在 TerminalManager 构造器中订阅 CREATE/DESTROY 事件，而非在 ws-gateway switch-case 中添加分支。原因：(1) ws-gateway 已通过 default 分支将未知消息转发到 EventBus；(2) TerminalManager 已有在构造器中订阅事件的前例（INPUT）；(3) 保持关注点分离 — ws-gateway 只做路由，业务逻辑在 Manager 中",
+    "decision_factors": [
+      "ARCH-001 约束要求添加常量—这是源头的类型安全修复",
+      "CORR-004/005 的根因是 TerminalManager 未订阅这些事件—在 Manager 中修复是最小改动",
+      "避免在 ws-gateway.ts 添加特殊 case（保持其通用转发语义）"
+    ],
+    "tradeoffs": "ws-gateway 的 default 分支转发所有未知消息到 EventBus，包括非终端相关消息。TerminalManager 订阅 CREATE/DESTROY 后，这些事件会被正确路由。无需修改 ws-gateway 的 switch-case。"
+  },
+  "risks": [
+    "TerminalBridge.svelte 发送 term:create 时 payload 为空对象 {}，createTerminal 需要 terminalId。修改：TerminalManager 订阅 CREATE 时应自动生成 terminalId（如 term-{timestamp}-{random}），而非从 payload 中读取不存在的 terminalId"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["Terminal 创建/销毁"],
+    "affected_components": ["TerminalBridge.svelte", "TerminalManager", "WSGateway"],
+    "affected_requirements": ["C-P2-1: 终端会话管理"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

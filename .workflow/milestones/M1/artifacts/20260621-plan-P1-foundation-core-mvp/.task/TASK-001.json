@@ -1,0 +1,130 @@
+{
+  "id": "TASK-001",
+  "title": "CLI Adapter Layer — Versioned Registry + NDJSON Parsing",
+  "description": "Create the CLIAdapter module that detects the maestro CLI version at startup and parses CLI command outputs (skills list, delegate events) into typed domain objects. Uses the Versioned Registry pattern: run `maestro --version`, match major version to a registered adapter, fail-fast if unsupported.",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "Create src/lib/server/cli-adapter.ts with CLIAdapterRegistry class and CLIAdapter interface. Implement detectVersion() that spawns `maestro --version`, parseSkillsOutput(raw: string): WorkflowMeta[] that parses NDJSON from `maestro ralph skills --json --quiet`, and parseDelegateOutput(raw: string): DelegateEvent[] that parses delegate broker events. Throw UnsupportedVersionError when version not in registry. Add WorkflowMeta and DelegateEvent types to src/lib/shared/types.ts.",
+  "status": "completed",
+  "completed_at": "2026-06-20T23:40:10.056Z",
+  "actual_duration": null,
+  "scope": "src/lib/server",
+  "focus_paths": [
+    "src/lib/server/cli-adapter.ts",
+    "src/lib/shared/types.ts"
+  ],
+  "read_first": [
+    "src/lib/shared/types.ts",
+    "src/lib/shared/events.ts",
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/__tests__/event-bus.test.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/server/cli-adapter.ts contains 'export class CLIAdapterRegistry'",
+      "src/lib/server/cli-adapter.ts contains 'export interface CLIAdapter' with parseSkillsOutput and parseDelegateOutput methods",
+      "src/lib/server/cli-adapter.ts contains 'export class UnsupportedVersionError extends Error'",
+      "src/lib/shared/types.ts contains 'export interface WorkflowMeta'",
+      "src/lib/shared/types.ts contains 'export interface DelegateEvent'",
+      "CLIAdapterRegistry.detectVersion() calls child_process.exec('maestro --version') and returns parsed semver string via Promise",
+      "CLIAdapterRegistry.getAdapter(version) returns matching adapter or throws UnsupportedVersionError",
+      "parseSkillsOutput correctly parses NDJSON lines into WorkflowMeta[] array",
+      "parseDelegateOutput correctly parses broker events {type:'queued'|'started'|'completed'|'failed'} into DelegateEvent[]"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/cli-adapter.test.ts",
+    "definition_of_done": "CLI Adapter can detect maestro version, select matching adapter from registry, and parse both skills list NDJSON and delegate broker event streams into typed objects"
+  },
+  "files": [
+    {
+      "path": "src/lib/shared/types.ts",
+      "action": "modify",
+      "target": "WorkflowMeta + DelegateEvent types",
+      "change": "Add WorkflowMeta interface {id, name, category, description, params: ParamDef[]} and DelegateEvent interface {type:'queued'|'started'|'completed'|'failed', executionId, stepIndex?, stepName?, output?, error?}"
+    },
+    {
+      "path": "src/lib/server/cli-adapter.ts",
+      "action": "create",
+      "target": "CLIAdapterRegistry + CLIAdapter + UnsupportedVersionError",
+      "change": "Create CLIAdapter interface with parseSkillsOutput(raw:string):WorkflowMeta[] and parseDelegateOutput(raw:string):DelegateEvent[]. Create CLIAdapterRegistry with detectVersion():Promise<string>, getAdapter(version:string):CLIAdapter, registerAdapter(majorVersion:number, adapter:CLIAdapter). Create UnsupportedVersionError class."
+    },
+    {
+      "path": "src/lib/server/__tests__/cli-adapter.test.ts",
+      "action": "create",
+      "target": "CLIAdapter unit tests",
+      "change": "Test detectVersion parsing, registry lookup, UnsupportedVersionError on unknown version, parseSkillsOutput with sample NDJSON, parseDelegateOutput with broker event lines"
+    }
+  ],
+  "implementation": [
+    "Add WorkflowMeta and DelegateEvent interfaces to src/lib/shared/types.ts. WorkflowMeta: {id:string, name:string, category:string, description:string, params:ParamDef[]} where ParamDef={name:string, type:string, required:boolean, default?:unknown}. DelegateEvent: {type:'queued'|'started'|'completed'|'failed', executionId:string, stepIndex?:number, stepName?:string, output?:string, error?:string, timestamp?:string}",
+    "Create src/lib/server/cli-adapter.ts. Import child_process, types from shared/types. Define CLIAdapter interface with parseSkillsOutput(raw:string):WorkflowMeta[] and parseDelegateOutput(raw:string):DelegateEvent[].",
+    "Implement CLIAdapterRegistry class with private adapters Map<number, CLIAdapter>. Method registerAdapter(majorVersion:number, adapter:CLIAdapter):void. Method detectVersion():Promise<string> that runs `maestro --version` via child_process.exec, parses semver (e.g. '1.2.3' -> major=1), returns full version string. Method getAdapter(version:string):CLIAdapter that extracts major version and looks up in registry, throws UnsupportedVersionError if not found.",
+    "Implement UnsupportedVersionError extends Error with constructor(detectedVersion:string, supportedVersions:number[]) that sets message to `Unsupported maestro version ${detectedVersion}. Supported major versions: ${supportedVersions.join(', ')}`",
+    "Implement DefaultCLIAdapter (implements CLIAdapter) with parseSkillsOutput: split input by newlines, filter empty, JSON.parse each line, map to WorkflowMeta. parseDelegateOutput: same line-split approach, map each parsed object to DelegateEvent with type validation.",
+    "Create src/lib/server/__tests__/cli-adapter.test.ts following vitest pattern from event-bus.test.ts. Mock child_process.exec for detectVersion tests. Test: (1) detectVersion parses 'maestro 1.5.0' -> '1.5.0', (2) getAdapter('1.5.0') returns registered adapter, (3) getAdapter('99.0.0') throws UnsupportedVersionError, (4) parseSkillsOutput with 3-line NDJSON returns 3 WorkflowMeta items, (5) parseDelegateOutput with broker events returns typed DelegateEvent array, (6) parseSkillsOutput with empty string returns empty array, (7) parseDelegateOutput with malformed line skips it gracefully"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/cli-adapter.test.ts"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/cli-adapter.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "All 7+ test cases pass",
+      "No TypeScript errors in cli-adapter.ts"
+    ]
+  },
+  "reference": {
+    "pattern": "EventBus constructor injection + singleton export pattern from event-bus.ts",
+    "files": [
+      "src/lib/server/event-bus.ts",
+      "src/lib/shared/types.ts",
+      "src/lib/shared/events.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Versioned Registry pattern allows adding new CLI version adapters without modifying existing code. Each major version gets its own adapter implementation. Fail-fast on version mismatch prevents silent parsing errors.",
+    "decision_factors": [
+      "User decision locked on Versioned Registry",
+      "CLI output format may change between major versions",
+      "Need clear error when maestro version is incompatible"
+    ],
+    "tradeoffs": "Registry must be manually updated when new major versions release, but this is intentional — each version needs tested adapter logic"
+  },
+  "risks": [
+    {
+      "risk": "maestro CLI not installed on dev machine",
+      "mitigation": "Tests mock child_process.exec; detectVersion is only called at server startup, not in tests"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "CLI Adapter",
+      "Version Detection"
+    ],
+    "affected_components": [
+      "server"
+    ],
+    "affected_requirements": [
+      "SCOPE-1"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "60-90 min",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

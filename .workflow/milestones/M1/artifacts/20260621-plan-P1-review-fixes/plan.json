@@ -1,0 +1,18 @@
+{
+  "summary": "Fix 3 high-severity correctness issues identified in Phase 1 review: response data contract mismatch, subscription leak, and infinite reconnection loop.",
+  "approach": "All 3 issues are small, isolated correctness fixes in the client layer (WorkflowCommander, +page.svelte, stores/index.ts). Each fix is clearly scoped with a known fix direction. Merged into a single task since all are sub-5-min changes touching independent code paths.",
+  "task_ids": ["TASK-001"],
+  "task_count": 1,
+  "complexity": "low",
+  "estimated_time": "15-20 minutes",
+  "recommended_execution": "Inline",
+  "gap_mode": true,
+  "source_issues": ["ISS-20260621-001", "ISS-20260621-002", "ISS-20260621-003"],
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001"],
+      "label": "Fix all 3 correctness issues (independent file changes)"
+    }
+  ]
+}

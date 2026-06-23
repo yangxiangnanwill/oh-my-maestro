@@ -1,0 +1,1111 @@
+{
+  "version": 2,
+  "generatedAt": 1782174612653,
+  "entries": [
+    {
+      "id": "project-project",
+      "type": "project",
+      "title": "Maestro IDE",
+      "summary": "基于 maestro-flow 封装的 IDE-like 产品，面向非 CLI 习惯开发者。",
+      "tags": [],
+      "status": "active",
+      "created": "2026-06-22T02:09:45.111Z",
+      "updated": "2026-06-22T02:09:45.111Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "project.md"
+      }
+    },
+    {
+      "id": "roadmap-roadmap",
+      "type": "roadmap",
+      "title": "Roadmap: Superset + Maestro-flow 融合",
+      "summary": "## Overview",
+      "tags": [],
+      "status": "active",
+      "created": "2026-06-22T21:29:41.561Z",
+      "updated": "2026-06-22T21:29:41.567Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "roadmap.md"
+      }
+    },
+    {
+      "id": "spec:project:architecture-constraints",
+      "type": "spec",
+      "title": "Architecture Constraints",
+      "summary": "# Architecture Constraints",
+      "tags": [
+        "architecture",
+        "module",
+        "layer",
+        "boundary",
+        "dependency",
+        "structure"
+      ],
+      "status": "active",
+      "created": "2026-06-20T10:43:13.005Z",
+      "updated": "2026-06-20T10:43:13.005Z",
+      "scope": "project",
+      "category": "arch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/architecture-constraints.md"
+      }
+    },
+    {
+      "id": "spec:project:coding-conventions",
+      "type": "spec",
+      "title": "Coding Conventions",
+      "summary": "# Coding Conventions",
+      "tags": [
+        "style",
+        "naming",
+        "import",
+        "pattern",
+        "convention",
+        "formatting"
+      ],
+      "status": "active",
+      "created": "2026-06-20T10:43:13.003Z",
+      "updated": "2026-06-20T10:43:13.003Z",
+      "scope": "project",
+      "category": "coding",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/coding-conventions.md"
+      }
+    },
+    {
+      "id": "spec:project:debug-notes",
+      "type": "spec",
+      "title": "Debug Notes",
+      "summary": "# Debug Notes",
+      "tags": [
+        "debug",
+        "issue",
+        "workaround",
+        "root-cause",
+        "gotcha"
+      ],
+      "status": "active",
+      "created": "2026-06-20T10:43:13.007Z",
+      "updated": "2026-06-20T10:43:13.007Z",
+      "scope": "project",
+      "category": "debug",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/debug-notes.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings",
+      "type": "spec",
+      "title": "Learnings",
+      "summary": "# Learnings",
+      "tags": [
+        "bug",
+        "lesson",
+        "gotcha",
+        "learning"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-001",
+      "type": "spec",
+      "title": "**Dependency Injection for Subprocess Calls**: Use constructor parameters (execFn, spawnFn) with defaults from node:child_process instead of module-level vi.mock. Benefits: type-safe, no hoisting issues, explicit dependencies, works with any test framework. Pattern: `constructor(private execFn = exec)` then `this.execFn('maestro --version')`.",
+      "summary": "**Dependency Injection for Subprocess Calls**: Use constructor parameters (execFn, spawnFn) with defaults from node:child_process instead of module-level vi.mock. Benefits: type-safe, no hoisting issues, explicit dependencies, works with an",
+      "tags": [
+        "dependency-injection",
+        "subprocess",
+        "execFn",
+        "spawnFn",
+        "testability"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-002",
+      "type": "spec",
+      "title": "**Different Error Strategies for Stream vs Batch Parsing**: Stream parsers (DelegateExecutor.parseLine) should return null for invalid lines — streams may contain partial writes. Batch parsers (DefaultCLIAdapter.parseSkillsOutput) should throw on malformed input — one-shot invocation expects complete valid data. Never use the same error strategy for both.",
+      "summary": "**Different Error Strategies for Stream vs Batch Parsing**: Stream parsers (DelegateExecutor.parseLine) should return null for invalid lines — streams may contain partial writes. Batch parsers (DefaultCLIAdapter.parseSkillsOutput) should th",
+      "tags": [
+        "NDJSON",
+        "stream-parsing",
+        "error-strategy",
+        "resilience"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-003",
+      "type": "spec",
+      "title": "**Safe Wave Merging When No File Conflicts**: Tasks from different waves can be executed concurrently if they have zero file overlap, even if they have logical dependencies. Frontend-only tasks and server-only tasks can safely run in parallel. Always verify with collision detection before merging waves.",
+      "summary": "**Safe Wave Merging When No File Conflicts**: Tasks from different waves can be executed concurrently if they have zero file overlap, even if they have logical dependencies. Frontend-only tasks and server-only tasks can safely run in parall",
+      "tags": [
+        "wave-merge",
+        "parallel-execution",
+        "file-conflict",
+        "optimization"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-004",
+      "type": "spec",
+      "title": "**EventBus as Integration Backbone**: All server-side components (DelegateExecutor, StateSyncEngine, WSGateway) communicate through EventBus with typed events and channels. New components naturally emit to existing channels (WorkflowEvents, Channels.WORKFLOW). This decouples producers from consumers and enables testing with real EventBus.",
+      "summary": "**EventBus as Integration Backbone**: All server-side components (DelegateExecutor, StateSyncEngine, WSGateway) communicate through EventBus with typed events and channels. New components naturally emit to existing channels (WorkflowEvents,",
+      "tags": [
+        "eventbus",
+        "integration-backbone",
+        "publish-subscribe",
+        "server-architecture"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-005",
+      "type": "spec",
+      "title": "**Svelte 5 $effect Subscription Cleanup Pattern**: When using `store.subscribe()` inside `$effect`, always return the unsubscribe function. Svelte 5 automatically calls the returned cleanup function when the effect re-runs or component unmounts. Pattern: `$effect(() => { const unsub = store.subscribe(fn); return unsub; })`. Without the return, each re-run creates a new subscription without cleaning up the old one, causing memory leaks.",
+      "summary": "**Svelte 5 $effect Subscription Cleanup Pattern**: When using `store.subscribe()` inside `$effect`, always return the unsubscribe function. Svelte 5 automatically calls the returned cleanup function when the effect re-runs or component unmo",
+      "tags": [
+        "svelte-effect",
+        "subscription-cleanup",
+        "memory-leak",
+        "reactive"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-006",
+      "type": "spec",
+      "title": "**Type Contract Changes Require Full Test Data Migration**: When changing a shared type (e.g., `WorkflowMeta.params` from `Record<string, unknown>` to `ParamDef[]`), ALL test fixtures using the old shape must be updated. Missing even one test fixture causes compilation failures that cascade across the test suite. Always grep for all usages of the changed type before committing.",
+      "summary": "**Type Contract Changes Require Full Test Data Migration**: When changing a shared type (e.g., `WorkflowMeta.params` from `Record<string, unknown>` to `ParamDef[]`), ALL test fixtures using the old shape must be updated. Missing even one te",
+      "tags": [
+        "type-contract",
+        "data-migration",
+        "test-update",
+        "ParamDef"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-007",
+      "type": "spec",
+      "title": "**Event Accumulation Pattern for Data Contract Bridging**: When upstream events (DelegateEvent) have a different shape than downstream consumers expect (WorkflowExecution), use an accumulation map (`Map<executionId, WorkflowExecution>`) that extracts fields from incoming events and incrementally builds the target shape. Add defensive checks for existing entries (update vs push) and terminal state protection to prevent mutation of completed/cancelled/failed executions.",
+      "summary": "**Event Accumulation Pattern for Data Contract Bridging**: When upstream events (DelegateEvent) have a different shape than downstream consumers expect (WorkflowExecution), use an accumulation map (`Map<executionId, WorkflowExecution>`) tha",
+      "tags": [
+        "data-contract",
+        "event-accumulation",
+        "DelegateEvent",
+        "WorkflowExecution",
+        "type-mapping"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-008",
+      "type": "spec",
+      "title": "**Per-Client Message Object Creation in WebSocket Broadcasts**: When broadcasting to multiple WebSocket clients, create a new message object inside the iteration loop — not outside. A shared message object created before the loop risks payload mutation where one client's translated payload overwrites another's. Pattern: `for (const client of clients) { const message = { ... }; /* modify per-client */; client.send(message); }`",
+      "summary": "**Per-Client Message Object Creation in WebSocket Broadcasts**: When broadcasting to multiple WebSocket clients, create a new message object inside the iteration loop — not outside. A shared message object created before the loop risks payl",
+      "tags": [
+        "ws-message",
+        "shared-mutation",
+        "per-client",
+        "object-creation"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-009",
+      "type": "spec",
+      "title": "**Error Type Discrimination in init() Bootstrap**: Use `instanceof` checks in catch blocks to distinguish known error types from unexpected ones. Known errors (e.g., `UnsupportedVersionError`) get graceful degradation (warn + fallback), while unknown errors get full error logging. This prevents catch-all handlers from silently swallowing critical failures.",
+      "summary": "**Error Type Discrimination in init() Bootstrap**: Use `instanceof` checks in catch blocks to distinguish known error types from unexpected ones. Known errors (e.g., `UnsupportedVersionError`) get graceful degradation (warn + fallback), whi",
+      "tags": [
+        "error-discrimination",
+        "instanceof",
+        "catch-all",
+        "UnsupportedVersionError"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-010",
+      "type": "spec",
+      "title": "PTY 事件回环防护：source 标记模式",
+      "summary": "### PTY 事件回环防护：source 标记模式 当 TerminalManager 通过 `writeToTerminal()` 写入 PTY 时，会发布 `term:input` 事件以通知客户端回显。但 TerminalManager 自身也订阅 `term:input` 事件来向 PTY 写入数据。若不加以区分，`writeToTerminal` 发布的 INPUT 事件会被自身订阅捕获，导致 PTY 双重写入。 **解决方案**：在 EventBus.pub",
+      "tags": [
+        "pty",
+        "terminal",
+        "event-loop",
+        "source-guard",
+        "double-write"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-011",
+      "type": "spec",
+      "title": "NDJSON 跨 chunk 行缓冲模式",
+      "summary": "### NDJSON 跨 chunk 行缓冲模式 子进程 stdout 的 `data` 事件不保证在 JSON 行边界处分割。当 NDJSON 行跨越两个 chunk 时，简单的 `split('\\n')` 会丢失尾部不完整行。 **标准模式**：`buffer += chunk; const lines = buffer.split('\\n'); buffer = lines.pop() || '';` — 追加到缓冲区 → 按行分割 → 最后一行（可能不完整）保留在",
+      "tags": [
+        "NDJSON",
+        "stream-buffer",
+        "cross-chunk",
+        "line-splitting",
+        "stdout"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-012",
+      "type": "spec",
+      "title": "PTY 退出竞态防护：`_exiting` 标记 + 统一清理方法",
+      "summary": "### PTY 退出竞态防护：`_exiting` 标记 + 统一清理方法 PTY 进程退出时存在竞态条件：用户调用 `destroyTerminal()` 触发 `pty.kill()`，同时 PTY 自身也可能触发 `onExit` 回调。两者都会尝试清理会话资源，导致重复的 EXIT 事件发布。 **解决方案**： 1. 在调用 `pty.kill()` 前设置 `_exiting = true` 标记 2. `onExit` 回调检查 `_exiting` 标记，",
+      "tags": [
+        "pty",
+        "cleanup",
+        "dedup",
+        "_exiting",
+        "exit-race"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-013",
+      "type": "spec",
+      "title": "用 DOMPurify 替代手写 XSS 正则",
+      "summary": "### 用 DOMPurify 替代手写 XSS 正则 手写 XSS 过滤正则（如 `/<script[^>]*>.*?<\\/script>/gi`）容易遗漏攻击向量（事件处理器注入、CSS expression、data URI 等）。DOMPurify 是经过大量安全审计的成熟库，覆盖 OWASP XSS 攻击向量。 **迁移模式**：将 `sanitizeHtml(marked.parse(text))` 替换为 `DOMPurify.sanitize(marked",
+      "tags": [
+        "DOMPurify",
+        "XSS",
+        "sanitize",
+        "marked",
+        "markdown"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-014",
+      "type": "spec",
+      "title": "Shell 路径白名单验证防止命令注入",
+      "summary": "### Shell 路径白名单验证防止命令注入 当允许用户指定 shell 路径时，攻击者可能通过路径遍历（如 `../../malicious.exe`）或指定任意可执行文件来执行恶意代码。 **防护模式**： 1. 使用 `path.basename(shell)` 提取纯文件名，消除路径遍历 2. 维护 `SHELL_WHITELIST` Set 包含合法 shell（powershell.exe, cmd.exe, pwsh.exe, bash, zsh, sh,",
+      "tags": [
+        "shell",
+        "whitelist",
+        "path-traversal",
+        "security",
+        "spawn"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-015",
+      "type": "spec",
+      "title": "DIALOG Channel 翻译白名单：防止聊天消息被概念翻译损坏",
+      "summary": "### DIALOG Channel 翻译白名单：防止聊天消息被概念翻译损坏 TranslatorMiddleware 的概念翻译会将技术术语替换为用户友好文本。但 AI 对话消息（Markdown/ANSI/代码块）不应经过概念翻译，否则会损坏代码片段和技术内容。 **解决方案**：在 `translator.ts` 中添加 `shouldTranslateChannel()` 方法，检测 payload 是否包含 `sessionId` 字段（DIALOG chann",
+      "tags": [
+        "DIALOG",
+        "translator",
+        "whitelist",
+        "channel",
+        "concept-translation"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-016",
+      "type": "spec",
+      "title": "Svelte 5 each 块中 xterm.js 挂载：data-attribute 替代 bind:this",
+      "summary": "### Svelte 5 each 块中 xterm.js 挂载：data-attribute 替代 bind:this 在 Svelte 5 的 `{#each}` 块中，`bind:this` 无法可靠地绑定到动态创建的 DOM 元素。xterm.js 需要通过 `terminal.open(container)` 挂载到 DOM 容器。 **解决方案**：使用 `data-terminal-id={term.terminalId}` 属性标记容器，在 `$effec",
+      "tags": [
+        "terminal",
+        "xterm",
+        "svelte5",
+        "data-attribute",
+        "mount"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-017",
+      "type": "spec",
+      "title": "WebSocket backpressure 检测：bufferedAmount 阈值保护",
+      "summary": "### WebSocket backpressure 检测：bufferedAmount 阈值保护 当客户端消费速度低于服务端推送速度时，WebSocket 内部缓冲区持续增长，最终导致内存溢出。 **防护模式**：在 `sendToClient()` 中检查 `client.ws.bufferedAmount > 16384`（16KB），超阈值时 `console.warn` 并跳过发送。16KB 是经验阈值，平衡了延迟与内存安全。注意使用 `console.warn",
+      "tags": [
+        "backpressure",
+        "websocket",
+        "bufferedAmount",
+        "flow-control"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-018",
+      "type": "spec",
+      "title": "EventBus skipHistory 选项：高频事件的历史存储优化",
+      "summary": "### EventBus skipHistory 选项：高频事件的历史存储优化 终端输出（`term:output`）和流式聊天（`dialog:stream-chunk`）是高频事件，每秒可达数十次。将这些事件存入 EventBus history 数组会导致内存快速增长且无实际价值（新客户端不需要回放历史终端输出）。 **解决方案**：在 `EventBus.publish()` 添加 `options?: { skipHistory?: boolean }` 参数。",
+      "tags": [
+        "skipHistory",
+        "eventbus",
+        "high-frequency",
+        "optimization"
+      ],
+      "status": "active",
+      "created": "2026-06-22T02:07:37.387Z",
+      "updated": "2026-06-22T02:07:37.400Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:quality-rules",
+      "type": "spec",
+      "title": "Quality Rules",
+      "summary": "# Quality Rules",
+      "tags": [
+        "quality",
+        "lint",
+        "rule",
+        "enforcement"
+      ],
+      "status": "active",
+      "created": "2026-06-20T10:43:13.006Z",
+      "updated": "2026-06-20T10:43:13.007Z",
+      "scope": "project",
+      "category": "review",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/quality-rules.md"
+      }
+    },
+    {
+      "id": "spec:project:review-standards",
+      "type": "spec",
+      "title": "Review Standards",
+      "summary": "# Review Standards",
+      "tags": [
+        "review",
+        "checklist",
+        "gate",
+        "approval",
+        "standard"
+      ],
+      "status": "active",
+      "created": "2026-06-20T10:43:13.009Z",
+      "updated": "2026-06-20T10:43:13.009Z",
+      "scope": "project",
+      "category": "review",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/review-standards.md"
+      }
+    },
+    {
+      "id": "spec:project:test-conventions",
+      "type": "spec",
+      "title": "Test Conventions",
+      "summary": "# Test Conventions",
+      "tags": [
+        "test",
+        "coverage",
+        "mock",
+        "fixture",
+        "assertion",
+        "framework"
+      ],
+      "status": "active",
+      "created": "2026-06-20T10:43:13.008Z",
+      "updated": "2026-06-20T10:43:13.008Z",
+      "scope": "project",
+      "category": "test",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/test-conventions.md"
+      }
+    },
+    {
+      "id": "spec:project:ui-conventions",
+      "type": "spec",
+      "title": "UI Conventions",
+      "summary": "# UI Conventions",
+      "tags": [
+        "ui",
+        "design",
+        "color",
+        "typography",
+        "layout",
+        "animation",
+        "component"
+      ],
+      "status": "active",
+      "created": "2026-06-22T03:11:51.063Z",
+      "updated": "2026-06-22T03:11:51.069Z",
+      "scope": "project",
+      "category": "ui",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/ui-conventions.md"
+      }
+    },
+    {
+      "id": "spec:project:ui-conventions-001",
+      "type": "spec",
+      "title": "Product Context: Maestro IDE. Register: product. Users: 不习惯 CLI 的开发者，使用场景为 IDE-like 工作流管理。Brand personality: 精准、高效、可靠（专业工具感）。Design principles: 自解释、非阻塞、信息透明、一致性。Anti-references: 避免 hacker 风格、企业软件臃肿感、游戏化 UI。Accessibility: WCAG 2.1 AA。",
+      "summary": "Product Context: Maestro IDE. Register: product. Users: 不习惯 CLI 的开发者，使用场景为 IDE-like 工作流管理。Brand personality: 精准、高效、可靠（专业工具感）。Design principles: 自解释、非阻塞、信息透明、一致性。Anti-references: 避免 hacker 风格、企业软件臃肿感、游戏化 UI。Accessibility: WCAG 2.1 AA。",
+      "tags": [
+        "product",
+        "brand",
+        "register",
+        "users",
+        "anti-references",
+        "design-principles"
+      ],
+      "status": "active",
+      "created": "2026-06-22T03:11:51.063Z",
+      "updated": "2026-06-22T03:11:51.069Z",
+      "scope": "project",
+      "category": "ui",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:ui-conventions",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/ui-conventions.md"
+      }
+    },
+    {
+      "id": "scratch-20260620-brainstorm-maestro-ide-design-research",
+      "type": "note",
+      "title": "Design Research: IDE-like GUI Wrapper for CLI-based AI Workflow Tool",
+      "summary": "## Key Findings",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-20T10:55:38.308Z",
+      "updated": "2026-06-20T10:55:38.312Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260620-brainstorm-maestro-ide/design-research.md"
+      }
+    },
+    {
+      "id": "scratch-20260620-brainstorm-maestro-ide-guidance-specification",
+      "type": "note",
+      "title": "Guidance Specification: Maestro IDE — AI Workflow Orchestrator for Non-CLI Developers",
+      "summary": "## §1. Project Positioning & Goals",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-20T12:49:53.542Z",
+      "updated": "2026-06-20T12:49:53.543Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260620-brainstorm-maestro-ide/guidance-specification.md"
+      }
+    },
+    {
+      "id": "scratch-20260620-plan-maestro-ide-plan",
+      "type": "note",
+      "title": "Maestro IDE — Foundation Phase 实施计划",
+      "summary": "# Maestro IDE — Foundation Phase 实施计划",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-20T13:38:44.540Z",
+      "updated": "2026-06-20T13:38:44.551Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260620-plan-maestro-ide/plan.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-macro-superset-maestro-analysis",
+      "type": "note",
+      "title": "Analysis: Superset + Maestro-flow 兼容性宏分析",
+      "summary": "**Artifact ID**: ANL-007 **Date**: 2026-06-22 **Scope**: Macro (Standalone) **Mode**: Full (6-dimension scoring)",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T11:37:58.600Z",
+      "updated": "2026-06-22T11:37:58.615Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-macro-superset-maestro/analysis.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-macro-superset-maestro-context",
+      "type": "note",
+      "title": "Context: Superset + Maestro-flow 融合决策",
+      "summary": "**Date**: 2026-06-22 **Source**: ANL-007 (宏分析) **Areas discussed**: 技术栈调和、架构融合策略、功能迁移方案、oh-my-maestro 去留",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T11:39:36.748Z",
+      "updated": "2026-06-22T11:39:36.750Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-macro-superset-maestro/context.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-macro-superset-maestro-discussion",
+      "type": "note",
+      "title": "Discussion: Superset + Maestro-flow 兼容性宏分析",
+      "summary": "**Session ID**: ANL-superset-maestro-2026-06-22 **Date**: 2026-06-22 **Mode**: Macro (standalone) **Topic**: 评估 Superset 能否基于 Maestro-flow 魔改，Superset 可视化 + Maestro-flow 内核替代 oh-my-maestro",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T11:46:28.414Z",
+      "updated": "2026-06-22T11:46:28.421Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-macro-superset-maestro/discussion.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p0-environment-bootstrap-analysis",
+      "type": "note",
+      "title": "Analysis: Phase 0 — Environment Bootstrap",
+      "summary": "**Artifact ID**: ANL-008 **Date**: 2026-06-22 **Scope**: Micro (Phase 0, Milestone F1) **Mode**: Quick (focused decision extraction)",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T21:36:38.123Z",
+      "updated": "2026-06-22T21:36:38.131Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P0-environment-bootstrap/analysis.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p0-environment-bootstrap-context",
+      "type": "note",
+      "title": "Context: Phase 0 — Environment Bootstrap",
+      "summary": "**Date**: 2026-06-22 **Source**: ANL-008 (Phase 0 分析) **Areas discussed**: Windows 兼容性修复策略、oh-my-maestro 归档方式、概念翻译层保留",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T21:37:02.801Z",
+      "updated": "2026-06-22T21:37:02.811Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P0-environment-bootstrap/context.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p0-environment-bootstrap-discussion",
+      "type": "note",
+      "title": "Discussion: Phase 0 — Environment Bootstrap",
+      "summary": "**Session ID**: ANL-008 **Date**: 2026-06-22 **Mode**: Micro (Phase 0, Milestone F1) **Depth**: Quick (focused decision extraction)",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T21:37:51.042Z",
+      "updated": "2026-06-22T21:37:51.048Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P0-environment-bootstrap/discussion.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p3-trust-polish-analysis",
+      "type": "note",
+      "title": "Analysis: Phase 3 — Trust & Polish",
+      "summary": "**Session**: ANL-003 **Date**: 2026-06-22 **Milestone**: M3 \"Refined — Trust & Polish\" **Phase**: 3 \"trust-polish\"",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T02:36:13.771Z",
+      "updated": "2026-06-22T02:36:13.780Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P3-trust-polish/analysis.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p3-trust-polish-context",
+      "type": "note",
+      "title": "Context: Phase 3 — Trust & Polish",
+      "summary": "**Date**: 2026-06-22 **Areas discussed**: 审批门控架构、Windows 兼容性、性能优化、前端设计、技术债务",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T02:37:57.797Z",
+      "updated": "2026-06-22T02:37:57.802Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P3-trust-polish/context.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-analyze-p3-trust-polish-discussion",
+      "type": "note",
+      "title": "Discussion: Phase 3 — Trust & Polish",
+      "summary": "**Session**: ANL-003 **Date**: 2026-06-22 **Milestone**: M3 \"Refined — Trust & Polish\" **Phase**: 3 \"trust-polish\" **Mode**: Deep Dive **Dimensions**: architecture, platform, performance, frontend",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T02:40:35.612Z",
+      "updated": "2026-06-22T02:40:35.617Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-analyze-P3-trust-polish/discussion.md"
+      }
+    },
+    {
+      "id": "scratch-20260622-test-p3-trust-polish-uat",
+      "type": "note",
+      "title": "uat",
+      "summary": "## Current Test",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-22T09:51:01.710Z",
+      "updated": "2026-06-22T09:51:01.719Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260622-test-P3-trust-polish/uat.md"
+      }
+    },
+    {
+      "id": "issue-ISS-20260621-001",
+      "type": "issue",
+      "title": "[correctness] WorkflowCommander response data contract mismatch",
+      "summary": "WorkflowCommander.svelte:23 parses /api/workflows response as WorkflowMeta[] directly but the API returns { workflows: WorkflowMeta[], version: string }. Workflows card list will never render.",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-21T14:40:00+08:00",
+      "updated": "2026-06-21T14:40:00+08:00",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260621-001",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 1
+      }
+    },
+    {
+      "id": "issue-ISS-20260621-002",
+      "type": "issue",
+      "title": "[correctness] +page.svelte subscription leak in $effect",
+      "summary": "+page.svelte:14 creates a new connectionState.subscribe() inside $effect without cleanup. Each re-render accumulates subscriptions causing memory leak and duplicate callbacks.",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-21T14:40:00+08:00",
+      "updated": "2026-06-21T14:40:00+08:00",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260621-002",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 2
+      }
+    },
+    {
+      "id": "issue-ISS-20260621-003",
+      "type": "issue",
+      "title": "[correctness] stores/index.ts infinite reconnection loop",
+      "summary": "stores/index.ts:88 subscribes to connectionState and calls wsClient.connect() whenever disconnected, bypassing WSClient's exponential backoff reconnect logic and creating a rapid reconnection loop.",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-21T14:40:00+08:00",
+      "updated": "2026-06-21T14:40:00+08:00",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260621-003",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 3
+      }
+    }
+  ]
+}

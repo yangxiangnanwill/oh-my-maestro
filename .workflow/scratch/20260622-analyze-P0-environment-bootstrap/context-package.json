@@ -1,0 +1,63 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "analyze",
+    "artifact_id": "ANL-008",
+    "session_path": "scratch/20260622-analyze-P0-environment-bootstrap",
+    "generated_at": "2026-06-22T20:30:00+08:00"
+  },
+  "requirements": [
+    {
+      "id": "REQ-P0-001",
+      "title": "Windows 构建环境修复",
+      "acceptance": "bun install 成功，bun run dev 启动 API + Desktop",
+      "ref": "conclusions.json#implementation_scope[0]"
+    },
+    {
+      "id": "REQ-P0-002",
+      "title": "Shell 环境适配",
+      "acceptance": "终端面板在 Windows 上正常显示 shell 提示符",
+      "ref": "conclusions.json#implementation_scope[1]"
+    },
+    {
+      "id": "REQ-P0-003",
+      "title": "概念翻译层设计文档提取",
+      "acceptance": "设计文档写入 Superset 仓库",
+      "ref": "conclusions.json#implementation_scope[2]"
+    },
+    {
+      "id": "REQ-P0-004",
+      "title": "oh-my-maestro 归档",
+      "acceptance": "目录删除，git 历史保留",
+      "ref": "conclusions.json#implementation_scope[3]"
+    }
+  ],
+  "constraints": [
+    { "status": "locked", "title": "Windows 上 bun install && bun run dev 成功", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "保留概念翻译层设计文档", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "归档 oh-my-maestro", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "Electron 桌面应用窗口正常打开", "ref": "context.md#Locked" },
+    { "status": "open", "title": "字体路径替换策略", "ref": "context.md#Free" },
+    { "status": "open", "title": "setup 脚本替代方案", "ref": "context.md#Free" },
+    { "status": "open", "title": "原生模块编译方式", "ref": "context.md#Free" }
+  ],
+  "domain": {},
+  "non_goals": [
+    { "title": "Docker/Caddy 本地环境", "rationale": "Phase 1+ 再处理", "ref": "context.md#Deferred" },
+    { "title": "Windows 安装包签名", "rationale": "发布阶段", "ref": "context.md#Deferred" },
+    { "title": "Windows 通知集成", "rationale": "Phase 2+", "ref": "context.md#Deferred" }
+  ],
+  "insights": [
+    { "role": "analyzer", "area": "Windows 兼容性", "summary": "代码库已有跨平台意识（22+ 条件分支），修复范围可控（20-25 变更点）" },
+    { "role": "analyzer", "area": "概念翻译层", "summary": "translations.ts 结构清晰，10 个核心术语映射，DisplayMode 设计值得保留" },
+    { "role": "analyzer", "area": "风险", "summary": "所有 macOS 专属依赖已有 try/catch 保护，node-pty 原生支持 Windows" }
+  ],
+  "open_questions": [
+    { "area": "setup 脚本", "question": "setup.local.sh 如何适配 Windows？", "options": ["PowerShell 重写", "手动配置文档", "Git Bash 兼容层"] },
+    { "area": "字体", "question": "Windows 上是否保留系统字体协议？", "options": ["添加 C:\\Windows\\Fonts", "跳过字体协议", "仅使用 Web 字体"] }
+  ],
+  "references": [
+    { "type": "analysis", "path": "context.md" },
+    { "type": "conclusions", "path": "conclusions.json" }
+  ]
+}

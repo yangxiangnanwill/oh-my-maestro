@@ -1,0 +1,66 @@
+PURPOSE: Implement task TASK-001: TerminalManager — node-pty PTY session management + frame throttle + ring buffer; success = all convergence criteria pass
+TASK: Create src/lib/server/terminal-manager.ts with TerminalManager class | Create src/lib/server/__tests__/terminal-manager.test.ts with 9 test cases | Read existing code first | Verify convergence criteria after changes
+MODE: write
+CONTEXT: @src/lib/server/event-bus.ts @src/lib/shared/events.ts @src/lib/shared/types.ts @src/lib/server/delegate-executor.ts @src/lib/server/ws-gateway.ts @src/lib/server/index.ts
+EXPECTED: Working TerminalManager class + passing tests, all convergence criteria verified, summary of what was done
+CONSTRAINTS: Scope limited to task files | Follow project specs | node-pty for PTY management | 33ms frame throttle | Ring buffer capacity 1000 | Max 5 concurrent sessions | EventBus DI pattern
+
+## Task Definition
+
+**Scope**: src/lib/server | **Action**: Create TerminalManager class with node-pty PTY session management, 33ms frame throttle, ring buffer (capacity 1000), max 5 sessions
+
+### Files
+- src/lib/server/terminal-manager.ts: Create TerminalManager: PTY spawn management, 33ms frame throttle, ring buffer, session lifecycle (create/write/resize/destroy), 5 session limit
+- src/lib/server/__tests__/terminal-manager.test.ts: Mock node-pty spawn returning EventEmitter-based IPty. Tests: create PTY emits CREATED, data emits OUTPUT per throttle, max sessions enforced, resize emits RESIZE, destroy emits EXIT, ring buffer evicts oldest at 1000
+
+### Read First
+- src/lib/server/event-bus.ts
+- src/lib/shared/events.ts
+- src/lib/shared/types.ts
+- src/lib/server/delegate-executor.ts
+- src/lib/server/ws-gateway.ts
+- src/lib/server/index.ts
+
+### Implementation Steps
+1. Create src/lib/server/terminal-manager.ts. Import { IPty, spawn as ptySpawn } from node-pty. Import { EventBus } from ./event-bus.js. Import { TerminalSession, TerminalStatus } from ../shared/types.js. Import { Channels, TerminalEvents } from ../shared/events.js.
+2. Define TerminalOutputEntry interface: { terminalId: string; data: string; timestamp: string }.
+3. Define ActiveTerminal interface (internal): { pty: IPty; session: TerminalSession; buffer: string[]; throttleTimer: ReturnType<typeof setInterval> | null }.
+4. Define SpawnPtyFn type: (file: string, args: string[], options: { name: string; cols: number; rows: number; cwd: string }) => IPty.
+5. Implement TerminalManager class. Constructor signature: constructor(private eventBus: EventBus, private spawnPty: SpawnPtyFn = ptySpawn). Private members: private sessions = new Map(), private ringBuffer: TerminalOutputEntry[] = [], private readonly MAX_SESSIONS = 5, private readonly THROTTLE_MS = 33. In constructor subscribe to EventBus term:input events: this.eventBus.subscribe(Channels.TERMINAL, (event) => { if (event.type === TerminalEvents.INPUT) { this.writeToTerminal(event.payload.terminalId, event.payload.data); } }).
+6. Implement createTerminal(terminalId, options?): TerminalSession. Check this.sessions.size >= this.MAX_SESSIONS, throw Error if so. Resolve defaults: cwd = options?.cwd ?? process.cwd(), cols = options?.cols ?? 80, rows = options?.rows ?? 24, shell = options?.shell ?? (process.platform === win32 ? powershell.exe : process.env.SHELL ?? /bin/bash). Call this.spawnPty(shell, [], { name: xterm-256color, cols, rows, cwd }). Create TerminalSession: { terminalId, ptyPid: pty.pid, cwd, cols, rows, status: running }. Call this.startFrameThrottle(terminalId, pty). Store to this.sessions. Emit TerminalEvents.CREATED: this.eventBus.publish(TerminalEvents.CREATED, Channels.TERMINAL, { terminalId, session }, server). Return session.
+7. Implement writeToTerminal(terminalId, data): void. Get activeTerminal from this.sessions, silently return if not found. Call activeTerminal.pty.write(data). Emit TerminalEvents.INPUT: this.eventBus.publish(TerminalEvents.INPUT, Channels.TERMINAL, { terminalId, data, timestamp: new Date().toISOString() }, server).
+8. Implement resizeTerminal(terminalId, cols, rows): void. Get activeTerminal, silently return if not found. Call activeTerminal.pty.resize(cols, rows). Update session.cols, session.rows. Emit TerminalEvents.RESIZE.
+9. Implement destroyTerminal(terminalId): void. Get activeTerminal, silently return if not found. Clear throttleTimer (clearInterval). Call activeTerminal.pty.kill(). Delete from this.sessions. Emit TerminalEvents.EXIT: this.eventBus.publish(TerminalEvents.EXIT, Channels.TERMINAL, { terminalId, exitCode: null, timestamp: new Date().toISOString() }, server).
+10. Implement private startFrameThrottle(terminalId, pty): void. Get activeTerminal. Set pty.onData((data) => { activeTerminal.buffer.push(data); }). Create throttleTimer = setInterval(() => { if buffer non-empty: combine buffer.join(), emit this.eventBus.publish(TerminalEvents.OUTPUT, Channels.TERMINAL, { terminalId, data: combined, timestamp: new Date().toISOString() }, server), append to this.ringBuffer (shift if length >= 1000), clear buffer. }, this.THROTTLE_MS). Store to activeTerminal.throttleTimer.
+11. Create src/lib/server/__tests__/terminal-manager.test.ts. Mock node-pty spawn: return { pid: 12345, write: vi.fn(), resize: vi.fn(), kill: vi.fn(), onData: vi.fn() }. Use real EventBus instance. Tests: (1) createTerminal returns TerminalSession and emits CREATED; (2) createTerminal 6th call throws Error; (3) data callback accumulates to buffer, 33ms later flush emits OUTPUT; (4) writeToTerminal calls pty.write; (5) resizeTerminal calls pty.resize and updates cols/rows; (6) destroyTerminal calls pty.kill and emits EXIT; (7) ringBuffer push over 1000 entries shifts oldest; (8) destroyTerminal then writeToTerminal silently no-ops; (9) throttle timer cleared on destroy.
+
+### Convergence Criteria
+- src/lib/server/terminal-manager.ts contains export class TerminalManager
+- TerminalManager constructor accepts (eventBus: EventBus, spawnPty?) params
+- createTerminal(terminalId, options) calls node-pty spawn and returns TerminalSession object (with terminalId, ptyPid, cwd, cols, rows, status: running)
+- createTerminal throws Error(Maximum terminal sessions (5) reached) when exceeding maxSessions=5
+- PTY data event handler accumulates output to buffer, 33ms setInterval flush emits TerminalEvents.OUTPUT to EventBus (channel: terminal, type: term:output)
+- EventBus.publish call signature: eventBus.publish(TerminalEvents.OUTPUT, Channels.TERMINAL, { terminalId, data: string, timestamp }, server)
+- writeToTerminal(terminalId, data) calls pty.write(data)
+- resizeTerminal(terminalId, cols, rows) calls pty.resize(cols, rows) and emits TerminalEvents.RESIZE
+- destroyTerminal(terminalId) kills PTY process, clears throttle timer, deletes session, emits TerminalEvents.EXIT
+- destroyTerminal silently no-ops for non-existent terminalId (no exception)
+- ringBuffer is TerminalOutputEntry[] ({ terminalId, data, timestamp }), push shifts if length >= 1000
+- TerminalManager constructor subscribes to EventBus Channels.TERMINAL term:input events
+- src/lib/server/__tests__/terminal-manager.test.ts exists and all tests pass
+
+### Reference
+- Pattern: DelegateExecutor constructor injection pattern (eventBus + spawnFn), and emitEvent EventBus.publish(channel, type, payload, source) call signature
+- Files: src/lib/server/delegate-executor.ts, src/lib/server/event-bus.ts, src/lib/shared/events.ts, src/lib/shared/types.ts
+
+## Phase Context
+- Goal: Phase 2 Interaction Surfaces: Terminal Bridge + AI Dialog + EventBus optimization + orchestration integration
+- Success criteria: TerminalManager manages PTY sessions via node-pty, output frame-throttled at 33ms, events stored in independent ring buffer (capacity 1000), max 5 concurrent sessions
+
+## Project Specs
+- ESM imports with .js extension
+- TypeScript strict mode
+- Vitest for testing (describe/it/expect/beforeEach)
+- Constructor injection (EventBus injected into TerminalManager)
+- SpawnFn DI (TerminalManager accepts optional spawn function for testing)
+- Follow existing code style: DelegateExecutor pattern

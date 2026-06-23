@@ -1,0 +1,55 @@
+{
+  "summary": "M1 里程碑集成审计差距修复计划。修复 2 个 CRITICAL 运行时阻断问题（缺少依赖、数据契约不匹配）、1 个 HIGH 多客户端消息污染问题、3 个 MEDIUM/LOW 质量问题（孤儿 store、类型偏差、错误处理）。共 3 个任务，2 个并行 wave。",
+  "approach": "Wave 1 并行修复 CRITICAL 和 HIGH 问题（互不依赖）。Wave 2 修复 MEDIUM/LOW 问题，依赖 TASK-001 完成（types.ts 的 ParamDef 变更可能影响 stores 的类型推断）。所有修复均为文件级修改，不涉及架构变更。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003"],
+  "task_count": 3,
+  "complexity": "low",
+  "estimated_time": "1.5h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {"wave": 1, "tasks": ["TASK-001", "TASK-002"]},
+    {"wave": 2, "tasks": ["TASK-003"]}
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": ["fix dependencies", "fix data contracts", "fix quality issues"]
+  },
+  "design_decisions": [
+    "DelegateEvent→WorkflowExecution 转换在 stores/index.ts 中通过 Map 累积步骤实现，不修改 DelegateExecutor 的 emit 逻辑",
+    "WSGateway 消息对象创建移入 client 循环内部，每个客户端获得独立的消息副本",
+    "ParamDef 接口恢复为独立类型定义，与 TASK-001 原始 spec 保持一致",
+    "init() 错误处理使用 instanceof UnsupportedVersionError 区分已知和未知错误"
+  ],
+  "shared_context": {
+    "patterns": ["EventBus publish/subscribe", "Svelte writable stores", "WebSocket message routing"],
+    "conventions": ["ESM imports", "strict TypeScript", "JSDoc on public methods"],
+    "dependencies": ["@hono/node-server ^1.13.0", "hono ^4.7.0", "ws ^8.18.0"]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-21T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "fix",
+    "schema_version": "2.0",
+    "git_commit": null
+  },
+  "confidence": {
+    "overall": 0.88,
+    "dimensions": {
+      "requirements_coverage": 0.95,
+      "task_quality": 0.90,
+      "dependency_correctness": 0.95,
+      "estimation_accuracy": 0.85,
+      "collision_safety": 1.0
+    },
+    "pressure_pass": true,
+    "pressure_pass_task": "TASK-001",
+    "checker_verdict": "PASS",
+    "checker_issues": [
+      "TASK-003 ParamDef 类型变更需同步更新 cli-adapter.ts — 已修复（添加 files[] 条目 + implementation 步骤）",
+      "TASK-002 收敛标准 C2 为行为性描述 — 已确认 C1 结构性检查充分证明正确性"
+    ],
+    "devils_advocate_notes": "TASK-001 executionMap 无清理逻辑已作为已知限制记录。projectState HTTP fetch 与 WebSocket sync 双路径可能竞态，但现有 WebSocket handler 的 projectId 守卫已提供保护。",
+    "scope_minimizer_notes": "3 个任务是合理的最小可行集合。7 个差距自然聚类为 3 组。"
+  }
+}

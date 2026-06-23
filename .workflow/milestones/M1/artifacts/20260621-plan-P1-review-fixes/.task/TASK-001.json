@@ -1,0 +1,58 @@
+{
+  "id": "TASK-001",
+  "title": "Fix 3 Correctness Issues: Response Contract, Subscription Leak, Reconnect Loop",
+  "description": "Fix ISS-20260621-001 (WorkflowCommander response parsing), ISS-20260621-002 (+page.svelte subscription leak), and ISS-20260621-003 (stores/index.ts infinite reconnect loop).",
+  "issue_id": null,
+  "issue_refs": ["ISS-20260621-001", "ISS-20260621-002", "ISS-20260621-003"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "small",
+  "action": "Fix 1 (ISS-001): In src/lib/client/components/WorkflowCommander.svelte line 23, change `.then((data: WorkflowMeta[]) => { workflows = data; loading = false; })` to `.then((data: { workflows: WorkflowMeta[] }) => { workflows = data.workflows; loading = false; })`. Also fix the retry handler at line 92 to match.\n\nFix 2 (ISS-002): In src/routes/+page.svelte line 14-17, replace the leaky $effect that subscribes to connectionState. Use Svelte's auto-subscription syntax: replace the entire $effect block with a simple `$effect(() => { connected = $connectionState.connected; });` which does not create manual subscriptions. Alternatively, remove the intermediate `connected` variable and use `$connectionState.connected` directly in the template.\n\nFix 3 (ISS-003): In src/lib/client/stores/index.ts lines 88-92, remove the `connectionState.subscribe()` that calls `wsClient.connect()`. Instead, add a one-time `wsClient.connect()` call immediately after the WSClient instantiation (around line 7). WSClient already handles reconnection internally via `scheduleReconnect()`.",
+  "status": "completed",
+  "completed_at": "2026-06-21T14:46:00+08:00",
+  "actual_duration": "60s",
+  "scope": "src/lib/client, src/routes",
+  "focus_paths": [
+    "src/lib/client/components/WorkflowCommander.svelte",
+    "src/routes/+page.svelte",
+    "src/lib/client/stores/index.ts"
+  ],
+  "read_first": [
+    "src/lib/client/components/WorkflowCommander.svelte",
+    "src/routes/+page.svelte",
+    "src/lib/client/stores/index.ts",
+    "src/lib/client/services/ws-client.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "inline",
+  "convergence": {
+    "criteria": [
+      "WorkflowCommander.svelte contains `.then((data: { workflows: WorkflowMeta[]` (response destructuring)",
+      "WorkflowCommander.svelte contains `workflows = data.workflows` (correct field access)",
+      "+page.svelte does NOT contain `connectionState.subscribe` (no manual subscription)",
+      "stores/index.ts does NOT contain `connectionState.subscribe(($state) => { if (!$state.connected) { wsClient.connect()` (no reconnect loop)",
+      "stores/index.ts contains `wsClient.connect()` as a top-level call (one-time init)",
+      "npx vitest run exits 0 (all existing tests pass)"
+    ]
+  },
+  "implementation": [
+    {
+      "step": 1,
+      "description": "Fix WorkflowCommander response parsing",
+      "detail": "Line 23: change `.then((data: WorkflowMeta[]) => { workflows = data; loading = false; })` to `.then((data: { workflows: WorkflowMeta[] }) => { workflows = data.workflows; loading = false; })`. Line 92 retry handler: same response shape fix."
+    },
+    {
+      "step": 2,
+      "description": "Fix +page.svelte subscription leak",
+      "detail": "Remove the $effect block at lines 14-17 that creates unmanaged subscriptions. Replace with a reactive derived: either use `let connected = $derived($connectionState.connected)` or `$effect(() => { connected = $connectionState.connected; })` which accesses the auto-subscription directly without creating manual `.subscribe()` calls."
+    },
+    {
+      "step": 3,
+      "description": "Fix stores/index.ts infinite reconnect loop",
+      "detail": "Remove lines 88-92 (the connectionState.subscribe auto-connect). Add `wsClient.connect()` call at line 8 (immediately after WSClient instantiation): `export const wsClient = new WSClient('ws://localhost:3001'); if (typeof window !== 'undefined') { wsClient.connect(); }`"
+    }
+  ]
+}

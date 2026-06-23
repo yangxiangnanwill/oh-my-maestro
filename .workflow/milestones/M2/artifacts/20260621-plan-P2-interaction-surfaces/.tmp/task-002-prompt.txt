@@ -1,0 +1,65 @@
+PURPOSE: Implement task TASK-002: TerminalBridge frontend panel — xterm.js integration + multi-session tabs + dual-mode display; success = all convergence criteria pass
+TASK: Create src/lib/client/components/TerminalBridge.svelte with xterm.js + FitAddon | Modify src/lib/client/stores/index.ts to add TERMINAL channel event listeners + terminalSessions store | Read existing code first | Verify convergence criteria after changes
+MODE: write
+CONTEXT: @src/lib/client/components/WorkflowCommander.svelte @src/lib/client/stores/index.ts @src/lib/client/services/ws-client.ts @src/lib/server/terminal-manager.ts @src/lib/shared/types.ts @src/lib/shared/events.ts
+EXPECTED: Working TerminalBridge component + stores integration, all convergence criteria verified, summary of what was done
+CONSTRAINTS: Scope limited to task files | Follow project specs | Svelte 5 runes ($state, $derived, $effect) | xterm.js + FitAddon | Catppuccin Mocha theme | Max 5 tabs | Dual mode (simple/advanced)
+
+## Task Definition
+
+**Scope**: src/lib/client/components | **Action**: Create TerminalBridge.svelte with xterm.js embedded terminal, multi-session tabs, input forwarding, resize sync, dual-mode display
+
+### Files
+- src/lib/client/components/TerminalBridge.svelte: Create integrated xterm.js + FitAddon terminal panel component with multi-session tabs, input forwarding, resize sync, dual-mode display
+- src/lib/client/stores/index.ts: Add TERMINAL channel event listeners + terminalSessions store. Subscribe to Channels.TERMINAL events, accumulate term:created/term:output/term:exit events into store
+
+### Read First
+- src/lib/client/components/WorkflowCommander.svelte
+- src/lib/client/stores/index.ts
+- src/lib/client/services/ws-client.ts
+- src/lib/server/terminal-manager.ts
+- src/lib/shared/types.ts
+- src/lib/shared/events.ts
+
+### Implementation Steps
+1. Install npm dependencies: npm install @xterm/xterm @xterm/addon-fit
+2. Import: import { Terminal } from @xterm/xterm; import { FitAddon } from @xterm/addon-fit; import @xterm/xterm/css/xterm.css. Import wsClient, displayMode store. Import Channels, TerminalEvents. Import TerminalSession type.
+3. Define component state: let terminals = $state([]); let activeTerminalId = $state(null); let containerEl = $state(null);
+4. Implement initTerminal(terminalId): creates Terminal with Catppuccin Mocha theme, FitAddon, onData callback for input forwarding via wsClient.send()
+5. Implement createNewTerminal(): sends term:create message via wsClient to server
+6. Implement $effect setup block: subscribe to wsClient.on(Channels.TERMINAL, handler). Handle term:created (initTerminal + mount + fit + add to terminals), term:output (write to terminal), term:exit (update status), term:resize (resize terminal)
+7. Implement resize handling: ResizeObserver on containerEl, fit all terminals, send resize message for active terminal
+8. Implement Tab UI: div.terminal-tabs with each terminals as button, active state, create button disabled when terminals.length >= 5
+9. Implement dual-mode display: simple mode shows annotation overlay on xterm.js, advanced mode shows raw ANSI output
+10. Implement Ctrl+C shortcut: terminal.attachCustomKeyEventHandler sending x03 to PTY
+11. Write CSS: Catppuccin Mocha theme, reuse WorkflowCommander variable naming and spacing patterns
+
+### Convergence Criteria
+- src/lib/client/components/TerminalBridge.svelte contains script lang=ts and Svelte 5 $state/$effect runes
+- Component creates xterm.js Terminal instance with Catppuccin Mocha theme
+- Terminal.open() mounts to DOM container element
+- Uses FitAddon: const fitAddon = new FitAddon(); terminal.loadAddon(fitAddon); fitAddon.fit()
+- Component listens to WSClient TERMINAL channel events with cleanup in $effect return
+- term:output event handler calls terminal.write(event.payload.data)
+- User keyboard input forwarding: terminal.onData sends via wsClient
+- Terminal resize sync: ResizeObserver triggers fitAddon.fit() and sends resize message
+- Multi-session Tab UI with terminal-tab class and terminals.length tracking
+- Session limit 5: create button disabled when terminals.length >= 5
+- displayMode switching: simple mode shows annotation overlay, advanced mode shows raw output
+- Ctrl+C shortcut: sends x03 to current terminal
+- Component styles follow Catppuccin Mocha theme (4+ color references)
+
+### Reference
+- Pattern: WorkflowCommander.svelte Svelte 5 runes pattern ($state, $derived, $effect) + WSClient event subscription + Catppuccin Mocha style theme
+- Files: src/lib/client/components/WorkflowCommander.svelte, src/lib/client/stores/index.ts, src/lib/client/services/ws-client.ts
+
+## Phase Context
+- Goal: Phase 2 Interaction Surfaces: Terminal Bridge + AI Dialog + EventBus optimization + orchestration integration
+- Success criteria: TerminalBridge component embeds xterm.js terminal, supports multi-session tab switching (max 5), keyboard input forwarded via WebSocket to server PTY, ANSI output rendered in real-time, window resize auto-sync, simple/advanced mode switchable
+
+## Project Specs
+- ESM imports with .js extension
+- Svelte 5 runes: $state for local state, $derived for computed, $effect for side effects + cleanup
+- Store subscription + event accumulation pattern (stores/index.ts:52-152)
+- Catppuccin Mocha theme colors: #1e1e2e background, #cdd6f4 foreground, #313244 surface, #45475a overlay
+- Follow existing code style: WorkflowCommander.svelte patterns

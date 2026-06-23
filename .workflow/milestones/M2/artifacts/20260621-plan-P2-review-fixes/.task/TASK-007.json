@@ -1,0 +1,97 @@
+{
+  "id": "TASK-007",
+  "title": "MAINT-002: 评估 TerminalManager/DialogManager 代码重复 — deferred",
+  "description": "MAINT-002 发现 TerminalManager 和 DialogManager 存在约 40% 的结构重复（session CRUD、MAX_SESSIONS 限制、EventBus 集成模式）。提取泛型 SessionManager<T> 基类需要大量重构，风险较高。本次 gap-fix 将其标记为 deferred，记录技术债务供 Phase 3 处理。",
+  "issue_id": "MAINT-002",
+  "issue_refs": [],
+  "type": "debt",
+  "priority": "medium",
+  "effort": "small",
+  "action": "不修改代码。在代码中添加 TODO 注释标记重复模式，记录到技术债务清单。",
+  "status": "completed",
+  "completed_at": "2026-06-21T17:18:00+08:00",
+  "actual_duration": "3m",
+  "scope": "src/lib/server/terminal-manager.ts + src/lib/server/dialog-manager.ts",
+  "focus_paths": [
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/dialog-manager.ts"
+  ],
+  "read_first": [
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/dialog-manager.ts"
+  ],
+  "depends_on": ["TASK-003", "TASK-006"],
+  "wave": 2,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n \"TODO.*MAINT-002\" src/lib/server/terminal-manager.ts 返回匹配行（TODO 注释存在）",
+      "grep -n \"TODO.*MAINT-002\" src/lib/server/dialog-manager.ts 返回匹配行（TODO 注释存在）",
+      "grep -n \"SessionManager\" src/lib/server/terminal-manager.ts 返回匹配行（注释中提及 SessionManager 基类方向）"
+    ],
+    "verification": "grep -rn \"TODO.*MAINT-002\" src/lib/server/",
+    "definition_of_done": "两个 Manager 文件中添加了 MAINT-002 技术债务 TODO 注释；plan.json 中记录了 deferred 原因"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "modify",
+      "target": "TerminalManager 类定义上方",
+      "change": "添加 TODO 注释: // TODO(MAINT-002): 与 DialogManager 共享约 40% session 管理模式（CRUD + MAX_SESSIONS + EventBus 集成）。Phase 3 考虑提取泛型 SessionManager<T> 基类。"
+    },
+    {
+      "path": "src/lib/server/dialog-manager.ts",
+      "action": "modify",
+      "target": "DialogManager 类定义上方",
+      "change": "添加 TODO 注释: // TODO(MAINT-002): 与 TerminalManager 共享约 40% session 管理模式。Phase 3 考虑提取泛型 SessionManager<T> 基类。"
+    }
+  ],
+  "implementation": [
+    "1. 打开 src/lib/server/terminal-manager.ts，在 export class TerminalManager 行之前添加:\n// TODO(MAINT-002): 与 DialogManager 共享约 40% session 管理模式（CRUD + MAX_SESSIONS + EventBus 集成）。Phase 3 考虑提取泛型 SessionManager<T> 基类。",
+    "2. 打开 src/lib/server/dialog-manager.ts，在 export class DialogManager 行之前添加:\n// TODO(MAINT-002): 与 TerminalManager 共享约 40% session 管理模式。Phase 3 考虑提取泛型 SessionManager<T> 基类。",
+    "3. 确认两个 TODO 注释存在"
+  ],
+  "test": {
+    "commands": [
+      "grep -rn \"TODO.*MAINT-002\" src/lib/server/"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "两个文件中均存在 MAINT-002 TODO 注释"
+    ]
+  },
+  "reference": {
+    "pattern": "技术债务标记模式 — TODO(ISSUE_ID): description",
+    "files": [
+      "src/lib/server/terminal-manager.ts:45 (TerminalManager 类定义)",
+      "src/lib/server/dialog-manager.ts:29 (DialogManager 类定义)"
+    ],
+    "examples": "重复模式识别:\n- sessions: Map<string, ActiveX>\n- MAX_SESSIONS = 5\n- constructor(eventBus, ...)\n- getSessionCount(): number\n- destroyAll/closeAll(): void\n- EventBus 事件发布模式"
+  },
+  "rationale": {
+    "chosen_approach": "标记为 deferred 而非立即重构。原因：(1) 约 40% 代码量重构，风险较高；(2) gap-fix 的目标是修复 critical/high bug，不是架构改进；(3) 两个 Manager 的具体行为差异（PTY vs ChildProcess、frame throttle vs NDJSON parsing）使泛型抽象需要仔细设计，不应仓促执行。",
+    "decision_factors": [
+      "gap-fix 范围限制：仅修复 bug，不做架构重构",
+      "重构风险：泛型基类设计不当可能引入新 bug",
+      "Phase 3 (Trust & Polish) 更适合处理技术债务"
+    ],
+    "tradeoffs": "推迟重构意味着代码重复将持续存在，增加短期维护成本。但相比在 gap-fix 中引入重构风险，这是更安全的选择。"
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["代码架构"],
+    "affected_components": ["TerminalManager", "DialogManager"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "5m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

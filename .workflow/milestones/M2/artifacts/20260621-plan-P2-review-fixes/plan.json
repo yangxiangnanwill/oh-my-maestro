@@ -1,0 +1,86 @@
+{
+  "summary": "Phase 2 (Interaction Surfaces) Review Gap 修复计划 — 修复 REV-003 中发现的 3 个 critical、7 个 high 问题。范围仅限 bug 修复和安全加固，不新增功能。MAINT-002（SessionManager 基类提取）标记为 deferred，不在本次 gap-fix 中实现。",
+  "approach": "按依赖关系分 2 个 wave 执行。Wave 1 包含 6 个完全独立的修复任务（事件契约、NDJSON 缓冲、PTY buffer flush、step status 映射、XSS 防护、shell 白名单），可完全并行。Wave 2 仅包含 MAINT-001（清理逻辑去重），依赖 Wave 1 中 terminal-manager.ts 的修改稳定后执行。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006", "TASK-007"],
+  "task_count": 7,
+  "complexity": "medium",
+  "estimated_time": "3h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006"]
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-007"]
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "Wave 1: 并行修复 6 个独立 bug",
+      "Wave 2: 基于 Wave 1 稳定代码进行清理逻辑去重"
+    ]
+  },
+  "design_decisions": [
+    "term:create/term:destroy 通过 ws-gateway default 分支转发到 EventBus，TerminalManager 在构造器中订阅这两个事件 — 与现有 INPUT 事件处理模式一致，不修改 ws-gateway 的 switch-case 结构",
+    "NDJSON 跨 chunk 缓冲复用 ActiveDialog.buffer 字段，采用 append+split+保留尾部的方式，与现有 parseChunk 逻辑兼容",
+    "XSS 防护使用 DOMPurify（需新增依赖），替代手写正则 — 业界标准方案，避免正则绕过风险",
+    "shell 白名单使用静态允许列表（powershell.exe, cmd.exe, bash, zsh, sh, fish），拒绝不在列表中的 shell 参数",
+    "MAINT-002（SessionManager 泛型基类）标记为 deferred — 约 40% 代码重构量，风险较高，不适合在 gap-fix 中执行"
+  ],
+  "shared_context": {
+    "patterns": [
+      "EventBus publish/subscribe 模式用于事件通信",
+      "ws-gateway default 分支转发未知消息类型到 EventBus",
+      "TerminalManager 构造器中订阅 EventBus 事件处理客户端输入",
+      "ActiveDialog.buffer 字段用于跨 chunk 行缓冲"
+    ],
+    "conventions": [
+      "ESM 模块导入 (import/export)",
+      "TypeScript strict 模式",
+      "Svelte 5 $state/$derived/$effect runes",
+      "Vitest 测试框架"
+    ],
+    "dependencies": [
+      "node-pty (PTY 管理)",
+      "ws (WebSocket)",
+      "marked + highlight.js (Markdown 渲染)",
+      "新增: dompurify + @types/dompurify (XSS 防护)"
+    ]
+  },
+  "confidence": {
+    "overall": 0.92,
+    "dimensions": {
+      "requirements_coverage": 0.95,
+      "task_quality": 0.93,
+      "dependency_correctness": 0.98,
+      "estimation_accuracy": 0.85,
+      "collision_safety": 0.90
+    },
+    "pressure_pass": {
+      "status": "PASSED",
+      "task_checked": "TASK-001",
+      "result": "TASK-001 是最复杂的任务（3 个文件 + 跨层修改）。read_first 覆盖所有修改文件 + types.ts；convergence.criteria 全部 grep-可验证（9 条）；action 包含确切常量名和代码位置；implementation 步骤包含具体代码片段。通过。"
+    },
+    "checker_result": {
+      "verdict": "PASS",
+      "score": 0.93,
+      "issues_found": 0
+    },
+    "residual_risks": [
+      "DOMPurify 是新增依赖，需确认安装成功（npm install dompurify @types/dompurify）",
+      "shell 白名单可能过于严格 — Git Bash (bash.exe) 不在白名单中，如用户需要可后续添加",
+      "MAINT-002 (SessionManager 泛型基类) 标记为 deferred，代码重复将在 Phase 3 处理"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-21T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "gap-fix",
+    "plan_type": "bugfix",
+    "schema_version": "2.0",
+    "git_commit": null
+  }
+}

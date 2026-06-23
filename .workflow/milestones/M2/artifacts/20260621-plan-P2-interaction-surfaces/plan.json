@@ -1,0 +1,143 @@
+{
+  "summary": "Phase 2 Interaction Surfaces: 补全交互能力——Terminal Bridge（node-pty + xterm.js 嵌入终端） + AI Dialog（Claude Code CLI 子进程 + 流式聊天 + 意图路由） + EventBus 性能优化 + 编排集成。5 个任务，4 个 wave，预计 5-7 小时。",
+  "approach": "Terminal 链路（TASK-001/002）和 Dialog 链路（TASK-003/004）并行开发，共享 EventBus + WSGateway 现有基础设施。Terminal 链路：node-pty PTY 管理器（服务端）-> TerminalBridge 前端面板（Svelte 5 + xterm.js）。Dialog 链路：DialogManager（服务端，复用 DelegateExecutor 的 spawn/parse/emit 模式）-> AIDialog 前端面板（流式 Markdown 渲染 + 意图路由）。EventBus 性能优化（TASK-005）独立并行。编排集成（TASK-004）依赖 Terminal 和 Dialog 完成后统一接入 MaestroIDEServer + stores。遵循 C-3 约束：不修改 WSGateway 和 Translator（现有 default forwarding + auto-translate 覆盖 Phase 2）。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005"],
+  "task_count": 5,
+  "complexity": "high",
+  "estimated_time": "5-7 hours",
+  "recommended_execution": "Agent",
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001", "TASK-003", "TASK-005"],
+      "label": "TerminalManager + DialogManager + EventBus 优化（并行，无文件冲突）"
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-002"],
+      "label": "TerminalBridge 前端面板（依赖 TASK-001 的 TerminalManager 接口）"
+    },
+    {
+      "wave": 3,
+      "tasks": ["TASK-004"],
+      "label": "编排集成 — MaestroIDEServer 接线 + stores 扩展 + AIDialog 前端面板（依赖 TASK-001/003 的接口 + TASK-002 的前端模式）"
+    }
+  ],
+  "data_flow": {
+    "diagram": "Terminal: node-pty --(ANSI output)--> TerminalManager --(TerminalEvents)--> EventBus --(WSMessage)--> WSGateway --> TerminalBridge.svelte (xterm.js)\nDialog: Claude Code CLI --(NDJSON stdout)--> DialogManager --(DialogEvents)--> EventBus --(WSMessage)--> WSGateway --> AIDialog.svelte (marked.js + highlight.js)\nIntegration: AIDialog --(intent routed)--> WorkflowCommander --(delegate execute)--> DelegateExecutor",
+    "stages": ["PTY spawn + ANSI capture", "EventBus publish (TerminalEvents/DialogEvents)", "WSGateway broadcast + translate", "Svelte store update", "xterm.js render / Markdown render", "Intent routing -> WorkflowCommander"]
+  },
+  "design_decisions": [
+    {
+      "decision": "Terminal 使用 node-pty 而非 child_process.spawn",
+      "choice": "node-pty",
+      "rationale": "用户决策锁定 (C-1)。PTY 提供真正的伪终端交互（ANSI 颜色、光标控制、信号处理），spawn 只能捕获 stdout 流。"
+    },
+    {
+      "decision": "DialogManager 复用 DelegateExecutor 的 spawn/parse/emit 模式",
+      "choice": "复用模式",
+      "rationale": "用户决策锁定 (C-2)。Claude Code CLI 子进程管理、NDJSON 行解析、EventBus 事件发射三阶段与 DelegateExecutor 一致。"
+    },
+    {
+      "decision": "WSGateway 和 Translator 不做修改",
+      "choice": "零修改",
+      "rationale": "用户决策锁定 (C-3)。现有 default forwarding（ws-gateway.ts:115-118）和 auto-translate（ws-gateway.ts:124-145）已覆盖 DIALOG 和 TERMINAL channel。"
+    },
+    {
+      "decision": "PTY 输出帧节流策略",
+      "choice": "33ms throttle (≈30fps)",
+      "rationale": "用户决策锁定 (C-4)。避免高频 ANSI 输出压垮 WebSocket 连接。使用累积缓冲区 + setInterval flush 模式。"
+    },
+    {
+      "decision": "Terminal 事件使用独立环形缓冲区",
+      "choice": "RingBuffer（非 EventBus linear history）",
+      "rationale": "用户决策锁定 (C-7)。终端输出量极大（可能数千行/秒），EventBus 线性历史会 OOM。环形缓冲区限制 1000 条。"
+    },
+    {
+      "decision": "Markdown 渲染选型",
+      "choice": "marked.js + highlight.js",
+      "rationale": "用户建议（free choice）。marked.js 轻量（~50KB），highlight.js 支持 190+ 语言。无需重型编辑器库。"
+    },
+    {
+      "decision": "多会话上限",
+      "choice": "5 个并发会话（Terminal + Dialog 各 5）",
+      "rationale": "用户建议（free choice）。MVP 阶段单用户场景，5 个会话足够覆盖典型使用模式。"
+    }
+  ],
+  "shared_context": {
+    "patterns": [
+      "EventBus pub/sub（subscribe 返回 unsubscribe fn，publish 返回 InternalEvent）",
+      "Constructor injection（EventBus 注入 TerminalManager/DialogManager）",
+      "SpawnFn DI（TerminalManager 和 DialogManager 接受可选 spawn 函数用于测试）",
+      "NDJSON line parsing（parseLine() 返回 null 表示无效行，流安全）",
+      "Per-client message creation（new WSMessage inside for loop，ws-gateway.ts:124-145）",
+      "Svelte 5 runes（$state 局部状态，$derived 计算属性，$effect 副作用 + cleanup）",
+      "Store subscription + event accumulation（stores/index.ts:52-152 模式）",
+      "Server component wiring（index.ts:27-34 构造函数注入 + 属性赋值模式）"
+    ],
+    "conventions": [
+      "ESM imports with .js extension",
+      "TypeScript strict mode",
+      "Vitest for testing（describe/it/expect/beforeEach）",
+      "Hono for HTTP routes",
+      "ws library for WebSocket server",
+      "SvelteKit 2.x with ssr: false",
+      "Catppuccin Mocha 主题色板（#1e1e2e 背景, #cdd6f4 前景, #313244 表面, #45475a 覆盖）"
+    ],
+    "dependencies": [
+      "node-pty ^1.0.0",
+      "@xterm/xterm ^5.5.0",
+      "@xterm/addon-fit ^0.10.0",
+      "marked ^15.0.0",
+      "highlight.js ^11.11.0",
+      "hono ^4.7.0",
+      "ws ^8.18.0",
+      "vitest ^3.0.0",
+      "svelte ^5.0.0",
+      "@sveltejs/kit ^2.21.0"
+    ]
+  },
+  "confidence": {
+    "overall": 0.90,
+    "dimensions": {
+      "requirements_coverage": 0.92,
+      "task_quality": 0.90,
+      "dependency_correctness": 0.95,
+      "estimation_accuracy": 0.82,
+      "collision_safety": 0.90
+    },
+    "pressure_pass": {
+      "status": "PASSED_AFTER_FIXES",
+      "blockers_resolved": [
+        "StreamChunk/IntentResult 类型已添加到 TASK-003 files[]（修改 types.ts）",
+        "TerminalManager 构造器中添加 EventBus 订阅 term:input 事件，解决终端输入双通道矛盾",
+        "SpawnFn 类型签名已兼容 node:child_process.spawn 完整签名",
+        "TASK-004 stop() 中添加 terminalManager.destroyAll() 和 dialogManager.closeAll() 资源清理"
+      ],
+      "warnings_acknowledged": [
+        "TASK-002/004 都修改 stores/index.ts — TASK-004 implementation 已明确标注合并而非覆盖",
+        "Translator 对 DIALOG channel 的意外翻译 — TASK-004 中添加 channel 白名单检查",
+        "workflowRegistry 更新时机 — 在 POST /api/dialog/sessions 中调用 updateWorkflowRegistry"
+      ]
+    },
+    "checker_result": {
+      "verdict": "PASS_WITH_MINOR",
+      "score": 0.87,
+      "minor_issues_resolved": 5
+    },
+    "residual_risks": [
+      "node-pty Windows ConPTY 兼容性未在 Phase 2 验证（延迟到 Phase 3）",
+      "Claude Code CLI NDJSON 输出格式基于文档假设，未对真实 CLI 测试",
+      "marked.js + highlight.js 版本可能不兼容 SvelteKit SSR（需确认 ssr: false）",
+      "TASK-002/004 stores 合并需人工确认不重复声明 terminalSessions"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-21T00:00:00+08:00",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "feature",
+    "schema_version": "2.0",
+    "git_commit": null
+  }
+}

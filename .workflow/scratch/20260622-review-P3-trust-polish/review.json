@@ -1,0 +1,269 @@
+{
+  "phase": 3,
+  "phase_slug": "trust-polish",
+  "milestone": "M3",
+  "level": "standard",
+  "verdict": "WARN",
+  "reviewed_at": "2026-06-22T17:30:00+08:00",
+  "reviewer": "workflow-reviewer",
+  "dimensions_reviewed": ["correctness", "security", "performance", "architecture", "maintainability", "best-practices"],
+  "files_reviewed": [
+    "src/lib/server/gate-manager.ts",
+    "src/lib/server/session-manager.ts",
+    "src/lib/server/delegate-executor.ts",
+    "src/lib/server/index.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/dialog-manager.ts",
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/server/translator.ts",
+    "src/lib/shared/translations.ts",
+    "src/lib/client/stores/index.ts",
+    "src/lib/client/components/WorkflowCommander.svelte"
+  ],
+  "severity_distribution": {
+    "critical": 0,
+    "high": 6,
+    "medium": 37,
+    "low": 27,
+    "total": 70
+  },
+  "critical_files": [
+    {
+      "file": "src/lib/server/index.ts",
+      "dimensions": ["architecture", "security", "maintainability", "correctness"]
+    },
+    {
+      "file": "src/lib/client/components/WorkflowCommander.svelte",
+      "dimensions": ["correctness", "maintainability", "best-practices"]
+    },
+    {
+      "file": "src/lib/client/stores/index.ts",
+      "dimensions": ["correctness", "performance", "best-practices"]
+    },
+    {
+      "file": "src/lib/server/delegate-executor.ts",
+      "dimensions": ["security", "maintainability", "best-practices"]
+    }
+  ],
+  "findings": [
+    {
+      "id": "CORR-001",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "未检查 stdin.writable 可能导致写入失败静默丢失",
+      "file": "src/lib/server/dialog-manager.ts",
+      "line": 96,
+      "snippet": "if (stdin) { stdin.write(message + '\\n'); }",
+      "description": "仅检查 stdin 是否为 truthy 就直接调用 write()，未检查 stdin.writable。如果子进程的 stdin 已关闭或不可写，write() 会返回 false 且数据可能丢失。",
+      "impact": "用户发送的 dialog 消息可能静默丢失而没有任何错误提示。",
+      "suggestion": "检查 stdin.writable 并在写入失败时通过事件总线发布警告事件。"
+    },
+    {
+      "id": "CORR-002",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "resolveGate 返回过期的 gate 但调用方仅检查 !gate 而忽略非 presented 状态",
+      "file": "src/lib/server/index.ts",
+      "line": 135,
+      "snippet": "const gate = this.gateManager.resolveGate(gateId, approved); if (!gate) { return c.json({ error: 'Gate not found' }, 404); }",
+      "description": "resolveGate 在 gate 状态非 presented 时返回当前 gate 对象（而非 undefined）。代码未区分 'gate not found' 与 'gate already resolved' 两种不同情况。",
+      "impact": "针对已过期/已确认的门控重复调用 resolve API 可能触发重复的 workflow 执行。",
+      "suggestion": "为 resolveGate 增加 alreadyResolved/alreadyExpired 等不同返回状态；在 HTTP handler 中区分 gate 不存在 vs 状态已不可变。"
+    },
+    {
+      "id": "CORR-012",
+      "dimension": "correctness",
+      "severity": "medium",
+      "title": "wsClient.on() 返回的 unsubscribe 函数未被调用，导致内存泄漏和僵尸事件监听",
+      "file": "src/lib/client/components/WorkflowCommander.svelte",
+      "line": 67,
+      "snippet": "const unsub = wsClient.on(Channels.GATE, (message) => { ... });",
+      "description": "每次调用 executeWorkflow() 都会注册一个新的 GATE 事件监听器，返回的 unsub 函数存储在局部变量中但从未被调用。",
+      "impact": "随着用户多次触发工作流执行，GATE channel 上的事件处理器不断累积（内存泄漏 + CPU 浪费）。",
+      "suggestion": "在 handleDismiss、handleApprove、handleReject 回调中调用 unsubscribe，或在 executeWorkflow 函数入口处先取消之前的订阅。"
+    },
+    {
+      "id": "CORR-018",
+      "dimension": "correctness",
+      "severity": "medium",
+      "title": "activeWorkflows.update 的回调直接修改数组元素但未返回新数组引用",
+      "file": "src/lib/client/stores/index.ts",
+      "line": 156,
+      "snippet": "workflows[idx] = execution; ... return workflows;",
+      "description": "Svelte store 在回调返回的值与当前值引用相同时不会通知订阅者。修改已有 execution 时返回同一数组引用，导致 UI 不更新。",
+      "impact": "工作流步骤进度更新时 UI 不刷新。",
+      "suggestion": "将 return workflows 改为 return [...workflows]。"
+    },
+    {
+      "id": "CORR-014",
+      "dimension": "correctness",
+      "severity": "medium",
+      "title": "dryRun 失败时静默吞噬异常但未记录日志",
+      "file": "src/lib/server/index.ts",
+      "line": 107,
+      "snippet": "try { dryRunResult = await this.gateManager.performDryRun(...); } catch { dryRunResult = ''; }",
+      "description": "dry-run 失败的 catch 块完全静默，不输出任何错误日志。",
+      "impact": "dry-run 异常被完全隐藏，运维排查困难。",
+      "suggestion": "在 catch 块中添加 console.warn 并在响应中传递标志位通知前端。"
+    },
+    {
+      "id": "SEC-001",
+      "dimension": "security",
+      "severity": "high",
+      "title": "命令注入风险 — 用户提供的 workflowId 和 params 直接拼接到 shell 命令中",
+      "file": "src/lib/server/delegate-executor.ts",
+      "line": 68,
+      "snippet": "const childProcess = this.spawnFn('maestro', ['delegate', prompt, '--to', tool, '--mode', mode]);",
+      "description": "buildPrompt() 方法将 workflowId 和 params 值直接拼接到传递给 maestro delegate 的 prompt 字符串中，未进行任何清理。",
+      "impact": "攻击者可能通过构造恶意的 workflowId 或 params 值注入额外的 CLI 参数或命令。",
+      "suggestion": "对 workflowId 进行白名单校验（仅允许字母数字、连字符和下划线）；对 params 值进行清理，过滤换行符、反引号、$()等 shell 元字符。"
+    },
+    {
+      "id": "SEC-002",
+      "dimension": "security",
+      "severity": "high",
+      "title": "命令注入风险 — tool 参数未经验证直接传递给 spawn",
+      "file": "src/lib/server/delegate-executor.ts",
+      "line": 65,
+      "snippet": "const tool = (params.tool as string) ?? 'claude';",
+      "description": "tool 参数从用户提供的 params 中提取，仅做类型断言 as string，未进行任何白名单验证。",
+      "impact": "攻击者可能通过提供恶意的 tool 值绕过预期的工具选择。",
+      "suggestion": "对 tool 参数进行白名单验证，仅允许已知的 CLI 工具名称（如 claude、gemini、codex、opencode）。"
+    },
+    {
+      "id": "SEC-003",
+      "dimension": "security",
+      "severity": "high",
+      "title": "路径遍历风险 — 用户提供的 cwd 参数未经验证直接用于 PTY 生成",
+      "file": "src/lib/server/terminal-manager.ts",
+      "line": 113,
+      "snippet": "const cwd = options?.cwd ?? process.cwd();",
+      "description": "用户通过 HTTP API 提供的 cwd 参数直接传递给 node-pty 的 spawn 作为工作目录，未进行路径规范化或遍历检查。",
+      "impact": "攻击者可能在服务器文件系统的任意位置生成 shell 进程。",
+      "suggestion": "对 cwd 进行路径规范化（path.resolve）并与允许的基础目录进行比较。"
+    },
+    {
+      "id": "PERF-001",
+      "dimension": "performance",
+      "severity": "medium",
+      "title": "translateString 每次调用在循环中重复创建 RegExp 对象",
+      "file": "src/lib/shared/translations.ts",
+      "line": 182,
+      "snippet": "const regex = new RegExp(`(?<![a-zA-Z-])${escapeRegex(term)}(?![a-zA-Z-])`, 'g');",
+      "description": "translateString 在 WS broadcast 的热路径上被调用。每次调用创建约 15-25 个 new RegExp 对象。",
+      "impact": "WS 广播中每个需翻译的消息产生 15-25 个临时 RegExp 对象，增加 GC 压力。",
+      "suggestion": "在模块顶层预编译 RegExp 并缓存到 Map<string, RegExp>。"
+    },
+    {
+      "id": "PERF-003",
+      "dimension": "performance",
+      "severity": "medium",
+      "title": "dialogMessages 无上限累积导致 O(n^2) 数组复制",
+      "file": "src/lib/client/stores/index.ts",
+      "line": 233,
+      "snippet": "dialogMessages.update((msgs) => [...msgs, msg]);",
+      "description": "每次 STREAM_CHUNK 事件都通过扩展运算符创建新数组（O(n)），累积成本为 O(n^2)。无容量上限。",
+      "impact": "长时间对话（>1000 chunks）时每次 DOM 更新都需复制上千个元素，导致 UI 卡顿和内存持续增长。",
+      "suggestion": "添加最大消息数限制（如 500 条），超出时移除旧消息。"
+    },
+    {
+      "id": "ARC-001",
+      "dimension": "architecture",
+      "severity": "high",
+      "title": "MaestroIDEServer 类承担过多职责，违反单一职责原则",
+      "file": "src/lib/server/index.ts",
+      "line": 17,
+      "snippet": "export class MaestroIDEServer { readonly app; readonly eventBus; readonly translator; readonly wsGateway; readonly stateSync; readonly cliAdapter; readonly delegateExecutor; readonly gateManager; readonly terminalManager; readonly dialogManager; }",
+      "description": "MaestroIDEServer 同时承担了 HTTP 路由注册（8 组端点）、服务实例化与依赖注入、生命周期管理以及 auto-start 入口逻辑。setupRoutes 方法约 200 行。",
+      "impact": "随着端点增加，该类将持续膨胀；修改任何一组 API 端点都需要触及该类；单元测试难以隔离单个端点。",
+      "suggestion": "将 setupRoutes 中的端点按功能域拆分为独立的路由模块（如 workflow-routes.ts、gate-routes.ts、terminal-routes.ts）。"
+    },
+    {
+      "id": "ARC-002",
+      "dimension": "architecture",
+      "severity": "high",
+      "title": "GateManager 与 DelegateExecutor 存在隐式循环依赖风险",
+      "file": "src/lib/server/gate-manager.ts",
+      "line": 24,
+      "snippet": "constructor(private eventBus: EventBus, private delegateExecutor: DelegateExecutor) {}",
+      "description": "GateManager 直接依赖 DelegateExecutor（用于 executeDryRun），而 index.ts 中 /api/gates/:id/resolve 端点又通过 gateManager.resolveGate 确认后调用 delegateExecutor.execute。",
+      "impact": "运行时调用链形成逻辑循环：gateManager 持有 delegateExecutor 引用，路由层在 gate 确认后又调用 delegateExecutor.execute。",
+      "suggestion": "将 dry-run 执行职责从 GateManager 中移出，让路由层负责编排。GateManager 应只关注门控状态机本身。"
+    },
+    {
+      "id": "ARC-010",
+      "dimension": "architecture",
+      "severity": "low",
+      "title": "gate 确认后 delegateExecutor.execute 丢失了原始 workflowId 和 params",
+      "file": "src/lib/server/index.ts",
+      "line": 141,
+      "snippet": "this.delegateExecutor.execute(gate.executionId, params);",
+      "description": "gate 被批准后调用 delegateExecutor.execute 时，传入的 params 是空对象 {}，workflowId 使用了 gate.executionId 而非原始 workflow ID。",
+      "impact": "用户批准 gate 后，实际执行的 delegate 命令无法反映用户最初选择的 workflow 和参数。",
+      "suggestion": "在 ApprovalGate 类型中增加 workflowId 和 params 字段，GateManager.createGate 接收并保存这些信息。"
+    },
+    {
+      "id": "BP-001",
+      "dimension": "best-practices",
+      "severity": "high",
+      "title": "unsubscribe 函数未被存储导致 WebSocket 监听器泄漏",
+      "file": "src/lib/client/components/WorkflowCommander.svelte",
+      "line": 67,
+      "snippet": "const unsub = wsClient.on(Channels.GATE, (message) => { ... });",
+      "description": "executeWorkflow 函数中注册了 GATE 通道的 WebSocket 监听器，但返回的 unsubscribe 函数仅存储在局部变量 unsub 中，从未被调用。",
+      "impact": "随着用户多次执行工作流，GATE 通道监听器会不断累积，导致内存持续增长，且同一事件会被多个旧监听器重复处理。",
+      "suggestion": "将 unsubscribe 函数存储在组件级变量中，在注册新监听器前先调用旧的 unsubscribe。"
+    },
+    {
+      "id": "BP-003",
+      "dimension": "best-practices",
+      "severity": "medium",
+      "title": "Svelte store 的 update 回调中直接修改数组元素违反不可变性约定",
+      "file": "src/lib/client/stores/index.ts",
+      "line": 156,
+      "snippet": "workflows[idx] = execution; ... return workflows;",
+      "description": "Svelte writable store 的 update 回调中直接修改了传入的数组，然后返回同一个数组引用。Svelte 通过引用比较判断是否触发更新。",
+      "impact": "activeWorkflows store 的订阅者可能不会收到更新通知，导致 UI 不刷新。",
+      "suggestion": "使用不可变更新模式：return idx >= 0 ? workflows.map((w, i) => i === idx ? execution : w) : [...workflows, execution];"
+    },
+    {
+      "id": "BP-007",
+      "dimension": "best-practices",
+      "severity": "medium",
+      "title": "dialogManager 构造时传入空数组作为 workflowRegistry 但缺少更新机制",
+      "file": "src/lib/server/index.ts",
+      "line": 46,
+      "snippet": "this.dialogManager = new DialogManager(this.eventBus, spawnFn, []);",
+      "description": "DialogManager 的 workflowRegistry 在构造时传入空数组 []，MaestroIDEServer 中从未调用 updateWorkflowRegistry 方法。",
+      "impact": "DialogManager 的意图路由功能在生产环境中完全不可用，所有用户消息都不会被路由到任何工作流。",
+      "suggestion": "在 init() 或 start() 方法中添加工作流注册表的初始化逻辑。"
+    },
+    {
+      "id": "MAINT-001",
+      "dimension": "maintainability",
+      "severity": "medium",
+      "title": "buildPrompt/buildDryRunPrompt 在 DelegateExecutor 和 GateManager 中完全重复",
+      "file": "src/lib/server/delegate-executor.ts",
+      "line": 264,
+      "snippet": "private buildPrompt(workflowId: string, params: Record<string, unknown>): string { ... }",
+      "description": "DelegateExecutor.buildPrompt() 和 GateManager.buildDryRunPrompt() 实现完全相同。",
+      "impact": "修改参数拼接逻辑需要同步两个位置，容易遗漏。",
+      "suggestion": "将 buildPrompt 逻辑提取到共享工具函数。"
+    },
+    {
+      "id": "MAINT-014",
+      "dimension": "maintainability",
+      "severity": "low",
+      "title": "index.ts 中 /api/workflows/execute 路由的 executionId 生成与 DelegateExecutor 不一致",
+      "file": "src/lib/server/index.ts",
+      "line": 98,
+      "snippet": "const executionId = `exec-${Date.now()}`;",
+      "description": "路由层手动生成 executionId（exec-${Date.now()}），而 DelegateExecutor.execute() 使用 eventCounter 生成。同一毫秒内的两个请求会产生相同的 executionId。",
+      "impact": "高并发下可能产生重复 ID，导致执行追踪混乱。",
+      "suggestion": "让路由层调用 DelegateExecutor 的统一 ID 生成方法，或使用 crypto.randomUUID()。"
+    }
+  ],
+  "issues_created": [],
+  "deep_dives": []
+}

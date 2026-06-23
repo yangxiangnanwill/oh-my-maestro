@@ -1,0 +1,46 @@
+{
+  "phase": 2,
+  "status": "passed",
+  "verified_at": "2026-06-21T17:30:00+08:00",
+  "verifier": "claude",
+  "must_haves": {
+    "truths": [
+      {"criterion": "C1-C8: TASK-001 终端事件契约", "status": "verified", "count": "8/8"},
+      {"criterion": "C9-C12: TASK-002 NDJSON 跨chunk缓冲", "status": "verified", "count": "4/4"},
+      {"criterion": "C13-C16: TASK-003 PTY buffer flush + 清理去重", "status": "verified", "count": "4/4"},
+      {"criterion": "C17-C21: TASK-004 步骤状态映射", "status": "verified", "count": "5/5"},
+      {"criterion": "C22-C25: TASK-005 DOMPurify XSS防护", "status": "verified", "count": "4/4"},
+      {"criterion": "C26-C29: TASK-006 Shell白名单", "status": "verified", "count": "4/4"},
+      {"criterion": "C30-C31: TASK-007 技术债务标记", "status": "verified", "count": "2/2"}
+    ],
+    "artifacts": [
+      {"path": "src/lib/shared/events.ts", "status": "exists", "substance": "real"},
+      {"path": "src/lib/server/terminal-manager.ts", "status": "exists", "substance": "real"},
+      {"path": "src/lib/server/dialog-manager.ts", "status": "exists", "substance": "real"},
+      {"path": "src/lib/client/components/TerminalBridge.svelte", "status": "exists", "substance": "real"},
+      {"path": "src/lib/client/components/AIDialog.svelte", "status": "exists", "substance": "real"},
+      {"path": "src/lib/client/stores/index.ts", "status": "exists", "substance": "real"},
+      {"path": "src/lib/server/__tests__/terminal-manager.test.ts", "status": "exists", "substance": "real"}
+    ],
+    "key_links": [
+      {"path": "src/lib/shared/events.ts", "status": "wired", "importers": 5},
+      {"path": "src/lib/server/terminal-manager.ts", "status": "wired", "importers": 2},
+      {"path": "src/lib/server/dialog-manager.ts", "status": "wired", "importers": 1},
+      {"path": "src/lib/client/components/TerminalBridge.svelte", "status": "wired", "importers": 1},
+      {"path": "src/lib/client/components/AIDialog.svelte", "status": "wired", "importers": 1},
+      {"path": "src/lib/client/stores/index.ts", "status": "wired", "importers": 2},
+      {"path": "src/lib/server/__tests__/terminal-manager.test.ts", "status": "wired", "importers": 1}
+    ]
+  },
+  "gaps": [
+    {"id": "GAP-001", "type": "test-coverage", "severity": "medium", "description": "dialog-manager.ts 缺少对应的单元测试文件", "fix_direction": "创建 src/lib/server/__tests__/dialog-manager.test.ts"},
+    {"id": "GAP-002", "type": "type-safety", "severity": "low", "description": "stores/index.ts 使用双重类型断言绕过类型检查", "fix_direction": "为 wsClient.on 回调添加泛型类型参数"},
+    {"id": "GAP-003", "type": "architecture", "severity": "low", "description": "terminal-manager 和 dialog-manager 有约 40% session 管理模式重复", "fix_direction": "Phase 3 提取泛型 SessionManager<T> 基类 (MAINT-002)"}
+  ],
+  "antipatterns": [
+    {"type": "TODO", "file": "src/lib/server/terminal-manager.ts", "line": 59, "severity": "info"},
+    {"type": "TODO", "file": "src/lib/server/dialog-manager.ts", "line": 29, "severity": "info"},
+    {"type": "console.error", "file": "src/lib/server/dialog-manager.ts", "line": 144, "severity": "warning"}
+  ],
+  "coverage_score": 1.0
+}

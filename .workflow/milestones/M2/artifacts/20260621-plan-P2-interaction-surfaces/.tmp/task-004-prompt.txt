@@ -1,0 +1,74 @@
+PURPOSE: Implement task TASK-004: Orchestration integration — MaestroIDEServer wiring + stores extension + AIDialog frontend panel; success = all convergence criteria pass
+TASK: Modify src/lib/server/index.ts to add TerminalManager/DialogManager properties + REST API endpoints | Modify src/lib/client/stores/index.ts to add DIALOG/TERMINAL channel event listeners + stores | Create src/lib/client/components/AIDialog.svelte with chat UI + Markdown rendering + intent routing display | Read existing code first | Verify convergence criteria after changes
+MODE: write
+CONTEXT: @src/lib/server/index.ts @src/lib/server/terminal-manager.ts @src/lib/server/dialog-manager.ts @src/lib/server/event-bus.ts @src/lib/client/stores/index.ts @src/lib/client/services/ws-client.ts @src/lib/client/components/WorkflowCommander.svelte @src/lib/client/components/TerminalBridge.svelte @src/lib/shared/events.ts @src/lib/shared/types.ts
+EXPECTED: Working end-to-end integration + passing tests, all convergence criteria verified, summary of what was done
+CONSTRAINTS: Scope limited to task files | Follow project specs | Do NOT modify WSGateway or Translator (C-3 constraint) | Svelte 5 runes | marked.js + highlight.js for Markdown | Catppuccin Mocha theme | Add channel whitelist check in Translator to skip DIALOG translation
+
+## Task Definition
+
+**Scope**: src/lib/server + src/lib/client | **Action**: Integrate TerminalManager and DialogManager into MaestroIDEServer lifecycle, extend frontend stores for DIALOG and TERMINAL channel events, create AIDialog.svelte frontend panel (streaming Markdown render + intent routing result display)
+
+### Files
+- src/lib/server/index.ts: Add terminalManager/dialogManager property initialization in constructor; add REST API endpoints in setupRoutes; add resource cleanup in stop()
+- src/lib/client/stores/index.ts: Add terminalSessions and dialogSessions writable stores; subscribe to Channels.TERMINAL and Channels.DIALOG; accumulate events to corresponding stores
+- src/lib/client/components/AIDialog.svelte: Create chat interface: message list (Markdown render + code highlighting), input box, send button, intent routing result display, disambiguation list, streaming output append
+
+### Read First
+- src/lib/server/index.ts
+- src/lib/server/terminal-manager.ts
+- src/lib/server/dialog-manager.ts
+- src/lib/server/event-bus.ts
+- src/lib/client/stores/index.ts
+- src/lib/client/services/ws-client.ts
+- src/lib/client/components/WorkflowCommander.svelte
+- src/lib/client/components/TerminalBridge.svelte
+- src/lib/shared/events.ts
+- src/lib/shared/types.ts
+
+### Implementation Steps
+1. Modify src/lib/server/index.ts. Import TerminalManager and DialogManager. Add readonly terminalManager: TerminalManager; readonly dialogManager: DialogManager properties. In constructor (after this.delegateExecutor): this.terminalManager = new TerminalManager(this.eventBus); this.dialogManager = new DialogManager(this.eventBus, spawn, []).
+2. Add Translator channel whitelist: if channel === Channels.DIALOG return payload (skip DIALOG channel translation).
+3. Add Terminal API endpoints: POST /api/terminal/create, POST /api/terminal/:id/write, POST /api/terminal/:id/resize, POST /api/terminal/:id/destroy.
+4. Add Dialog API endpoints: POST /api/dialog/sessions, POST /api/dialog/sessions/:id/message, POST /api/dialog/sessions/:id/close.
+5. Add resource cleanup in stop(): this.terminalManager.destroyAll(), this.dialogManager.closeAll().
+6. Modify src/lib/client/stores/index.ts. Add terminalSessions and dialogSessions writable stores. Add wsClient.on(Channels.TERMINAL) subscription and wsClient.on(Channels.DIALOG) subscription to accumulate events.
+7. Create src/lib/client/components/AIDialog.svelte. Import from stores, marked, highlight.js. Define component state with $state. Implement createSession(), sendMessage(). Implement $effect to subscribe to wsClient DIALOG events. Implement chat UI template with message list, input box, intent routing result display, disambiguation list. Implement CSS with Catppuccin Mocha theme.
+8. Use marked.js for Markdown rendering: import { marked } from 'marked'. Use highlight.js for code highlighting: import hljs from 'highlight.js/lib/core' with js, ts, bash, json languages only. Set marked options with highlight function.
+9. Implement intent routing display: confidence >= 0.8 shows routing target, 0.5-0.8 shows disambiguation list with clickable candidates.
+10. Implement XSS protection: use DOMPurify filter on marked output before setting innerHTML.
+
+### Convergence Criteria
+- src/lib/server/index.ts has terminalManager and dialogManager readonly properties
+- Constructor initializes terminalManager and dialogManager
+- POST /api/terminal/create route exists calling terminalManager.createTerminal()
+- POST /api/dialog/sessions route exists calling dialogManager.createSession()
+- POST /api/dialog/sessions/:id/message route exists calling dialogManager.sendMessage()
+- POST /api/dialog/sessions/:id/close route exists calling dialogManager.closeSession()
+- stores/index.ts has terminalSessions writable store
+- stores/index.ts has dialogSessions writable store
+- stores/index.ts has wsClient.on(Channels.DIALOG) and wsClient.on(Channels.TERMINAL) subscriptions
+- AIDialog.svelte exists with script lang=ts and Svelte 5 runes
+- AIDialog uses marked.js for Markdown rendering: import { marked } from 'marked'
+- AIDialog uses highlight.js for syntax highlighting
+- AIDialog displays intent-routed results with confidence and candidates
+- AIDialog styles follow Catppuccin Mocha theme (4+ color references)
+
+### Reference
+- Pattern: index.ts server component wiring pattern (constructor initializes all managers) + stores/index.ts WSClient.on() subscription + WorkflowCommander.svelte Svelte 5 component pattern
+- Files: src/lib/server/index.ts, src/lib/client/stores/index.ts, src/lib/client/components/WorkflowCommander.svelte
+
+## Phase Context
+- Goal: Phase 2 Interaction Surfaces: Terminal Bridge + AI Dialog + EventBus optimization + orchestration integration
+- Success criteria: TerminalManager and DialogManager integrated via REST API endpoints and EventBus end-to-end, frontend stores monitoring DIALOG/TERMINAL events, AIDialog component supports streaming Markdown chat and intent routing result display
+
+## Project Specs
+- ESM imports with .js extension
+- TypeScript strict mode
+- Vitest for testing
+- Hono for HTTP routes
+- SvelteKit 2.x with ssr: false
+- Constructor injection pattern
+- Store subscription + event accumulation
+- Catppuccin Mocha theme colors
+- C-3 constraint: Do NOT modify WSGateway and Translator (except adding DIALOG channel whitelist in translator)

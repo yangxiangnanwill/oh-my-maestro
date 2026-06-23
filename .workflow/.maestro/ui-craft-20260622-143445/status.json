@@ -1,0 +1,15 @@
+{
+  "chain_type": "harden",
+  "target": "ApprovalPanel",
+  "steps": [
+    {"name": "harden", "status": "completed", "notes": "4 项硬固化：1) 5s 撤销窗口（拒绝后可撤销）；2) dry-run 展开时暂停倒计时；3) 并发保护（isProcessing 防重复提交、按钮 disabled）；4) 定时器清理（undoInterval + countdownInterval cleanup）"},
+    {"name": "audit", "status": "completed", "notes": "质量门通过 ✓ — 19/20 (≥14), P0=0", "score": "19/20", "p0_count": 0, "p1_count": 0},
+    {"name": "polish", "status": "completed", "notes": "撤销按钮响应式全宽、撤销/暂停状态 reduced-motion 支持、撤销按钮 CSS 样式与 Catppuccin 令牌一致"}
+  ],
+  "current_step": 3,
+  "gate_history": [
+    {"step": "audit", "score": 19, "threshold": 14, "p0_count": 0, "passed": true}
+  ],
+  "loop_count": 0,
+  "status": "completed"
+}

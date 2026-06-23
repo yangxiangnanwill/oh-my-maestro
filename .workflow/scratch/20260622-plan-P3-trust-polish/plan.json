@@ -1,0 +1,67 @@
+{
+  "summary": "Maestro IDE Phase 3 (Trust & Polish) 执行计划 — 5 个 feature-level 任务覆盖审批门控、Windows ConPTY 兼容性、P0/P1 性能优化和 MAINT-002 技术债务偿还。Wave 1 并行执行门控核心和平台修复，Wave 2 单独执行 P0 性能优化（skipHistory + backpressure），Wave 3 并行执行 MAINT-002 SessionManager 基类提取和 P1 优化+翻译增强。",
+  "approach": "按 3 个 Wave 渐进交付。Wave 1 建立信任层核心（GateManager 状态机 + 审批面板集成）并修复 Windows 兼容性问题。Wave 2 基于稳定状态单独执行 P0 性能优化（skipHistory + backpressure），避免与 MAINT-002 重构同时修改 terminal-manager.ts 和 dialog-manager.ts 造成文件冲突。Wave 3 在 P0 优化稳定后并行执行 MAINT-002 架构整理和 P1 优化+翻译增强（两者不修改相同文件）。所有任务可独立验证。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005"],
+  "task_count": 5,
+  "complexity": "high",
+  "estimated_time": "9h 30m",
+  "recommended_execution": "Agent",
+  "waves": [
+    {"wave": 1, "tasks": ["TASK-001", "TASK-002"]},
+    {"wave": 2, "tasks": ["TASK-003"]},
+    {"wave": 3, "tasks": ["TASK-004", "TASK-005"]}
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "Wave 1: GateManager 创建审批门控 → DelegateExecutor dry-run 获取 diff → EventBus 发布 gate:pending → WSGateway 推送到客户端 → ApprovalPanel 展示并收集用户决策 → 确认后执行写操作",
+      "Wave 1: Windows SIGBREAK/SIGINT 处理 → TerminalManager wsl.exe 白名单 + resize 防回环",
+      "Wave 2: EventBus skipHistory 选项 → TerminalManager/DialogManager 传入 skipHistory → WSGateway bufferedAmount 检查",
+      "Wave 3: SessionManager<T> 基类 → TerminalManager/DialogManager 继承（基于 Wave 2 优化后的稳定代码）",
+      "Wave 3: TerminalManager throttle 动态启停 → WSGateway 批量广播 → 客户端连接状态事件驱动 → Translator isDialogPayload 收紧 + 复合词翻译修复"
+    ]
+  },
+  "design_decisions": [
+    "GateManager 5 状态线性流转: pending→presented→approved/rejected/expired, 30s 超时",
+    "内联展开审批面板 — WorkflowCommander 下方展开，不阻塞操作",
+    "Diff 预览使用 Delegate dry-run (--mode analysis 捕获 stdout)",
+    "所有 --mode write 操作触发门控",
+    "MAINT-002 在 Phase 3 Wave 2 执行，提取泛型 SessionManager<T> 基类",
+    "性能优化按优先级渐进: P0→P1→P2 独立测试",
+    "客户端连接状态从 500ms 轮询改为事件驱动"
+  ],
+  "shared_context": {
+    "patterns": [
+      "EventBus pub/sub 模式（所有事件通过 EventBus 流转）",
+      "Constructor subscription 模式（构造函数中 subscribe 以监听事件）",
+      "session CRUD 模式（Map-based session tracking, MAX_SESSIONS 限制）",
+      "NDJSON 行解析模式（parseLine/parseChunk，跳过空行和无效 JSON）",
+      "Mock factory 模式（createMockPty/createMockSpawn 创建可控测试替身）"
+    ],
+    "conventions": [
+      "ESM 模块导入（.js 扩展名）",
+      "TypeScript strict 模式",
+      "Svelte 5 runes ($state, $derived, $effect, $props)",
+      "Vitest 测试框架（describe/it/expect/vi）",
+      "Catppuccin Mocha 主题颜色令牌",
+      "EventBus source 标记 ('server' | 'client') 防回环"
+    ],
+    "dependencies": [
+      "hono (HTTP 框架)",
+      "ws (WebSocket)",
+      "node-pty (PTY 管理)",
+      "chokidar (文件监听)",
+      "svelte (前端)",
+      "vitest (测试)"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-22T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "feature",
+    "milestone": "M3",
+    "phase": "Phase 3 Trust & Polish",
+    "previous_analysis": "ANL-003"
+  }
+}

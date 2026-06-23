@@ -1,0 +1,132 @@
+{
+  "id": "TASK-002",
+  "title": "Delegate Executor — Subprocess Management + Output Stream Parsing",
+  "description": "Create the DelegateExecutor module that spawns `maestro delegate` child processes, captures stdout/stderr, parses broker events line-by-line, emits them to EventBus, and manages process lifecycle (cleanup on stop/exit).",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "Create src/lib/server/delegate-executor.ts with DelegateExecutor class. Constructor takes EventBus instance. Method execute(workflowId:string, params:Record<string,unknown>):ChildProcess spawns `maestro delegate <prompt> --to <tool> --mode <mode>`. Method onEvent(callback:(event:DelegateEvent)=>void):()=>void registers event listener. Method stop(executionId:string):void kills process and cleans up. Private method parseLine(line:string):DelegateEvent|null parses each stdout line. Emit to EventBus: workflow:execution-started, workflow:step-update, workflow:execution-completed, workflow:execution-failed.",
+  "status": "completed",
+  "completed_at": "2026-06-20T23:52:13.525Z",
+  "actual_duration": null,
+  "scope": "src/lib/server",
+  "focus_paths": [
+    "src/lib/server/delegate-executor.ts"
+  ],
+  "read_first": [
+    "src/lib/server/event-bus.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/shared/events.ts",
+    "src/lib/server/state-sync.ts",
+    "src/lib/server/__tests__/event-bus.test.ts"
+  ],
+  "depends_on": [
+    "TASK-001"
+  ],
+  "wave": 2,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/server/delegate-executor.ts contains 'export class DelegateExecutor'",
+      "DelegateExecutor constructor accepts EventBus parameter",
+      "DelegateExecutor.execute(workflowId, params) calls child_process.spawn and returns executionId string (ChildProcess stored internally in activeProcesses map)",
+      "DelegateExecutor.onEvent() registers callback and returns unsubscribe function",
+      "DelegateExecutor.stop() kills the child process for given executionId and removes from activeProcesses map",
+      "stdout line-by-line parsing emits DelegateEvent objects to registered callbacks",
+      "EventBus.publish called with WorkflowEvents.EXECUTION_STARTED on 'queued' broker event",
+      "EventBus.publish called with WorkflowEvents.STEP_UPDATE on 'started' broker event",
+      "EventBus.publish called with WorkflowEvents.EXECUTION_COMPLETED on 'completed' broker event",
+      "EventBus.publish called with WorkflowEvents.EXECUTION_FAILED on 'failed' broker event",
+      "Process 'exit' event triggers cleanup (remove from activeProcesses, emit final event if needed)",
+      "src/lib/server/__tests__/delegate-executor.test.ts exists and all tests pass"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/delegate-executor.test.ts",
+    "definition_of_done": "DelegateExecutor can spawn maestro delegate subprocess, parse broker events from stdout, emit typed events to EventBus, and clean up processes on stop/exit"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/delegate-executor.ts",
+      "action": "create",
+      "target": "DelegateExecutor class",
+      "change": "Create DelegateExecutor with execute(), onEvent(), stop() methods. Manage active processes in Map<string, {process:ChildProcess, executionId:string}>. Parse stdout line-by-line for broker events. Emit to EventBus via WorkflowEvents constants."
+    },
+    {
+      "path": "src/lib/server/__tests__/delegate-executor.test.ts",
+      "action": "create",
+      "target": "DelegateExecutor unit tests",
+      "change": "Mock child_process.spawn to emit fake stdout lines. Test: execute spawns with correct args, onEvent receives parsed events, stop kills process, exit event cleans up, EventBus receives correct event types for each broker event"
+    }
+  ],
+  "implementation": [
+    "Create src/lib/server/delegate-executor.ts. Import child_process, type ChildProcess. Import EventBus from './event-bus.js'. Import DelegateEvent from '../shared/types.js'. Import { Channels, WorkflowEvents } from '../shared/events.js'.",
+    "Define ActiveExecution interface: {process: ChildProcess, executionId: string, callbacks: Set<(event:DelegateEvent)=>void>}",
+    "Implement DelegateExecutor class. Constructor: private eventBus: EventBus, private activeProcesses = new Map<string, ActiveExecution>(), private executionCounter = 0.",
+    "Implement execute(workflowId:string, params:Record<string,unknown>): string. Generate executionId as `exec-${++this.executionCounter}-${Date.now()}`. Build spawn args from params: prompt=params.prompt, tool=params.tool??'claude', mode=params.mode??'write'. Spawn: child_process.spawn('maestro', ['delegate', prompt, '--to', tool, '--mode', mode]). Store in activeProcesses. Set up stdout data handler: split buffer by newlines, call parseLine() for each non-empty line, emit to callbacks and EventBus. Set up stderr handler: log errors. Set up 'exit' handler: remove from activeProcesses, emit workflow:execution-completed or workflow:execution-failed based on exit code. Return executionId.",
+    "Implement parseLine(line:string): DelegateEvent | null. Try JSON.parse(line). Validate type field is one of 'queued'|'started'|'completed'|'failed'. Return as DelegateEvent or null for invalid lines.",
+    "Implement onEvent(callback:(event:DelegateEvent)=>void): ()=>void. Store callback in a class-level Set. Return unsubscribe function that deletes from the Set.",
+    "Implement stop(executionId:string):void. Look up in activeProcesses. If found, process.kill('SIGTERM'), remove from map.",
+    "Implement private emitToEventBus(event:DelegateEvent, executionId:string):void. Map event.type to WorkflowEvents constant: 'queued'->EXECUTION_STARTED, 'started'->STEP_UPDATE, 'completed'->EXECUTION_COMPLETED, 'failed'->EXECUTION_FAILED. Call eventBus.publish(eventType, Channels.WORKFLOW, {executionId, ...event}).",
+    "Create src/lib/server/__tests__/delegate-executor.test.ts. Mock child_process.spawn to return EventEmitter with stdout/stderr EventEmitters. Test: (1) execute returns executionId and spawns with correct args, (2) stdout line '{\"type\":\"queued\",\"executionId\":\"test-1\"}' triggers onEvent callback with DelegateEvent, (3) EventBus receives workflow:execution-started for 'queued' type, (4) EventBus receives workflow:step-update for 'started' type, (5) EventBus receives workflow:execution-completed for 'completed' type, (6) EventBus receives workflow:execution-failed for 'failed' type, (7) stop kills process and removes from activeProcesses, (8) process exit event cleans up, (9) onEvent unsubscribe stops receiving events, (10) malformed JSON line is skipped without error"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/delegate-executor.test.ts"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/delegate-executor.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "All 10 test cases pass",
+      "No TypeScript errors in delegate-executor.ts"
+    ]
+  },
+  "reference": {
+    "pattern": "EventBus publish pattern from state-sync.ts (subscribes to events, re-emits via EventBus)",
+    "files": [
+      "src/lib/server/state-sync.ts",
+      "src/lib/server/event-bus.ts",
+      "src/lib/shared/events.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Line-by-line stdout parsing with EventBus emission follows the existing architecture pattern (StateSyncEngine does similar: subscribe to events, re-emit via EventBus). Child process lifecycle is managed in a Map for O(1) lookup by executionId.",
+    "decision_factors": [
+      "Delegate broker emits NDJSON events on stdout",
+      "EventBus is the central event routing mechanism",
+      "Process cleanup must be deterministic (stop + exit handler)"
+    ],
+    "tradeoffs": "Line-by-line parsing assumes one JSON object per line (NDJSON format). If maestro changes to multi-line JSON, adapter will need updating — but this is covered by the Versioned Registry pattern in TASK-001."
+  },
+  "risks": [
+    {
+      "risk": "maestro delegate output format differs from expected NDJSON",
+      "mitigation": "parseLine returns null for unparseable lines; tests use mock data matching documented format"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "Delegate Executor",
+      "Workflow Execution"
+    ],
+    "affected_components": [
+      "server"
+    ],
+    "affected_requirements": [
+      "SCOPE-2"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "60-90 min",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

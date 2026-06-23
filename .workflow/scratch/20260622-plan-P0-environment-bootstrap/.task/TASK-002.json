@@ -1,0 +1,111 @@
+{
+  "task_id": "TASK-002",
+  "phase": 0,
+  "milestone": "F1",
+  "title": "Shell 环境适配 — getDefaultShell PowerShell 优先 + setup.local.ps1",
+  "type": "fix",
+  "complexity": "medium",
+  "estimated_minutes": 35,
+  "depends_on": [],
+  "parallel_group": "wave-1",
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts",
+      "action": "modify",
+      "target": "getDefaultShell() 函数（第 75-92 行）",
+      "change": "微调 win32 分支优先级：优先返回 PowerShell 路径而非 COMSPEC（CMD）"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts",
+      "action": "modify",
+      "target": "buildTerminalEnv() 函数（第 431-498 行）",
+      "change": "Windows 上跳过 locale 探测（locale 命令不存在），直接使用 en_US.UTF-8"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts",
+      "action": "modify",
+      "target": "startLocaleProbe() 函数（第 20-36 行）",
+      "change": "Windows 上跳过 exec('locale ...') — locale 命令在 Windows 上不存在"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/.superset/setup.local.ps1",
+      "action": "create",
+      "target": "Windows PowerShell 替代 setup.local.sh",
+      "change": "创建最小化 Windows 设置脚本：检查 bun/node 依赖，创建 .env 从 .env.local.example"
+    }
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/agent-setup/utils.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/agent-setup/shell-wrappers.ts",
+    "D:/WorkSpace/GitRepoes/superset/.superset/setup.local.sh"
+  ],
+  "action": "修改 D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts：(1) getDefaultShell() 第 81-85 行 — 将 win32 分支改为优先返回 'C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe'，回退为 process.env.COMSPEC || 'cmd.exe'；(2) startLocaleProbe() 第 20-36 行 — 在函数开头添加 if (os.platform() === 'win32') { cachedUtf8Locale = 'en_US.UTF-8'; return; } 跳过 locale 探测；(3) buildTerminalEnv() 第 458 行 — getShellEnv(shell) 调用在 Windows 上 shell 为 PowerShell 时返回空对象（无需 .zshrc/.bashrc 包装脚本）。创建 D:/WorkSpace/GitRepoes/superset/.superset/setup.local.ps1：最小化 Windows 设置脚本，检查 bun --version 和 node --version，从 .env.local.example 复制到 .env（如果不存在）。",
+  "implementation": [
+    "Step 1: 读取 env.ts 第 75-92 行 getDefaultShell()，修改 win32 分支逻辑",
+    "Step 2: 将 win32 分支改为：先尝试 powershell.exe 路径（C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe），如果不存在文件则回退到 process.env.COMSPEC || 'cmd.exe'",
+    "Step 3: 读取 env.ts 第 20-36 行 startLocaleProbe()，添加 win32 早期返回",
+    "Step 4: 在 startLocaleProbe() 开头添加：if (os.platform() === 'win32') { cachedUtf8Locale = 'en_US.UTF-8'; return; }",
+    "Step 5: 读取 utils.ts 确认 findBinaryPathsWindows() 实现正确（where.exe 调用）",
+    "Step 6: 创建 .superset/setup.local.ps1：检查 bun/node 版本，复制 .env.local.example → .env（若不存在），输出设置完成信息",
+    "Step 7: 确保 setup.local.ps1 文件使用 CRLF 换行（Windows 默认）"
+  ],
+  "convergence": {
+    "criteria": [
+      "grep -c 'powershell.exe' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts 返回 >= 1",
+      "grep -c 'win32.*en_US' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts 返回 >= 1（或 startLocaleProbe 包含 win32 跳过逻辑）",
+      "D:/WorkSpace/GitRepoes/superset/.superset/setup.local.ps1 文件存在",
+      "D:/WorkSpace/GitRepoes/superset/.superset/setup.local.ps1 包含 'bun --version' 检查",
+      "grep -c 'findBinaryPathsWindows' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/agent-setup/utils.ts 返回 >= 1（已存在，确认）"
+    ],
+    "verification": "grep -n 'powershell\\|win32\\|en_US\\|COMSPEC' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts",
+    "definition_of_done": "终端面板在 Windows 上默认打开 PowerShell，locale 探测不会因 locale 命令缺失而报错，setup.local.ps1 可执行基本环境检查"
+  },
+  "test": {
+    "commands": [
+      "grep -n 'powershell' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts",
+      "grep -n 'win32' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts",
+      "cat D:/WorkSpace/GitRepoes/superset/.superset/setup.local.ps1"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "getDefaultShell() win32 分支返回 PowerShell 路径",
+      "startLocaleProbe() 在 win32 上跳过 exec('locale')",
+      "setup.local.ps1 存在且可执行"
+    ]
+  },
+  "reference": {
+    "pattern": "env.ts 中已有的 process.platform 条件分支（getDefaultShell、buildSafeEnv），utils.ts 中已有的 findBinaryPathsWindows()",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/terminal/env.ts",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/agent-setup/utils.ts",
+      "D:/WorkSpace/GitRepoes/superset/.superset/setup.local.sh"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "getDefaultShell() 已有 win32 分支（第 83-84 行返回 COMSPEC 或 powershell.exe），但优先级不当。COMSPEC 通常指向 cmd.exe，在 Windows 上 PowerShell 是更好的默认终端体验。startLocaleProbe() 调用 exec('locale ...') 在 Windows 上必然失败，添加 win32 跳过避免不必要的错误日志。setup.local.ps1 是 setup.local.sh 的 Windows 简化版 — Phase 0 不需要完整 Docker/Postgres 设置。",
+    "decision_factors": [
+      "getDefaultShell() 已有 win32 分支，只需微调优先级",
+      "PowerShell 5.1+ 预装在 Windows 10/11",
+      "locale 命令是 POSIX 专属，Windows 无此命令",
+      "findBinaryPathsWindows() 已用 where.exe 实现正确"
+    ],
+    "tradeoffs": "如果用户首选 CMD 而非 PowerShell，可以通过环境变量 COMSPEC 覆盖。默认选 PowerShell 因为其功能更完善（ANSI 颜色、Tab 补全、脚本支持）。"
+  },
+  "risks": [
+    "PowerShell 执行策略可能阻止脚本运行 — setup.local.ps1 仅作环境检查，不执行高风险操作",
+    "Windows PowerShell 5.1 路径与 PowerShell 7 (pwsh.exe) 不同 — 优先检查 pwsh.exe 再回退内置 PowerShell"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "35m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": "wave-1",
+    "executor": "agent"
+  }
+}

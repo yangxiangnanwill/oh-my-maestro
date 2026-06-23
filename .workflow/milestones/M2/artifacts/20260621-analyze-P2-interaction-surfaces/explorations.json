@@ -1,0 +1,188 @@
+{
+  "$schema": "explorations/1.0",
+  "session_id": "ANL-002",
+  "generated_at": "2026-06-21T17:00:00+08:00",
+  "sources": [
+    {
+      "type": "cli-explore-agent",
+      "id": "a2678e94638d784da",
+      "output": "exploration-codebase.json",
+      "summary": "16 relevant files, 4 call chains, 14 code anchors, 16 extension points"
+    },
+    {
+      "type": "maestro-delegate",
+      "tool": "claude",
+      "exec_id": "cld-142003-2a41",
+      "role": "architecture-review",
+      "summary": "Comprehensive architecture analysis: node-pty vs spawn evaluation, TerminalManager/DialogManager integration patterns, risk assessment"
+    },
+    {
+      "type": "maestro-delegate",
+      "tool": "codex",
+      "exec_id": "cdx-142009-fee5",
+      "role": "implementation-patterns",
+      "status": "failed",
+      "reason": "Region restriction (HTTP 451)"
+    },
+    {
+      "type": "external-research",
+      "source": "context7",
+      "libraries": ["xterm.js", "node-pty"],
+      "summary": "xterm.js Terminal + FitAddon API confirmed; node-pty spawn/onData/write/resize pattern confirmed; Windows ConPTY required (build 18309+)"
+    }
+  ],
+  "key_findings": [
+    {
+      "id": "F-1",
+      "area": "architecture",
+      "finding": "events.ts and types.ts already have complete Phase 2 type/event definitions — DIALOG and TERMINAL channels, DialogEvents, TerminalEvents, DialogSession, TerminalSession all predefined",
+      "evidence": ["exploration-codebase.json#code_anchors[5]", "cld-142003-2a41#3.1"],
+      "confidence": "high"
+    },
+    {
+      "id": "F-2",
+      "area": "architecture",
+      "finding": "WSGateway default branch (ws-gateway.ts:115-118) already forwards unknown messages to EventBus — no WSGateway modification needed for Phase 2",
+      "evidence": ["exploration-codebase.json#code_anchors[3]", "cld-142003-2a41#3.1"],
+      "confidence": "high"
+    },
+    {
+      "id": "F-3",
+      "area": "architecture",
+      "finding": "node-pty is the correct choice for Terminal Bridge — interactive terminals need PTY semantics (ANSI sequences, resize, interactive programs) that child_process.spawn cannot provide",
+      "evidence": ["cld-142003-2a41#3.1", "context7:node-pty"],
+      "confidence": "high"
+    },
+    {
+      "id": "F-4",
+      "area": "implementation",
+      "finding": "DialogManager can reuse DelegateExecutor's spawn/parse/emit pattern — same dependency injection, NDJSON line parsing, event mapping architecture",
+      "evidence": ["exploration-codebase.json#code_anchors[0,1,2]", "cld-142003-2a41#3.2"],
+      "confidence": "high"
+    },
+    {
+      "id": "F-5",
+      "area": "implementation",
+      "finding": "xterm.js integration pattern: Terminal + FitAddon → terminal.open(container) → pty.onData(data => term.write(data)) → term.onData(data => pty.write(data))",
+      "evidence": ["context7:xterm.js"],
+      "confidence": "high"
+    },
+    {
+      "id": "F-6",
+      "area": "performance",
+      "finding": "EventBus history capped at 1000 entries — high-frequency terminal output could rapidly fill history. Terminal events should bypass history or use separate ring buffer",
+      "evidence": ["exploration-codebase.json#code_anchors[7]", "cld-142003-2a41#5.3"],
+      "confidence": "medium"
+    },
+    {
+      "id": "F-7",
+      "area": "security",
+      "finding": "Server binds to 127.0.0.1 only (local-only constraint). PTY subprocesses inherit server process permissions. No additional sandboxing needed for M2 scope",
+      "evidence": ["exploration-codebase.json#code_anchors[10]", "blueprint:context-package.json#C-005"],
+      "confidence": "high"
+    },
+    {
+      "id": "F-8",
+      "area": "architecture",
+      "finding": "Translator middleware auto-applies to all object payloads in WSGateway.broadcastEvent — Dialog and Terminal messages get translation for free",
+      "evidence": ["cld-142003-2a41#3.2"],
+      "confidence": "high"
+    }
+  ],
+  "risks": [
+    {
+      "id": "R-1",
+      "description": "node-pty native module compilation on Windows — requires ConPTY (build 18309+)",
+      "severity": "high",
+      "mitigation": "node-pty v1.0+ uses ConPTY by default on Windows; provide spawn fallback for unsupported platforms"
+    },
+    {
+      "id": "R-2",
+      "description": "PTY process leak — TerminalManager must clean up PTY sessions on client disconnect",
+      "severity": "high",
+      "mitigation": "Follow DelegateExecutor.stop() pattern; add SIGINT handler for graceful cleanup"
+    },
+    {
+      "id": "R-3",
+      "description": "EventBus history saturation from terminal output — 1000 entry cap fills in seconds with PTY output",
+      "severity": "medium",
+      "mitigation": "Add per-channel history opt-out; terminal events bypass history"
+    },
+    {
+      "id": "R-4",
+      "description": "Bidirectional message loop — TerminalManager subscribes to term:input and publishes term:output on same channel",
+      "severity": "medium",
+      "mitigation": "Use separate event types (INPUT vs OUTPUT); ensure TerminalManager does not re-publish received INPUT events"
+    },
+    {
+      "id": "R-5",
+      "description": "Claude Code CLI protocol uncertainty — exact stdio communication format needs verification",
+      "severity": "medium",
+      "mitigation": "Start with --print mode for non-interactive; add --input-format stream-json for structured I/O"
+    }
+  ],
+  "extension_points": [
+    {
+      "location": "src/lib/server/terminal-manager.ts (NEW)",
+      "pattern": "Follow DelegateExecutor pattern: constructor(EventBus, spawnFn), Map<id, IPTY>, onData→EventBus",
+      "extends": "delegate-executor.ts:35-43"
+    },
+    {
+      "location": "src/lib/server/dialog-manager.ts (NEW)",
+      "pattern": "Follow DelegateExecutor pattern: constructor(EventBus, spawnFn), NDJSON parseLine, event mapping table",
+      "extends": "delegate-executor.ts:22-27,144-163"
+    },
+    {
+      "location": "src/lib/server/index.ts (MODIFY)",
+      "pattern": "Add TerminalManager and DialogManager to MaestroIDEServer constructor, wire to EventBus",
+      "extends": "index.ts:27-34"
+    },
+    {
+      "location": "src/lib/client/components/TerminalBridge.svelte (NEW)",
+      "pattern": "Follow WorkflowCommander pattern: $effect for WebSocket subscription, $state for sessions",
+      "extends": "WorkflowCommander.svelte"
+    },
+    {
+      "location": "src/lib/client/components/AIDialog.svelte (NEW)",
+      "pattern": "Follow WorkflowCommander pattern: fetch for initial data, WebSocket for streaming updates",
+      "extends": "WorkflowCommander.svelte"
+    },
+    {
+      "location": "src/lib/client/stores/index.ts (MODIFY)",
+      "pattern": "Add terminalSessions and dialogSessions stores, add Channels.TERMINAL and Channels.DIALOG handlers",
+      "extends": "stores/index.ts:58-152"
+    }
+  ],
+  "technical_solutions": [
+    {
+      "round": 1,
+      "solution": "TerminalManager — node-pty based PTY lifecycle manager",
+      "problem": "Need interactive terminal with ANSI support, resize, multi-session",
+      "rationale": "node-pty provides real PTY allocation; child_process.spawn cannot support interactive programs or resize",
+      "alternatives": ["child_process.spawn (no PTY, no resize)", "xterm.js headless (no backend)"],
+      "status": "proposed",
+      "evidence_refs": ["cld-142003-2a41#3.1", "context7:node-pty"],
+      "next_action": "Validate node-pty Windows ConPTY compatibility on target system"
+    },
+    {
+      "round": 1,
+      "solution": "DialogManager — stdio-based Claude Code CLI subprocess manager",
+      "problem": "Need AI chat with streaming output, intent routing, multi-session",
+      "rationale": "Reuses DelegateExecutor's proven spawn/parse/emit pattern; stdio is simplest IPC for local CLI",
+      "alternatives": ["HTTP API (requires API key, network)", "WebSocket direct (complex)"],
+      "status": "proposed",
+      "evidence_refs": ["cld-142003-2a41#3.2", "exploration-codebase.json#code_anchors[0,1,2]"],
+      "next_action": "Verify Claude Code CLI --print and --input-format flags for programmatic use"
+    },
+    {
+      "round": 1,
+      "solution": "EventBus per-channel history opt-out for terminal events",
+      "problem": "Terminal output at high frequency fills 1000-entry EventBus history in seconds",
+      "rationale": "Terminal output is ephemeral — clients that need replay should use terminal scrollback, not EventBus history",
+      "alternatives": ["Increase history to 10000 (memory concern)", "Separate ring buffer per channel (over-engineering for M2)"],
+      "status": "proposed",
+      "evidence_refs": ["cld-142003-2a41#5.3"],
+      "next_action": "Add skipHistory option to EventBus.publish()"
+    }
+  ]
+}

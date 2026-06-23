@@ -1,0 +1,129 @@
+{
+  "id": "TASK-001",
+  "title": "GateManager 审批门控模块",
+  "description": "实现 GateManager 状态机 + DelegateExecutor dry-run 支持 + POST /api/workflows/execute 门控集成 + WorkflowCommander 门控 UI 流程。创建 src/lib/server/gate-manager.ts（GateManager 类，5 状态线性流转 pending→presented→approved/rejected/expired，30s 超时），修改 DelegateExecutor 支持 --mode analysis dry-run，在 index.ts 路由中插入 gate:pending 检查，在 WorkflowCommander.svelte 中集成 ApprovalPanel 展示和确认/拒绝流程。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "创建 src/lib/server/gate-manager.ts — GateManager 类：构造函数接收 EventBus 和 DelegateExecutor；方法 createGate(executionId: string, stepIndex: number, dryRunResult: string) 创建 ApprovalGate 对象（gateId='gate-{counter}-{timestamp}'），发布 gate:pending 事件；方法 resolveGate(gateId: string, approved: boolean) 执行状态转换（presented→approved 或 presented→rejected），发布 gate:resolved 事件；30s 超时定时器（setTimeout），超时后自动调用 resolveGate(gateId, false) 并设置 status='expired'；私有方法 buildDryRunPrompt(workflowId: string, params: Record<string, unknown>): string 构建 dry-run prompt。修改 src/lib/server/delegate-executor.ts：execute() 方法签名增加 mode 参数（默认 'write'），executeDryRun(workflowId: string, params: Record<string, unknown>): Promise<string> 新方法 — spawn 'maestro delegate <prompt> --to claude --mode analysis'，通过监听 childProcess.stdout 'data' 事件收集所有输出行，在进程 exit 时 resolve 完整 stdout 字符串（非 NDJSON 解析，直接拼接原始输出）。修改 src/lib/server/index.ts：POST /api/workflows/execute 路由在调用 delegateExecutor.execute() 前先调用 gateManager.createGate()，返回 { executionId, gateId, status: 'pending' }；新增 POST /api/gates/:id/resolve 路由接收 { approved: boolean } 调用 gateManager.resolveGate()，approved=true 时执行实际 delegateExecutor.execute()。修改 src/lib/client/components/WorkflowCommander.svelte：导入 wsClient（从 $lib/client/services/ws-client.js），在 executeWorkflow() 中改为异步流程 — POST /api/workflows/execute 获取 { gateId, status } → 设置 showApprovalPanel = true 和 currentGateId = gateId → 通过 wsClient.on(Channels.GATE, handler) 监听 gate:resolved 事件 → 用户确认后 POST /api/gates/:id/resolve { approved: true }。ApprovalPanel.svelte 已存在且 UI 打磨完成，只需确保 props 接口匹配。",
+  "scope": "src/lib/server/gate-manager.ts (new), src/lib/server/delegate-executor.ts, src/lib/server/index.ts, src/lib/client/components/WorkflowCommander.svelte",
+  "focus_paths": [
+    "src/lib/server/gate-manager.ts",
+    "src/lib/server/delegate-executor.ts",
+    "src/lib/server/index.ts",
+    "src/lib/client/components/WorkflowCommander.svelte",
+    "src/lib/client/components/ApprovalPanel.svelte"
+  ],
+  "read_first": [
+    "src/lib/shared/types.ts",
+    "src/lib/shared/events.ts",
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/delegate-executor.ts",
+    "src/lib/server/index.ts",
+    "src/lib/client/components/WorkflowCommander.svelte",
+    "src/lib/client/components/ApprovalPanel.svelte"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave-1",
+  "convergence": {
+    "criteria": [
+      "grep -r 'class GateManager' src/lib/server/gate-manager.ts 返回类定义，包含 createGate 和 resolveGate 方法",
+      "grep -r 'executeDryRun' src/lib/server/delegate-executor.ts 返回方法定义，包含 --mode analysis 参数",
+      "grep -r 'gateManager.createGate' src/lib/server/index.ts 返回调用点，位于 POST /api/workflows/execute 路由内",
+      "grep -r 'gate:pending' src/lib/server/gate-manager.ts 返回 EventBus.publish 调用，发布到 Channels.GATE",
+      "grep -r 'POST.*gates.*resolve' src/lib/server/index.ts 返回新路由定义，接收 approved 参数",
+      "grep -r 'ApprovalPanel' src/lib/client/components/WorkflowCommander.svelte 返回组件导入和使用",
+      "npx vitest run src/lib/server/__tests__/gate-manager.test.ts 全部通过（需创建测试文件）"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/gate-manager.test.ts src/lib/server/__tests__/delegate-executor.test.ts && npx tsc --noEmit",
+    "definition_of_done": "文件修改类 workflow 执行前展示 dry-run diff 预览 + 确认/拒绝按钮，30s 超时自动拒绝，已确认操作正常执行"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/gate-manager.ts",
+      "action": "create",
+      "target": "GateManager class",
+      "change": "创建 GateManager 类：5 状态状态机、EventBus 集成、30s 超时、createGate/resolveGate 方法"
+    },
+    {
+      "path": "src/lib/server/delegate-executor.ts",
+      "action": "modify",
+      "target": "DelegateExecutor.execute() and new executeDryRun()",
+      "change": "execute() 增加 mode 参数（默认 'write'）；新增 executeDryRun() 方法使用 --mode analysis 收集 stdout"
+    },
+    {
+      "path": "src/lib/server/index.ts",
+      "action": "modify",
+      "target": "POST /api/workflows/execute and new POST /api/gates/:id/resolve",
+      "change": "插入 gateManager.createGate() 调用；新增门控决议路由"
+    },
+    {
+      "path": "src/lib/client/components/WorkflowCommander.svelte",
+      "action": "modify",
+      "target": "executeWorkflow() function",
+      "change": "改为异步门控流程：POST execute → 展示 ApprovalPanel → 监听决议 → 执行"
+    }
+  ],
+  "implementation": [
+    "创建 src/lib/server/gate-manager.ts：GateManager 类，构造函数接收 EventBus 和 DelegateExecutor，维护 Map<string, ApprovalGate> gates，counter 自增生成 gateId",
+    "实现 createGate(executionId: string, stepIndex: number, dryRunResult: string): ApprovalGate — 创建 gate 对象，发布 gate:pending 事件，启动 30s setTimeout 超时",
+    "实现 resolveGate(gateId: string, approved: boolean): void — 状态转换 presented→approved/rejected，清除超时定时器，发布 gate:resolved 事件",
+    "实现私有方法 buildDryRunPrompt(workflowId: string, params: Record<string, unknown>): string — 构建 dry-run prompt 字符串",
+    "修改 DelegateExecutor.execute() — 增加第三个参数 mode: 'write' | 'analysis' = 'write'，传递到 spawn 的 --mode 参数",
+    "新增 DelegateExecutor.executeDryRun(workflowId: string, params: Record<string, unknown>): Promise<string> — spawn --mode analysis，收集 stdout 返回完整字符串",
+    "修改 src/lib/server/index.ts — 构造函数中实例化 GateManager，传入 eventBus 和 delegateExecutor",
+    "修改 POST /api/workflows/execute — 先调用 gateManager.createGate()，返回 { executionId, gateId, status: 'pending' } 而非直接执行",
+    "新增 POST /api/gates/:id/resolve — 接收 { approved: boolean }，调用 gateManager.resolveGate()，approved=true 时调用 delegateExecutor.execute()",
+    "修改 WorkflowCommander.svelte executeWorkflow() — POST /api/workflows/execute 获取 gateId → 展示 ApprovalPanel → 监听 gate:resolved → 用户确认后 POST /api/gates/:id/resolve",
+    "创建 src/lib/server/__tests__/gate-manager.test.ts — 测试 createGate 发布 gate:pending、resolveGate 发布 gate:resolved、30s 超时自动 expired、状态转换正确性"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/gate-manager.test.ts",
+      "npx vitest run src/lib/server/__tests__/delegate-executor.test.ts",
+      "npx tsc --noEmit"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/gate-manager.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "GateManager 单元测试全部通过",
+      "DelegateExecutor 现有测试不回归",
+      "TypeScript 编译零错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Follow EventBus pub/sub pattern from event-bus.ts, DelegateExecutor spawn pattern from delegate-executor.ts, Svelte 5 runes pattern from WorkflowCommander.svelte",
+    "files": [
+      "src/lib/server/event-bus.ts",
+      "src/lib/server/delegate-executor.ts",
+      "src/lib/client/components/WorkflowCommander.svelte",
+      "src/lib/client/components/ApprovalPanel.svelte"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "GateManager 作为独立模块通过 EventBus 解耦 — 服务端管理状态机生命周期，客户端通过 WebSocket 事件和 HTTP API 交互。DelegateExecutor 复用现有 spawn 基础设施，dry-run 通过 --mode analysis 实现。",
+    "decision_factors": [
+      "类型契约已就绪：GateStatus、ApprovalGate、GateEvents 已在 types.ts 和 events.ts 中定义",
+      "ApprovalPanel.svelte 已存在且 UI 打磨完成，只需集成",
+      "EventBus 解耦允许 GateManager 独立测试"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "dry-run 的 --mode analysis 可能产生与 --mode write 不同的输出 — 需在测试中验证",
+    "30s 超时可能对复杂 dry-run 不够 — 可后续调整为可配置"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "2h 30m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": "wave-1",
+    "executor": "agent"
+  }
+}

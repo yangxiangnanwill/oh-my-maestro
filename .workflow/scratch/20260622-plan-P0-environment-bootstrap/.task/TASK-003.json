@@ -1,0 +1,93 @@
+{
+  "task_id": "TASK-003",
+  "phase": 0,
+  "milestone": "F1",
+  "title": "概念翻译层设计文档提取 — translations.ts + translator.ts → Superset docs",
+  "type": "docs",
+  "complexity": "low",
+  "estimated_minutes": 30,
+  "depends_on": [],
+  "parallel_group": null,
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/docs/design/concept-translation-layer.md",
+      "action": "create",
+      "target": "概念翻译层设计文档",
+      "change": "从 oh-my-maestro 提取 translations.ts + translator.ts 的完整设计文档"
+    }
+  ],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/src/lib/shared/translations.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/src/lib/server/translator.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/src/lib/shared/types.ts"
+  ],
+  "action": "读取 D:/WorkSpace/VsCode/oh-my-maestro/src/lib/shared/translations.ts（203 行，TranslationEntry 接口 + TRANSLATIONS 注册表 + translate/shouldHide/translatePayload 函数）和 D:/WorkSpace/VsCode/oh-my-maestro/src/lib/server/translator.ts（148 行，TranslatorMiddleware 类 + clientModes 管理 + DIALOG 白名单 + isDialogPayload 检测）。提取以下设计资产写入 D:/WorkSpace/GitRepoes/superset/docs/design/concept-translation-layer.md：(1) 设计理念 — 简单/高级双模式，概念抽象层在技术术语和用户语言之间建立映射；(2) TranslationEntry 数据结构完整定义；(3) 10 个核心术语的完整映射表（term→simpleLabel→advancedLabel→category→hiddenInSimpleMode→aliases）；(4) translate() 算法 — 基于正则词边界匹配的术语替换；(5) translatePayload() 算法 — 仅翻译 label-like 字段，不修改数据值；(6) DisplayMode 类型定义；(7) TranslatorMiddleware 服务端架构 — 按 WebSocket 连接 ID 管理客户端模式，DIALOG 通道白名单；(8) 在 Superset React UI 中的集成建议。",
+  "implementation": [
+    "Step 1: 读取 translations.ts 完整内容（203 行），记录 TRANSLATIONS 数组中全部 10 个术语的完整映射",
+    "Step 2: 读取 translator.ts 完整内容（148 行），记录 TranslatorMiddleware 类的完整设计",
+    "Step 3: 读取 types.ts 中 DisplayMode 类型定义（'simple' | 'advanced'）",
+    "Step 4: 创建 D:/WorkSpace/GitRepoes/superset/docs/design/ 目录（如不存在）",
+    "Step 5: 编写 concept-translation-layer.md，包含以下章节：概述与设计理念、TranslationEntry 数据结构、核心术语映射表、翻译算法（translate/translatePayload/shouldHide）、TranslatorMiddleware 架构、DIALOG 白名单机制、Superset React 集成建议、来源说明（oh-my-maestro 项目）",
+    "Step 6: 在文档中嵌入关键代码片段（TypeScript 接口定义 + 核心函数签名），供 Superset 团队未来实现参考",
+    "Step 7: 验证文档包含全部 10 个术语（chain/skill/delegate/session/milestone/phase/artifact/analyze/plan/execute）"
+  ],
+  "convergence": {
+    "criteria": [
+      "D:/WorkSpace/GitRepoes/superset/docs/design/concept-translation-layer.md 文件存在",
+      "文档包含 TranslationEntry 接口定义（term/simpleLabel/advancedLabel/category/hiddenInSimpleMode/aliases）",
+      "文档包含完整的 10 个核心术语映射表",
+      "文档包含 translate() 函数签名和算法描述",
+      "文档包含 translatePayload() 函数签名和 label-only 规则描述",
+      "文档包含 TranslatorMiddleware 类设计和 DIALOG 白名单机制",
+      "文档包含 DisplayMode 类型定义",
+      "文档包含来源声明（oh-my-maestro 项目，已归档）"
+    ],
+    "verification": "grep -c 'TranslationEntry\\|DisplayMode\\|TranslatorMiddleware\\|DIALOG\\|translatePayload\\|simple.*advanced' D:/WorkSpace/GitRepoes/superset/docs/design/concept-translation-layer.md",
+    "definition_of_done": "概念翻译层设计完整文档化到 Superset 仓库，包含术语映射表、核心算法、服务端架构，可作为未来 Superset UI 实现的概念基础"
+  },
+  "test": {
+    "commands": [
+      "wc -l D:/WorkSpace/GitRepoes/superset/docs/design/concept-translation-layer.md",
+      "grep -c 'chain\\|skill\\|delegate\\|session\\|milestone\\|phase\\|artifact\\|analyze\\|plan\\|execute' D:/WorkSpace/GitRepoes/superset/docs/design/concept-translation-layer.md"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "文档 >= 100 行（包含完整设计描述）",
+      "所有 10 个术语均出现在文档中",
+      "文档包含 TypeScript 代码示例"
+    ]
+  },
+  "reference": {
+    "pattern": "oh-my-maestro 现有代码结构：translations.ts 为纯数据+函数模块，translator.ts 为 EventBus 连接的中间件类",
+    "files": [
+      "D:/WorkSpace/VsCode/oh-my-maestro/src/lib/shared/translations.ts",
+      "D:/WorkSpace/VsCode/oh-my-maestro/src/lib/server/translator.ts",
+      "D:/WorkSpace/VsCode/oh-my-maestro/src/lib/shared/types.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "设计理念（简单/高级双模式、DisplayMode、隐藏规则）比代码本身更有保留价值。文档化而非代码移植，因为 Superset 的技术栈不同（React 而非 Svelte），直接代码移植价值有限。设计文档作为概念基础，供 Superset 团队用 React 重新实现。",
+    "decision_factors": [
+      "Superset 使用 React + TanStack Router，oh-my-maestro 使用 Svelte + 自定义路由",
+      "翻译层是抽象概念，不依赖特定框架",
+      "术语映射表是纯数据，可直接复用",
+      "DIALOG 白名单机制与 Superset 的 AI Chat 模块直接相关"
+    ],
+    "tradeoffs": "不移植代码，仅保留设计文档。优点：减少维护负担，避免框架不匹配；缺点：Superset 团队需要自行实现，但设计文档提供了完整的类型定义和算法描述。"
+  },
+  "risks": [
+    "Superset 团队可能忽略此设计文档 — 将其放在 docs/design/ 标准位置，与 AGENTS.md 引用关联"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "30m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

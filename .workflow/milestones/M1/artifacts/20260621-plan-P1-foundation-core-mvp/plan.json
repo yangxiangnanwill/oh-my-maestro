@@ -1,0 +1,109 @@
+{
+  "summary": "Phase 1 Foundation + Core MVP: CLI Adapter, Delegate Executor, server API routes, frontend components, and test coverage for WSGateway/StateSyncEngine",
+  "approach": "Build the missing CLI integration layer (CLIAdapter + DelegateExecutor) first as it is the biggest gap and blocks real data flow. In parallel, add test coverage for the already-implemented WSGateway and StateSyncEngine. Then wire server API routes and integration in index.ts. Finally, build the two frontend panels (Project Radar tree + Workflow Commander cards) that consume the data. This follows the data-flow direction: CLI subprocess -> EventBus -> WSGateway -> frontend.",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006"],
+  "task_count": 6,
+  "complexity": "high",
+  "estimated_time": "6-8 hours",
+  "recommended_execution": "Agent",
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001", "TASK-003"],
+      "label": "CLI Adapter + WSGateway/StateSync tests (parallel, no file conflicts)"
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-002"],
+      "label": "Delegate Executor (depends on TASK-001 for DelegateEvent type in shared/types.ts)"
+    },
+    {
+      "wave": 3,
+      "tasks": ["TASK-005", "TASK-006"],
+      "label": "Frontend components — Project Radar + Workflow Commander (parallel, no file conflicts)"
+    },
+    {
+      "wave": 4,
+      "tasks": ["TASK-004"],
+      "label": "Server API routes + index.ts wiring + +page.svelte integration (depends on all prior tasks)"
+    }
+  ],
+  "data_flow": {
+    "diagram": "maestro CLI --(NDJSON stdout)--> CLIAdapter --(WorkflowMeta[])--> Hono API\nmaestro delegate --(broker events)--> DelegateExecutor --(DelegateEvent)--> EventBus\nEventBus --(InternalEvent)--> WSGateway --(WSMessage)--> WSClient\nchokidar --(fs events)--> StateSyncEngine --(StateSyncEvent)--> EventBus\nHono API --(HTTP JSON)--> Svelte frontend\nWSClient --(store updates)--> ProjectRadar + WorkflowCommander",
+    "stages": ["CLI subprocess spawn + parse", "EventBus publish", "StateSync merge + debounce", "WSGateway broadcast + translate", "Svelte store update", "Component render"]
+  },
+  "design_decisions": [
+    {
+      "decision": "CLI version detection strategy",
+      "choice": "Versioned Registry pattern",
+      "rationale": "User decision locked. Run `maestro --version`, parse major version, select matching adapter from registry. Fail-fast with UnsupportedVersionError if no match."
+    },
+    {
+      "decision": "Delegate subprocess lifecycle",
+      "choice": "Spawn + line-by-line stdout parsing + EventBus emission",
+      "rationale": "Delegate broker emits NDJSON events (queued/started/completed/failed). Parse each line, emit to EventBus, let WSGateway push to clients. Process cleanup on stop/exit."
+    },
+    {
+      "decision": "Frontend component architecture",
+      "choice": "Self-built Svelte tree + card components (no external tree library)",
+      "rationale": "MVP scope; tree depth is fixed (milestone->phase->step, 3 levels). No need for virtualization or external dependency. Keeps bundle small."
+    },
+    {
+      "decision": "Test strategy for WSGateway/StateSyncEngine",
+      "choice": "Unit tests with mocked dependencies (mock WebSocket, mock chokidar, real EventBus)",
+      "rationate": "Follow existing vitest pattern from event-bus.test.ts. Mock external I/O, test internal logic. Target >80% coverage."
+    }
+  ],
+  "shared_context": {
+    "patterns": [
+      "EventBus pub/sub (subscribe returns unsubscribe fn, publish returns InternalEvent)",
+      "Constructor injection (EventBus, TranslatorMiddleware passed to WSGateway/StateSyncEngine)",
+      "Singleton exports (eventBus in event-bus.ts, wsClient in stores/index.ts)",
+      "Svelte 5 runes ($state, $effect, $derived) + stores (writable, derived)"
+    ],
+    "conventions": [
+      "ESM imports with .js extension",
+      "TypeScript strict mode",
+      "Vitest for testing (describe/it/expect/beforeEach)",
+      "Hono for HTTP routes",
+      "ws library for WebSocket server",
+      "chokidar for file watching",
+      "SvelteKit 2.x with ssr: false"
+    ],
+    "dependencies": [
+      "hono ^4.7.0",
+      "ws ^8.18.0",
+      "chokidar ^4.0.0",
+      "vitest ^3.0.0",
+      "svelte ^5.0.0",
+      "@sveltejs/kit ^2.21.0"
+    ]
+  },
+  "confidence": {
+    "overall": 0.85,
+    "dimensions": {
+      "requirements_coverage": 0.88,
+      "task_quality": 0.85,
+      "dependency_correctness": 0.95,
+      "estimation_accuracy": 0.75,
+      "collision_safety": 0.85
+    },
+    "pressure_pass": {
+      "task_id": "TASK-002",
+      "result": "PASS",
+      "notes": "DelegateExecutor is highest-complexity task (subprocess lifecycle + output parsing + EventBus integration). read_first covers all dependencies. convergence.criteria are grep-verifiable. action is concrete with exact method signatures and spawn arguments."
+    },
+    "residual_risks": [
+      "CLI output format assumed from maestro-flow source code — not tested against live CLI",
+      "WS push latency < 500ms not measured in real network conditions (mock timers only)"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-21T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "feature",
+    "schema_version": "2.0",
+    "git_commit": null
+  }
+}

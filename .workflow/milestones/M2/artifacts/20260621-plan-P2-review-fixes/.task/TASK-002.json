@@ -1,0 +1,105 @@
+{
+  "id": "TASK-002",
+  "title": "修复 dialog-manager.ts NDJSON 跨 chunk 行缓冲",
+  "description": "修复 CORR-002：dialog-manager.ts spawnClaudeCLI 中 stdout data 直接 split('\\n') 解析，当 NDJSON 行跨越两个 chunk 边界时，行被截断后永久丢失。修复方案：利用 ActiveDialog.buffer 字段实现跨 chunk 行缓冲 — 将新 chunk 追加到 buffer，按 '\\n' 分割，最后一个不完整行保留在 buffer 中等待下一个 chunk。",
+  "issue_id": "CORR-002",
+  "issue_refs": [],
+  "type": "bugfix",
+  "priority": "high",
+  "effort": "medium",
+  "action": "修改 spawnClaudeCLI 方法中 childProcess.stdout.on('data', ...) 的内部逻辑：将 chunk 文本追加到 activeDialog.buffer，按 '\\n' 分割 buffer 得到 lines 数组，pop() 最后一个元素作为新 buffer（不完整行），遍历剩余 lines 调用 parseChunk。",
+  "status": "completed",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/lib/server/dialog-manager.ts",
+  "focus_paths": [
+    "src/lib/server/dialog-manager.ts",
+    "src/lib/server/__tests__/delegate-executor.test.ts"
+  ],
+  "read_first": [
+    "src/lib/server/dialog-manager.ts",
+    "src/lib/server/__tests__/delegate-executor.test.ts",
+    "src/lib/shared/types.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n \"activeDialog.buffer\" src/lib/server/dialog-manager.ts 在 spawnClaudeCLI 方法内返回匹配行（证明使用了 buffer 字段）",
+      "grep -n \"activeDialog.buffer = \" src/lib/server/dialog-manager.ts 返回匹配行（证明更新了 buffer 残留）",
+      "grep -n \"activeDialog.buffer += \" src/lib/server/dialog-manager.ts 返回匹配行（证明 chunk 追加到 buffer）",
+      "grep -n \"activeDialog.buffer.split\" src/lib/server/dialog-manager.ts 返回匹配行（证明按 \\n 分割）",
+      "npx vitest run src/lib/server/__tests__/delegate-executor.test.ts 通过"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/delegate-executor.test.ts && npx tsc --noEmit",
+    "definition_of_done": "NDJSON 行跨越 chunk 边界时不再丢失；ActiveDialog.buffer 字段被正确使用来保持不完整行"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/dialog-manager.ts",
+      "action": "modify",
+      "target": "spawnClaudeCLI 方法中 childProcess.stdout.on('data', ...) 回调 (第 125-135 行)",
+      "change": "将直接 split('\\n') 逻辑替换为基于 activeDialog.buffer 的跨 chunk 缓冲逻辑"
+    }
+  ],
+  "implementation": [
+    "1. 打开 src/lib/server/dialog-manager.ts，定位到 spawnClaudeCLI 方法 (第 109 行)",
+    "2. 找到 childProcess.stdout?.on('data', (chunk) => { ... }) 块 (第 125-135 行)",
+    "3. 将当前逻辑替换为:\n```typescript\nchildProcess.stdout?.on('data', (chunk: Buffer | string) => {\n  const text = typeof chunk === 'string' ? chunk : chunk.toString();\n  activeDialog.buffer += text;\n  const lines = activeDialog.buffer.split('\\n');\n  // 最后一个元素可能是不完整行，保留在 buffer 中\n  activeDialog.buffer = lines.pop() ?? '';\n  for (const line of lines) {\n    const streamChunk = this.parseChunk(line);\n    if (streamChunk) {\n      this.emitStreamChunk(sessionId, streamChunk);\n    }\n  }\n});\n```",
+    "4. 运行 npx vitest run src/lib/server/__tests__/delegate-executor.test.ts 验证",
+    "5. 运行 npx tsc --noEmit 验证类型",
+    "6. 额外验证：确认 spawnClaudeCLI 在创建 activeDialog 时已正确初始化 buffer: '' 字段（当前 createSession 方法第 63 行 buffer: ''，已正确初始化）"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/delegate-executor.test.ts",
+      "npx tsc --noEmit"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/delegate-executor.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "所有现有 delegate-executor 测试通过",
+      "TypeScript 编译无错误",
+      "跨 chunk NDJSON 行在手动测试中不再丢失"
+    ]
+  },
+  "reference": {
+    "pattern": "使用 buffer + split + pop 模式（经典行缓冲模式）",
+    "files": [
+      "src/lib/server/dialog-manager.ts:16-20 (ActiveDialog 接口定义 — buffer 字段已存在)",
+      "src/lib/server/dialog-manager.ts:60-64 (createSession 中 buffer: '' 初始化)",
+      "src/lib/server/dialog-manager.ts:125-135 (当前有 bug 的 stdout 处理)"
+    ],
+    "examples": "经典行缓冲模式:\nconst buffer = '';\nstream.on('data', (chunk) => {\n  buffer += chunk;\n  const lines = buffer.split('\\n');\n  buffer = lines.pop();\n  for (const line of lines) { processLine(line); }\n});"
+  },
+  "rationale": {
+    "chosen_approach": "复用 ActiveDialog 已定义但未使用的 buffer 字段，实现经典的 '追加+分割+保留尾部' 行缓冲模式。这是 Node.js 流处理中最常见且经过验证的行缓冲实现。",
+    "decision_factors": [
+      "ActiveDialog.buffer 字段已在接口中定义但未使用，零新增状态",
+      "split+pop 模式是 Node.js 社区标准做法",
+      "与现有 parseChunk 和 emitStreamChunk 逻辑完全兼容"
+    ],
+    "tradeoffs": "buffer 可能无限增长（当 NDJSON 行异常长时）。但正常 NDJSON 行长度有限（Claude Code CLI 输出通常 < 10KB/行），且 ActiveDialog 有生命周期约束（MAX_SESSIONS=5），风险可接受。"
+  },
+  "risks": [
+    "如果 buffer 积累异常大的不完整行（>10MB），可能导致内存问题。但 Claude Code CLI NDJSON 输出行长度有限，实际风险很低。"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["Dialog NDJSON 流解析"],
+    "affected_components": ["DialogManager"],
+    "affected_requirements": ["C-P2-6: NDJSON 协议"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "20m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

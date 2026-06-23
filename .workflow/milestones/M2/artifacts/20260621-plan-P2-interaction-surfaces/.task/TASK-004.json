@@ -1,0 +1,174 @@
+{
+  "id": "TASK-004",
+  "title": "编排集成 — MaestroIDEServer 接线 + stores 扩展 + AIDialog 前端面板",
+  "description": "将 TerminalManager 和 DialogManager 集成到 MaestroIDEServer 生命周期中，扩展前端 stores 支持 DIALOG 和 TERMINAL channel 事件，创建 AIDialog.svelte 前端面板（流式 Markdown 渲染 + 意图路由结果展示）。此任务依赖 TASK-001（TerminalManager 接口）、TASK-003（DialogManager 接口）已完成，同时参考 TASK-002（TerminalBridge 前端模式）。遵循 C-3 约束：不修改 WSGateway 和 Translator。",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "修改 src/lib/server/index.ts：在 MaestroIDEServer 构造器中添加 this.terminalManager = new TerminalManager(this.eventBus) 和 this.dialogManager = new DialogManager(this.eventBus, spawn, await this.fetchWorkflowRegistry())。添加 REST API 端点：POST /api/terminal/create（调用 terminalManager.createTerminal），POST /api/terminal/:id/write（调用 writeToTerminal），POST /api/terminal/:id/resize（调用 resizeTerminal），POST /api/terminal/:id/destroy（调用 destroyTerminal）。POST /api/dialog/sessions（调用 dialogManager.createSession），POST /api/dialog/sessions/:id/message（调用 sendMessage），POST /api/dialog/sessions/:id/close（调用 closeSession）。修改 src/lib/client/stores/index.ts：添加 dialogSessions writable store 和 terminalSessions writable store，订阅 Channels.DIALOG 和 Channels.TERMINAL 事件并累积到 store。创建 src/lib/client/components/AIDialog.svelte：聊天界面 UI（消息列表 + 输入框 + 发送按钮），使用 marked.js 渲染 Markdown 内容（流式追加），使用 highlight.js 语法高亮代码块，展示意图路由结果（消歧列表为可点击的候选 workflow 列表）。处理 dialog:stream-chunk（逐块渲染）、dialog:intent-routed（展示路由结果或消歧列表）、dialog:session-created（初始化聊天）、dialog:session-closed（显示结束状态）。displayMode 控制是否显示原始 CLI 术语（简单模式用 translatedLabel）。",
+  "status": "completed",
+  "completed_at": "2026-06-21T19:10:00+08:00",
+  "actual_duration": "55 min",
+  "scope": "src/lib/server + src/lib/client",
+  "focus_paths": [
+    "src/lib/server/index.ts",
+    "src/lib/client/stores/index.ts",
+    "src/lib/client/components/AIDialog.svelte"
+  ],
+  "read_first": [
+    "src/lib/server/index.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/dialog-manager.ts",
+    "src/lib/server/event-bus.ts",
+    "src/lib/client/stores/index.ts",
+    "src/lib/client/services/ws-client.ts",
+    "src/lib/client/components/WorkflowCommander.svelte",
+    "src/lib/client/components/TerminalBridge.svelte",
+    "src/lib/shared/events.ts",
+    "src/lib/shared/types.ts"
+  ],
+  "depends_on": [
+    "TASK-001",
+    "TASK-002",
+    "TASK-003"
+  ],
+  "wave": 3,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/server/index.ts 中 MaestroIDEServer 类新增了 terminalManager 和 dialogManager 属性声明：readonly terminalManager: TerminalManager; readonly dialogManager: DialogManager",
+      "MaestroIDEServer 构造器中调用了 this.terminalManager = new TerminalManager(this.eventBus) 和 this.dialogManager = new DialogManager(this.eventBus)",
+      "src/lib/server/index.ts 中 setupRoutes() 方法新增 POST /api/terminal/create 路由（调用 terminalManager.createTerminal(terminalId, options) 并返回 TerminalSession JSON）",
+      "src/lib/server/index.ts 中新增 POST /api/dialog/sessions 路由（调用 dialogManager.createSession(clientId) 并返回 DialogSession JSON）",
+      "src/lib/server/index.ts 中新增 POST /api/dialog/sessions/:id/message 路由（调用 dialogManager.sendMessage(sessionId, message)）",
+      "src/lib/server/index.ts 中新增 POST /api/dialog/sessions/:id/close 路由（调用 dialogManager.closeSession(sessionId)）",
+      "src/lib/client/stores/index.ts 新增 terminalSessions writable store（累积 term:created/term:output/term:exit 事件）",
+      "src/lib/client/stores/index.ts 新增 dialogSessions writable store（累积 dialog:session-created/dialog:stream-chunk/dialog:intent-routed/dialog:session-closed 事件）",
+      "src/lib/client/stores/index.ts 中 WSClient 订阅 Channels.DIALOG 和 Channels.TERMINAL 的 on() 调用存在",
+      "src/lib/client/components/AIDialog.svelte 存在且包含 <script lang=\"ts\"> 和 Svelte 5 runes",
+      "AIDialog.svelte 使用 marked.js 渲染 Markdown：import { marked } from 'marked'; 调用 marked.parse(content) 并设置 innerHTML",
+      "AIDialog.svelte 使用 highlight.js 语法高亮：import hljs from 'highlight.js'; marked.setOptions({ highlight: (code, lang) => hljs.highlight(code, { language: lang || 'plaintext' }).value })",
+      "AIDialog.svelte 展示 intent-routed 结果：grep 'confidence' src/lib/client/components/AIDialog.svelte 返回匹配，grep 'intent-result' src/lib/client/components/AIDialog.svelte 返回匹配",
+      "AIDialog.svelte 样式遵循 Catppuccin Mocha 主题：grep -cE '#1e1e2e|#313244|#45475a|#cdd6f4' src/lib/client/components/AIDialog.svelte 返回 >= 4"
+    ],
+    "verification": "(1) npx vitest run 确认所有现有测试通过；(2) npm run dev 启动应用，浏览器 DevTools 验证 Tabs（Workflow/AI/Terminal）都可见且可切换；(3) curl POST /api/terminal/create 返回 200；(4) curl POST /api/dialog/sessions 返回 200",
+    "definition_of_done": "TerminalManager 和 DialogManager 通过 REST API 端点和 EventBus 完成端到端集成，前端 stores 监听 DIALOG/TERMINAL 事件，AIDialog 组件支持流式 Markdown 聊天和意图路由结果展示"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/index.ts",
+      "action": "modify",
+      "target": "MaestroIDEServer class — 添加 terminalManager/dialogManager 属性 + REST API 端点",
+      "change": "构造器中初始化 TerminalManager 和 DialogManager；setupRoutes 中添加 /api/terminal/* 和 /api/dialog/* 端点"
+    },
+    {
+      "path": "src/lib/client/stores/index.ts",
+      "action": "modify",
+      "target": "stores/index.ts — 添加 DIALOG/TERMINAL channel 事件监听 + stores",
+      "change": "添加 terminalSessions 和 dialogSessions writable stores；订阅 Channels.TERMINAL 和 Channels.DIALOG；累积事件到对应 store"
+    },
+    {
+      "path": "src/lib/client/components/AIDialog.svelte",
+      "action": "create",
+      "target": "AIDialog Svelte 5 component",
+      "change": "创建聊天界面：消息列表（Markdown 渲染 + 代码高亮）、输入框、发送按钮、意图路由结果显示、消歧列表、流式输出追加"
+    }
+  ],
+  "implementation": [
+    "修改 src/lib/server/index.ts。导入 TerminalManager：import { TerminalManager } from './terminal-manager.js'。导入 DialogManager：import { DialogManager } from './dialog-manager.js'。导入 { spawn } from 'node:child_process'。",
+    "在 MaestroIDEServer 类中添加属性声明：readonly terminalManager: TerminalManager; readonly dialogManager: DialogManager;。",
+    "在构造器中初始化（在 this.delegateExecutor 之后）：this.terminalManager = new TerminalManager(this.eventBus); this.dialogManager = new DialogManager(this.eventBus, spawn, []); // workflowRegistry 通过 API 动态更新。注意：TranslatorMiddleware 会对所有通过 WSGateway broadcast 的 payload 执行翻译。DIALOG channel 的 stream-chunk 事件 content 字段（AI 输出的 Markdown/代码）不应被翻译。需要在 TranslatorMiddleware.translate 中添加 channel 白名单检查：if (channel === Channels.DIALOG) return payload;（跳过 DIALOG channel 的翻译）。",
+    "在 setupRoutes() 中添加 Terminal API 端点：(a) POST /api/terminal/create：body { terminalId, cwd?, cols?, rows?, shell? }，调用 this.terminalManager.createTerminal(terminalId, { cwd, cols, rows, shell })，返回 session JSON。(b) POST /api/terminal/:id/write：body { data }，调用 this.terminalManager.writeToTerminal(id, data)，返回 { success: true }。(c) POST /api/terminal/:id/resize：body { cols, rows }，调用 this.terminalManager.resizeTerminal(id, cols, rows)，返回 { success: true }。(d) POST /api/terminal/:id/destroy：调用 this.terminalManager.destroyTerminal(id)，返回 { success: true }。",
+    "在 setupRoutes() 中添加 Dialog API 端点：(a) POST /api/dialog/sessions：body { clientId }，调用 this.dialogManager.createSession(clientId)，更新 workflowRegistry（this.dialogManager.updateWorkflowRegistry(workflows)），返回 session JSON。(b) POST /api/dialog/sessions/:id/message：body { message }，调用 this.dialogManager.sendMessage(id, message)，返回 { success: true, sessionId }。(c) POST /api/dialog/sessions/:id/close：调用 this.dialogManager.closeSession(id)，返回 { success: true }。",
+    "在 stop() 方法中添加资源清理：this.terminalManager.destroyAll()（遍历所有活跃会话调用 destroyTerminal）；this.dialogManager.closeAll()（遍历所有活跃会话调用 closeSession）。确保应用关闭时不会泄漏 PTY 进程和 CLI 子进程。",
+    "修改 src/lib/client/stores/index.ts。导入 DialogEvents、TerminalEvents from events.js。导入 TerminalSession、DialogSession、StreamChunk 等类型。注意：terminalSessions store 和 Channels.TERMINAL 订阅已在 TASK-002 中添加，此处仅需添加 dialogSessions 和 Channels.DIALOG 订阅，不要覆盖已有代码。",
+    "添加 terminalSessions store：export const terminalSessions = writable<Array<TerminalSession & { outputBuffer?: string }>>([])。添加 dialogSessions store：export const dialogSessions = writable<Array<DialogSession & { messages: Array<{ role: 'user' | 'assistant'; content: string; chunks: StreamChunk[] }> }>>([])。",
+    "添加 wsClient.on(Channels.TERMINAL, handler) 订阅：(a) term:created -> 追加到 terminalSessions；(b) term:output -> 更新对应 session 的 outputBuffer；(c) term:exit -> 更新 status 为 'exited'。",
+    "添加 wsClient.on(Channels.DIALOG, handler) 订阅：(a) dialog:session-created -> 追加到 dialogSessions；(b) dialog:stream-chunk -> 追加 chunk 到对应 session 的 messages[last].chunks，更新 content；(c) dialog:intent-routed -> 存储 intentResult 到 session；(d) dialog:session-closed -> 更新 status。",
+    "创建 src/lib/client/components/AIDialog.svelte。导入：import { dialogSessions, displayMode, wsClient } from '$lib/client/stores/index.js'; import { marked } from 'marked'; import hljs from 'highlight.js/lib/core'; import javascript from 'highlight.js/lib/languages/javascript'; import typescript from 'highlight.js/lib/languages/typescript'; import bash from 'highlight.js/lib/languages/bash'; import json from 'highlight.js/lib/languages/json'; import 'highlight.js/styles/github-dark.css';。hljs.registerLanguage('javascript', javascript); …。marked.setOptions({ highlight: (code: string, lang: string) => { if (lang && hljs.getLanguage(lang)) { return hljs.highlight(code, { language: lang }).value; } return hljs.highlightAuto(code).value; } })。",
+    "定义组件状态：let sessions = $derived($dialogSessions); let activeSessionId = $state<string | null>(null); let messageInput = $state(''); let sending = $state(false);。",
+    "实现 createSession(): 调用 fetch('/api/dialog/sessions', { method: 'POST', body: JSON.stringify({ clientId: 'browser' }) })，设置 activeSessionId。",
+    "实现 sendMessage(): 设置 sending = true，调用 fetch('/api/dialog/sessions/' + activeSessionId + '/message', { method: 'POST', body: JSON.stringify({ message: messageInput }) })，清空 messageInput，设置 sending = false。",
+    "实现 $effect 订阅 wsClient.on(Channels.DIALOG, handler)：实时更新 sessions store。",
+    "实现 Template：div.ai-dialog 包含三区域。(a) 头部：新建会话按钮、会话列表下拉。(b) 消息区域：{#each activeSession.messages as msg} div.message（role 区分样式），{@html marked.parse(msg.content)}（使用 marked 渲染，代码块自动高亮）。(c) 意图路由区域：{#if activeSession.intentResult} div.intent-result（confidence >= 0.8 显示 'Routing to: {workflowName}'，0.5-0.8 显示 'Did you mean?' 消歧列表，每个候选为 button 点击后调用 executeWorkflow(candidate.workflowId)）。(d) 输入区域：textarea + button（Enter 发送，Shift+Enter 换行）。",
+    "实现 CSS：遵循 Catppuccin Mocha 主题，消息气泡样式（user 右对齐蓝底，assistant 左对齐灰底），代码块背景 #181825，滚动容器 flex:1 overflow-y:auto。",
+    "实现 executeWorkflow(workflowId: string): 调用 POST /api/workflows/execute { workflowId, params: {} }，类似 WorkflowCommander。"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run",
+      "npm run dev"
+    ],
+    "unit": [],
+    "integration": [
+      "手动验证：打开应用 -> 创建 AI 对话 -> 输入消息 -> 观察流式 Markdown 渲染 -> 输入 'build project' -> 验证意图路由 -> 切换简单/高级模式"
+    ],
+    "success_metrics": [
+      "所有现有 vitest 测试继续通过",
+      "应用启动无错误，所有 API 端点返回 200",
+      "AI Dialog 组件可创建会话、发送消息、接收流式输出并渲染 Markdown",
+      "意图路由在高置信度时自动展示路由目标，中置信度时展示消歧列表",
+      "Markdown 代码块使用 highlight.js 语法高亮"
+    ]
+  },
+  "reference": {
+    "pattern": "index.ts 的 server component wiring 模式（构造器中初始化所有管理器） + stores/index.ts 的 WSClient.on() 订阅 + WorkflowCommander.svelte 的 Svelte 5 组件模式",
+    "files": [
+      "src/lib/server/index.ts",
+      "src/lib/client/stores/index.ts",
+      "src/lib/client/components/WorkflowCommander.svelte"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "在 TASK-004 中集中完成所有集成工作（server wiring + stores + AIDialog 组件），避免拆分为多个小任务。这是因为三者之间有紧密的接口契约依赖（server API 输出结构 -> store 数据模型 -> AIDialog 渲染），作为一个连贯的功能单元一起实现效率最高。AIDialog 的 Markdown 渲染用 marked.js（轻量）+ highlight.js 子集（仅注册 js/ts/bash/json 四种语言以减少 bundle size）。",
+    "decision_factors": [
+      "C-3 约束：不修改 WSGateway 和 Translator，仅通过新增 channel 事件利用现有广播机制",
+      "intent-routed 事件通过 DIALOG channel 推送，前端 stores 接收后更新 AIDialog",
+      "marked.js 为推荐的 Markdown 渲染库（自由选择）",
+      "highlight.js 仅注册必需语言以减少 bundle size"
+    ],
+    "tradeoffs": "API 端点通过 HTTP 而非 WebSocket 发送 Terminal/Dialog 指令，因为输入操作（创建终端、发送消息）是一次性请求，不需要流式双向通信。事件广播仍走 WebSocket。"
+  },
+  "risks": [
+    {
+      "risk": "marked.parse() 设置 innerHTML 有 XSS 风险（如果 AI 输出包含恶意 HTML）",
+      "mitigation": "使用 DOMPurify 过滤 marked 输出（npm install dompurify），或在 marked 配置中禁用 HTML：marked.setOptions({ sanitize: true })"
+    },
+    {
+      "risk": "highlight.js 全量导入 bundle size 过大（~1MB）",
+      "mitigation": "仅注册 JavaScript、TypeScript、Bash、JSON 四种语言（MVP 覆盖 95% 代码块场景）"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "AI Dialog UI",
+      "Terminal Bridge API",
+      "Dialog Manager API",
+      "Stores Extension"
+    ],
+    "affected_components": [
+      "server",
+      "client"
+    ],
+    "affected_requirements": [
+      "REQ-003",
+      "REQ-004"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "90-120 min",
+    "risk": "medium",
+    "autonomous": false,
+    "checkpoint": true,
+    "wave": 3,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

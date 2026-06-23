@@ -1,0 +1,140 @@
+{
+  "id": "TASK-004",
+  "title": "Server API Routes + Integration Wiring in index.ts",
+  "description": "Wire CLIAdapter and DelegateExecutor into the MaestroIDEServer class. Add three Hono API routes: GET /api/workflows (list available workflows via CLIAdapter), POST /api/workflows/execute (trigger workflow via DelegateExecutor), GET /api/project/state (read .workflow/state.json). Initialize CLIAdapter and DelegateExecutor in the server constructor and connect them to EventBus.",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "Modify src/lib/server/index.ts to import and instantiate CLIAdapterRegistry and DelegateExecutor. Add CLIAdapterRegistry and DelegateExecutor instantiation in constructor. Add async init() method that calls this.cliAdapter.detectVersion() and stores result. Update start() to call await this.init() before starting servers. Add 3 Hono routes: GET /api/workflows (calls cliAdapter.getAdapter().parseSkillsOutput()), POST /api/workflows/execute (calls delegateExecutor.execute(workflowId, params)), GET /api/project/state (reads <MAESTRO_PROJECT_DIR ?? process.cwd()>/.workflow/state.json via fs.readFileSync, returns 404 if not found). Update auto-start block to use async pattern.",
+  "status": "completed",
+  "completed_at": "2026-06-21T00:05:00.768Z",
+  "actual_duration": null,
+  "scope": "src/lib/server",
+  "focus_paths": [
+    "src/lib/server/index.ts"
+  ],
+  "read_first": [
+    "src/lib/server/index.ts",
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/cli-adapter.ts",
+    "src/lib/server/delegate-executor.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/shared/events.ts"
+  ],
+  "depends_on": [
+    "TASK-001",
+    "TASK-002",
+    "TASK-003",
+    "TASK-005",
+    "TASK-006"
+  ],
+  "wave": 4,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/server/index.ts imports CLIAdapterRegistry from './cli-adapter.js'",
+      "src/lib/server/index.ts imports DelegateExecutor from './delegate-executor.js'",
+      "MaestroIDEServer has readonly cliAdapter: CLIAdapterRegistry property",
+      "MaestroIDEServer has readonly delegateExecutor: DelegateExecutor property",
+      "GET /api/workflows route exists and calls cliAdapter.getAdapter().parseSkillsOutput()",
+      "POST /api/workflows/execute route exists and calls delegateExecutor.execute() with request body params",
+      "GET /api/project/state route exists and reads .workflow/state.json",
+      "Constructor initializes CLIAdapterRegistry with DefaultCLIAdapter registered for major version 1",
+      "Constructor creates DelegateExecutor with eventBus injection",
+      "npx vitest run exits 0 (all existing + new tests pass)",
+      "npx tsc --noEmit exits 0 (no TypeScript errors)",
+      "GET /api/project/state reads process.env.MAESTRO_PROJECT_DIR ?? process.cwd() + /.workflow/state.json, returns 404 if file not found",
+      "start() method is async and calls await this.init() before starting servers"
+    ],
+    "verification": "npx vitest run && npx tsc --noEmit",
+    "definition_of_done": "Server exposes three API endpoints that connect CLI Adapter and Delegate Executor to HTTP clients, with proper initialization and error handling"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/index.ts",
+      "action": "modify",
+      "target": "MaestroIDEServer class",
+      "change": "Add CLIAdapterRegistry and DelegateExecutor imports and instantiation. Add three API routes. Add cliAdapter and delegateExecutor readonly properties. Add async init() method for version detection."
+    },
+    {
+      "path": "src/routes/+page.svelte",
+      "action": "modify",
+      "target": "sidebar and content area",
+      "change": "Import ProjectRadar into sidebar section, import WorkflowCommander into content area, replace placeholder content"
+    }
+  ],
+  "implementation": [
+    "Add imports at top of index.ts: import { CLIAdapterRegistry, DefaultCLIAdapter } from './cli-adapter.js'; import { DelegateExecutor } from './delegate-executor.js'; import { readFileSync, existsSync } from 'fs'; import { join } from 'path';",
+    "Add readonly properties to MaestroIDEServer: readonly cliAdapter: CLIAdapterRegistry; readonly delegateExecutor: DelegateExecutor;",
+    "In constructor, after existing initialization: this.cliAdapter = new CLIAdapterRegistry(); this.cliAdapter.registerAdapter(1, new DefaultCLIAdapter()); this.delegateExecutor = new DelegateExecutor(this.eventBus);",
+    "Add async init() method: const version = await this.cliAdapter.detectVersion(); const adapter = this.cliAdapter.getAdapter(version); console.log(`[Maestro IDE] Detected maestro v${version}`); Store currentAdapter for route use.",
+    "Add GET /api/workflows route in setupRoutes(): this.app.get('/api/workflows', async (c) => { try { const adapter = this.cliAdapter.getAdapter(this.currentVersion); const raw = await this.runCliCommand('maestro ralph skills --json --quiet'); const workflows = adapter.parseSkillsOutput(raw); return c.json({ workflows }); } catch (err) { return c.json({ error: (err as Error).message }, 500); } });",
+    "Add POST /api/workflows/execute route: this.app.post('/api/workflows/execute', async (c) => { const body = await c.req.json<{ workflowId: string; params: Record<string, unknown> }>(); const executionId = this.delegateExecutor.execute(body.workflowId, body.params); return c.json({ executionId, status: 'queued' }); });",
+    "Add GET /api/project/state route: this.app.get('/api/project/state', (c) => { const projectDir = process.env.MAESTRO_PROJECT_DIR ?? process.cwd(); const statePath = join(projectDir, '.workflow', 'state.json'); if (!existsSync(statePath)) { return c.json({ error: 'No project state found' }, 404); } const raw = readFileSync(statePath, 'utf-8'); return c.json(JSON.parse(raw)); });",
+    "Add private currentVersion: string = '' property. Update init() to set this.currentVersion = version after detection.",
+    "Add private runCliCommand(cmd: string): Promise<string> helper that uses child_process.execSync and returns stdout string.",
+    "Update start() method to call await this.init() before starting servers. Make start() async."
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "All existing tests still pass",
+      "No TypeScript compilation errors",
+      "Three new API routes respond correctly"
+    ]
+  },
+  "reference": {
+    "pattern": "Existing Hono route setup in index.ts setupRoutes() method. Constructor injection pattern from WSGateway/StateSyncEngine.",
+    "files": [
+      "src/lib/server/index.ts",
+      "src/lib/server/cli-adapter.ts",
+      "src/lib/server/delegate-executor.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Add routes to existing setupRoutes() method following the same pattern as /api/health and /api/translations. CLIAdapter and DelegateExecutor are initialized in constructor like other components. Version detection happens in async init() called from start().",
+    "decision_factors": [
+      "Follow existing Hono route pattern in index.ts",
+      "CLIAdapter and DelegateExecutor are server-level singletons",
+      "Version detection is async (spawns process) so needs init() method"
+    ],
+    "tradeoffs": "start() becomes async, which changes the call site. This is acceptable since server startup is already async in practice (WebSocket server starts)."
+  },
+  "risks": [
+    {
+      "risk": "maestro CLI not available at runtime",
+      "mitigation": "init() catches UnsupportedVersionError and logs warning; /api/workflows returns 500 with clear error message"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "Server API",
+      "CLI Integration",
+      "Project State"
+    ],
+    "affected_components": [
+      "server"
+    ],
+    "affected_requirements": [
+      "SCOPE-1",
+      "SCOPE-2"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "30-45 min",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

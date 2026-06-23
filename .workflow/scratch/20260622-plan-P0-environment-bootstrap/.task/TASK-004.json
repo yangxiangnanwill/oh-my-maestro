@@ -1,0 +1,89 @@
+{
+  "task_id": "TASK-004",
+  "phase": 0,
+  "milestone": "F1",
+  "title": "oh-my-maestro 归档 — 创建归档分支 + 删除工作目录",
+  "type": "docs",
+  "complexity": "low",
+  "estimated_minutes": 20,
+  "depends_on": ["TASK-003"],
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/",
+      "action": "delete",
+      "target": "整个 oh-my-maestro 工作目录",
+      "change": "创建归档分支保留完整 git history 后删除工作目录"
+    }
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/docs/design/concept-translation-layer.md"
+  ],
+  "action": "在 D:/WorkSpace/VsCode/oh-my-maestro 仓库中执行归档操作：git checkout -b archive/oh-my-maestro → git push origin archive/oh-my-maestro → git checkout master/main → git rm -rf src/ .workflow/ .task/ .claude/ .maestro/ templates/ package.json package-lock.json tsconfig.json svelte.config.js vite.config.ts → git commit -m '归档: 移除 oh-my-maestro 工作目录，历史保留在 archive/oh-my-maestro 分支'。注意：保留 .git/ 目录（git history），只删除 Git 跟踪的工作文件。",
+  "implementation": [
+    "Step 1: 确认 TASK-003 已完成（D:/WorkSpace/GitRepoes/superset/docs/design/concept-translation-layer.md 存在）",
+    "Step 2: cd D:/WorkSpace/VsCode/oh-my-maestro && git status 确认工作目录状态",
+    "Step 3: git checkout -b archive/oh-my-maestro 创建归档分支",
+    "Step 4: git push origin archive/oh-my-maestro 推送归档分支到远程",
+    "Step 5: git checkout master 回到主分支",
+    "Step 6: 列出所有 Git 跟踪的文件（git ls-files），排除 .git/ 和 .gitignore",
+    "Step 7: git rm -rf src/ .workflow/ .task/ .claude/ .maestro/ templates/ 等所有工作目录文件",
+    "Step 8: git commit -m '归档: 移除 oh-my-maestro 工作目录，完整历史保留在 archive/oh-my-maestro 分支'",
+    "Step 9: git push origin master（可选，取决于是否立即推送）"
+  ],
+  "convergence": {
+    "criteria": [
+      "git branch -a 显示 archive/oh-my-maestro 分支存在",
+      "git log archive/oh-my-maestro -1 显示最近的提交历史完整",
+      "master 分支上 D:/WorkSpace/VsCode/oh-my-maestro/src/ 目录不存在（或仅剩 .git）",
+      "master 分支上 D:/WorkSpace/VsCode/oh-my-maestro/package.json 不存在",
+      "git reflog 或 git log --all 包含归档提交记录"
+    ],
+    "verification": "cd D:/WorkSpace/VsCode/oh-my-maestro && git branch -a | grep archive && git log archive/oh-my-maestro --oneline -5",
+    "definition_of_done": "oh-my-maestro 工作目录文件已从 master 分支删除，完整 git history 保留在 archive/oh-my-maestro 分支，可随时切换回去查看或恢复"
+  },
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/VsCode/oh-my-maestro && git branch -a | grep archive",
+      "cd D:/WorkSpace/VsCode/oh-my-maestro && git log archive/oh-my-maestro --oneline -5",
+      "ls D:/WorkSpace/VsCode/oh-my-maestro/src/ 2>&1"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "archive/oh-my-maestro 分支存在且包含完整历史",
+      "master 分支上 src/ 目录已删除",
+      "git 仓库仍完整可用"
+    ]
+  },
+  "reference": {
+    "pattern": "标准 Git 归档流程：创建长期分支保留历史 → 主分支删除文件 → 推送",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/docs/design/concept-translation-layer.md"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "创建 archive/oh-my-maestro 分支保留完整 git history，然后从 master 删除所有工作文件。这样 git history 完整保留，可随时通过 git checkout archive/oh-my-maestro 查看。主分支保持干净，后续所有工作都在 Superset 仓库进行。",
+    "decision_factors": [
+      "用户已确认立即删除",
+      "Git 归档分支是保留历史的行业标准做法",
+      "TASK-003 先提取设计文档，确保核心资产不丢失",
+      "不删除 .git/ 目录，仓库本身保留"
+    ],
+    "tradeoffs": "归档分支上的代码将不再更新，设计文档已提取到 Superset。如果需要恢复，git checkout archive/oh-my-maestro 即可访问完整历史。"
+  },
+  "risks": [
+    "远程仓库（GitHub）可能不存在 — 确认 remote origin 配置后再 push",
+    "master 分支可能有未提交更改 — git status 第 2 步会先检查"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "20m",
+    "risk": "low",
+    "autonomous": false,
+    "checkpoint": true,
+    "wave": 3,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

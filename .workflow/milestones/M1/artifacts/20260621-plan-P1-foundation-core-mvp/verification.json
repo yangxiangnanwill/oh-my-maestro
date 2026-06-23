@@ -1,0 +1,302 @@
+{
+  "phase": 1,
+  "status": "gaps_found",
+  "verified_at": "2026-06-21T08:39:30.000Z",
+  "verifier": "agent",
+  "convergence_check": {
+    "criterion-01": {
+      "description": "src/lib/server/cli-adapter.ts contains export class CLIAdapterRegistry",
+      "pass": true,
+      "evidence": "cli-adapter.ts:71 — export class CLIAdapterRegistry"
+    },
+    "criterion-02": {
+      "description": "src/lib/server/cli-adapter.ts contains export interface CLIAdapter with parseSkillsOutput and parseDelegateOutput methods",
+      "pass": true,
+      "evidence": "cli-adapter.ts:7-10 — export interface CLIAdapter { parseSkillsOutput(raw: string): WorkflowMeta[]; parseDelegateOutput(raw: string): DelegateEvent[]; }"
+    },
+    "criterion-03": {
+      "description": "src/lib/server/cli-adapter.ts contains export class UnsupportedVersionError extends Error",
+      "pass": true,
+      "evidence": "cli-adapter.ts:19 — export class UnsupportedVersionError extends Error"
+    },
+    "criterion-04": {
+      "description": "src/lib/shared/types.ts contains export interface WorkflowMeta",
+      "pass": true,
+      "evidence": "types.ts:119-125 — export interface WorkflowMeta { id, name, category, description, params }"
+    },
+    "criterion-05": {
+      "description": "src/lib/shared/types.ts contains export interface DelegateEvent",
+      "pass": true,
+      "evidence": "types.ts:128-135 — export interface DelegateEvent { type, executionId, stepIndex?, stepName?, output?, timestamp }"
+    },
+    "criterion-06": {
+      "description": "CLIAdapterRegistry.detectVersion() calls child_process.exec and returns Promise",
+      "pass": true,
+      "evidence": "cli-adapter.ts:100-117 — detectVersion(): Promise<string> calls this.execFn('maestro --version', callback) where execFn defaults to exec from node:child_process (line 3, line 76)"
+    },
+    "criterion-07": {
+      "description": "CLIAdapterRegistry.getAdapter(version) returns matching adapter or throws UnsupportedVersionError",
+      "pass": true,
+      "evidence": "cli-adapter.ts:88-94 — getAdapter(version: string): CLIAdapter { const adapter = this.adapters.get(version); if (!adapter) throw new UnsupportedVersionError(version); return adapter; }"
+    },
+    "criterion-08": {
+      "description": "src/lib/server/delegate-executor.ts contains export class DelegateExecutor",
+      "pass": true,
+      "evidence": "delegate-executor.ts:35 — export class DelegateExecutor"
+    },
+    "criterion-09": {
+      "description": "DelegateExecutor constructor accepts EventBus parameter",
+      "pass": true,
+      "evidence": "delegate-executor.ts:40-43 — constructor(private eventBus: EventBus, private spawnFn: SpawnFn = spawn) {}"
+    },
+    "criterion-10": {
+      "description": "DelegateExecutor.execute() calls child_process.spawn and returns executionId string",
+      "pass": true,
+      "evidence": "delegate-executor.ts:50-115 — execute(workflowId, params): string { ... this.spawnFn('maestro', ['delegate', prompt, '--to', tool, '--mode', 'write']); ... return executionId; } where spawnFn defaults to spawn from node:child_process (line 3)"
+    },
+    "criterion-11": {
+      "description": "DelegateExecutor.onEvent() registers callback and returns unsubscribe function",
+      "pass": true,
+      "evidence": "delegate-executor.ts:121-126 — onEvent(callback): () => void { this.globalCallbacks.add(callback); return () => { this.globalCallbacks.delete(callback); }; }"
+    },
+    "criterion-12": {
+      "description": "DelegateExecutor.stop() kills process and removes from activeProcesses",
+      "pass": true,
+      "evidence": "delegate-executor.ts:132-138 — stop(executionId: string): void { const entry = this.activeProcesses.get(executionId); if (entry) { entry.process.kill(); this.activeProcesses.delete(executionId); } }"
+    },
+    "criterion-13": {
+      "description": "EventBus.publish called with WorkflowEvents constants on each broker event type",
+      "pass": true,
+      "evidence": "delegate-executor.ts:22-27 — DELEGATE_TO_WORKFLOW_EVENT maps queued->EXECUTION_STARTED, started->STEP_UPDATE, completed->EXECUTION_COMPLETED, failed->EXECUTION_FAILED; delegate-executor.ts:191-199 — this.eventBus.publish(workflowEvent, Channels.WORKFLOW, payload, 'server')"
+    },
+    "criterion-14": {
+      "description": "src/lib/server/index.ts imports CLIAdapterRegistry from cli-adapter.js",
+      "pass": true,
+      "evidence": "index.ts:10 — import { CLIAdapterRegistry, DefaultCLIAdapter } from './cli-adapter.js';"
+    },
+    "criterion-15": {
+      "description": "src/lib/server/index.ts imports DelegateExecutor from delegate-executor.js",
+      "pass": true,
+      "evidence": "index.ts:11 — import { DelegateExecutor } from './delegate-executor.js';"
+    },
+    "criterion-16": {
+      "description": "MaestroIDEServer has cliAdapter and delegateExecutor properties",
+      "pass": true,
+      "evidence": "index.ts:19-20 — readonly cliAdapter: CLIAdapterRegistry; readonly delegateExecutor: DelegateExecutor; initialized at lines 32-34"
+    },
+    "criterion-17": {
+      "description": "GET /api/workflows route exists",
+      "pass": true,
+      "evidence": "index.ts:70 — this.app.get('/api/workflows', async (c) => { ... })"
+    },
+    "criterion-18": {
+      "description": "POST /api/workflows/execute route exists",
+      "pass": true,
+      "evidence": "index.ts:83 — this.app.post('/api/workflows/execute', async (c) => { ... })"
+    },
+    "criterion-19": {
+      "description": "GET /api/project/state route exists",
+      "pass": true,
+      "evidence": "index.ts:94 — this.app.get('/api/project/state', async (c) => { ... })"
+    },
+    "criterion-20": {
+      "description": "start() is async and calls await init()",
+      "pass": true,
+      "evidence": "index.ts:125-126 — async start(): Promise<void> { await this.init(); ... }"
+    },
+    "criterion-21": {
+      "description": "ProjectRadar.svelte contains {#each} over milestones, phases, steps",
+      "pass": true,
+      "evidence": "ProjectRadar.svelte:52 — {#each $projectState.milestones as milestone}; line 70 — {#each milestone.phases as phase}; line 88 — {#each phase.steps as step}"
+    },
+    "criterion-22": {
+      "description": "WorkflowCommander.svelte contains fetch('/api/workflows')",
+      "pass": true,
+      "evidence": "WorkflowCommander.svelte:21 — fetch('/api/workflows')"
+    },
+    "criterion-23": {
+      "description": "+page.svelte imports ProjectRadar and WorkflowCommander",
+      "pass": true,
+      "evidence": "+page.svelte:3-4 — import ProjectRadar from '$lib/client/components/ProjectRadar.svelte'; import WorkflowCommander from '$lib/client/components/WorkflowCommander.svelte';"
+    },
+    "criterion-24": {
+      "description": "Run npx vitest run and verify all 83 tests pass",
+      "pass": true,
+      "evidence": "vitest output: Test Files 6 passed (6), Tests 83 passed (83), Duration 1.30s"
+    },
+    "criterion-25": {
+      "description": "No raw maestro terms (delegate/session/skill) in user-visible string literals in frontend components",
+      "pass": true,
+      "evidence": "grep for delegate|session|skill in src/lib/client/ and src/routes/ returned no matches"
+    }
+  },
+  "must_haves": {
+    "truths": [
+      { "criterion": "All 25 convergence criteria pass", "status": "verified", "evidence": "Each criterion verified with file:line evidence above" },
+      { "criterion": "No raw maestro terms in frontend user-visible strings", "status": "verified", "evidence": "grep of src/lib/client/ and src/routes/ for delegate/session/skill returned zero matches" },
+      { "criterion": "EventBus.publish uses WorkflowEvents constants (not string literals)", "status": "verified", "evidence": "delegate-executor.ts:22-27 DELEGATE_TO_WORKFLOW_EVENT maps to WorkflowEvents constants; delegate-executor.ts:193 this.eventBus.publish(workflowEvent, ...)" }
+    ],
+    "artifacts": [
+      { "path": "src/lib/server/cli-adapter.ts", "status": "exists", "substance": "real", "evidence": "119 lines, full implementation with CLIAdapterRegistry, DefaultCLIAdapter, UnsupportedVersionError" },
+      { "path": "src/lib/server/delegate-executor.ts", "status": "exists", "substance": "real", "evidence": "212 lines, full implementation with execute/onEvent/stop/parseLine/emitEvent/buildPrompt" },
+      { "path": "src/lib/server/event-bus.ts", "status": "exists", "substance": "real", "evidence": "140 lines, full implementation with subscribe/onAny/publish/getHistory/clear/getSubscriberCount" },
+      { "path": "src/lib/server/translator.ts", "status": "exists", "substance": "real", "evidence": "96 lines, full implementation with setClientMode/getClientMode/removeClient/translate/shouldHide/translateTerm/getTranslations/getStats" },
+      { "path": "src/lib/server/ws-gateway.ts", "status": "exists", "substance": "real", "evidence": "176 lines, full implementation with start/handleClientMessage/broadcastEvent/sendToClient/getClientCount/stop" },
+      { "path": "src/lib/server/state-sync.ts", "status": "exists", "substance": "real", "evidence": "172 lines, full implementation with start/emitInProcessEvent/handleFilesystemEvent/bufferEvent/getRecentEvents/addWatchPath/stop" },
+      { "path": "src/lib/server/index.ts", "status": "exists", "substance": "real", "evidence": "176 lines, full MaestroIDEServer class with constructor/setupRoutes/init/start/stop and auto-start block" },
+      { "path": "src/lib/shared/types.ts", "status": "exists", "substance": "real", "evidence": "149 lines, comprehensive type definitions: WorkflowExecution, ExecutionStep, ProjectState, Milestone, Phase, PhaseStep, DialogSession, TerminalSession, ApprovalGate, WSMessage, Recommendation, WorkflowMeta, DelegateEvent, StateSyncEvent" },
+      { "path": "src/lib/shared/events.ts", "status": "exists", "substance": "real", "evidence": "69 lines, all event channel and type constants: Channels, WorkflowEvents, ProjectEvents, DialogEvents, TerminalEvents, GateEvents, StateSyncEvents, EventType union" },
+      { "path": "src/lib/shared/translations.ts", "status": "exists", "substance": "real", "evidence": "192 lines, full translation registry with 10 entries, translate/shouldHide/translatePayload/translateString/findEntry functions" },
+      { "path": "src/lib/client/components/ProjectRadar.svelte", "status": "exists", "substance": "real", "evidence": "191 lines, full tree-view component with {#each} over milestones/phases/steps, expand/collapse, status colors, simple-mode hiding" },
+      { "path": "src/lib/client/components/WorkflowCommander.svelte", "status": "exists", "substance": "real", "evidence": "552 lines, full two-panel component with workflow list, execution progress, fetch('/api/workflows'), fetch('/api/workflows/execute')" },
+      { "path": "src/lib/client/services/ws-client.ts", "status": "exists", "substance": "real", "evidence": "160 lines, full WebSocket client with connect/disconnect/on/send/setMode/scheduleReconnect" },
+      { "path": "src/lib/client/stores/index.ts", "status": "exists", "substance": "real", "evidence": "82 lines, writable/derived stores for connectionState, displayMode, projectState, activeWorkflows, recommendations with WSClient integration" },
+      { "path": "src/routes/+page.svelte", "status": "exists", "substance": "real", "evidence": "182 lines, full page layout with ProjectRadar and WorkflowCommander imports, mode toggle, connection status" },
+      { "path": "src/routes/+layout.svelte", "status": "exists", "substance": "real", "evidence": "7 lines, imports app.css and renders children" },
+      { "path": "src/routes/+layout.ts", "status": "exists", "substance": "real", "evidence": "2 lines, ssr=false, prerender=false" },
+      { "path": "src/app.css", "status": "missing", "evidence": "Referenced by +layout.svelte line 2 but file does not exist on disk" },
+      { "path": "src/lib/server/__tests__/cli-adapter.test.ts", "status": "exists", "substance": "real", "evidence": "218 lines, 18 tests covering register/getAdapter/UnsupportedVersionError/detectVersion/parseSkillsOutput/parseDelegateOutput" },
+      { "path": "src/lib/server/__tests__/delegate-executor.test.ts", "status": "exists", "substance": "real", "evidence": "467 lines, 22 tests covering execute/onEvent/stop/process-exit/EventBus-integration/line-parsing/multiple-executions" },
+      { "path": "src/lib/server/__tests__/event-bus.test.ts", "status": "exists", "substance": "real", "evidence": "89 lines, 6 tests covering publish-subscribe/unsubscribing/wildcard/history/error-isolation/subscriber-count" },
+      { "path": "src/lib/server/__tests__/ws-gateway.test.ts", "status": "exists", "substance": "real", "evidence": "366 lines, 14 tests covering start/connect/disconnect/subscribe/unsubscribe/set-mode/broadcast/wildcard/translation/reconnect/latency/error/stop/invalid-json" },
+      { "path": "src/lib/server/__tests__/state-sync.test.ts", "status": "exists", "substance": "real", "evidence": "286 lines, 11 tests covering in-process-events/filesystem-debounce/buffer-size/getRecentEvents/addWatchPath/stop/timing/multiple-types/no-watcher" },
+      { "path": "src/lib/shared/__tests__/translator.test.ts", "status": "exists", "substance": "real", "evidence": "88 lines, 12 tests covering translate/shouldHide/translatePayload/coverage" }
+    ],
+    "key_links": [
+      { "path": "src/lib/server/index.ts", "status": "wired", "importers": ["auto-start block at line 158"], "imports": ["event-bus.js", "ws-gateway.js", "translator.js", "state-sync.js", "cli-adapter.js", "delegate-executor.js"] },
+      { "path": "src/lib/server/delegate-executor.ts", "status": "wired", "importers": ["index.ts:11"], "imports": ["event-bus.js (type)", "shared/types.js (type)", "shared/events.js"] },
+      { "path": "src/lib/server/ws-gateway.ts", "status": "wired", "importers": ["index.ts:8"], "imports": ["event-bus.js (type)", "shared/types.js (type)", "shared/events.js", "translator.js (type)"] },
+      { "path": "src/lib/server/state-sync.ts", "status": "wired", "importers": ["index.ts:9"], "imports": ["event-bus.js (type)", "shared/types.js (type)", "shared/events.js"] },
+      { "path": "src/lib/server/translator.ts", "status": "wired", "importers": ["index.ts:8 (via ws-gateway)", "ws-gateway.ts:7 (type)"], "imports": ["shared/types.js (type)", "shared/translations.js"] },
+      { "path": "src/lib/server/cli-adapter.ts", "status": "wired", "importers": ["index.ts:10"], "imports": ["shared/types.js (type)"] },
+      { "path": "src/lib/server/event-bus.ts", "status": "wired", "importers": ["index.ts:6", "delegate-executor.ts:4 (type)", "ws-gateway.ts:4 (type)", "state-sync.ts:4 (type)", "translator.ts:5 (type)"], "imports": ["shared/events.js (type)"] },
+      { "path": "src/lib/shared/types.ts", "status": "wired", "importers": ["cli-adapter.ts:4", "delegate-executor.ts:5", "ws-gateway.ts:5", "state-sync.ts:5", "translator.ts:3", "stores/index.ts:4", "ws-client.ts:3", "ProjectRadar.svelte:3-4", "WorkflowCommander.svelte:3"], "imports": [] },
+      { "path": "src/lib/shared/events.ts", "status": "wired", "importers": ["event-bus.ts:3 (type)", "delegate-executor.ts:6", "ws-gateway.ts:6", "state-sync.ts:6", "stores/index.ts:5", "ws-client.ts:4"], "imports": [] },
+      { "path": "src/lib/shared/translations.ts", "status": "wired", "importers": ["translator.ts:4", "ProjectRadar.svelte:5"], "imports": ["shared/types.js (type)"] },
+      { "path": "src/lib/client/stores/index.ts", "status": "orphaned", "importers": ["ProjectRadar.svelte:2", "WorkflowCommander.svelte:2", "+page.svelte:2"], "imports": ["svelte/store", "shared/types.js (type)", "shared/events.js", "BROKEN: ./ws-client.js (should be ../services/ws-client.js)"], "issue": "Import path ./ws-client.js is incorrect; file is at ../services/ws-client.ts" },
+      { "path": "src/lib/client/services/ws-client.ts", "status": "wired", "importers": ["stores/index.ts:6 (via broken path)"], "imports": ["shared/types.js (type)", "shared/events.js"] },
+      { "path": "src/lib/client/components/ProjectRadar.svelte", "status": "wired", "importers": ["+page.svelte:3"], "imports": ["stores/index.js", "shared/types.js (type)", "shared/types.js (type)", "shared/translations.js"] },
+      { "path": "src/lib/client/components/WorkflowCommander.svelte", "status": "wired", "importers": ["+page.svelte:4"], "imports": ["stores/index.js", "shared/types.js (type)"] },
+      { "path": "src/routes/+page.svelte", "status": "wired", "importers": ["SvelteKit router"], "imports": ["stores/index.js", "ProjectRadar.svelte", "WorkflowCommander.svelte"] },
+      { "path": "src/routes/+layout.svelte", "status": "wired", "importers": ["SvelteKit router"], "imports": ["app.css (MISSING FILE)"] }
+    ]
+  },
+  "gaps": [
+    {
+      "id": "GAP-001",
+      "type": "connection",
+      "severity": "high",
+      "description": "stores/index.ts imports WSClient from './ws-client.js' but the file is located at '../services/ws-client.ts' — import path is broken",
+      "fix_direction": "Change import path in stores/index.ts line 6 from './ws-client.js' to '../services/ws-client.js'"
+    },
+    {
+      "id": "GAP-002",
+      "type": "connection",
+      "severity": "high",
+      "description": "WSClient class uses Svelte 5 $state runes but is passed as first argument to derived() which expects a Svelte store with subscribe() method — WSClient does not implement subscribe()",
+      "fix_direction": "Either make WSClient implement the Svelte store contract (subscribe method) or refactor stores/index.ts to use a different reactive pattern compatible with $state-based classes"
+    },
+    {
+      "id": "GAP-003",
+      "type": "connection",
+      "severity": "medium",
+      "description": "WorkflowCommander.svelte fetch('/api/workflows') parses response as WorkflowMeta[] but the API returns { workflows: WorkflowMeta[], version: string } — data contract mismatch",
+      "fix_direction": "Update WorkflowCommander.svelte line 23 to destructure: .then((data: { workflows: WorkflowMeta[] }) => { workflows = data.workflows; })"
+    },
+    {
+      "id": "GAP-004",
+      "type": "existence",
+      "severity": "medium",
+      "description": "+layout.svelte imports '../app.css' but src/app.css does not exist on disk",
+      "fix_direction": "Create src/app.css with base styles, or remove the import from +layout.svelte"
+    },
+    {
+      "id": "GAP-005",
+      "type": "antipattern",
+      "severity": "info",
+      "description": "Server-side files use console.log/console.error/console.warn for logging (index.ts:115,140,153,172; delegate-executor.ts:92,174,185; event-bus.ts:87,97; ws-gateway.ts:64,74; ws-client.ts:49). These are acceptable for server-side diagnostic logging but should be replaced with a proper logger in production",
+      "fix_direction": "Consider introducing a structured logger (e.g., pino) in a future phase"
+    }
+  ],
+  "antipatterns": [
+    {
+      "type": "console.log",
+      "file": "src/lib/server/index.ts",
+      "line": 115,
+      "severity": "info"
+    },
+    {
+      "type": "console.log",
+      "file": "src/lib/server/index.ts",
+      "line": 140,
+      "severity": "info"
+    },
+    {
+      "type": "console.log",
+      "file": "src/lib/server/index.ts",
+      "line": 153,
+      "severity": "info"
+    },
+    {
+      "type": "console.error",
+      "file": "src/lib/server/delegate-executor.ts",
+      "line": 92,
+      "severity": "info"
+    },
+    {
+      "type": "console.error",
+      "file": "src/lib/server/delegate-executor.ts",
+      "line": 174,
+      "severity": "info"
+    },
+    {
+      "type": "console.error",
+      "file": "src/lib/server/delegate-executor.ts",
+      "line": 185,
+      "severity": "info"
+    },
+    {
+      "type": "console.error",
+      "file": "src/lib/server/event-bus.ts",
+      "line": 87,
+      "severity": "info"
+    },
+    {
+      "type": "console.error",
+      "file": "src/lib/server/event-bus.ts",
+      "line": 97,
+      "severity": "info"
+    },
+    {
+      "type": "console.error",
+      "file": "src/lib/server/ws-gateway.ts",
+      "line": 64,
+      "severity": "info"
+    },
+    {
+      "type": "console.error",
+      "file": "src/lib/server/ws-gateway.ts",
+      "line": 74,
+      "severity": "info"
+    },
+    {
+      "type": "console.error",
+      "file": "src/lib/client/services/ws-client.ts",
+      "line": 49,
+      "severity": "info"
+    },
+    {
+      "type": "console.warn",
+      "file": "src/lib/server/index.ts",
+      "line": 117,
+      "severity": "info"
+    },
+    {
+      "type": "console.error",
+      "file": "src/lib/server/index.ts",
+      "line": 172,
+      "severity": "info"
+    }
+  ],
+  "coverage_score": 0.80
+}

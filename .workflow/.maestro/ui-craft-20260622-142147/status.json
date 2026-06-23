@@ -1,0 +1,17 @@
+{
+  "chain_type": "improve",
+  "target": "ApprovalPanel",
+  "steps": [
+    {"name": "critique", "status": "completed", "notes": "复用 build 链结果: 31/40 (≥26), P0=0 ✓", "score": "31/40", "p0_count": 0, "p1_count": 2},
+    {"name": "refine", "status": "completed", "notes": "质量门通过，跳过 refine 循环"},
+    {"name": "polish", "status": "completed", "notes": "确认 4 项 polish 修复已就位: 对比度、触摸目标、响应式对齐、快捷键可见"},
+    {"name": "audit", "status": "completed", "notes": "质量门通过 ✓ — 19/20 (≥14), P0=0。Accessibility 3→4 (对比度/触摸)，Responsive 3→4 (移动端层次)","score": "19/20", "p0_count": 0, "p1_count": 0}
+  ],
+  "current_step": 4,
+  "gate_history": [
+    {"step": "critique", "score": 31, "threshold": 26, "p0_count": 0, "passed": true},
+    {"step": "audit", "score": 19, "threshold": 14, "p0_count": 0, "passed": true}
+  ],
+  "loop_count": 0,
+  "status": "completed"
+}

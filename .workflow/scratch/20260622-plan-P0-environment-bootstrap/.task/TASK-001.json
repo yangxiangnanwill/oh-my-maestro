@@ -1,0 +1,114 @@
+{
+  "task_id": "TASK-001",
+  "phase": 0,
+  "milestone": "F1",
+  "title": "Windows 构建环境修复 — root package.json + bun install + 字体路径 + 原生模块 stub",
+  "type": "fix",
+  "complexity": "medium",
+  "estimated_minutes": 45,
+  "depends_on": [],
+  "files": [
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/package.json",
+      "action": "create",
+      "target": "root package.json with Bun workspaces",
+      "change": "创建根 package.json，配置 workspaces: [\"apps/*\"]，添加 scripts.dev"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/index.ts",
+      "action": "modify",
+      "target": "SYSTEM_FONT_DIRS 字体路径数组（约第 364 行）",
+      "change": "将 darwin-only 的字体协议处理扩展为支持 win32 的 C:\\Windows\\Fonts"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/packages/macos-process-metrics/index.js",
+      "action": "create",
+      "target": "Windows stub for @superset/macos-process-metrics",
+      "change": "创建空 stub 模块，使 workspace:* 引用在 Windows 上不报错"
+    },
+    {
+      "path": "D:/WorkSpace/GitRepoes/superset/packages/macos-process-metrics/package.json",
+      "action": "create",
+      "target": "package.json for macos-process-metrics stub",
+      "change": "创建 stub 包的 package.json，name: @superset/macos-process-metrics, main: index.js"
+    }
+  ],
+  "read_first": [
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/package.json",
+    "D:/WorkSpace/GitRepoes/superset/apps/api/package.json",
+    "D:/WorkSpace/GitRepoes/superset/apps/admin/package.json",
+    "D:/WorkSpace/GitRepoes/superset/.bun-version",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/index.ts",
+    "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/resource-metrics/process-tree.ts"
+  ],
+  "action": "在 Superset 仓库根目录 D:/WorkSpace/GitRepoes/superset/ 创建 package.json，内容为 {\"name\": \"superset-monorepo\", \"private\": true, \"workspaces\": [\"apps/*\", \"packages/*\"], \"scripts\": {\"dev\": \"cd apps/api && bun dev & cd apps/desktop && bun dev\"}}。创建 D:/WorkSpace/GitRepoes/superset/packages/macos-process-metrics/package.json（{\"name\": \"@superset/macos-process-metrics\", \"version\": \"0.0.0\", \"main\": \"index.js\"}）和 index.js（module.exports = {};）。修改 apps/desktop/src/main/index.ts 第 363-389 行，将 SYSTEM_FONT_DIRS 从 darwin-only 改为平台分支：darwin → 保持现有路径，win32 → ['C:\\\\Windows\\\\Fonts']，其他 → 空数组。然后执行 bun install 验证。",
+  "implementation": [
+    "Step 1: 读取 apps/desktop/package.json、apps/api/package.json、apps/admin/package.json 确认 workspace 名称",
+    "Step 2: 在 D:/WorkSpace/GitRepoes/superset/ 创建 package.json，name='superset-monorepo', private=true, workspaces=['apps/*', 'packages/*'], scripts.dev='cd apps/api && bun dev & cd apps/desktop && bun dev'",
+    "Step 3: 创建 D:/WorkSpace/GitRepoes/superset/packages/macos-process-metrics/ 目录",
+    "Step 4: 创建 packages/macos-process-metrics/package.json，name='@superset/macos-process-metrics', version='0.0.0', main='index.js'",
+    "Step 5: 创建 packages/macos-process-metrics/index.js，内容 module.exports = {}",
+    "Step 6: 修改 apps/desktop/src/main/index.ts 第 363-389 行：将 if (process.platform === 'darwin') { ... } 块中的 SYSTEM_FONT_DIRS 改为平台分支常量，win32 使用 ['C:\\\\Windows\\\\Fonts']",
+    "Step 7: 执行 cd D:/WorkSpace/GitRepoes/superset && bun install，验证退出码为 0",
+    "Step 8: 验证 bun.lock 文件生成，确认 @superset/macos-process-metrics 被正确解析"
+  ],
+  "convergence": {
+    "criteria": [
+      "D:/WorkSpace/GitRepoes/superset/package.json 存在且包含 \"workspaces\": [\"apps/*\", \"packages/*\"]",
+      "D:/WorkSpace/GitRepoes/superset/packages/macos-process-metrics/package.json 存在且 name 为 @superset/macos-process-metrics",
+      "D:/WorkSpace/GitRepoes/superset/packages/macos-process-metrics/index.js 存在且导出空对象",
+      "D:/WorkSpace/GitRepoes/superset/bun.lock 文件存在（bun install 成功生成）",
+      "apps/desktop/src/main/index.ts 中 SYSTEM_FONT_DIRS 包含 'C:\\\\Windows\\\\Fonts' 或 win32 分支",
+      "bun install 在 D:/WorkSpace/GitRepoes/superset 目录下退出码为 0"
+    ],
+    "verification": "cd D:/WorkSpace/GitRepoes/superset && bun install 2>&1 | tail -5（应显示安装成功，无错误）",
+    "definition_of_done": "bun install 在 Windows 上成功完成，bun.lock 生成，字体路径支持 Windows，macos-process-metrics stub 可用"
+  },
+  "test": {
+    "commands": [
+      "cd D:/WorkSpace/GitRepoes/superset && bun install",
+      "ls D:/WorkSpace/GitRepoes/superset/bun.lock",
+      "grep -c 'win32' D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/index.ts"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "bun install 退出码 0",
+      "bun.lock 文件存在",
+      "字体路径包含 Windows 分支"
+    ]
+  },
+  "reference": {
+    "pattern": "Bun workspaces 配置参考 https://bun.sh/docs/install/workspaces，现有 process.platform 条件分支模式参考 process-tree.ts 和 apple-events-permission.ts",
+    "files": [
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/package.json",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/resource-metrics/process-tree.ts",
+      "D:/WorkSpace/GitRepoes/superset/apps/desktop/src/main/lib/apple-events-permission.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Superset 仓库没有 root package.json，依赖 Bun 隐式 workspace 解析。显式创建 root package.json 声明 workspaces 是最直接的方式。macos-process-metrics 是 workspace:* 依赖但无对应源码目录，创建空 stub 避免 bun install 报错。字体路径从 darwin-only 改为平台分支，遵循现有代码库中的 process.platform 模式。",
+    "decision_factors": [
+      "Bun 1.3.x 支持显式 workspaces 配置",
+      "现有代码已有 22+ 处 process.platform 条件分支",
+      "macos-process-metrics 在 process-tree.ts 中已有 try/catch 保护",
+      "字体协议处理已有 darwin 守卫，只需扩展而非重写"
+    ],
+    "tradeoffs": "macos-process-metrics stub 返回空对象，Windows 上资源监控功能降级但不会崩溃。这是 Phase 0 最小化方案，Phase 2+ 可添加 Windows 原生性能监控。"
+  },
+  "risks": [
+    "bun install 可能因原生模块编译失败（如 better-sqlite3、node-pty）— 需安装 VS Build Tools",
+    "其他 workspace:* 依赖可能也缺少源码目录 — 需逐个排查"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "45m",
+    "actual_time": "30m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "executor": "agent"
+  }
+}

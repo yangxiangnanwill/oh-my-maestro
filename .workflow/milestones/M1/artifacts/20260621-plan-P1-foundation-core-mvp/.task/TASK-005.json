@@ -1,0 +1,115 @@
+{
+  "id": "TASK-005",
+  "title": "Project Radar — Svelte Tree Component for Milestone/Phase/Step Status",
+  "description": "Build the Project Radar frontend component: a self-built Svelte 5 tree that renders the milestone->phase->step hierarchy with status indicators. Reads from the projectState store. Supports expand/collapse, status coloring, and translated labels based on display mode.",
+  "issue_id": null,
+  "issue_refs": [],
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "Create src/lib/client/components/ProjectRadar.svelte with a recursive tree rendering milestone->phase->step hierarchy. Each node shows translated name (from translatedName field or name fallback), status indicator (colored dot: green=complete, blue=running, yellow=pending, red=failed), and expand/collapse toggle. Read from projectState store. Import displayMode store for simple/advanced label rendering. Replace the placeholder Project Status section in +page.svelte with this component.",
+  "status": "completed",
+  "completed_at": "2026-06-20T23:49:58.179Z",
+  "actual_duration": null,
+  "scope": "src/lib/client/components",
+  "focus_paths": [
+    "src/lib/client/components/ProjectRadar.svelte",
+    "src/routes/+page.svelte"
+  ],
+  "read_first": [
+    "src/routes/+page.svelte",
+    "src/lib/client/stores/index.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/shared/translations.ts"
+  ],
+  "depends_on": [],
+  "wave": 3,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/lib/client/components/ProjectRadar.svelte exists",
+      "Component template contains {#each} iteration over $projectState.milestones, milestone.phases, and phase.steps",
+      "Each tree node displays translatedName ?? name as label",
+      "Status indicators use colored dots: green for 'complete', blue for 'running', yellow for 'pending', red for 'failed'",
+      "Expand/collapse toggle works on milestone and phase nodes (step nodes are leaf)",
+      "+page.svelte imports ProjectRadar from $lib/client/components/ProjectRadar.svelte and renders it in sidebar section",
+      "Component uses (translatedName ?? name) for all user-visible labels — template contains translatedName",
+      "grep -E \"\b(delegate|session|skill)\b\" src/lib/client/components/ProjectRadar.svelte returns 0 matches in user-visible string literals (not import paths or comments)"
+    ],
+    "verification": "npx vite build exits 0 && manual visual check in browser",
+    "definition_of_done": "Project Radar tree component displays real-time project status with translated labels, status indicators, and expand/collapse interaction"
+  },
+  "files": [
+    {
+      "path": "src/lib/client/components/ProjectRadar.svelte",
+      "action": "create",
+      "target": "ProjectRadar tree component",
+      "change": "Create Svelte 5 component with recursive tree rendering. Props: none (reads from stores). Uses projectState store for data, displayMode store for label mode. Renders milestone->phase->step with expand/collapse and status dots."
+    }
+  ],
+  "implementation": [
+    "Create src/lib/client/components/ProjectRadar.svelte. Script section: import projectState, displayMode from '$lib/client/stores/index.js'. Define helper function statusColor(status:string): string returning CSS color values: 'complete'->'#a6e3a1', 'running'->'#89b4fa', 'pending'->'#f9e2af', 'failed'->'#f38ba8', default->'#6c7086'. Define helper statusIcon(status:string): string returning dot characters.",
+    "Define expand/collapse state: let expandedNodes = $state<Set<string>>(new Set()). Function toggleNode(id:string) toggles id in the Set.",
+    "Template section: iterate over $projectState.milestones. Each milestone node: click toggles expand/collapse, shows status dot + translatedName??name + status text. When expanded, iterate milestone.phases. Each phase node: same pattern. When expanded, iterate phase.steps. Step nodes: leaf nodes showing status dot + translatedName??name.",
+    "Note: +page.svelte wiring is handled by TASK-004"
+  ],
+  "test": {
+    "commands": [
+      "npx vite build"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "Build succeeds with no errors",
+      "Component renders in browser without console errors"
+    ]
+  },
+  "reference": {
+    "pattern": "Svelte 5 runes ($state, $effect) from +page.svelte. Store subscription pattern from stores/index.ts. Color scheme from +page.svelte CSS.",
+    "files": [
+      "src/routes/+page.svelte",
+      "src/lib/client/stores/index.ts",
+      "src/lib/shared/types.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Self-built tree component instead of external library because tree depth is fixed at 3 levels (milestone->phase->step) and node count is small. No virtualization needed. Keeps bundle size minimal.",
+    "decision_factors": [
+      "Fixed 3-level hierarchy, no arbitrary nesting",
+      "No need for drag-and-drop or lazy loading in MVP",
+      "Existing CSS color scheme should be reused"
+    ],
+    "tradeoffs": "Custom tree requires more code than a library, but avoids dependency and gives full control over styling and behavior."
+  },
+  "risks": [
+    {
+      "risk": "projectState store empty if server not running",
+      "mitigation": "Component shows empty state message 'No project loaded' when milestones array is empty (matching existing behavior)"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "Project Radar",
+      "Project Status Visualization"
+    ],
+    "affected_components": [
+      "client",
+      "frontend"
+    ],
+    "affected_requirements": [
+      "SC-1",
+      "SC-3"
+    ],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "45-60 min",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

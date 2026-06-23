@@ -1,0 +1,61 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "blueprint",
+    "artifact_id": "BLP-maestro-ide-2026-06-20",
+    "session_path": "blueprint/BLP-maestro-ide-2026-06-20",
+    "generated_at": "2026-06-20T21:25:00+08:00"
+  },
+  "requirements": [
+    { "id": "REQ-001", "title": "Workflow Commander", "description": "工作流编排面板：意图驱动分类选择、一键触发完整链路、步骤进度可视化", "priority": "must", "acceptance": "用户可通过分类选择或自然语言触发工作流，实时展示步骤进度", "ref": "requirements/REQ-001-workflow-commander.md" },
+    { "id": "REQ-002", "title": "Project Radar", "description": "项目状态仪表盘：实时展示里程碑/阶段/步骤进度，推荐下一步", "priority": "must", "acceptance": "仪表盘实时反映项目状态，展示推荐下一步操作", "ref": "requirements/REQ-002-project-radar.md" },
+    { "id": "REQ-003", "title": "AI Dialog", "description": "AI 对话面板：自然语言交互，流式输出，意图识别路由", "priority": "must", "acceptance": "用户可用自然语言与 AI 交互，意图自动路由到工作流", "ref": "requirements/REQ-003-ai-dialog.md" },
+    { "id": "REQ-004", "title": "Terminal Bridge", "description": "终端桥接：xterm.js 嵌入终端，实时 CLI 输出，双流架构", "priority": "must", "acceptance": "用户可看到实时 CLI 输出，支持多会话切换", "ref": "requirements/REQ-004-terminal-bridge.md" },
+    { "id": "REQ-005", "title": "State Sync Engine", "description": "状态同步引擎：WebSocket 实时推送，双源事件合并", "priority": "must", "acceptance": "状态变更 500ms 内推送 UI，99% 准确率", "ref": "requirements/REQ-005-state-sync-engine.md" },
+    { "id": "REQ-006", "title": "Concept Translator", "description": "概念翻译层：技术概念映射为用户语言，分层展示", "priority": "should", "acceptance": "简单模式下无原始技术术语泄漏", "ref": "requirements/REQ-006-concept-translator.md" },
+    { "id": "REQ-007", "title": "Approval Gate", "description": "审批门控：内联面板确认/拒绝，diff 预览，dry-run", "priority": "should", "acceptance": "破坏性操作必须经过审批，展示 diff 和 dry-run", "ref": "requirements/REQ-007-approval-gate.md" }
+  ],
+  "constraints": [
+    { "id": "C-001", "area": "architecture", "constraint": "本地 Web 应用架构 (HTTP/WS + 浏览器前端)", "rationale": "最快 MVP 路径，跨平台", "status": "locked", "ref": "architecture/ADR-001-local-web-app.md" },
+    { "id": "C-002", "area": "integration", "constraint": "CLI 子进程优先集成 Claude Code", "rationale": "零 API 依赖，最快验证", "status": "locked", "ref": "architecture/ADR-002-cli-subprocess-integration.md" },
+    { "id": "C-003", "area": "frontend", "constraint": "SvelteKit 前端框架", "rationale": "编译时响应性，WebSocket 友好", "status": "locked", "ref": "architecture/ADR-003-sveltekit-frontend.md" },
+    { "id": "C-004", "area": "realtime", "constraint": "事件驱动 + WebSocket 状态同步", "rationale": "唯一满足 500ms 延迟 + 双向流的方案", "status": "locked", "ref": "architecture/ADR-004-event-driven-state-sync.md" },
+    { "id": "C-005", "area": "security", "constraint": "仅本地绑定 (127.0.0.1)，无远程访问", "rationale": "安全基线", "status": "locked", "ref": "requirements/NFR-sec-001-local-only.md" },
+    { "id": "C-006", "area": "product", "constraint": "终端伴侣定位，不替代编辑器或终端", "rationale": "聚焦工作流编排层", "status": "locked", "ref": "product-brief.md" }
+  ],
+  "domain": {
+    "problem_statement": "不习惯 CLI 的开发者在使用 maestro-flow 60+ 命令体系时面临命令记忆负担重、输入繁琐、缺少可视化状态追踪、缺少统一 AI 开发入口的痛点",
+    "terminology": [
+      { "term": "workflow", "definition": "从分析→规划→执行→测试的命令序列", "ref": "glossary.json" },
+      { "term": "action", "definition": "maestro 中可调用的命令单元", "ref": "glossary.json" },
+      { "term": "milestone", "definition": "项目进度节点", "ref": "glossary.json" },
+      { "term": "stage", "definition": "里程碑内的执行阶段", "ref": "glossary.json" },
+      { "term": "output", "definition": "工作流步骤产生的文件输出", "ref": "glossary.json" }
+    ],
+    "audience": "不习惯 CLI 的开发者",
+    "industry": "开发者工具 / AI 辅助开发"
+  },
+  "non_goals": [
+    { "title": "多模型后端支持", "rationale": "仅对接 Claude Code", "ref": "product-brief.md" },
+    { "title": "完整代码编辑器", "rationale": "用户使用自己的编辑器", "ref": "product-brief.md" },
+    { "title": "VS Code / JetBrains 集成", "rationale": "Phase 2 考虑", "ref": "product-brief.md" }
+  ],
+  "insights": [
+    { "role": "architect", "area": "state-machine", "summary": "WorkflowExecution 8 状态转换 + ApprovalGate 6 状态转换，双源事件合并模型", "ref": "architecture/_index.md" },
+    { "role": "architect", "area": "configuration", "summary": "14 个配置参数，环境变量驱动，5 个 scope 级别", "ref": "architecture/_index.md" },
+    { "role": "pm", "area": "delivery", "summary": "4 阶段交付：Foundation → Core MVP → Interaction → Trust", "ref": "epics/_index.md" }
+  ],
+  "open_questions": [
+    { "area": "intent-classification", "question": "意图分类策略：LLM vs rule-based vs hybrid，MVP 验证后确定", "ref": "requirements/REQ-003-ai-dialog.md" },
+    { "area": "terminal-mode", "question": "Terminal Bridge 双流架构的性能影响需实测验证", "ref": "requirements/REQ-004-terminal-bridge.md" },
+    { "area": "approval-scope", "question": "EPIC-004 partial MVP 范围需在 plan 阶段明确", "ref": "epics/EPIC-004-trust.md" }
+  ],
+  "references": [
+    { "type": "product-brief", "path": "product-brief.md" },
+    { "type": "glossary", "path": "glossary.json" },
+    { "type": "requirements-index", "path": "requirements/_index.md" },
+    { "type": "architecture-index", "path": "architecture/_index.md" },
+    { "type": "epics-index", "path": "epics/_index.md" },
+    { "type": "readiness-report", "path": "readiness-report.md" }
+  ]
+}

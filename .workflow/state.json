@@ -1,0 +1,259 @@
+{
+  "initialized": true,
+  "project": {
+    "name": "Superset + Maestro-flow 融合",
+    "description": "基于 Superset (Agent IDE) + Maestro-flow (编排内核) 的融合项目，替代 oh-my-maestro"
+  },
+  "milestones": [
+    {
+      "id": "M1",
+      "type": "standard",
+      "name": "MVP — Workflow Visualization",
+      "status": "archived",
+      "phases": [1],
+      "phase_slugs": { "1": "foundation-core-mvp" },
+      "roadmap_ref": ".workflow/roadmap.md",
+      "created_at": "2026-06-21T08:00:00+08:00",
+      "completed_at": "2026-06-21T16:00:00+08:00"
+    },
+    {
+      "id": "M2",
+      "type": "standard",
+      "name": "Usable — AI & Terminal",
+      "status": "archived",
+      "phases": [2],
+      "phase_slugs": { "2": "interaction-surfaces" },
+      "roadmap_ref": ".workflow/roadmap.md",
+      "created_at": "2026-06-21T08:00:00+08:00",
+      "completed_at": "2026-06-22T10:00:00+08:00"
+    },
+    {
+      "id": "M3",
+      "type": "standard",
+      "name": "Refined — Trust & Polish",
+      "status": "archived",
+      "phases": [3],
+      "phase_slugs": { "3": "trust-polish" },
+      "roadmap_ref": ".workflow/roadmap.md",
+      "created_at": "2026-06-21T08:00:00+08:00"
+    },
+    {
+      "id": "F1",
+      "type": "standard",
+      "name": "Foundation — 基础打通",
+      "status": "active",
+      "phases": [0, 1],
+      "phase_slugs": { "0": "environment-bootstrap", "1": "cli-embed" },
+      "roadmap_ref": ".workflow/roadmap.md",
+      "created_at": "2026-06-22T20:00:00+08:00"
+    },
+    {
+      "id": "F2",
+      "type": "standard",
+      "name": "Orchestration — 编排可视化",
+      "status": "planned",
+      "phases": [2],
+      "phase_slugs": { "2": "command-chain-ui" },
+      "roadmap_ref": ".workflow/roadmap.md",
+      "created_at": "2026-06-22T20:00:00+08:00"
+    },
+    {
+      "id": "F3",
+      "type": "standard",
+      "name": "Deep Integration — 深度融合",
+      "status": "planned",
+      "phases": [3],
+      "phase_slugs": { "3": "full-integration" },
+      "roadmap_ref": ".workflow/roadmap.md",
+      "created_at": "2026-06-22T20:00:00+08:00"
+    }
+  ],
+  "current_milestone": "F1",
+  "artifacts": [
+    {
+      "id": "RDM-fusion-2026-06-22",
+      "type": "roadmap",
+      "phase": null,
+      "milestone": null,
+      "path": ".workflow/roadmap.md",
+      "created_at": "2026-06-22T20:00:00+08:00",
+      "depends_on": ["ANL-007"]
+    },
+    {
+      "id": "BRN-20260620-maestro-ide",
+      "type": "brainstorm",
+      "phase": null,
+      "milestone": null,
+      "path": "scratch/20260620-brainstorm-maestro-ide",
+      "created_at": "2026-06-20T18:55:00+08:00",
+      "context_package": "scratch/20260620-brainstorm-maestro-ide/context-package.json"
+    },
+    {
+      "id": "BLP-maestro-ide-2026-06-20",
+      "type": "blueprint",
+      "phase": null,
+      "milestone": null,
+      "path": "blueprint/BLP-maestro-ide-2026-06-20",
+      "created_at": "2026-06-20T21:25:00+08:00",
+      "context_package": "blueprint/BLP-maestro-ide-2026-06-20/context-package.json"
+    },
+    {
+      "id": "ANL-003",
+      "type": "analyze",
+      "scope": "micro",
+      "phase": 3,
+      "milestone": "M3",
+      "path": "scratch/20260622-analyze-P3-trust-polish",
+      "context_package": "scratch/20260622-analyze-P3-trust-polish/context-package.json",
+      "status": "completed",
+      "harvested": false,
+      "created_at": "2026-06-22T10:00:00+08:00",
+      "completed_at": "2026-06-22T10:30:00+08:00"
+    },
+    {
+      "id": "PLN-005",
+      "type": "plan",
+      "scope": "phase",
+      "phase": 3,
+      "milestone": "M3",
+      "path": "scratch/20260622-plan-P3-trust-polish",
+      "status": "completed",
+      "depends_on": ["ANL-003"],
+      "harvested": false,
+      "created_at": "2026-06-22T15:24:00+08:00",
+      "completed_at": "2026-06-22T15:35:00+08:00"
+    },
+    {
+      "id": "EXC-006",
+      "type": "execute",
+      "scope": "phase",
+      "phase": 3,
+      "milestone": "M3",
+      "path": "scratch/20260622-plan-P3-trust-polish",
+      "status": "completed",
+      "depends_on": ["PLN-005"],
+      "harvested": false,
+      "created_at": "2026-06-22T16:16:00+08:00",
+      "completed_at": "2026-06-22T17:00:00+08:00"
+    },
+    {
+      "id": "REV-004",
+      "type": "review",
+      "milestone": "M3",
+      "phase": 3,
+      "scope": "phase",
+      "path": "scratch/20260622-review-P3-trust-polish",
+      "status": "completed",
+      "depends_on": ["EXC-006"],
+      "harvested": false,
+      "verdict": "WARN",
+      "created_at": "2026-06-22T17:15:00+08:00",
+      "completed_at": "2026-06-22T17:30:00+08:00"
+    },
+    {
+      "id": "TST-001",
+      "type": "test",
+      "milestone": "M3",
+      "phase": 3,
+      "scope": "phase",
+      "path": "scratch/20260622-test-P3-trust-polish",
+      "status": "completed",
+      "depends_on": ["EXC-006"],
+      "harvested": false,
+      "created_at": "2026-06-22T17:45:00+08:00",
+      "completed_at": "2026-06-22T17:50:00+08:00"
+    },
+    {
+      "id": "ANL-007",
+      "type": "analyze",
+      "scope": "macro",
+      "phase": null,
+      "milestone": null,
+      "path": "scratch/20260622-analyze-macro-superset-maestro",
+      "context_package": "scratch/20260622-analyze-macro-superset-maestro/context-package.json",
+      "status": "completed",
+      "harvested": false,
+      "created_at": "2026-06-22T19:30:00+08:00",
+      "completed_at": "2026-06-22T20:00:00+08:00",
+      "verdict": "GO",
+      "scope_verdict": "large"
+    },
+    {
+      "id": "ANL-008",
+      "type": "analyze",
+      "scope": "micro",
+      "phase": 0,
+      "milestone": "F1",
+      "path": "scratch/20260622-analyze-P0-environment-bootstrap",
+      "context_package": "scratch/20260622-analyze-P0-environment-bootstrap/context-package.json",
+      "status": "completed",
+      "harvested": false,
+      "created_at": "2026-06-22T20:30:00+08:00",
+      "completed_at": "2026-06-22T20:35:00+08:00",
+      "verdict": "GO",
+      "scope_verdict": "small"
+    },
+    {
+      "id": "PLN-009",
+      "type": "plan",
+      "scope": "phase",
+      "phase": 0,
+      "milestone": "F1",
+      "path": "scratch/20260622-plan-P0-environment-bootstrap",
+      "status": "completed",
+      "depends_on": ["ANL-008"],
+      "harvested": false,
+      "created_at": "2026-06-22T21:00:00+08:00",
+      "completed_at": "2026-06-22T21:05:00+08:00"
+    }
+  ],
+  "milestone_history": [
+    {
+      "id": "M1",
+      "name": "MVP — Workflow Visualization",
+      "status": "completed",
+      "completed_at": "2026-06-21T16:00:00+08:00",
+      "archive_path": "milestones/M1/",
+      "archived_artifacts": [
+        {"id": "RDM-maestro-ide-2026-06-21", "type": "roadmap", "phase": null, "milestone": "M1", "path": ".workflow/roadmap.md", "created_at": "2026-06-21T08:00:00+08:00"},
+        {"id": "ANL-001", "type": "analyze", "scope": "micro", "phase": 1, "milestone": "M1", "path": "scratch/20260621-analyze-P1-foundation-core-mvp", "context_package": "scratch/20260621-analyze-P1-foundation-core-mvp/context-package.json", "status": "completed", "created_at": "2026-06-21T09:30:00+08:00", "completed_at": "2026-06-21T09:45:00+08:00", "harvested": false},
+        {"id": "PLN-001", "type": "plan", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-foundation-core-mvp", "status": "completed", "depends_on": ["ANL-001"], "harvested": false, "created_at": "2026-06-21T10:00:00+08:00", "completed_at": "2026-06-21T10:30:00+08:00"},
+        {"id": "EXC-001", "type": "execute", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-foundation-core-mvp", "status": "completed", "depends_on": ["PLN-001"], "harvested": false, "created_at": "2026-06-21T10:30:00+08:00", "completed_at": "2026-06-21T11:00:00+08:00"},
+        {"id": "REV-001", "type": "review", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-review-P1-foundation-core-mvp", "status": "completed", "depends_on": ["EXC-001"], "harvested": false, "created_at": "2026-06-21T14:35:00+08:00", "completed_at": "2026-06-21T14:40:00+08:00"},
+        {"id": "PLN-002", "type": "plan", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-review-fixes", "status": "completed", "depends_on": ["REV-001"], "harvested": false, "gap_mode": true, "source_issues": ["ISS-20260621-001", "ISS-20260621-002", "ISS-20260621-003"], "created_at": "2026-06-21T14:43:00+08:00", "completed_at": "2026-06-21T14:44:00+08:00"},
+        {"id": "EXC-002", "type": "execute", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-review-fixes", "status": "completed", "depends_on": ["PLN-002"], "harvested": false, "gap_mode": true, "created_at": "2026-06-21T14:45:00+08:00", "completed_at": "2026-06-21T14:46:00+08:00"},
+        {"id": "REV-002", "type": "review", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-review-fixes", "status": "completed", "depends_on": ["EXC-002"], "harvested": false, "verdict": "PASS", "created_at": "2026-06-21T14:48:00+08:00", "completed_at": "2026-06-21T14:48:00+08:00"},
+        {"id": "PLN-003", "type": "plan", "scope": "milestone", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-M1-audit-fixes", "status": "completed", "depends_on": ["REV-002"], "harvested": false, "gap_mode": true, "source_issues": ["M1-audit-gap-1", "M1-audit-gap-2", "M1-audit-gap-3", "M1-audit-gap-4", "M1-audit-gap-5", "M1-audit-gap-6", "M1-audit-gap-7"], "created_at": "2026-06-21T15:00:00+08:00", "completed_at": "2026-06-21T15:05:00+08:00"},
+        {"id": "EXC-003", "type": "execute", "scope": "milestone", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-M1-audit-fixes", "status": "completed", "depends_on": ["PLN-003"], "harvested": false, "gap_mode": true, "created_at": "2026-06-21T15:10:00+08:00", "completed_at": "2026-06-21T15:30:00+08:00"}
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "Usable — AI & Terminal",
+      "status": "completed",
+      "completed_at": "2026-06-22T10:00:00+08:00",
+      "archive_path": "milestones/M2/",
+      "archived_artifacts": [
+        {"id": "ANL-002", "type": "analyze", "scope": "micro", "phase": 2, "milestone": "M2", "path": "scratch/20260621-analyze-P2-interaction-surfaces", "context_package": "scratch/20260621-analyze-P2-interaction-surfaces/context-package.json", "status": "completed", "harvested": false, "created_at": "2026-06-21T16:30:00+08:00", "completed_at": "2026-06-21T17:30:00+08:00"},
+        {"id": "PLN-004", "type": "plan", "scope": "phase", "phase": 2, "milestone": "M2", "path": "scratch/20260621-plan-P2-interaction-surfaces", "status": "completed", "depends_on": ["ANL-002"], "harvested": false, "created_at": "2026-06-21T17:45:00+08:00", "completed_at": "2026-06-21T18:15:00+08:00"},
+        {"id": "EXC-004", "type": "execute", "scope": "phase", "phase": 2, "milestone": "M2", "path": "scratch/20260621-plan-P2-interaction-surfaces", "status": "completed", "depends_on": "PLN-004", "harvested": false, "created_at": "2026-06-21T07:37:51.613Z", "completed_at": "2026-06-21T08:13:22.986Z"},
+        {"id": "REV-003", "type": "review", "milestone": "M2", "phase": 2, "scope": "phase", "path": "scratch/20260621-review-P2-interaction-surfaces", "status": "completed", "depends_on": "EXC-004", "harvested": false, "created_at": "2026-06-21T19:00:00+08:00", "completed_at": "2026-06-21T08:29:18.278Z", "verdict": "BLOCK"},
+        {"id": "PLN-005", "type": "plan", "scope": "phase", "phase": 2, "milestone": "M2", "path": "scratch/20260621-plan-P2-review-fixes", "status": "completed", "depends_on": ["REV-003"], "harvested": false, "gap_mode": true, "source_review": "REV-003", "created_at": "2026-06-21T17:00:00+08:00", "completed_at": "2026-06-21T17:05:00+08:00"},
+        {"id": "EXC-005", "type": "execute", "scope": "phase", "phase": 2, "milestone": "M2", "path": "scratch/20260621-plan-P2-review-fixes", "status": "completed", "depends_on": "PLN-005", "harvested": false, "gap_mode": true, "created_at": "2026-06-21T17:05:00+08:00", "completed_at": "2026-06-21T17:20:00+08:00"},
+        {"id": "VRF-002", "type": "verify", "milestone": "M2", "phase": 2, "scope": "phase", "path": "scratch/20260621-plan-P2-review-fixes/verification.json", "status": "completed", "depends_on": "EXC-005", "harvested": false, "created_at": "2026-06-21T17:30:00+08:00", "completed_at": "2026-06-21T17:30:00+08:00"}
+      ]
+    }
+  ],
+  "accumulated_context": {
+    "deferred": [],
+    "key_decisions": [
+      "本地 Web 应用架构 (SA-01)",
+      "CLI 子进程优先集成 (SA-02)",
+      "事件驱动 + WebSocket (SA-03)",
+      "Node.js + SvelteKit (SA-04)",
+      "意图驱动交互 (UX-01)",
+      "状态导向模式 (UX-02)",
+      "概念翻译层 (UX-03)"
+    ]
+  }
+}

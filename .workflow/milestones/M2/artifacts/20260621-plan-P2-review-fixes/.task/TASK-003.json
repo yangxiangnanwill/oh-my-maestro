@@ -1,0 +1,105 @@
+{
+  "id": "TASK-003",
+  "title": "修复 terminal-manager.ts PTY 退出时 buffer 未 flush + 清理逻辑去重",
+  "description": "修复 CORR-001（handlePtyExit 在清除 throttleTimer 前未 flush 残留 buffer 数据，导致 PTY 退出前最后一批输出丢失）和 MAINT-001（destroyTerminal 和 handlePtyExit 中清理逻辑 80% 重复，且 destroyTerminal 的 kill 可能触发 handlePtyExit 重复发送 EXIT 事件）。修复方案：抽取 cleanupSession 私有方法统一清理逻辑，在清理前先 flush buffer；添加 _exiting 标记防止重复 EXIT 事件。",
+  "issue_id": "CORR-001",
+  "issue_refs": ["MAINT-001"],
+  "type": "bugfix",
+  "priority": "high",
+  "effort": "medium",
+  "action": "在 terminal-manager.ts 中抽取 cleanupSession(terminalId, exitCode, flushBuffer) 私有方法；在 handlePtyExit 中先 flush buffer 再调用 cleanupSession；在 destroyTerminal 中先设置 _exiting 标记再 kill PTY，防止重复 EXIT 事件；cleanupSession 统一处理 throttleTimer 清除、sessions.delete、EXIT 事件发布",
+  "status": "completed",
+  "completed_at": "2026-06-21T17:16:00+08:00",
+  "actual_duration": "20m",
+  "scope": "src/lib/server/terminal-manager.ts",
+  "focus_paths": [
+    "src/lib/server/terminal-manager.ts"
+  ],
+  "read_first": [
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/__tests__/terminal-manager.test.ts",
+    "src/lib/shared/events.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n \"cleanupSession\" src/lib/server/terminal-manager.ts 返回至少 3 处匹配（方法定义 + destroyTerminal 调用 + handlePtyExit 调用）",
+      "grep -n \"active.buffer.length > 0\" src/lib/server/terminal-manager.ts 在 handlePtyExit 方法中返回匹配行（flush buffer 逻辑）",
+      "grep -n \"_exiting\" src/lib/server/terminal-manager.ts 在 destroyTerminal 方法中返回匹配行（防止重复 EXIT）",
+      "grep -n \"clearInterval.*throttleTimer\" src/lib/server/terminal-manager.ts 仅在 cleanupSession 方法中返回匹配行（无重复清理代码）",
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts 通过"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts && npx tsc --noEmit",
+    "definition_of_done": "PTY 退出时 buffer 中残留数据被 flush 为 OUTPUT 事件；destroyTerminal 和 handlePtyExit 不重复发送 EXIT 事件；清理逻辑无重复代码"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "modify",
+      "target": "destroyTerminal 方法 (第 170-193 行) + handlePtyExit 方法 (第 268-288 行) + 新增 cleanupSession 方法",
+      "change": "抽取 cleanupSession(terminalId, exitCode, flushBuffer) 私有方法；handlePtyExit 中先 flush buffer 再调用 cleanupSession；destroyTerminal 中设置 _exiting 标记后 kill PTY，在 cleanupSession 中统一清理"
+    }
+  ],
+  "implementation": [
+    "1. 在 ActiveTerminal 接口中添加 _exiting?: boolean 字段（第 16-21 行）",
+    "2. 在 TerminalManager 类中添加私有方法 cleanupSession(terminalId: string, exitCode: number | null, flushBuffer: boolean): void，实现:\n  - 如果 flushBuffer 且 active.buffer.length > 0，则 join buffer 并发布 TerminalEvents.OUTPUT 事件 + 追加到 ringBuffer\n  - 清除 throttleTimer（clearInterval）\n  - 从 sessions Map 中删除\n  - 发布 TerminalEvents.EXIT 事件",
+    "3. 修改 handlePtyExit 方法：调用 this.cleanupSession(terminalId, exitCode, true)（flushBuffer=true）",
+    "4. 修改 destroyTerminal 方法：在 active.pty.kill() 之前设置 active._exiting = true；在 cleanupSession 中检查 _exiting 标记决定是否发布 EXIT 事件；destroyTerminal 中调用 this.cleanupSession(terminalId, null, true)",
+    "5. 修改 pty.onExit 回调：检查 active._exiting 标记，如果已标记则跳过 handlePtyExit（防止 destroyTerminal 的 kill 触发重复 EXIT）",
+    "6. 运行 npx vitest run src/lib/server/__tests__/terminal-manager.test.ts 验证",
+    "7. 运行 npx tsc --noEmit 验证类型"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts",
+      "npx tsc --noEmit"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/terminal-manager.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "所有现有 terminal-manager 测试通过",
+      "TypeScript 编译无错误",
+      "cleanupSession 是唯一的清理代码路径"
+    ]
+  },
+  "reference": {
+    "pattern": "抽取私有方法统一清理逻辑 — 遵循 DRY 原则",
+    "files": [
+      "src/lib/server/terminal-manager.ts:170-193 (destroyTerminal 当前实现)",
+      "src/lib/server/terminal-manager.ts:268-288 (handlePtyExit 当前实现)",
+      "src/lib/server/terminal-manager.ts:229-263 (startFrameThrottle — buffer 和 throttleTimer 的使用方式)"
+    ],
+    "examples": "destroyTerminal 和 handlePtyExit 当前重复的清理代码:\n- clearInterval(active.throttleTimer)\n- active.throttleTimer = null\n- this.sessions.delete(terminalId)\n- this.eventBus.publish(TerminalEvents.EXIT, ...)"
+  },
+  "rationale": {
+    "chosen_approach": "抽取 cleanupSession 私有方法统一清理逻辑，同时解决两个问题：(1) CORR-001 的 buffer 未 flush — 在 cleanupSession 中先 flush 再清理；(2) MAINT-001 的代码重复 — 两个调用点都走同一个清理路径。_exiting 标记解决 destroyTerminal 的 kill 触发 onExit → handlePtyExit 的重复 EXIT 事件问题。",
+    "decision_factors": [
+      "DRY 原则：消除 80% 重复代码",
+      "最小改动：不改变公开 API",
+      "向后兼容：destroyTerminal 和 handlePtyExit 的行为语义不变"
+    ],
+    "tradeoffs": "引入 _exiting 标记增加了一点状态复杂度，但比在 onExit 中 try-catch 忽略错误的方案更明确。"
+  },
+  "risks": [
+    "pty.onExit 回调可能在 destroyTerminal 设置 _exiting 之前触发（竞态条件）。通过先设置 _exiting 再 kill 的顺序来避免。"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["Terminal PTY 生命周期管理"],
+    "affected_components": ["TerminalManager"],
+    "affected_requirements": ["C-P2-1: PTY 会话管理"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

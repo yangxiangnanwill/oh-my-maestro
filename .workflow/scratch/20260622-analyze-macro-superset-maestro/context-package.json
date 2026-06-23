@@ -1,0 +1,60 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "analyze",
+    "artifact_id": "ANL-007",
+    "session_path": "scratch/20260622-analyze-macro-superset-maestro",
+    "generated_at": "2026-06-22T20:00:00+08:00"
+  },
+  "requirements": [
+    {
+      "id": "REQ-F-001",
+      "title": "Superset 中集成 Maestro-flow CLI",
+      "acceptance": "maestro 命令可在 Superset 终端面板中正常执行",
+      "ref": "conclusions.json#implementation_scope[0]"
+    },
+    {
+      "id": "REQ-F-002",
+      "title": "命令链状态可视化",
+      "acceptance": "status.json 内容在 Superset UI 中渲染为可交互的步骤进度面板",
+      "ref": "conclusions.json#implementation_scope[1]"
+    },
+    {
+      "id": "REQ-F-003",
+      "title": "全功能融合",
+      "acceptance": "KG、分析、决策能力通过 MCP 端点暴露",
+      "ref": "conclusions.json#implementation_scope[2]"
+    }
+  ],
+  "constraints": [
+    { "status": "locked", "title": "保留 Maestro-flow 命令链系统", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "保留概念翻译层设计", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "支持 Windows 平台", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "采用 MCP 协议", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "清空 oh-my-maestro", "ref": "context.md#Locked" },
+    { "status": "open", "title": "前端框架选择", "ref": "context.md#Free" },
+    { "status": "open", "title": "Maestro-flow 运行方式", "ref": "context.md#Free" },
+    { "status": "open", "title": "命令存储位置", "ref": "context.md#Free" },
+    { "status": "open", "title": "状态同步机制", "ref": "context.md#Free" }
+  ],
+  "domain": {},
+  "non_goals": [
+    { "title": "移动端支持", "rationale": "当前阶段优先级低", "ref": "context.md#Deferred" },
+    { "title": "VS Code / JetBrains 插件", "rationale": "未来考虑", "ref": "context.md#Deferred" },
+    { "title": "生产部署配置", "rationale": "当前仅开发环境", "ref": "context.md#Deferred" }
+  ],
+  "insights": [
+    { "role": "analyzer", "area": "融合策略", "summary": "Superset UI + Maestro-flow 内核是最优方案，两者互补性极强" },
+    { "role": "analyzer", "area": "技术栈", "summary": "Maestro-flow 以子进程方式运行可快速验证，逐步迁移" },
+    { "role": "analyzer", "area": "时机", "summary": "oh-my-maestro M3 已完成执行，是切换到 Superset 的最佳时机" }
+  ],
+  "open_questions": [
+    { "area": "前端框架", "question": "是否保留 SvelteKit 概念翻译组件，还是在 React 中重写？", "options": ["React 重写所有", "混合使用", "保留 SvelteKit 作为微前端"] },
+    { "area": "运行方式", "question": "Maestro-flow 最终以什么方式运行？", "options": ["Node.js 子进程", "Bun 直接运行", "平台无关模块"] },
+    { "area": "命令迁移", "question": "Maestro-flow 的 .claude/commands/ 多久迁移？", "options": ["Phase 1 立即", "Phase 2 逐步", "Phase 3 全量"] }
+  ],
+  "references": [
+    { "type": "analysis", "path": "context.md" },
+    { "type": "conclusions", "path": "conclusions.json" }
+  ]
+}

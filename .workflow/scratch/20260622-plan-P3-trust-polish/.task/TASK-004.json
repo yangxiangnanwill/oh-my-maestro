@@ -1,0 +1,122 @@
+{
+  "id": "TASK-004",
+  "title": "MAINT-002 SessionManager<T> 泛型基类提取",
+  "description": "提取 TerminalManager 和 DialogManager 共享的 session CRUD 模式到泛型基类 SessionManager<T>。创建 src/lib/server/session-manager.ts，定义 SessionManager<T> 抽象类：泛型 T 为 session 数据类型，包含 sessions Map、MAX_SESSIONS、getSessionCount()、hasSession() 方法。TerminalManager 和 DialogManager 继承 SessionManager，复用 session CRUD 逻辑。保持所有现有公共接口不变，现有测试全部通过。",
+  "type": "refactor",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "创建 src/lib/server/session-manager.ts — 泛型抽象类 SessionManager<T>：protected sessions: Map<string, T>；protected readonly MAX_SESSIONS: number（构造函数参数，默认 5）；getSessionCount(): number；hasSession(id: string): boolean；protected checkMaxSessions(): void（抛出 Error 如果已达上限）。修改 src/lib/server/terminal-manager.ts — TerminalManager extends SessionManager<ActiveTerminal>，移除重复的 sessions、MAX_SESSIONS、getSessionCount()、hasSession() 定义；构造函数中调用 super(eventBus, 5)；删除 MAINT-002 TODO 注释。修改 src/lib/server/dialog-manager.ts — DialogManager extends SessionManager<ActiveDialog>，移除重复的 sessions、MAX_SESSIONS、getSessionCount()、hasSession() 定义；构造函数中调用 super(eventBus, 5)；删除 MAINT-002 TODO 注释。",
+  "scope": "src/lib/server/session-manager.ts (new), src/lib/server/terminal-manager.ts, src/lib/server/dialog-manager.ts",
+  "focus_paths": [
+    "src/lib/server/session-manager.ts",
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/dialog-manager.ts"
+  ],
+  "read_first": [
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/dialog-manager.ts",
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/__tests__/terminal-manager.test.ts",
+    "src/lib/server/__tests__/dialog-manager.test.ts"
+  ],
+  "depends_on": [
+    "TASK-003"
+  ],
+  "parallel_group": "wave-3",
+  "convergence": {
+    "criteria": [
+      "grep -r 'class SessionManager' src/lib/server/session-manager.ts 返回泛型类定义，包含 <T> 类型参数",
+      "grep -r 'extends SessionManager' src/lib/server/terminal-manager.ts 返回 'extends SessionManager<ActiveTerminal>'",
+      "grep -r 'extends SessionManager' src/lib/server/dialog-manager.ts 返回 'extends SessionManager<ActiveDialog>'",
+      "grep -r 'MAINT-002' src/lib/server/terminal-manager.ts 返回 0 行（TODO 已删除）",
+      "grep -r 'MAINT-002' src/lib/server/dialog-manager.ts 返回 0 行（TODO 已删除）",
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts src/lib/server/__tests__/dialog-manager.test.ts 全部通过，零回归"
+    ],
+    "verification": "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts src/lib/server/__tests__/dialog-manager.test.ts && npx tsc --noEmit",
+    "definition_of_done": "TerminalManager 和 DialogManager 通过 SessionManager<T> 基类复用 session CRUD 逻辑，所有现有测试通过，MAINT-002 TODO 已移除"
+  },
+  "files": [
+    {
+      "path": "src/lib/server/session-manager.ts",
+      "action": "create",
+      "target": "SessionManager<T> abstract class",
+      "change": "创建泛型抽象基类：sessions Map、MAX_SESSIONS、getSessionCount()、hasSession()、checkMaxSessions()"
+    },
+    {
+      "path": "src/lib/server/terminal-manager.ts",
+      "action": "modify",
+      "target": "TerminalManager class declaration and constructor",
+      "change": "继承 SessionManager<ActiveTerminal>，移除重复的 session CRUD 代码，删除 MAINT-002 TODO"
+    },
+    {
+      "path": "src/lib/server/dialog-manager.ts",
+      "action": "modify",
+      "target": "DialogManager class declaration and constructor",
+      "change": "继承 SessionManager<ActiveDialog>，移除重复的 session CRUD 代码，删除 MAINT-002 TODO"
+    }
+  ],
+  "implementation": [
+    "创建 src/lib/server/session-manager.ts — 定义泛型抽象类 SessionManager<T>",
+    "SessionManager<T> 包含：protected sessions: Map<string, T> = new Map()；protected readonly MAX_SESSIONS: number；constructor(maxSessions?: number) 默认 5",
+    "SessionManager<T> 方法：getSessionCount(): number { return this.sessions.size }；hasSession(id: string): boolean { return this.sessions.has(id) }",
+    "SessionManager<T> 方法：protected checkMaxSessions(): void — 如果 this.sessions.size >= this.MAX_SESSIONS 抛出 Error",
+    "修改 TerminalManager — class TerminalManager extends SessionManager<ActiveTerminal>",
+    "TerminalManager 构造函数中调用 super(5)，移除 this.sessions、this.MAX_SESSIONS 声明",
+    "TerminalManager 移除 getSessionCount() 和 hasSession() 方法（继承自基类）",
+    "TerminalManager 删除第 59 行 MAINT-002 TODO 注释",
+    "修改 DialogManager — class DialogManager extends SessionManager<ActiveDialog>",
+    "DialogManager 构造函数中调用 super(5)，移除 this.sessions、this.MAX_SESSIONS 声明",
+    "DialogManager 移除 getSessionCount() 和 hasSession() 方法（继承自基类）",
+    "DialogManager 删除 MAINT-002 TODO 注释",
+    "运行全部测试验证零回归"
+  ],
+  "test": {
+    "commands": [
+      "npx vitest run src/lib/server/__tests__/terminal-manager.test.ts",
+      "npx vitest run src/lib/server/__tests__/dialog-manager.test.ts",
+      "npx tsc --noEmit"
+    ],
+    "unit": [
+      "src/lib/server/__tests__/terminal-manager.test.ts",
+      "src/lib/server/__tests__/dialog-manager.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "terminal-manager.test.ts 全部通过",
+      "dialog-manager.test.ts 全部通过",
+      "TypeScript 编译零错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Follow TypeScript abstract class pattern — protected members accessible to subclasses, generic type parameter for session data type",
+    "files": [
+      "src/lib/server/terminal-manager.ts",
+      "src/lib/server/dialog-manager.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "泛型抽象类提取共享 session CRUD 模式，子类通过 extends 继承。不改变公共 API，不引入新依赖。保持最小改动原则 — 只提取真正共享的代码（sessions Map、MAX_SESSIONS、getSessionCount、hasSession），不强行统一不同的逻辑。",
+    "decision_factors": [
+      "TerminalManager 和 DialogManager 共享 ~40% session 管理模式",
+      "泛型 <T> 允许 ActiveTerminal 和 ActiveDialog 保持各自的内部类型",
+      "抽象类而非接口 — 提供默认实现，子类无需重复代码",
+      "Phase 3 是最后一个计划里程碑，适合做架构整理"
+    ],
+    "tradeoffs": "继承增加了耦合 — 如果未来两个 Manager 的 session 管理逻辑分化，需要重构。当前共享模式稳定，风险可控。"
+  },
+  "risks": [
+    "TypeScript 泛型继承可能导致类型推断问题 — 需验证编译通过",
+    "sessions 从 private 变为 protected 可能影响封装性 — 子类直接访问 sessions Map，需确保不绕过 checkMaxSessions()"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "1h 30m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 3,
+    "execution_group": "wave-2",
+    "executor": "agent"
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "id": "TASK-003",
+  "title": "修复 MEDIUM/LOW 质量问题：孤儿 projectState store + ParamDef 类型偏差 + init() 错误处理",
+  "description": "修复三个 MEDIUM/LOW 问题：(1) projectState store 初始化为空值后没有任何代码从 GET /api/project/state 拉取数据，ProjectRadar 组件永远显示 'No project loaded'。在 +page.svelte 添加 $effect 在挂载时 fetch 项目状态。(2) WorkflowMeta.params 类型为 Record<string, unknown> 但 spec 定义为 ParamDef[]。恢复 ParamDef 接口并修正 WorkflowMeta.params 类型。(3) init() 方法 catch 块不区分 UnsupportedVersionError（预期的回退场景）和其他错误（如 TypeError、SyntaxError 等需要记录的异常）。添加 instanceof 检查。",
+  "issue_id": null,
+  "issue_refs": ["M1-audit-gap-5", "M1-audit-gap-6", "M1-audit-gap-7"],
+  "type": "fix",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "在 +page.svelte 添加 $effect 调用 fetch('/api/project/state').then(r=>r.json()).then(data=>projectState.set(data))；在 types.ts 添加 ParamDef 接口 { name: string, type: string, required: boolean, default?: unknown } 并将 WorkflowMeta.params 改为 ParamDef[]；在 index.ts 的 init() catch 块添加 if (err instanceof UnsupportedVersionError) 分支用 console.warn 处理，else 分支用 console.error 记录",
+  "status": "completed",
+  "completed_at": "2026-06-21T10:56:00Z",
+  "actual_duration": "28m",
+  "scope": "src/routes/+page.svelte, src/lib/shared/types.ts, src/lib/server/index.ts",
+  "focus_paths": ["src/routes/+page.svelte", "src/lib/shared/types.ts", "src/lib/server/index.ts"],
+  "read_first": [
+    "src/routes/+page.svelte",
+    "src/lib/shared/types.ts",
+    "src/lib/server/index.ts",
+    "src/lib/server/cli-adapter.ts",
+    "src/lib/client/stores/index.ts"
+  ],
+  "depends_on": ["TASK-001"],
+  "wave": 2,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/routes/+page.svelte 的 <script> 块中包含 fetch('/api/project/state') 调用",
+      "src/lib/shared/types.ts 包含 export interface ParamDef { name: string; type: string; required: boolean; default?: unknown; }",
+      "src/lib/shared/types.ts 中 WorkflowMeta.params 类型为 ParamDef[] 而非 Record<string, unknown>",
+      "src/lib/server/index.ts 的 init() catch 块包含 if (err instanceof UnsupportedVersionError) 条件分支",
+      "TypeScript 编译无错误"
+    ],
+    "verification": "grep -n 'fetch.*project/state' src/routes/+page.svelte && grep -n 'interface ParamDef' src/lib/shared/types.ts && grep -n 'params: ParamDef' src/lib/shared/types.ts && grep -n 'UnsupportedVersionError' src/lib/server/index.ts && npx tsc --noEmit --pretty false 2>&1 | grep -c 'error'",
+    "definition_of_done": "页面加载时 ProjectRadar 显示项目状态数据；WorkflowMeta.params 符合 spec 的 ParamDef[] 类型；init() 对已知版本错误使用 warn 级别、对未知错误使用 error 级别记录"
+  },
+  "files": [
+    {
+      "path": "src/routes/+page.svelte",
+      "action": "modify",
+      "target": "页面 onMount 逻辑",
+      "change": "在 <script> 块中添加 import { projectState } from '$lib/client/stores/index.js' 和 $effect 块，在挂载时 fetch('/api/project/state') 并将结果写入 projectState store"
+    },
+    {
+      "path": "src/lib/shared/types.ts",
+      "action": "modify",
+      "target": "WorkflowMeta 接口和新增 ParamDef 接口",
+      "change": "在 WorkflowMeta 之前添加 export interface ParamDef { name: string; type: string; required: boolean; default?: unknown; }，将 WorkflowMeta.params 从 Record<string, unknown> 改为 ParamDef[]"
+    },
+    {
+      "path": "src/lib/server/index.ts",
+      "action": "modify",
+      "target": "MaestroIDEServer.init 方法 catch 块",
+      "change": "在 catch 块中添加 import { UnsupportedVersionError } from './cli-adapter.js'，用 if (err instanceof UnsupportedVersionError) 分支使用 console.warn（保持现有回退逻辑），else 分支使用 console.error 记录意外错误"
+    },
+    {
+      "path": "src/lib/server/cli-adapter.ts",
+      "action": "modify",
+      "target": "DefaultCLIAdapter.parseSkillsOutput 方法 params 赋值",
+      "change": "将 params: parsed.params ?? {} 改为 params: Array.isArray(parsed.params) ? parsed.params : []，确保返回 ParamDef[] 类型而非对象"
+    }
+  ],
+  "implementation": [
+    "在 types.ts 中，WorkflowMeta 接口（约第119行）之前插入：export interface ParamDef { name: string; type: string; required: boolean; default?: unknown; }",
+    "将 types.ts 第124行 WorkflowMeta.params 从 params: Record<string, unknown> 改为 params: ParamDef[]",
+    "在 +page.svelte 的 <script> 块顶部 import 中添加 projectState：import { displayMode, connectionState, projectState } from '$lib/client/stores/index.js'",
+    "在 +page.svelte 的现有 $effect 块之后添加：$effect(() => { fetch('/api/project/state').then(r => r.json()).then(data => { if (data && data.projectId) projectState.set(data); }).catch(err => console.error('[App] Failed to load project state:', err)); })",
+    "在 index.ts 顶部 import 中添加：import { CLIAdapterRegistry, DefaultCLIAdapter, UnsupportedVersionError } from './cli-adapter.js'（在现有 import 行的 UnsupportedVersionError 位置添加）",
+    "检查 index.ts 第6行现有 import，如果未导入 UnsupportedVersionError 则添加",
+    "重构 index.ts init() catch 块（第116-119行）为：if (err instanceof UnsupportedVersionError) { console.warn('[Maestro IDE] Unsupported CLI version, using default adapter:', err.version); this.detectedVersion = '1'; } else { console.error('[Maestro IDE] Version detection failed:', err); this.detectedVersion = '1'; }",
+    "在 cli-adapter.ts 的 DefaultCLIAdapter.parseSkillsOutput 方法中，将 params: parsed.params ?? {} 改为 params: Array.isArray(parsed.params) ? parsed.params : []，确保返回 ParamDef[] 类型",
+    "运行 npx tsc --noEmit 验证所有类型变更无编译错误"
+  ],
+  "test": {
+    "commands": ["npx tsc --noEmit 2>&1"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "TypeScript 编译无错误",
+      "ParamDef 接口导出且字段定义正确",
+      "WorkflowMeta.params 类型为 ParamDef[]",
+      "+page.svelte 在挂载时发起 GET /api/project/state 请求",
+      "init() 对 UnsupportedVersionError 和其他错误的日志级别不同"
+    ]
+  },
+  "reference": {
+    "pattern": "现有 ParamDef spec 定义在 TASK-001.json:66，UnsupportedVersionError 在 cli-adapter.ts:19-27",
+    "files": ["src/lib/shared/types.ts", "src/lib/server/cli-adapter.ts", "src/routes/+page.svelte"],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "三个 MEDIUM/LOW 修复合并为一个任务，因为它们共享依赖上下文（都依赖 TASK-001 完成后的类型状态），且每个修复都是独立的小范围文件修改。合并可减少 agent 启动开销。",
+    "decision_factors": [
+      "projectState 加载需要 types.ts 和 stores 类型稳定",
+      "ParamDef 类型变更可能影响 stores 的类型推断（TASK-001 完成后类型一致）",
+      "init() 错误处理独立于前两者但工作量小，不宜单独建任务"
+    ],
+    "tradeoffs": "三个修复在同一个任务中，如果其中一个失败需要回滚整个任务。但每个修复范围极小且互不冲突，风险可接受"
+  },
+  "risks": [
+    "如果 +page.svelte 导入 projectState 后 Svelte 编译报错（store 引用问题），需检查 stores/index.ts 是否正确导出 projectState"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["Project Radar Display", "Workflow Metadata", "Server Initialization"],
+    "affected_components": ["+page.svelte", "Shared Types", "Server Entry"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "25m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

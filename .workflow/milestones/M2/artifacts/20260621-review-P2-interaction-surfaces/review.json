@@ -1,0 +1,166 @@
+{
+  "phase": 2,
+  "level": "standard",
+  "verdict": "BLOCK",
+  "reviewed_at": "2026-06-21T19:30:00+08:00",
+  "reviewer": "workflow-reviewer",
+  "dimensions_reviewed": ["correctness", "security", "performance", "architecture", "maintainability", "best-practices"],
+  "files_reviewed": [
+    "src/lib/server/terminal-manager.ts",
+    "src/lib/server/dialog-manager.ts",
+    "src/lib/server/event-bus.ts",
+    "src/lib/server/ws-gateway.ts",
+    "src/lib/server/translator.ts",
+    "src/lib/server/index.ts",
+    "src/lib/shared/types.ts",
+    "src/lib/client/stores/index.ts",
+    "src/lib/client/components/TerminalBridge.svelte",
+    "src/lib/client/components/AIDialog.svelte"
+  ],
+  "severity_distribution": {
+    "critical": 3,
+    "high": 15,
+    "medium": 47,
+    "low": 47,
+    "total": 112
+  },
+  "critical_files": [
+    { "file": "src/lib/server/terminal-manager.ts", "dimensions": ["correctness", "security", "performance", "architecture", "maintainability"] },
+    { "file": "src/lib/server/dialog-manager.ts", "dimensions": ["correctness", "security", "performance", "maintainability"] },
+    { "file": "src/lib/client/components/AIDialog.svelte", "dimensions": ["correctness", "security", "performance", "maintainability", "best-practices"] },
+    { "file": "src/lib/client/stores/index.ts", "dimensions": ["correctness", "performance", "architecture", "maintainability", "best-practices"] },
+    { "file": "src/lib/server/ws-gateway.ts", "dimensions": ["correctness", "security", "performance", "architecture"] }
+  ],
+  "top_findings": [
+    {
+      "id": "CORR-004",
+      "dimension": "correctness",
+      "severity": "critical",
+      "title": "TerminalBridge 发送 term:create 事件但服务端无 handler — 终端创建功能完全不可用",
+      "file": "src/lib/client/components/TerminalBridge.svelte",
+      "line": 118,
+      "description": "TerminalBridge 通过 WebSocket 发送 'term:create' 事件，但 TerminalEvents 中未定义该常量，TerminalManager 也未订阅该事件。点击 '+ Create Terminal' 按钮完全无效。",
+      "suggestion": "在 ws-gateway.ts 的 handleClientMessage 中添加 'term:create' case，直接调用 terminalManager.createTerminal()。或通过 HTTP API POST /api/terminal/create。"
+    },
+    {
+      "id": "CORR-005",
+      "dimension": "correctness",
+      "severity": "critical",
+      "title": "TerminalBridge 发送 term:destroy 事件但服务端无 handler — 终端销毁导致僵尸 PTY 进程",
+      "file": "src/lib/client/components/TerminalBridge.svelte",
+      "line": 136,
+      "description": "关闭终端标签页时前端销毁了 xterm 实例，但服务端 PTY 进程未被杀死，造成资源泄漏和 MAX_SESSIONS 耗尽。",
+      "suggestion": "在 ws-gateway.ts 中添加 'term:destroy' case 调用 terminalManager.destroyTerminal()。"
+    },
+    {
+      "id": "ARCH-001",
+      "dimension": "architecture",
+      "severity": "critical",
+      "title": "事件契约不匹配 — term:create/term:destroy 未在 TerminalEvents 中定义",
+      "file": "src/lib/shared/events.ts",
+      "line": 38,
+      "description": "TerminalEvents 缺少 CREATE 和 DESTROY 常量定义，导致前后端事件契约断裂。",
+      "suggestion": "在 TerminalEvents 中添加 CREATE: 'term:create' 和 DESTROY: 'term:destroy' 常量。"
+    },
+    {
+      "id": "CORR-002",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "NDJSON 流解析缺少行缓冲 — 跨 chunk 消息截断导致数据丢失",
+      "file": "src/lib/server/dialog-manager.ts",
+      "line": 125,
+      "description": "stdout data 事件可能在任何字节边界触发，跨 chunk 的 NDJSON 行被截断后永久丢失。",
+      "suggestion": "使用 ActiveDialog.buffer 实现跨 chunk 行缓冲。"
+    },
+    {
+      "id": "SEC-005",
+      "dimension": "security",
+      "severity": "high",
+      "title": "sanitizeHtml 使用不安全的正则过滤 — XSS 绕过风险",
+      "file": "src/lib/client/components/AIDialog.svelte",
+      "line": 43,
+      "description": "手写正则无法可靠防护 XSS，存在多种绕过向量（无引号属性、HTML 实体编码、SVG/IMG 标签等）。",
+      "suggestion": "使用 DOMPurify 替代手写正则进行 HTML 净化。"
+    },
+    {
+      "id": "SEC-001",
+      "dimension": "security",
+      "severity": "high",
+      "title": "shell 参数未验证 — 命令注入风险",
+      "file": "src/lib/server/terminal-manager.ts",
+      "line": 84,
+      "description": "createTerminal 的 shell 参数直接传递给 node-pty spawn，无白名单验证。",
+      "suggestion": "对 shell 参数进行白名单验证，仅允许预定义的安全 shell。"
+    },
+    {
+      "id": "CORR-001",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "PTY 退出时 buffer 未 flush — 最后输出数据丢失",
+      "file": "src/lib/server/terminal-manager.ts",
+      "line": 268,
+      "description": "handlePtyExit 在清除 throttleTimer 前未 flush 残留 buffer 数据。",
+      "suggestion": "在清理前先 flush buffer 中的残留数据。"
+    },
+    {
+      "id": "CORR-003",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "DelegateEvent 步骤状态转换错误 — queued/started 被标记为 complete",
+      "file": "src/lib/client/stores/index.ts",
+      "line": 140,
+      "description": "type 非 'failed' 时步骤 status 被设为 'complete'，导致刚入队的步骤显示为已完成。",
+      "suggestion": "使用完整的状态映射：queued/started→running, completed→complete, failed→failed。"
+    },
+    {
+      "id": "MAINT-002",
+      "dimension": "maintainability",
+      "severity": "high",
+      "title": "TerminalManager 和 DialogManager 存在大量结构重复",
+      "file": "src/lib/server/terminal-manager.ts",
+      "line": 47,
+      "description": "两个 Manager 共享相同的 session 管理模式但独立实现，约 40% 代码可抽象。",
+      "suggestion": "提取泛型 SessionManager<T> 基类封装公共 session CRUD 操作。"
+    },
+    {
+      "id": "MAINT-001",
+      "dimension": "maintainability",
+      "severity": "high",
+      "title": "PTY 退出清理逻辑在 destroyTerminal 和 handlePtyExit 中重复",
+      "file": "src/lib/server/terminal-manager.ts",
+      "line": 170,
+      "description": "两处清理逻辑 80% 重复，且 destroyTerminal 的 kill 可能触发 handlePtyExit 重复发送 EXIT 事件。",
+      "suggestion": "抽取 cleanupSession 私有方法统一清理逻辑。"
+    }
+  ],
+  "deep_dives": [
+    {
+      "finding_id": "CORR-004",
+      "root_cause": "TerminalEvents 缺少 CREATE/DESTROY 常量，TerminalManager 未订阅对应事件",
+      "impact_radius": ["TerminalBridge.svelte", "ws-gateway.ts", "events.ts", "terminal-manager.ts"],
+      "remediation": "在 ws-gateway.ts 中添加显式 case 处理，或通过 HTTP API 路径",
+      "risk_if_unfixed": "终端创建/销毁功能完全不可用，用户无法通过 UI 管理终端",
+      "reassessed_severity": "critical",
+      "confidence": 0.98
+    },
+    {
+      "finding_id": "CORR-005",
+      "root_cause": "同 CORR-004，'term:destroy' 事件无 handler",
+      "impact_radius": ["TerminalBridge.svelte", "ws-gateway.ts", "events.ts"],
+      "remediation": "同 CORR-004",
+      "risk_if_unfixed": "僵尸 PTY 进程泄漏 + MAX_SESSIONS 耗尽",
+      "reassessed_severity": "critical",
+      "confidence": 0.98
+    },
+    {
+      "finding_id": "ARCH-001",
+      "root_cause": "事件类型字符串在多个文件中自由拼写，TypeScript 无法捕获拼写错误",
+      "impact_radius": ["events.ts", "TerminalBridge.svelte", "ws-gateway.ts", "terminal-manager.ts"],
+      "remediation": "统一 TerminalEvents 常量定义 + ws-gateway 显式 case 处理",
+      "risk_if_unfixed": "松散契约导致静默故障，功能完全不可用",
+      "reassessed_severity": "critical",
+      "confidence": 0.95
+    }
+  ],
+  "issues_created": ["ISS-20260621-004", "ISS-20260621-005", "ISS-20260621-006", "ISS-20260621-007", "ISS-20260621-008", "ISS-20260621-009", "ISS-20260621-010", "ISS-20260621-011", "ISS-20260621-012", "ISS-20260621-013"]
+}

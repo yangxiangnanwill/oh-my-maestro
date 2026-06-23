@@ -1,0 +1,187 @@
+{
+  "session": "ANL-003",
+  "date": "2026-06-22",
+  "milestone": "M3",
+  "phase": 3,
+  "phase_slug": "trust-polish",
+  "recommendation": "GO",
+  "overall_confidence": 0.78,
+  "scope_verdict": "medium",
+  "decisions": [
+    {
+      "id": "D-001",
+      "title": "GateManager 状态机设计",
+      "status": "locked",
+      "chosen": "5 状态线性流转",
+      "rationale": "pending → presented（展示 diff）→ approved/rejected/expired，超时 30s 自动 expired。RESOLVED 事件表示用户已做出决定",
+      "alternatives": ["3 状态简化版", "支持重新提交"],
+      "evidence": "exploration-codebase.json: events.ts GateEvents 已定义 PENDING/RESOLVED/APPROVED/REJECTED"
+    },
+    {
+      "id": "D-002",
+      "title": "审批面板 UI 交互模式",
+      "status": "locked",
+      "chosen": "内联展开面板",
+      "rationale": "在 WorkflowCommander 下方展开内联面板，展示 diff + 确认/拒绝按钮，不阻塞其他操作",
+      "alternatives": ["Modal 弹窗", "侧边抽屉"],
+      "evidence": "exploration-codebase.json: WorkflowCommander.svelte:33-48 executeWorkflow() 是集成点"
+    },
+    {
+      "id": "D-003",
+      "title": "MAINT-002 SessionManager 基类提取",
+      "status": "locked",
+      "chosen": "Phase 3 Wave 1 执行",
+      "rationale": "TerminalManager 和 DialogManager 共享 ~40% session CRUD 模式，提取泛型 SessionManager<T> 基类减少重复",
+      "alternatives": ["继续推迟到 v0.4.0+"],
+      "evidence": "exploration-codebase.json: terminal-manager.ts:59 MAINT-002 TODO 注释"
+    },
+    {
+      "id": "D-004",
+      "title": "性能优化执行策略",
+      "status": "locked",
+      "chosen": "按优先级渐进",
+      "rationale": "P0: skipHistory + backpressure → P1: throttle 动态启停 + 批量广播 → P2: debounce 优化",
+      "alternatives": ["Wave 5 集中优化", "仅 P0 优化"],
+      "evidence": "exploration-codebase.json: 4 个性能热点精确识别"
+    },
+    {
+      "id": "D-005",
+      "title": "Diff 预览数据来源",
+      "status": "locked",
+      "chosen": "Delegate dry-run",
+      "rationale": "执行 --mode analysis 的 dry-run，捕获 stdout 作为 diff 预览内容",
+      "alternatives": ["命令预览模式", "Git diff 预览"],
+      "evidence": "exploration-codebase.json: delegate-executor.ts:60-67 spawn 参数可切换 --mode"
+    },
+    {
+      "id": "D-006",
+      "title": "门控触发条件",
+      "status": "locked",
+      "chosen": "所有写操作",
+      "rationale": "所有 --mode write 的执行都需要审批，确保破坏性操作受保护",
+      "alternatives": ["仅文件修改", "用户可配置"],
+      "evidence": "exploration-codebase.json: delegate-executor.ts:60-67 硬编码 --mode write"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "high",
+      "area": "architecture",
+      "action": "实现 GateManager 模块",
+      "rationale": "审批门控是 Phase 3 核心交付物，类型契约已就绪",
+      "steps": [
+        "创建 src/lib/server/gate-manager.ts — GateManager 类（状态机 + EventBus 集成）",
+        "在 index.ts /api/workflows/execute 路由前插入 gate:pending 检查",
+        "创建 src/lib/client/components/ApprovalPanel.svelte — 内联审批面板",
+        "修改 WorkflowCommander.svelte executeWorkflow() 集成门控流程"
+      ],
+      "acceptance": "文件修改类 workflow 执行前展示 diff 预览 + 确认/拒绝按钮"
+    },
+    {
+      "priority": "high",
+      "area": "platform",
+      "action": "Windows ConPTY 兼容性修复",
+      "rationale": "3 个已识别问题阻塞 Windows 用户体验",
+      "steps": [
+        "index.ts: 添加 SIGBREAK 监听 + process.on('exit') 兜底",
+        "terminal-manager.ts: SHELL_WHITELIST 添加 wsl.exe",
+        "terminal-manager.ts: resizeTerminal() 添加 _resizing 标记防回环"
+      ],
+      "acceptance": "Windows 下 Ctrl+C 正常停止进程，resize 无回环，wsl.exe 可创建终端"
+    },
+    {
+      "priority": "high",
+      "area": "performance",
+      "action": "P0 性能优化",
+      "rationale": "skipHistory + backpressure 是低成本高收益优化",
+      "steps": [
+        "EventBus.publish() 添加 skipHistory 选项",
+        "WSGateway.sendToClient() 添加 bufferedAmount 检查",
+        "TerminalManager OUTPUT 事件 + DialogManager STREAM_CHUNK 事件传入 skipHistory"
+      ],
+      "acceptance": "history 数组大小降低 90%+，慢客户端不导致内存增长"
+    },
+    {
+      "priority": "medium",
+      "area": "architecture",
+      "action": "MAINT-002 SessionManager<T> 基类提取",
+      "rationale": "消除 ~40% 代码重复，改善可维护性",
+      "steps": [
+        "提取泛型 SessionManager<T> 基类（CRUD + MAX_SESSIONS + EventBus 集成）",
+        "TerminalManager 和 DialogManager 继承基类",
+        "保持现有公共接口不变"
+      ],
+      "acceptance": "两个 Manager 的 session CRUD 逻辑通过基类复用，现有测试全部通过"
+    },
+    {
+      "priority": "medium",
+      "area": "performance",
+      "action": "P1 性能优化",
+      "rationale": "throttle 动态启停 + 批量广播进一步降低资源消耗",
+      "steps": [
+        "TerminalManager throttle timer 改为动态启停",
+        "WSGateway 预计算 JSON.stringify 复用",
+        "客户端连接状态改为事件驱动"
+      ],
+      "acceptance": "无终端活动时 CPU 使用率接近 0，多客户端广播性能提升"
+    },
+    {
+      "priority": "low",
+      "area": "frontend",
+      "action": "翻译覆盖度增强",
+      "rationale": "修复边缘情况和提升覆盖率",
+      "steps": [
+        "translator.ts: 修复 isDialogPayload 过于宽松问题",
+        "translations.ts: 修复复合词边界误替换",
+        "translator.ts: 添加翻译结果缓存"
+      ],
+      "acceptance": "Gate payload 不被错误跳过翻译，复合词不被误替换"
+    }
+  ],
+  "implementation_scope": [
+    {
+      "objective": "GateManager 审批门控模块",
+      "rationale": "Phase 3 核心交付物",
+      "priority": "high",
+      "target_files": ["src/lib/server/gate-manager.ts (new)", "src/lib/server/index.ts", "src/lib/client/components/ApprovalPanel.svelte (new)", "src/lib/client/components/WorkflowCommander.svelte"],
+      "acceptance_criteria": "文件修改类 workflow 执行前展示 diff 预览 + 确认/拒绝按钮"
+    },
+    {
+      "objective": "Windows ConPTY 兼容性修复",
+      "rationale": "3 个已识别问题",
+      "priority": "high",
+      "target_files": ["src/lib/server/index.ts", "src/lib/server/terminal-manager.ts"],
+      "acceptance_criteria": "Windows 下 Ctrl+C 正常停止进程，resize 无回环，wsl.exe 可创建终端"
+    },
+    {
+      "objective": "P0 性能优化",
+      "rationale": "低成本高收益",
+      "priority": "high",
+      "target_files": ["src/lib/server/event-bus.ts", "src/lib/server/ws-gateway.ts", "src/lib/server/terminal-manager.ts", "src/lib/server/dialog-manager.ts"],
+      "acceptance_criteria": "history 数组大小降低 90%+，慢客户端不导致内存增长"
+    },
+    {
+      "objective": "MAINT-002 SessionManager 基类",
+      "rationale": "消除 ~40% 代码重复",
+      "priority": "medium",
+      "target_files": ["src/lib/server/session-manager.ts (new)", "src/lib/server/terminal-manager.ts", "src/lib/server/dialog-manager.ts"],
+      "acceptance_criteria": "两个 Manager 的 session CRUD 逻辑通过基类复用，现有测试全部通过"
+    },
+    {
+      "objective": "P1 性能优化 + 翻译增强",
+      "rationale": "进一步优化和边缘情况修复",
+      "priority": "low",
+      "target_files": ["src/lib/server/terminal-manager.ts", "src/lib/server/ws-gateway.ts", "src/lib/client/stores/index.ts", "src/lib/server/translator.ts", "src/lib/shared/translations.ts"],
+      "acceptance_criteria": "无终端活动时 CPU 接近 0，翻译边缘情况修复"
+    }
+  ],
+  "decision_trail": [
+    {"round": 1, "decision": "选择 4 个分析维度 + 深度分析模式", "source": "user"},
+    {"round": 2, "decision": "GateManager 5 状态线性流转", "source": "user"},
+    {"round": 2, "decision": "内联展开面板 UI 模式", "source": "user"},
+    {"round": 2, "decision": "MAINT-002 在 Phase 3 执行", "source": "user"},
+    {"round": 2, "decision": "性能优化按优先级渐进", "source": "user"},
+    {"round": 3, "decision": "Diff 预览使用 Delegate dry-run", "source": "user"},
+    {"round": 3, "decision": "所有写操作触发门控", "source": "user"}
+  ]
+}

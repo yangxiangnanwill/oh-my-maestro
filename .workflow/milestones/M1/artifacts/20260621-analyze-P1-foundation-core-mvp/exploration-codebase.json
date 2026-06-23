@@ -1,0 +1,25 @@
+{
+  "session_id": "ANL-P1-foundation-core-mvp-2026-06-21",
+  "generated_at": "2026-06-21T09:30:00+08:00",
+  "relevant_files": ["src/lib/server/event-bus.ts", "src/lib/server/ws-gateway.ts", "src/lib/server/state-sync.ts", "src/lib/server/translator.ts", "src/lib/server/index.ts", "src/lib/shared/types.ts", "src/lib/shared/events.ts", "src/lib/shared/translations.ts", "src/lib/client/services/ws-client.ts", "src/lib/client/stores/index.ts", "src/routes/+page.svelte"],
+  "call_chains": [
+    {"name": "EventBus → WSGateway → WSClient → Svelte Stores", "evidence": "cli-explore-agent anchor-1, anchor-2, anchor-5"},
+    {"name": "Client → WSGateway → EventBus → StateSync", "evidence": "cli-explore-agent anchor-2"},
+    {"name": "Filesystem → chokidar → StateSyncEngine → EventBus → WSGateway", "evidence": "cli-explore-agent anchor-3"},
+    {"name": "maestro delegate → broker persistence → filesystem watcher", "evidence": "cli-explore-agent delegate-broker.js trace"}
+  ],
+  "data_flows": [
+    {"name": "EventBus → WSGateway → WSClient", "direction": "server-to-client", "protocol": "WebSocket JSON"},
+    {"name": "WSClient → WSGateway → EventBus", "direction": "client-to-server", "protocol": "WebSocket JSON"},
+    {"name": "CLI subprocess → StateSyncEngine", "direction": "external-to-server", "protocol": "EventBus in-memory"},
+    {"name": "Filesystem → chokidar → StateSyncEngine", "direction": "external-to-server", "protocol": "chokidar FS watcher"},
+    {"name": "maestro ralph skills --json → Skill catalog", "direction": "external-to-server (future)", "protocol": "child_process stdout NDJSON"}
+  ],
+  "code_anchors": [
+    {"id": "anchor-1-eventbus-pubsub", "file": "src/lib/server/event-bus.ts", "lines": "22-102"},
+    {"id": "anchor-2-ws-message-routing", "file": "src/lib/server/ws-gateway.ts", "lines": "59-145"},
+    {"id": "anchor-3-state-sync-dual-source", "file": "src/lib/server/state-sync.ts", "lines": "38-131"},
+    {"id": "anchor-4-translator-middleware", "file": "src/lib/server/translator.ts", "lines": "12-95"},
+    {"id": "anchor-5-svelte-stores-ws", "file": "src/lib/client/stores/index.ts", "lines": "1-82"}
+  ]
+}

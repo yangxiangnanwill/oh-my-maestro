@@ -1,0 +1,391 @@
+{
+  "relevant_files": [
+    "src/lib/server/delegate-executor.ts — 子进程管理模式：spawn + NDJSON stdout 解析 + EventBus 发布，是 Claude Code 子进程管理的直接模板",
+    "src/lib/server/ws-gateway.ts — WebSocket 网关：客户端连接管理、频道订阅、消息广播、翻译中间件集成，Terminal Bridge 和 AI Dialog 的推送通道",
+    "src/lib/server/event-bus.ts — 事件总线：pub/sub + 通配符监听 + 事件历史，所有新频道（terminal/dialog）的服务器端路由中枢",
+    "src/lib/shared/events.ts — 频道和事件类型常量定义：已预留 DIALOG 和 TERMINAL 频道及事件类型，Phase 2 直接使用",
+    "src/lib/server/translator.ts — 翻译中间件：客户端模式管理 + 负载翻译，Phase 2 需要添加 terminal/AI 相关术语翻译",
+    "src/lib/shared/translations.ts — 翻译注册表：TranslationEntry 定义 + translate/translatePayload 函数，需新增 terminal/AI 条目",
+    "src/lib/client/stores/index.ts — Svelte stores：WebSocket 事件到响应式状态的桥接，Phase 2 需新增 terminalSessions 和 dialogSessions stores",
+    "src/lib/server/cli-adapter.ts — CLI 适配器：版本化注册表 + NDJSON 解析，Claude Code 流式输出解析可复用此模式",
+    "src/lib/server/index.ts — 服务器入口：Hono 路由 + 组件装配，Phase 2 需在此添加 terminal/AI 相关 API 路由",
+    "src/lib/shared/types.ts — 共享类型定义：已预留 DialogSession、TerminalSession、TerminalStatus 等类型，Phase 2 可直接使用",
+    "src/lib/server/state-sync.ts — 状态同步引擎：双源事件合并（in-process + filesystem），Terminal 输出事件可复用此模式",
+    "src/lib/client/services/ws-client.ts — WebSocket 客户端：连接管理 + 频道订阅 + 消息路由，前端 terminal/AI 组件的数据通道",
+    "src/lib/client/components/WorkflowCommander.svelte — UI 组件模式：双面板布局 + 实时状态更新 + store 订阅，Terminal/AI 面板的 UI 参考",
+    "src/lib/client/components/ProjectRadar.svelte — UI 组件模式：树形展开 + 翻译集成 + 显示模式过滤，Terminal/AI 面板的 UI 参考",
+    "src/routes/+page.svelte — 页面入口：组件编排 + 模式切换 + 快速操作按钮（已预留 AI Dialog 和 Terminal 按钮）",
+    "package.json — 依赖清单：当前无 xterm、node-pty、@xterm/xterm 等依赖，Phase 2 需添加"
+  ],
+  "call_chains": [
+    {
+      "name": "子进程生命周期链 (delegate-executor → event-bus → ws-gateway → ws-client → stores)",
+      "path": [
+        "src/lib/server/delegate-executor.ts:50-115 (execute: spawn → stdout.on('data') → emitEvent)",
+        "src/lib/server/delegate-executor.ts:168-200 (emitEvent: callbacks → eventBus.publish)",
+        "src/lib/server/event-bus.ts:59-102 (publish: subscribers → wildcard → history)",
+        "src/lib/server/ws-gateway.ts:81-83 (onAny → broadcastEvent)",
+        "src/lib/server/ws-gateway.ts:124-145 (broadcastEvent: translate → sendToClient)",
+        "src/lib/client/services/ws-client.ts:44-51 (onmessage → handleMessage → channel handlers)",
+        "src/lib/client/stores/index.ts:71-143 (wsClient.on(WORKFLOW) → executionMap → activeWorkflows.set)"
+      ],
+      "description": "从 spawn 子进程到前端 store 更新的完整事件流。Phase 2 的 Terminal Bridge 和 AI Dialog 都遵循此链：子进程 stdout → EventBus → WSGateway broadcast → WSClient → Svelte stores"
+    },
+    {
+      "name": "WebSocket 消息路由链 (client → ws-gateway → event-bus → state-sync)",
+      "path": [
+        "src/lib/client/services/ws-client.ts:108-113 (send: JSON.stringify → ws.send)",
+        "src/lib/server/ws-gateway.ts:59-66 (ws.on('message') → JSON.parse → handleClientMessage)",
+        "src/lib/server/ws-gateway.ts:89-119 (handleClientMessage: subscribe/unsubscribe/set-mode → eventBus.publish)",
+        "src/lib/server/state-sync.ts:40-53 (eventBus.subscribe → emitInProcessEvent)",
+        "src/lib/server/state-sync.ts:73-91 (emitInProcessEvent → eventBus.publish('state:sync'))"
+      ],
+      "description": "客户端发送消息到服务器处理并触发状态同步的完整链路。Phase 2 的终端输入（term:input）和 AI 对话消息（dialog:stream-chunk）都通过此链路由"
+    },
+    {
+      "name": "翻译中间件链 (translator → ws-gateway → client)",
+      "path": [
+        "src/lib/server/ws-gateway.ts:49 (translator.setClientMode)",
+        "src/lib/server/ws-gateway.ts:112 (handleClientMessage set-mode → translator.setClientMode)",
+        "src/lib/server/ws-gateway.ts:136-141 (broadcastEvent: translator.translate → message.payload = translated)",
+        "src/lib/server/translator.ts:45-52 (translate: getClientMode → translatePayload)",
+        "src/lib/shared/translations.ts:135-164 (translatePayload: 遍历键值 → translateString → 替换术语)"
+      ],
+      "description": "概念翻译从客户端模式设置到消息广播时自动翻译的完整链路。Phase 2 需要添加 terminal 和 AI 相关术语的翻译条目"
+    },
+    {
+      "name": "状态同步双源合并链 (in-process + filesystem → event-bus → ws-gateway)",
+      "path": [
+        "src/lib/server/state-sync.ts:40-53 (eventBus.subscribe → emitInProcessEvent)",
+        "src/lib/server/state-sync.ts:73-91 (emitInProcessEvent: StateSyncEvent → eventBus.publish('state:sync'))",
+        "src/lib/server/state-sync.ts:63-65 (watcher.on('all') → handleFilesystemEvent)",
+        "src/lib/server/state-sync.ts:97-131 (handleFilesystemEvent: debounce → StateSyncEvent → eventBus.publish('state:sync'))",
+        "src/lib/server/event-bus.ts:59-102 (publish → subscribers → wildcard)",
+        "src/lib/server/ws-gateway.ts:81-83 (onAny → broadcastEvent)"
+      ],
+      "description": "in-process 事件和文件系统变更双源合并为统一 StateSyncEvent 的链路。Terminal 的 pty 输出事件可以走 in-process 源，AI 对话的文件输出可以走 filesystem 源"
+    }
+  ],
+  "code_anchors": [
+    {
+      "file": "src/lib/server/delegate-executor.ts",
+      "lines": "50-115",
+      "snippet": "execute(workflowId: string, params: Record<string, unknown>): string {\n    const executionId = `exec-${++this.eventCounter}-${Date.now()}`;\n    const prompt = this.buildPrompt(workflowId, params);\n    const tool = (params.tool as string) ?? 'claude';\n\n    const childProcess = this.spawnFn('maestro', [\n      'delegate', prompt, '--to', tool, '--mode', 'write',\n    ]);\n\n    const callbacks = new Set<(event: DelegateEvent) => void>();\n    this.activeProcesses.set(executionId, {\n      process: childProcess, executionId, callbacks,\n    });\n\n    childProcess.stdout?.on('data', (chunk: Buffer | string) => {\n      const text = typeof chunk === 'string' ? chunk : chunk.toString();\n      for (const line of text.split('\\n')) {\n        const event = this.parseLine(line);\n        if (event) { this.emitEvent(event); }\n      }\n    });\n\n    childProcess.stderr?.on('data', (chunk: Buffer | string) => {\n      const text = typeof chunk === 'string' ? chunk : chunk.toString();\n      console.error(`[DelegateExecutor:${executionId}] stderr:`, text);\n    });\n\n    childProcess.on('exit', (code) => {\n      const entry = this.activeProcesses.get(executionId);\n      if (entry) { this.activeProcesses.delete(executionId); }\n      if (code !== null && code !== 0) {\n        const failedEvent: DelegateEvent = {\n          type: 'failed', executionId,\n          output: `Process exited with code ${code}`,\n          timestamp: new Date().toISOString(),\n        };\n        this.emitEvent(failedEvent);\n      }\n    });\n\n    return executionId;\n  }",
+      "relevance": "这是 Phase 2 实现 Claude Code 子进程管理的直接模板。spawn 模式、stdout 逐行解析、stderr 日志、exit 处理、executionId 追踪 — 全部可直接复用。Terminal Bridge 的 node-pty 也遵循类似的 spawn + 事件流模式"
+    },
+    {
+      "file": "src/lib/server/delegate-executor.ts",
+      "lines": "144-163",
+      "snippet": "private parseLine(line: string): DelegateEvent | null {\n    const trimmed = line.trim();\n    if (trimmed.length === 0) { return null; }\n    try {\n      const parsed = JSON.parse(trimmed);\n      return {\n        type: parsed.type, executionId: parsed.executionId,\n        stepIndex: parsed.stepIndex, stepName: parsed.stepName,\n        output: parsed.output, timestamp: parsed.timestamp,\n      } satisfies DelegateEvent;\n    } catch { return null; }\n  }",
+      "relevance": "NDJSON 逐行解析模式。Claude Code 的流式输出（thinking/tool_use/assistant 事件）需要类似的逐行 JSON 解析，但输出格式不同（非 NDJSON 而是流式 JSON 块），需要扩展此解析器"
+    },
+    {
+      "file": "src/lib/server/delegate-executor.ts",
+      "lines": "168-200",
+      "snippet": "private emitEvent(event: DelegateEvent): void {\n    for (const cb of this.globalCallbacks) {\n      try { cb(event); } catch (err) { console.error(...); }\n    }\n    const entry = this.activeProcesses.get(event.executionId);\n    if (entry) {\n      for (const cb of entry.callbacks) {\n        try { cb(event); } catch (err) { console.error(...); }\n      }\n    }\n    const workflowEvent = DELEGATE_TO_WORKFLOW_EVENT[event.type];\n    if (workflowEvent) {\n      this.eventBus.publish(\n        workflowEvent, Channels.WORKFLOW, { ...event }, 'server',\n      );\n    }\n  }",
+      "relevance": "事件分发模式：全局回调 + 按执行ID回调 + EventBus 发布。Phase 2 的 TerminalExecutor 和 DialogExecutor 都需要相同的三层分发：全局监听、按会话ID监听、EventBus 发布到对应频道"
+    },
+    {
+      "file": "src/lib/server/ws-gateway.ts",
+      "lines": "34-84",
+      "snippet": "start(port: number): void {\n    this.wss = new WebSocketServer({ port });\n    this.wss.on('connection', (ws) => {\n      const clientId = `client-${++this.clientCounter}`;\n      const client: ClientConnection = {\n        ws, id: clientId,\n        subscribedChannels: new Set(),\n        connectedAt: new Date().toISOString(),\n        lastActivityAt: new Date().toISOString(),\n      };\n      this.clients.set(clientId, client);\n      this.translator.setClientMode(clientId, 'simple');\n      this.sendToClient(client, {\n        channel: Channels.STATE, type: StateSyncEvents.RECONNECT,\n        payload: { clientId, mode: 'simple' },\n        timestamp: new Date().toISOString(),\n      });\n      ws.on('message', (data) => { ... });\n      ws.on('close', () => { ... });\n      ws.on('error', (err) => { ... });\n    });\n    this.eventBus.onAny((payload, event) => {\n      this.broadcastEvent(event as InternalEvent);\n    });\n  }",
+      "relevance": "WebSocket 网关启动和连接管理模式。Phase 2 的 Terminal Bridge 和 AI Dialog 都通过此网关推送实时数据到前端。关键模式：ClientConnection 追踪、频道订阅、连接确认消息、EventBus.onAny 全局转发"
+    },
+    {
+      "file": "src/lib/server/ws-gateway.ts",
+      "lines": "124-145",
+      "snippet": "private broadcastEvent(event: InternalEvent): void {\n    for (const client of this.clients.values()) {\n      const message: WSMessage = {\n        channel: event.channel, type: event.type,\n        payload: event.payload, timestamp: event.timestamp,\n      };\n      if (client.subscribedChannels.has(event.channel) || client.subscribedChannels.has('*')) {\n        if (typeof event.payload === 'object' && event.payload !== null) {\n          const { translated } = this.translator.translate(\n            event.payload as Record<string, unknown>, client.id\n          );\n          message.payload = translated;\n        }\n        this.sendToClient(client, message);\n      }\n    }\n  }",
+      "relevance": "广播模式：遍历所有客户端 → 检查频道订阅 → 翻译负载 → 发送。Terminal 输出（term:output）和 AI 流式块（dialog:stream-chunk）都通过此广播推送到订阅了对应频道的客户端。注意：message 对象在循环内创建，避免了多客户端共享引用导致的 payload 污染（TASK-002 修复）"
+    },
+    {
+      "file": "src/lib/shared/events.ts",
+      "lines": "1-68",
+      "snippet": "export const Channels = {\n  WORKFLOW: 'workflow', PROJECT: 'project',\n  DIALOG: 'dialog', TERMINAL: 'terminal',\n  GATE: 'gate', STATE: 'state',\n} as const;\n\nexport const DialogEvents = {\n  SESSION_CREATED: 'dialog:session-created',\n  STREAM_CHUNK: 'dialog:stream-chunk',\n  INTENT_ROUTED: 'dialog:intent-routed',\n  SESSION_CLOSED: 'dialog:session-closed',\n} as const;\n\nexport const TerminalEvents = {\n  OUTPUT: 'term:output', INPUT: 'term:input',\n  RESIZE: 'term:resize', EXIT: 'term:exit',\n  CREATED: 'term:created',\n} as const;",
+      "relevance": "Phase 2 的核心频道和事件类型已全部预留。DIALOG 频道有 4 个事件类型（会话生命周期 + 流式块 + 意图路由），TERMINAL 频道有 5 个事件类型（输入输出 + 终端控制 + 生命周期）。Phase 2 实现时直接使用这些常量，无需修改 events.ts"
+    },
+    {
+      "file": "src/lib/client/stores/index.ts",
+      "lines": "58-143",
+      "snippet": "wsClient.on(Channels.STATE, (message) => {\n  if (message.type === 'state:sync') {\n    const event = (message.payload as { event: { type: string; payload: Record<string, unknown> } }).event;\n    if (event.type === 'project:state-update' || event.type === 'project:milestone-changed') {\n      const state = event.payload as unknown as ProjectState;\n      if (state.projectId) { projectState.set(state); }\n    }\n  }\n});\n\nwsClient.on(Channels.WORKFLOW, (message) => {\n  if (message.type === 'workflow:step-update') {\n    const event = (message.payload as unknown) as DelegateEvent;\n    const { executionId, type, stepIndex, stepName, output, timestamp } = event;\n    let execution = executionMap.get(executionId);\n    if (!execution) {\n      execution = { id: executionId, workflowId: '', params: {}, status: 'running', steps: [], startedAt: timestamp, completedAt: null };\n    }\n    // ... status mapping and step accumulation ...\n    executionMap.set(executionId, execution);\n    activeWorkflows.update((workflows) => { ... });\n  }\n});",
+      "relevance": "Store 订阅模式：wsClient.on(channel, handler) → 解析消息 → 更新 writable store。Phase 2 需要添加 terminalSessions 和 dialogSessions stores，遵循相同模式：订阅 TERMINAL/DIALOG 频道 → 解析 TerminalEvent/DialogEvent → 更新对应 store"
+    },
+    {
+      "file": "src/lib/shared/types.ts",
+      "lines": "68-85",
+      "snippet": "export interface DialogSession {\n  sessionId: string;\n  cliProcessId: number | null;\n  createdAt: string;\n  lastActivityAt: string;\n  status: 'active' | 'closed' | 'error';\n}\n\nexport interface TerminalSession {\n  terminalId: string;\n  ptyPid: number | null;\n  cwd: string;\n  cols: number;\n  rows: number;\n  status: TerminalStatus;\n}",
+      "relevance": "Phase 2 的核心实体类型已定义。DialogSession 追踪 Claude Code 子进程（cliProcessId）和会话状态，TerminalSession 追踪 node-pty 进程（ptyPid）和终端尺寸。Phase 2 实现时直接使用这些类型，可能需要扩展字段（如 DialogSession 添加 messages 数组）"
+    },
+    {
+      "file": "src/lib/server/index.ts",
+      "lines": "39-107",
+      "snippet": "private setupRoutes(): void {\n    this.app.get('/api/health', (c) => { ... });\n    this.app.get('/api/translations', (c) => { ... });\n    this.app.get('/api/mode/:clientId', (c) => { ... });\n    this.app.post('/api/mode/:clientId', async (c) => { ... });\n    this.app.get('/api/workflows', async (c) => { ... });\n    this.app.post('/api/workflows/execute', async (c) => { ... });\n    this.app.get('/api/project/state', async (c) => { ... });\n  }",
+      "relevance": "Hono 路由注册模式。Phase 2 需要添加：POST /api/terminal/spawn（创建终端会话）、POST /api/terminal/:id/resize（调整终端大小）、POST /api/dialog/start（启动 AI 对话）、POST /api/dialog/:id/message（发送消息）、GET /api/dialog/:id/history（获取历史）"
+    },
+    {
+      "file": "src/lib/server/translator.ts",
+      "lines": "45-52",
+      "snippet": "translate<T extends Record<string, unknown>>(\n    payload: T, clientId: string\n  ): { translated: T; untranslatedTerms: string[]; mode: DisplayMode } {\n    const mode = this.getClientMode(clientId);\n    const { translated, untranslatedTerms } = translatePayload(payload, mode);\n    return { translated, untranslatedTerms, mode };\n  }",
+      "relevance": "翻译中间件的核心方法。Phase 2 的终端输出和 AI 对话消息在广播前会经过此翻译。需要确保 translations.ts 中包含 terminal/AI 相关术语（如 pty、subprocess、intent、streaming 等）"
+    },
+    {
+      "file": "src/lib/shared/translations.ts",
+      "lines": "22-103",
+      "snippet": "export const TRANSLATIONS: TranslationEntry[] = [\n  { term: 'chain', simpleLabel: 'Workflow', advancedLabel: 'Chain (Workflow)', category: 'core', hiddenInSimpleMode: false, aliases: ['command-chain', 'lifecycle-chain'] },\n  { term: 'skill', simpleLabel: 'Action', advancedLabel: 'Skill (Action)', category: 'core', hiddenInSimpleMode: false, aliases: ['command', 'cmd'] },\n  { term: 'delegate', simpleLabel: 'Run', advancedLabel: 'Delegate (Run)', category: 'technical', hiddenInSimpleMode: true, aliases: ['delegation', 'dispatch'] },\n  // ... 7 more entries\n];",
+      "relevance": "翻译注册表模式。Phase 2 需要新增 terminal/AI 相关条目，例如：term: 'pty' → simpleLabel: 'Terminal', term: 'subprocess' → simpleLabel: 'Background Task', term: 'intent' → simpleLabel: 'Goal', term: 'streaming' → simpleLabel: 'Live Output'"
+    },
+    {
+      "file": "src/lib/client/components/WorkflowCommander.svelte",
+      "lines": "1-70",
+      "snippet": "let workflows: WorkflowMeta[] = $state([]);\nlet loading: boolean = $state(true);\nlet error: string | null = $state(null);\nlet selectedExecutionId: string | null = $state(null);\n\nlet activeExecutions: WorkflowExecution[] = $derived(\n  $activeWorkflows.filter((w) => w.status !== 'completed' && w.status !== 'cancelled')\n);\n\n$effect(() => {\n  fetch('/api/workflows')\n    .then((r) => r.json())\n    .then((data: { workflows: WorkflowMeta[] }) => { workflows = data.workflows; loading = false; })\n    .catch((e: Error) => { error = e.message; loading = false; });\n});",
+      "relevance": "Svelte 5 组件模式：$state 本地状态 + $derived 派生状态 + $effect 副作用 + store 订阅。Phase 2 的 TerminalPanel.svelte 和 AIDialog.svelte 遵循相同模式：$state 管理 UI 状态，$derived 从 terminalSessions/dialogSessions stores 派生数据，$effect 处理 xterm.js 初始化"
+    },
+    {
+      "file": "src/lib/server/cli-adapter.ts",
+      "lines": "67-118",
+      "snippet": "export class CLIAdapterRegistry {\n  private adapters = new Map<string, CLIAdapter>();\n  private execFn: ExecFn;\n\n  constructor(execFn?: ExecFn) { this.execFn = execFn ?? exec; }\n\n  register(version: string, adapter: CLIAdapter): void {\n    this.adapters.set(version, adapter);\n  }\n\n  getAdapter(version: string): CLIAdapter {\n    const adapter = this.adapters.get(version);\n    if (!adapter) { throw new UnsupportedVersionError(version); }\n    return adapter;\n  }\n\n  detectVersion(): Promise<string> {\n    return new Promise((resolve, reject) => {\n      this.execFn('maestro --version', (error, stdout) => {\n        if (error) { reject(error); return; }\n        const raw = stdout.trim();\n        const match = raw.match(/^v?(\\d+)/);\n        if (!match) { reject(new Error(`Cannot parse version from output: \"${raw}\"`)); return; }\n        resolve(match[1]);\n      });\n    });\n  }\n}",
+      "relevance": "版本化适配器注册表模式。Phase 2 的 Claude Code 子进程管理可以复用此模式：创建 ClaudeCodeAdapter 实现 ClaudeCodeOutputParser 接口，注册到 ClaudeCodeAdapterRegistry，支持不同 Claude Code 版本的输出格式差异"
+    },
+    {
+      "file": "src/lib/server/state-sync.ts",
+      "lines": "38-67",
+      "snippet": "start(): void {\n    this.eventBus.subscribe('workflow:step-update', (payload) => {\n      this.emitInProcessEvent('workflow:step-update', payload as Record<string, unknown>);\n    });\n    this.eventBus.subscribe('workflow:execution-started', (payload) => { ... });\n    this.eventBus.subscribe('workflow:execution-completed', (payload) => { ... });\n    this.eventBus.subscribe('project:state-update', (payload) => { ... });\n\n    if (this.watchPaths.length > 0) {\n      this.watcher = chokidar.watch(this.watchPaths, {\n        ignoreInitial: true, ignored: /(^|[/\\\\])\\.\\./, persistent: true,\n      });\n      this.watcher.on('all', (event: string, path: string) => {\n        this.handleFilesystemEvent(event, path);\n      });\n    }\n  }",
+      "relevance": "双源事件订阅模式。Phase 2 的 Terminal Bridge 可以订阅 term:output 事件（in-process 源），AI Dialog 可以订阅 dialog:stream-chunk 事件（in-process 源），同时可以监听 AI 对话产生的文件变更（filesystem 源）"
+    }
+  ],
+  "module_boundaries": [
+    {
+      "boundary": "子进程管理层 → 事件总线层",
+      "producer": "src/lib/server/delegate-executor.ts",
+      "consumer": "src/lib/server/event-bus.ts"
+    },
+    {
+      "boundary": "事件总线层 → WebSocket 传输层",
+      "producer": "src/lib/server/event-bus.ts",
+      "consumer": "src/lib/server/ws-gateway.ts"
+    },
+    {
+      "boundary": "WebSocket 传输层 → 翻译中间件层",
+      "producer": "src/lib/server/ws-gateway.ts",
+      "consumer": "src/lib/server/translator.ts"
+    },
+    {
+      "boundary": "翻译中间件层 → 翻译数据层",
+      "producer": "src/lib/server/translator.ts",
+      "consumer": "src/lib/shared/translations.ts"
+    },
+    {
+      "boundary": "WebSocket 传输层 → 前端 Store 层",
+      "producer": "src/lib/server/ws-gateway.ts",
+      "consumer": "src/lib/client/stores/index.ts"
+    },
+    {
+      "boundary": "前端 Store 层 → Svelte 组件层",
+      "producer": "src/lib/client/stores/index.ts",
+      "consumer": "src/lib/client/components/WorkflowCommander.svelte"
+    },
+    {
+      "boundary": "前端 Store 层 → Svelte 组件层",
+      "producer": "src/lib/client/stores/index.ts",
+      "consumer": "src/lib/client/components/ProjectRadar.svelte"
+    },
+    {
+      "boundary": "服务器入口 → 所有服务器组件（装配层）",
+      "producer": "src/lib/server/index.ts",
+      "consumer": "src/lib/server/event-bus.ts"
+    },
+    {
+      "boundary": "服务器入口 → 所有服务器组件（装配层）",
+      "producer": "src/lib/server/index.ts",
+      "consumer": "src/lib/server/ws-gateway.ts"
+    },
+    {
+      "boundary": "服务器入口 → 所有服务器组件（装配层）",
+      "producer": "src/lib/server/index.ts",
+      "consumer": "src/lib/server/translator.ts"
+    },
+    {
+      "boundary": "服务器入口 → 所有服务器组件（装配层）",
+      "producer": "src/lib/server/index.ts",
+      "consumer": "src/lib/server/state-sync.ts"
+    },
+    {
+      "boundary": "服务器入口 → 所有服务器组件（装配层）",
+      "producer": "src/lib/server/index.ts",
+      "consumer": "src/lib/server/cli-adapter.ts"
+    },
+    {
+      "boundary": "服务器入口 → 所有服务器组件（装配层）",
+      "producer": "src/lib/server/index.ts",
+      "consumer": "src/lib/server/delegate-executor.ts"
+    },
+    {
+      "boundary": "事件常量定义 → 所有模块（共享常量层）",
+      "producer": "src/lib/shared/events.ts",
+      "consumer": "src/lib/server/event-bus.ts"
+    },
+    {
+      "boundary": "事件常量定义 → 所有模块（共享常量层）",
+      "producer": "src/lib/shared/events.ts",
+      "consumer": "src/lib/server/ws-gateway.ts"
+    },
+    {
+      "boundary": "事件常量定义 → 所有模块（共享常量层）",
+      "producer": "src/lib/shared/events.ts",
+      "consumer": "src/lib/client/stores/index.ts"
+    },
+    {
+      "boundary": "事件常量定义 → 所有模块（共享常量层）",
+      "producer": "src/lib/shared/events.ts",
+      "consumer": "src/lib/client/services/ws-client.ts"
+    },
+    {
+      "boundary": "类型定义 → 所有模块（共享类型层）",
+      "producer": "src/lib/shared/types.ts",
+      "consumer": "src/lib/server/delegate-executor.ts"
+    },
+    {
+      "boundary": "类型定义 → 所有模块（共享类型层）",
+      "producer": "src/lib/shared/types.ts",
+      "consumer": "src/lib/server/ws-gateway.ts"
+    },
+    {
+      "boundary": "类型定义 → 所有模块（共享类型层）",
+      "producer": "src/lib/shared/types.ts",
+      "consumer": "src/lib/client/stores/index.ts"
+    }
+  ],
+  "data_flows": [
+    {
+      "name": "DelegateEvent 流",
+      "source": "src/lib/server/delegate-executor.ts",
+      "target": "src/lib/server/event-bus.ts",
+      "data": "DelegateEvent { type, executionId, stepIndex?, stepName?, output?, timestamp }"
+    },
+    {
+      "name": "InternalEvent 流",
+      "source": "src/lib/server/event-bus.ts",
+      "target": "src/lib/server/ws-gateway.ts",
+      "data": "InternalEvent { id, type, channel, payload, timestamp, source }"
+    },
+    {
+      "name": "WSMessage 流（服务器→客户端）",
+      "source": "src/lib/server/ws-gateway.ts",
+      "target": "src/lib/client/services/ws-client.ts",
+      "data": "WSMessage { channel, type, payload, timestamp }"
+    },
+    {
+      "name": "WSMessage 流（客户端→服务器）",
+      "source": "src/lib/client/services/ws-client.ts",
+      "target": "src/lib/server/ws-gateway.ts",
+      "data": "WSMessage { channel, type, payload, timestamp } — subscribe/unsubscribe/set-mode"
+    },
+    {
+      "name": "StateSyncEvent 流",
+      "source": "src/lib/server/state-sync.ts",
+      "target": "src/lib/server/event-bus.ts",
+      "data": "StateSyncEvent { id, source, type, payload, timestamp, executionId? }"
+    },
+    {
+      "name": "WorkflowExecution 流（Store 更新）",
+      "source": "src/lib/client/stores/index.ts",
+      "target": "src/lib/client/components/WorkflowCommander.svelte",
+      "data": "WorkflowExecution[] via activeWorkflows writable store"
+    },
+    {
+      "name": "ProjectState 流（Store 更新）",
+      "source": "src/lib/client/stores/index.ts",
+      "target": "src/lib/client/components/ProjectRadar.svelte",
+      "data": "ProjectState via projectState writable store"
+    },
+    {
+      "name": "DisplayMode 流（双向同步）",
+      "source": "src/lib/client/stores/index.ts",
+      "target": "src/lib/server/translator.ts",
+      "data": "DisplayMode ('simple' | 'advanced') — 客户端 set-mode → wsClient.send → WSGateway → translator.setClientMode"
+    },
+    {
+      "name": "TranslatedPayload 流",
+      "source": "src/lib/server/translator.ts",
+      "target": "src/lib/server/ws-gateway.ts",
+      "data": "{ translated: T, untranslatedTerms: string[], mode: DisplayMode }"
+    },
+    {
+      "name": "Phase 2 预期: TerminalEvent 流",
+      "source": "src/lib/server/terminal-bridge.ts (待创建)",
+      "target": "src/lib/server/event-bus.ts",
+      "data": "TerminalEvent — 通过 Channels.TERMINAL 频道，类型为 TerminalEvents.OUTPUT/INPUT/RESIZE/EXIT/CREATED"
+    },
+    {
+      "name": "Phase 2 预期: DialogEvent 流",
+      "source": "src/lib/server/dialog-executor.ts (待创建)",
+      "target": "src/lib/server/event-bus.ts",
+      "data": "DialogEvent — 通过 Channels.DIALOG 频道，类型为 DialogEvents.SESSION_CREATED/STREAM_CHUNK/INTENT_ROUTED/SESSION_CLOSED"
+    }
+  ],
+  "extension_points": [
+    {
+      "location": "src/lib/server/delegate-executor.ts:50",
+      "description": "execute() 方法是子进程 spawn 的标准入口。Phase 2 可创建 TerminalExecutor 类（复用 spawn 模式但使用 node-pty 的 spawn）和 DialogExecutor 类（复用 spawn 模式但 spawn Claude Code CLI），两者都遵循 execute → stdout.on('data') → parseLine → emitEvent 的管道模式"
+    },
+    {
+      "location": "src/lib/server/delegate-executor.ts:22-27",
+      "description": "DELEGATE_TO_WORKFLOW_EVENT 映射表。Phase 2 需要创建类似的 DIALOG_TO_WORKFLOW_EVENT 和 TERMINAL_TO_WORKFLOW_EVENT 映射，将 Claude Code 输出事件和终端事件映射到对应的 WorkflowEvents 或自定义事件类型"
+    },
+    {
+      "location": "src/lib/server/event-bus.ts:59",
+      "description": "publish() 方法接收 type, channel, payload, source 参数。Phase 2 的 TerminalExecutor 和 DialogExecutor 通过 eventBus.publish(eventType, Channels.TERMINAL/DIALOG, payload, 'server') 发布事件，完全复用现有接口"
+    },
+    {
+      "location": "src/lib/server/ws-gateway.ts:81-83",
+      "description": "eventBus.onAny() 全局监听所有事件并广播。Phase 2 不需要修改 WSGateway — 只要 TerminalExecutor/DialogExecutor 通过 EventBus 发布事件到 TERMINAL/DIALOG 频道，WSGateway 自动广播到订阅了这些频道的客户端"
+    },
+    {
+      "location": "src/lib/server/ws-gateway.ts:89-119",
+      "description": "handleClientMessage() 的 switch-case 结构。Phase 2 需要添加新的消息类型处理：'term-input'（转发终端输入到 pty）、'term-resize'（调整 pty 尺寸）、'dialog-message'（发送用户消息到 Claude Code 子进程 stdin）"
+    },
+    {
+      "location": "src/lib/shared/events.ts:30-35",
+      "description": "DialogEvents 常量已预留 4 个事件类型。Phase 2 可直接使用，无需修改。如果 Claude Code 输出需要更细粒度的事件（如 thinking/tool_use/assistant 分离），可以扩展 DialogEvents 添加更多类型"
+    },
+    {
+      "location": "src/lib/shared/events.ts:38-44",
+      "description": "TerminalEvents 常量已预留 5 个事件类型。Phase 2 可直接使用。node-pty 的 data 事件映射到 OUTPUT，用户输入映射到 INPUT，resize 映射到 RESIZE，exit 映射到 EXIT，spawn 成功映射到 CREATED"
+    },
+    {
+      "location": "src/lib/shared/types.ts:68-85",
+      "description": "DialogSession 和 TerminalSession 接口已定义。Phase 2 可能需要扩展：DialogSession 添加 messages: DialogMessage[] 数组（存储对话历史），TerminalSession 添加 shell: string 字段（指定 shell 类型）"
+    },
+    {
+      "location": "src/lib/client/stores/index.ts:58",
+      "description": "wsClient.on() 订阅模式。Phase 2 需要添加：wsClient.on(Channels.TERMINAL, handler) 和 wsClient.on(Channels.DIALOG, handler)，创建 terminalSessions 和 dialogSessions writable stores，遵循 executionMap 的累积更新模式"
+    },
+    {
+      "location": "src/lib/server/index.ts:39",
+      "description": "setupRoutes() 方法。Phase 2 需要添加路由：POST /api/terminal/spawn（创建终端）、POST /api/terminal/:id/resize（调整大小）、POST /api/dialog/start（启动对话）、POST /api/dialog/:id/message（发送消息）。同时在 constructor 中实例化 TerminalExecutor 和 DialogExecutor"
+    },
+    {
+      "location": "src/lib/server/index.ts:25-34",
+      "description": "MaestroIDEServer constructor 中的组件装配。Phase 2 需要添加：this.terminalExecutor = new TerminalExecutor(this.eventBus) 和 this.dialogExecutor = new DialogExecutor(this.eventBus)，遵循 DelegateExecutor 的装配模式"
+    },
+    {
+      "location": "src/lib/shared/translations.ts:22",
+      "description": "TRANSLATIONS 数组。Phase 2 需要新增 terminal/AI 相关翻译条目：pty→Terminal, subprocess→Background Task, intent→Goal, streaming→Live Output, session→Conversation 等，遵循现有的 TranslationEntry 结构"
+    },
+    {
+      "location": "src/lib/client/services/ws-client.ts:39",
+      "description": "connect() 中的频道订阅列表已包含 Channels.TERMINAL 和 Channels.DIALOG。Phase 2 无需修改 WSClient — 前端已自动订阅 terminal 和 dialog 频道"
+    },
+    {
+      "location": "src/routes/+page.svelte:64-72",
+      "description": "Quick Actions 区域已预留 AI Dialog 和 Terminal 按钮（当前 disabled）。Phase 2 需要创建 AIDialog.svelte 和 TerminalPanel.svelte 组件，替换这些占位按钮为实际功能入口"
+    },
+    {
+      "location": "src/lib/server/state-sync.ts:40",
+      "description": "start() 中的 eventBus.subscribe 调用。Phase 2 可以添加对 terminal 和 dialog 事件的订阅，使终端输出和 AI 对话状态变更也能触发 StateSyncEvent，支持客户端重连时的状态恢复"
+    },
+    {
+      "location": "package.json:18-24",
+      "description": "dependencies 中需要新增：xterm（前端终端模拟器）、@xterm/addon-fit（自适应尺寸）、node-pty（服务端伪终端）、@anthropic-ai/sdk 或直接 spawn claude CLI。devDependencies 需要 @types/xterm 和 @types/node-pty"
+    }
+  ]
+}

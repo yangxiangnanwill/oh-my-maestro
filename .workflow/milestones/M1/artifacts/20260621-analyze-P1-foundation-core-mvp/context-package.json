@@ -1,0 +1,51 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "analyze",
+    "artifact_id": "ANL-P1-foundation-core-mvp-2026-06-21",
+    "session_path": "scratch/20260621-analyze-P1-foundation-core-mvp",
+    "generated_at": "2026-06-21T09:40:00+08:00"
+  },
+  "requirements": [
+    { "id": "SCOPE-1", "title": "CLI Adapter Layer — NDJSON 解析 + 版本检测", "description": "解析 maestro ralph skills --json NDJSON 输出，封装为 WorkflowMeta[]；启动时版本检测", "priority": "must", "acceptance": "正确解析 skills 输出；版本不匹配时 fail-fast", "ref": "conclusions.json#implementation_scope" },
+    { "id": "SCOPE-2", "title": "delegate 子进程管理 + 输出流解析", "description": "spawn maestro delegate 子进程，捕获 stdout/stderr，解析 broker 事件", "priority": "must", "acceptance": "能触发工作流并跟踪执行状态", "ref": "conclusions.json#implementation_scope" },
+    { "id": "SCOPE-3", "title": "WSGateway + StateSyncEngine 单元测试", "description": "补充核心模块测试覆盖，目标 > 80%", "priority": "should", "acceptance": "WSGateway 和 StateSyncEngine 测试通过", "ref": "conclusions.json#implementation_scope" }
+  ],
+  "constraints": [
+    { "id": "C-ARCH-1", "area": "architecture", "constraint": "EventBus → WSGateway → StateSync → Translator 分层，不可跨层调用", "rationale": "依赖方向正确，避免循环依赖", "status": "locked", "ref": "context.md#Locked" },
+    { "id": "C-ARCH-2", "area": "architecture", "constraint": "SvelteKit + Hono + ws 技术栈锁定", "rationale": "ADR-001/003 已评估并选定", "status": "locked", "ref": "context.md#Locked" },
+    { "id": "C-ARCH-3", "area": "integration", "constraint": "CLI 子进程优先集成策略", "rationale": "ADR-002 已选定", "status": "locked", "ref": "context.md#Locked" },
+    { "id": "C-UX-1", "area": "ux", "constraint": "概念翻译必须覆盖所有用户可见文本", "rationale": "UX-01 核心约束", "status": "locked", "ref": "context.md#Locked" },
+    { "id": "C-PERF-1", "area": "performance", "constraint": "MVP 阶段接受 per-client O(n) 翻译开销", "rationale": "单用户 <10 客户端", "status": "open", "ref": "context.md#Free" },
+    { "id": "C-IMPL-1", "area": "implementation", "constraint": "Windows ConPTY 风险延迟到 Phase 2", "rationale": "Phase 1 用 child_process.spawn 不需要 PTY", "status": "open", "ref": "context.md#Free" }
+  ],
+  "domain": {
+    "problem_statement": "Phase 1 需补全 CLI Adapter + delegate 子进程管理，使 Maestro IDE 能实际与 maestro-flow 交互",
+    "terminology": [
+      { "term": "CLI Adapter", "definition": "解析 maestro CLI 结构化输出的适配器层", "ref": "analysis.md" },
+      { "term": "NDJSON", "definition": "Newline-Delimited JSON — maestro ralph skills 输出格式", "ref": "exploration-codebase.json" },
+      { "term": "delegate broker", "definition": "maestro-flow 的任务执行事件持久化层", "ref": "exploration-codebase.json" }
+    ]
+  },
+  "non_goals": [
+    { "title": "Terminal Bridge (xterm.js + node-pty)", "rationale": "Phase 2 需求", "ref": "context.md#Deferred" },
+    { "title": "AI Dialog (Claude Code 对话)", "rationale": "Phase 2 需求", "ref": "context.md#Deferred" },
+    { "title": "Approval Gate (diff 预览)", "rationale": "Phase 3 需求", "ref": "context.md#Deferred" }
+  ],
+  "insights": [
+    { "role": "analyzer", "area": "architecture", "summary": "EventBus → WSGateway → StateSync → Translator 四层架构合理，依赖方向正确，单点故障在 EventBus（崩溃则全系统停）", "ref": "analysis.md#Feasibility" },
+    { "role": "analyzer", "area": "implementation", "summary": "CLI Adapter 是 Phase 1 最大缺口——当前实现无法与 maestro-flow 交互，Workflow Commander 和 Project Radar 无数据源", "ref": "analysis.md#Feasibility" },
+    { "role": "analyzer", "area": "testing", "summary": "测试覆盖不均匀：EventBus 6 tests + Translator 12 tests 通过，但 WSGateway/StateSync/Server 无测试", "ref": "analysis.md#Complexity" }
+  ],
+  "open_questions": [
+    { "area": "cli-adapter", "question": "CLI Adapter 版本检测策略：注册表模式 vs 简单 if-else？", "options": ["versioned adapter registry", "simple if-else by major version"], "ref": "context.md#Free" },
+    { "area": "ui-components", "question": "Project Radar 状态树组件选型", "options": ["Svelte 自建 tree", "第三方 tree 组件"], "ref": "context.md#Free" },
+    { "area": "ws-translation", "question": "WS 消息 payload 嵌套深度限制？", "options": ["flat (1 level)", "nested (2 levels max)", "unlimited"], "ref": "context.md#Free" }
+  ],
+  "references": [
+    { "type": "analysis", "path": "analysis.md" },
+    { "type": "conclusions", "path": "conclusions.json" },
+    { "type": "exploration", "path": "exploration-codebase.json" },
+    { "type": "upstream-blueprint", "path": "../../blueprint/BLP-maestro-ide-2026-06-20/context-package.json" }
+  ]
+}
