@@ -7,7 +7,7 @@ param(
 
 if ($Help) {
     Write-Host "Usage: .\setup.local.ps1"
-    Write-Host "  Minimal Windows environment bootstrap for Superset."
+    Write-Host "  Minimal Windows environment bootstrap for oh-my-maestro."
     Write-Host "  Checks bun/node versions and creates .env from .env.local.example."
     exit 0
 }
@@ -18,7 +18,7 @@ $RootDir = Resolve-Path "$ScriptDir\.."
 
 Set-Location $RootDir
 
-Write-Host "=== Superset Windows Environment Bootstrap ===" -ForegroundColor Cyan
+Write-Host "=== Windows Environment Bootstrap ===" -ForegroundColor Cyan
 Write-Host ""
 
 # --- Dependency Checks ---

@@ -1,8 +1,8 @@
 {
   "initialized": true,
   "project": {
-    "name": "Superset + Maestro-flow 融合",
-    "description": "基于 Superset (Agent IDE) + Maestro-flow (编排内核) 的融合项目，替代 oh-my-maestro"
+    "name": "Maestro IDE",
+    "description": "基于 Maestro-flow 编排内核的 GUI 工作流管理工具"
   },
   "milestones": [
     {
@@ -428,6 +428,24 @@
       "source_findings": ["REV2-001","REV2-002","REV2-003","REV2-004","REV2-005","REV2-006"],
       "created_at": "2026-06-23T17:45:00+08:00",
       "completed_at": "2026-06-23T17:45:00+08:00"
+    },
+    {
+      "id": "EXC-012",
+      "type": "execute",
+      "scope": "phase",
+      "phase": 2,
+      "milestone": "F2",
+      "path": "scratch/20260623-plan-P2-command-chain-ui-re2-fix",
+      "status": "completed",
+      "depends_on": ["PLN-023"],
+      "harvested": false,
+      "gap_mode": true,
+      "source": "re-review",
+      "tasks_completed": 1,
+      "tasks_total": 1,
+      "note": "C9 tsc check skipped — tsc not available in current env",
+      "created_at": "2026-06-23T20:00:00+08:00",
+      "completed_at": "2026-06-23T20:15:00+08:00"
     }
   ],
   "milestone_history": [
