@@ -161,3 +161,69 @@ Milestone: M2
 
 Milestone: M2
 </spec-entry>
+<spec-entry category="learning" keywords="路径遍历, 空字节注入, resolve, normalize, path-security" date="2026-06-23" source="milestone-complete">
+
+### 路径遍历检测：resolve===normalize 无效，需用 sep 分割检查 .. 段
+
+`path.resolve(val)` 和 `path.normalize(val)` 都会将 `..` 解析为实际路径，因此 `resolve(val) === normalize(val)` 的比较无法检测路径遍历攻击（如 `../../etc/passwd`）。
+
+**正确方法**：使用 `resolve(val).split(sep)` 然后检查 `segments.includes("..")`。同时检查 `val.includes("\0")` 防止空字节注入绕过。
+
+**模式**：
+```typescript
+import { resolve, sep } from "node:path";
+function isPathSafe(cwd: string): boolean {
+  if (!cwd || cwd.includes("\0")) return false;
+  return !resolve(cwd).split(sep).includes("..");
+}
+```
+
+两个入口（tRPC input refine + 文件系统读取函数）应使用相同的校验逻辑。
+
+Milestone: F2
+</spec-entry>
+
+<spec-entry category="learning" keywords="type-guard, isRecord, as-assertion, TypeScript" date="2026-06-23" source="milestone-complete">
+
+### isRecord() type guard 替代 as Record<string, unknown> 断言
+
+`as Record<string, unknown>` 是危险的类型断言，绕过了 TypeScript 的类型检查。使用自定义 type guard 更安全：
+
+```typescript
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return v !== null && typeof v === "object" && !Array.isArray(v);
+}
+```
+
+`!Array.isArray(v)` 是必要的，因为 `typeof [] === "object"`。在 map 回调中使用 type guard 后，需用 `.filter()` 过滤 null 元素并提供类型谓词 `(s): s is TargetType => s !== null`。
+
+注意：TypeScript 在某些情况下需要显式的 `!== null` 检查来收窄类型，即使 `isRecord()` 已包含该检查。这不是冗余——是 TypeScript 控制流分析的局限。
+
+Milestone: F2
+</spec-entry>
+
+<spec-entry category="learning" keywords="无状态函数, class-removal, setInterval, 可测试性" date="2026-06-23" source="milestone-complete">
+
+### 无状态异步函数优于带定时器的 Class 单例
+
+原 `CommandChainStatusPoller` 类使用 `setInterval` 定时器 + 模块级单例 + `readFileSync`，导致：测试困难（需要等待定时器）、内存管理复杂（需要 stop/cleanup）、单例污染模块状态。
+
+**重构方案**：改为导出无状态异步函数 `readCommandChainStatus(cwd: string): Promise<CommandChainStatus | null>`，使用 `fs/promises readFile`，由调用方决定轮询策略（React Query `refetchInterval: 2000` 替代 `setInterval`）。
+
+轮询逻辑属于 UI 层关注点，不应混入数据读取层。
+
+Milestone: F2
+</spec-entry>
+
+<spec-entry category="learning" keywords="patch, git, 回滚, 可逆性" date="2026-06-23" source="milestone-complete">
+
+### .patches/ 目录用于可回滚的自动修复
+
+使用 `git format-patch` 生成 `.patch` 文件到 `.workflow/.patches/` 目录，提供可审计的变更历史和回滚能力。每个 TASK 对应一个独立的 patch 文件，通过 `git am` 应用，`git am --abort` 回滚。
+
+适合自动修复场景（AI agent 批量修改）。与直接 `git commit` 互补：patch 提供更细粒度的可逆性。
+
+注意：单个 patch 文件可能很大（>50MB），建议配置 Git LFS 或定期清理旧 patches。
+
+Milestone: F2
+</spec-entry>

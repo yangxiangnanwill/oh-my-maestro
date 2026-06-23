@@ -1191,5 +1191,14 @@
         "line": 3
       }
     }
-  ]
+  ],
+  "milestones": {
+    "F2": {
+      "name": "Orchestration — 编排可视化",
+      "status": "completed",
+      "completed_at": "2026-06-23T20:40:00+08:00",
+      "artifacts": 13,
+      "path": "milestones/F2/"
+    }
+  }
 }

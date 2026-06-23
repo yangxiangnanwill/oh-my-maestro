@@ -10,8 +10,12 @@
       "type": "standard",
       "name": "MVP — Workflow Visualization",
       "status": "archived",
-      "phases": [1],
-      "phase_slugs": { "1": "foundation-core-mvp" },
+      "phases": [
+        1
+      ],
+      "phase_slugs": {
+        "1": "foundation-core-mvp"
+      },
       "roadmap_ref": ".workflow/roadmap.md",
       "created_at": "2026-06-21T08:00:00+08:00",
       "completed_at": "2026-06-21T16:00:00+08:00"
@@ -21,8 +25,12 @@
       "type": "standard",
       "name": "Usable — AI & Terminal",
       "status": "archived",
-      "phases": [2],
-      "phase_slugs": { "2": "interaction-surfaces" },
+      "phases": [
+        2
+      ],
+      "phase_slugs": {
+        "2": "interaction-surfaces"
+      },
       "roadmap_ref": ".workflow/roadmap.md",
       "created_at": "2026-06-21T08:00:00+08:00",
       "completed_at": "2026-06-22T10:00:00+08:00"
@@ -32,8 +40,12 @@
       "type": "standard",
       "name": "Refined — Trust & Polish",
       "status": "archived",
-      "phases": [3],
-      "phase_slugs": { "3": "trust-polish" },
+      "phases": [
+        3
+      ],
+      "phase_slugs": {
+        "3": "trust-polish"
+      },
       "roadmap_ref": ".workflow/roadmap.md",
       "created_at": "2026-06-21T08:00:00+08:00"
     },
@@ -42,8 +54,14 @@
       "type": "standard",
       "name": "Foundation — 基础打通",
       "status": "active",
-      "phases": [0, 1],
-      "phase_slugs": { "0": "environment-bootstrap", "1": "cli-embed" },
+      "phases": [
+        0,
+        1
+      ],
+      "phase_slugs": {
+        "0": "environment-bootstrap",
+        "1": "cli-embed"
+      },
       "roadmap_ref": ".workflow/roadmap.md",
       "created_at": "2026-06-22T20:00:00+08:00"
     },
@@ -51,24 +69,33 @@
       "id": "F2",
       "type": "standard",
       "name": "Orchestration — 编排可视化",
-      "status": "audited",
-      "phases": [2],
-      "phase_slugs": { "2": "command-chain-ui" },
+      "status": "completed",
+      "phases": [
+        2
+      ],
+      "phase_slugs": {
+        "2": "command-chain-ui"
+      },
       "roadmap_ref": ".workflow/roadmap.md",
-      "created_at": "2026-06-22T20:00:00+08:00"
+      "created_at": "2026-06-22T20:00:00+08:00",
+      "completed_at": "2026-06-23T20:40:00+08:00"
     },
     {
       "id": "F3",
       "type": "standard",
       "name": "Deep Integration — 深度融合",
-      "status": "planned",
-      "phases": [3],
-      "phase_slugs": { "3": "full-integration" },
+      "status": "active",
+      "phases": [
+        3
+      ],
+      "phase_slugs": {
+        "3": "full-integration"
+      },
       "roadmap_ref": ".workflow/roadmap.md",
       "created_at": "2026-06-22T20:00:00+08:00"
     }
   ],
-  "current_milestone": "F1",
+  "current_milestone": "F3",
   "artifacts": [
     {
       "id": "RDM-fusion-2026-06-22",
@@ -77,7 +104,9 @@
       "milestone": null,
       "path": ".workflow/roadmap.md",
       "created_at": "2026-06-22T20:00:00+08:00",
-      "depends_on": ["ANL-007"]
+      "depends_on": [
+        "ANL-007"
+      ]
     },
     {
       "id": "BRN-20260620-maestro-ide",
@@ -118,7 +147,9 @@
       "milestone": "M3",
       "path": "scratch/20260622-plan-P3-trust-polish",
       "status": "completed",
-      "depends_on": ["ANL-003"],
+      "depends_on": [
+        "ANL-003"
+      ],
       "harvested": false,
       "created_at": "2026-06-22T15:24:00+08:00",
       "completed_at": "2026-06-22T15:35:00+08:00"
@@ -131,7 +162,9 @@
       "milestone": "M3",
       "path": "scratch/20260622-plan-P3-trust-polish",
       "status": "completed",
-      "depends_on": ["PLN-005"],
+      "depends_on": [
+        "PLN-005"
+      ],
       "harvested": false,
       "created_at": "2026-06-22T16:16:00+08:00",
       "completed_at": "2026-06-22T17:00:00+08:00"
@@ -144,7 +177,9 @@
       "scope": "phase",
       "path": "scratch/20260622-review-P3-trust-polish",
       "status": "completed",
-      "depends_on": ["EXC-006"],
+      "depends_on": [
+        "EXC-006"
+      ],
       "harvested": false,
       "verdict": "WARN",
       "created_at": "2026-06-22T17:15:00+08:00",
@@ -158,7 +193,9 @@
       "scope": "phase",
       "path": "scratch/20260622-test-P3-trust-polish",
       "status": "completed",
-      "depends_on": ["EXC-006"],
+      "depends_on": [
+        "EXC-006"
+      ],
       "harvested": false,
       "created_at": "2026-06-22T17:45:00+08:00",
       "completed_at": "2026-06-22T17:50:00+08:00"
@@ -201,7 +238,9 @@
       "milestone": "F1",
       "path": "scratch/20260622-plan-P0-environment-bootstrap",
       "status": "completed",
-      "depends_on": ["ANL-008"],
+      "depends_on": [
+        "ANL-008"
+      ],
       "harvested": false,
       "created_at": "2026-06-22T21:00:00+08:00",
       "completed_at": "2026-06-22T21:05:00+08:00"
@@ -214,7 +253,9 @@
       "milestone": "F1",
       "path": "scratch/20260622-plan-P0-environment-bootstrap",
       "status": "completed",
-      "depends_on": ["PLN-009"],
+      "depends_on": [
+        "PLN-009"
+      ],
       "harvested": false,
       "created_at": "2026-06-22T21:10:00+08:00",
       "completed_at": "2026-06-22T21:30:00+08:00",
@@ -244,7 +285,9 @@
       "milestone": "F1",
       "path": "scratch/20260623-plan-P1-cli-embed",
       "status": "completed",
-      "depends_on": ["ANL-009"],
+      "depends_on": [
+        "ANL-009"
+      ],
       "harvested": false,
       "created_at": "2026-06-23T09:10:00+08:00",
       "completed_at": "2026-06-23T09:15:00+08:00"
@@ -257,211 +300,14 @@
       "milestone": "F1",
       "path": "scratch/20260623-plan-P1-cli-embed",
       "status": "completed",
-      "depends_on": ["PLN-010"],
+      "depends_on": [
+        "PLN-010"
+      ],
       "harvested": false,
       "created_at": "2026-06-23T09:20:00+08:00",
       "completed_at": "2026-06-23T09:25:00+08:00",
       "tasks_completed": 3,
       "tasks_total": 3
-    },
-    {
-      "id": "ANL-010",
-      "type": "analyze",
-      "scope": "micro",
-      "phase": 2,
-      "milestone": "F2",
-      "path": "scratch/20260623-analyze-P2-command-chain-ui",
-      "context_package": "scratch/20260623-analyze-P2-command-chain-ui/context-package.json",
-      "status": "completed",
-      "harvested": false,
-      "created_at": "2026-06-23T10:00:00+08:00",
-      "completed_at": "2026-06-23T10:05:00+08:00",
-      "verdict": "GO",
-      "scope_verdict": "medium"
-    },
-    {
-      "id": "PLN-020",
-      "type": "plan",
-      "scope": "phase",
-      "phase": 2,
-      "milestone": "F2",
-      "path": "scratch/20260623-plan-P2-command-chain-ui",
-      "status": "completed",
-      "depends_on": ["ANL-010"],
-      "harvested": false,
-      "created_at": "2026-06-23T10:30:00+08:00",
-      "completed_at": "2026-06-23T10:45:00+08:00"
-    },
-    {
-      "id": "EXC-009",
-      "type": "execute",
-      "scope": "phase",
-      "phase": 2,
-      "milestone": "F2",
-      "path": "scratch/20260623-plan-P2-command-chain-ui",
-      "status": "completed",
-      "depends_on": ["PLN-020"],
-      "harvested": false,
-      "created_at": "2026-06-23T11:00:00+08:00",
-      "completed_at": "2026-06-23T11:30:00+08:00",
-      "tasks_completed": 3,
-      "tasks_total": 3
-    },
-    {
-      "id": "VRF-003",
-      "type": "verify",
-      "milestone": "F2",
-      "phase": 2,
-      "scope": "phase",
-      "path": "scratch/20260623-plan-P2-command-chain-ui/verification.json",
-      "status": "gaps_found",
-      "depends_on": ["EXC-009"],
-      "harvested": false,
-      "created_at": "2026-06-23T11:30:00+08:00",
-      "completed_at": "2026-06-23T11:30:00+08:00"
-    },
-    {
-      "id": "PLN-021",
-      "type": "plan",
-      "scope": "phase",
-      "phase": 2,
-      "milestone": "F2",
-      "path": "scratch/20260623-plan-P2-command-chain-ui-gapfix",
-      "status": "completed",
-      "depends_on": ["VRF-003"],
-      "harvested": false,
-      "gap_mode": true,
-      "source_gaps": ["GAP-001", "GAP-002", "GAP-003"],
-      "created_at": "2026-06-23T14:00:00+08:00",
-      "completed_at": "2026-06-23T14:15:00+08:00"
-    },
-    {
-      "id": "EXC-010",
-      "type": "execute",
-      "scope": "phase",
-      "phase": 2,
-      "milestone": "F2",
-      "path": "scratch/20260623-plan-P2-command-chain-ui-gapfix",
-      "status": "completed",
-      "depends_on": ["PLN-021"],
-      "harvested": false,
-      "gap_mode": true,
-      "created_at": "2026-06-23T15:00:00+08:00",
-      "completed_at": "2026-06-23T15:30:00+08:00",
-      "tasks_completed": 3,
-      "tasks_total": 3
-    },
-    {
-      "id": "REV-005",
-      "type": "review",
-      "milestone": "F2",
-      "phase": 2,
-      "scope": "phase",
-      "path": "scratch/20260623-review-P2-command-chain-ui",
-      "status": "completed",
-      "depends_on": ["EXC-010"],
-      "harvested": false,
-      "verdict": "WARN",
-      "created_at": "2026-06-23T16:00:00+08:00",
-      "completed_at": "2026-06-23T16:00:00+08:00"
-    },
-    {
-      "id": "PLN-022",
-      "type": "plan",
-      "scope": "phase",
-      "phase": 2,
-      "milestone": "F2",
-      "path": "scratch/20260623-plan-P2-command-chain-ui-review-fix",
-      "status": "completed",
-      "depends_on": ["REV-005"],
-      "harvested": false,
-      "gap_mode": true,
-      "source": "review",
-      "source_findings": ["SEC-001","SEC-002","SEC-003","SEC-004","COR-001","COR-002","ARCH-001","ARCH-002","ARCH-003","PERF-001","PERF-002","BP-001","BP-002","MAINT-001","MAINT-002"],
-      "created_at": "2026-06-23T16:30:00+08:00",
-      "completed_at": "2026-06-23T16:45:00+08:00"
-    },
-    {
-      "id": "EXC-011",
-      "type": "execute",
-      "scope": "phase",
-      "phase": 2,
-      "milestone": "F2",
-      "path": "scratch/20260623-plan-P2-command-chain-ui-review-fix",
-      "status": "completed",
-      "depends_on": ["PLN-022"],
-      "harvested": false,
-      "gap_mode": true,
-      "source": "review",
-      "created_at": "2026-06-23T17:00:00+08:00",
-      "completed_at": "2026-06-23T17:30:00+08:00",
-      "tasks_completed": 3,
-      "tasks_total": 3
-    },
-    {
-      "id": "REV-006",
-      "type": "review",
-      "milestone": "F2",
-      "phase": 2,
-      "scope": "phase",
-      "path": "scratch/20260623-review-P2-command-chain-ui-re2",
-      "status": "completed",
-      "depends_on": ["EXC-011"],
-      "harvested": false,
-      "verdict": "BLOCK",
-      "review_type": "re-review",
-      "created_at": "2026-06-23T17:30:00+08:00",
-      "completed_at": "2026-06-23T17:30:00+08:00"
-    },
-    {
-      "id": "PLN-023",
-      "type": "plan",
-      "scope": "phase",
-      "phase": 2,
-      "milestone": "F2",
-      "path": "scratch/20260623-plan-P2-command-chain-ui-re2-fix",
-      "status": "completed",
-      "depends_on": ["REV-006"],
-      "harvested": false,
-      "gap_mode": true,
-      "source": "re-review",
-      "source_findings": ["REV2-001","REV2-002","REV2-003","REV2-004","REV2-005","REV2-006"],
-      "created_at": "2026-06-23T17:45:00+08:00",
-      "completed_at": "2026-06-23T17:45:00+08:00"
-    },
-    {
-      "id": "EXC-012",
-      "type": "execute",
-      "scope": "phase",
-      "phase": 2,
-      "milestone": "F2",
-      "path": "scratch/20260623-plan-P2-command-chain-ui-re2-fix",
-      "status": "completed",
-      "depends_on": ["PLN-023"],
-      "harvested": false,
-      "gap_mode": true,
-      "source": "re-review",
-      "tasks_completed": 1,
-      "tasks_total": 1,
-      "note": "C9 tsc check skipped — tsc not available in current env",
-      "created_at": "2026-06-23T20:00:00+08:00",
-      "completed_at": "2026-06-23T20:15:00+08:00"
-    },
-    {
-      "id": "REV-007",
-      "type": "review",
-      "milestone": "F2",
-      "phase": 2,
-      "scope": "phase",
-      "path": "scratch/20260623-review-P2-command-chain-ui-re3",
-      "status": "completed",
-      "depends_on": ["EXC-012"],
-      "harvested": false,
-      "verdict": "PASS",
-      "review_type": "re-review (3rd pass)",
-      "prior_reviews": ["REV-005", "REV-006"],
-      "created_at": "2026-06-23T20:25:00+08:00",
-      "completed_at": "2026-06-23T20:30:00+08:00"
     }
   ],
   "milestone_history": [
@@ -472,16 +318,166 @@
       "completed_at": "2026-06-21T16:00:00+08:00",
       "archive_path": "milestones/M1/",
       "archived_artifacts": [
-        {"id": "RDM-maestro-ide-2026-06-21", "type": "roadmap", "phase": null, "milestone": "M1", "path": ".workflow/roadmap.md", "created_at": "2026-06-21T08:00:00+08:00"},
-        {"id": "ANL-001", "type": "analyze", "scope": "micro", "phase": 1, "milestone": "M1", "path": "scratch/20260621-analyze-P1-foundation-core-mvp", "context_package": "scratch/20260621-analyze-P1-foundation-core-mvp/context-package.json", "status": "completed", "created_at": "2026-06-21T09:30:00+08:00", "completed_at": "2026-06-21T09:45:00+08:00", "harvested": false},
-        {"id": "PLN-001", "type": "plan", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-foundation-core-mvp", "status": "completed", "depends_on": ["ANL-001"], "harvested": false, "created_at": "2026-06-21T10:00:00+08:00", "completed_at": "2026-06-21T10:30:00+08:00"},
-        {"id": "EXC-001", "type": "execute", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-foundation-core-mvp", "status": "completed", "depends_on": ["PLN-001"], "harvested": false, "created_at": "2026-06-21T10:30:00+08:00", "completed_at": "2026-06-21T11:00:00+08:00"},
-        {"id": "REV-001", "type": "review", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-review-P1-foundation-core-mvp", "status": "completed", "depends_on": ["EXC-001"], "harvested": false, "created_at": "2026-06-21T14:35:00+08:00", "completed_at": "2026-06-21T14:40:00+08:00"},
-        {"id": "PLN-002", "type": "plan", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-review-fixes", "status": "completed", "depends_on": ["REV-001"], "harvested": false, "gap_mode": true, "source_issues": ["ISS-20260621-001", "ISS-20260621-002", "ISS-20260621-003"], "created_at": "2026-06-21T14:43:00+08:00", "completed_at": "2026-06-21T14:44:00+08:00"},
-        {"id": "EXC-002", "type": "execute", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-review-fixes", "status": "completed", "depends_on": ["PLN-002"], "harvested": false, "gap_mode": true, "created_at": "2026-06-21T14:45:00+08:00", "completed_at": "2026-06-21T14:46:00+08:00"},
-        {"id": "REV-002", "type": "review", "scope": "phase", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-P1-review-fixes", "status": "completed", "depends_on": ["EXC-002"], "harvested": false, "verdict": "PASS", "created_at": "2026-06-21T14:48:00+08:00", "completed_at": "2026-06-21T14:48:00+08:00"},
-        {"id": "PLN-003", "type": "plan", "scope": "milestone", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-M1-audit-fixes", "status": "completed", "depends_on": ["REV-002"], "harvested": false, "gap_mode": true, "source_issues": ["M1-audit-gap-1", "M1-audit-gap-2", "M1-audit-gap-3", "M1-audit-gap-4", "M1-audit-gap-5", "M1-audit-gap-6", "M1-audit-gap-7"], "created_at": "2026-06-21T15:00:00+08:00", "completed_at": "2026-06-21T15:05:00+08:00"},
-        {"id": "EXC-003", "type": "execute", "scope": "milestone", "phase": 1, "milestone": "M1", "path": "scratch/20260621-plan-M1-audit-fixes", "status": "completed", "depends_on": ["PLN-003"], "harvested": false, "gap_mode": true, "created_at": "2026-06-21T15:10:00+08:00", "completed_at": "2026-06-21T15:30:00+08:00"}
+        {
+          "id": "RDM-maestro-ide-2026-06-21",
+          "type": "roadmap",
+          "phase": null,
+          "milestone": "M1",
+          "path": ".workflow/roadmap.md",
+          "created_at": "2026-06-21T08:00:00+08:00"
+        },
+        {
+          "id": "ANL-001",
+          "type": "analyze",
+          "scope": "micro",
+          "phase": 1,
+          "milestone": "M1",
+          "path": "scratch/20260621-analyze-P1-foundation-core-mvp",
+          "context_package": "scratch/20260621-analyze-P1-foundation-core-mvp/context-package.json",
+          "status": "completed",
+          "created_at": "2026-06-21T09:30:00+08:00",
+          "completed_at": "2026-06-21T09:45:00+08:00",
+          "harvested": false
+        },
+        {
+          "id": "PLN-001",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 1,
+          "milestone": "M1",
+          "path": "scratch/20260621-plan-P1-foundation-core-mvp",
+          "status": "completed",
+          "depends_on": [
+            "ANL-001"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-21T10:00:00+08:00",
+          "completed_at": "2026-06-21T10:30:00+08:00"
+        },
+        {
+          "id": "EXC-001",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 1,
+          "milestone": "M1",
+          "path": "scratch/20260621-plan-P1-foundation-core-mvp",
+          "status": "completed",
+          "depends_on": [
+            "PLN-001"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-21T10:30:00+08:00",
+          "completed_at": "2026-06-21T11:00:00+08:00"
+        },
+        {
+          "id": "REV-001",
+          "type": "review",
+          "scope": "phase",
+          "phase": 1,
+          "milestone": "M1",
+          "path": "scratch/20260621-review-P1-foundation-core-mvp",
+          "status": "completed",
+          "depends_on": [
+            "EXC-001"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-21T14:35:00+08:00",
+          "completed_at": "2026-06-21T14:40:00+08:00"
+        },
+        {
+          "id": "PLN-002",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 1,
+          "milestone": "M1",
+          "path": "scratch/20260621-plan-P1-review-fixes",
+          "status": "completed",
+          "depends_on": [
+            "REV-001"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "source_issues": [
+            "ISS-20260621-001",
+            "ISS-20260621-002",
+            "ISS-20260621-003"
+          ],
+          "created_at": "2026-06-21T14:43:00+08:00",
+          "completed_at": "2026-06-21T14:44:00+08:00"
+        },
+        {
+          "id": "EXC-002",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 1,
+          "milestone": "M1",
+          "path": "scratch/20260621-plan-P1-review-fixes",
+          "status": "completed",
+          "depends_on": [
+            "PLN-002"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "created_at": "2026-06-21T14:45:00+08:00",
+          "completed_at": "2026-06-21T14:46:00+08:00"
+        },
+        {
+          "id": "REV-002",
+          "type": "review",
+          "scope": "phase",
+          "phase": 1,
+          "milestone": "M1",
+          "path": "scratch/20260621-plan-P1-review-fixes",
+          "status": "completed",
+          "depends_on": [
+            "EXC-002"
+          ],
+          "harvested": false,
+          "verdict": "PASS",
+          "created_at": "2026-06-21T14:48:00+08:00",
+          "completed_at": "2026-06-21T14:48:00+08:00"
+        },
+        {
+          "id": "PLN-003",
+          "type": "plan",
+          "scope": "milestone",
+          "phase": 1,
+          "milestone": "M1",
+          "path": "scratch/20260621-plan-M1-audit-fixes",
+          "status": "completed",
+          "depends_on": [
+            "REV-002"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "source_issues": [
+            "M1-audit-gap-1",
+            "M1-audit-gap-2",
+            "M1-audit-gap-3",
+            "M1-audit-gap-4",
+            "M1-audit-gap-5",
+            "M1-audit-gap-6",
+            "M1-audit-gap-7"
+          ],
+          "created_at": "2026-06-21T15:00:00+08:00",
+          "completed_at": "2026-06-21T15:05:00+08:00"
+        },
+        {
+          "id": "EXC-003",
+          "type": "execute",
+          "scope": "milestone",
+          "phase": 1,
+          "milestone": "M1",
+          "path": "scratch/20260621-plan-M1-audit-fixes",
+          "status": "completed",
+          "depends_on": [
+            "PLN-003"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "created_at": "2026-06-21T15:10:00+08:00",
+          "completed_at": "2026-06-21T15:30:00+08:00"
+        }
       ]
     },
     {
@@ -491,13 +487,367 @@
       "completed_at": "2026-06-22T10:00:00+08:00",
       "archive_path": "milestones/M2/",
       "archived_artifacts": [
-        {"id": "ANL-002", "type": "analyze", "scope": "micro", "phase": 2, "milestone": "M2", "path": "scratch/20260621-analyze-P2-interaction-surfaces", "context_package": "scratch/20260621-analyze-P2-interaction-surfaces/context-package.json", "status": "completed", "harvested": false, "created_at": "2026-06-21T16:30:00+08:00", "completed_at": "2026-06-21T17:30:00+08:00"},
-        {"id": "PLN-004", "type": "plan", "scope": "phase", "phase": 2, "milestone": "M2", "path": "scratch/20260621-plan-P2-interaction-surfaces", "status": "completed", "depends_on": ["ANL-002"], "harvested": false, "created_at": "2026-06-21T17:45:00+08:00", "completed_at": "2026-06-21T18:15:00+08:00"},
-        {"id": "EXC-004", "type": "execute", "scope": "phase", "phase": 2, "milestone": "M2", "path": "scratch/20260621-plan-P2-interaction-surfaces", "status": "completed", "depends_on": "PLN-004", "harvested": false, "created_at": "2026-06-21T07:37:51.613Z", "completed_at": "2026-06-21T08:13:22.986Z"},
-        {"id": "REV-003", "type": "review", "milestone": "M2", "phase": 2, "scope": "phase", "path": "scratch/20260621-review-P2-interaction-surfaces", "status": "completed", "depends_on": "EXC-004", "harvested": false, "created_at": "2026-06-21T19:00:00+08:00", "completed_at": "2026-06-21T08:29:18.278Z", "verdict": "BLOCK"},
-        {"id": "PLN-005", "type": "plan", "scope": "phase", "phase": 2, "milestone": "M2", "path": "scratch/20260621-plan-P2-review-fixes", "status": "completed", "depends_on": ["REV-003"], "harvested": false, "gap_mode": true, "source_review": "REV-003", "created_at": "2026-06-21T17:00:00+08:00", "completed_at": "2026-06-21T17:05:00+08:00"},
-        {"id": "EXC-005", "type": "execute", "scope": "phase", "phase": 2, "milestone": "M2", "path": "scratch/20260621-plan-P2-review-fixes", "status": "completed", "depends_on": "PLN-005", "harvested": false, "gap_mode": true, "created_at": "2026-06-21T17:05:00+08:00", "completed_at": "2026-06-21T17:20:00+08:00"},
-        {"id": "VRF-002", "type": "verify", "milestone": "M2", "phase": 2, "scope": "phase", "path": "scratch/20260621-plan-P2-review-fixes/verification.json", "status": "completed", "depends_on": "EXC-005", "harvested": false, "created_at": "2026-06-21T17:30:00+08:00", "completed_at": "2026-06-21T17:30:00+08:00"}
+        {
+          "id": "ANL-002",
+          "type": "analyze",
+          "scope": "micro",
+          "phase": 2,
+          "milestone": "M2",
+          "path": "scratch/20260621-analyze-P2-interaction-surfaces",
+          "context_package": "scratch/20260621-analyze-P2-interaction-surfaces/context-package.json",
+          "status": "completed",
+          "harvested": false,
+          "created_at": "2026-06-21T16:30:00+08:00",
+          "completed_at": "2026-06-21T17:30:00+08:00"
+        },
+        {
+          "id": "PLN-004",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "M2",
+          "path": "scratch/20260621-plan-P2-interaction-surfaces",
+          "status": "completed",
+          "depends_on": [
+            "ANL-002"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-21T17:45:00+08:00",
+          "completed_at": "2026-06-21T18:15:00+08:00"
+        },
+        {
+          "id": "EXC-004",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "M2",
+          "path": "scratch/20260621-plan-P2-interaction-surfaces",
+          "status": "completed",
+          "depends_on": "PLN-004",
+          "harvested": false,
+          "created_at": "2026-06-21T07:37:51.613Z",
+          "completed_at": "2026-06-21T08:13:22.986Z"
+        },
+        {
+          "id": "REV-003",
+          "type": "review",
+          "milestone": "M2",
+          "phase": 2,
+          "scope": "phase",
+          "path": "scratch/20260621-review-P2-interaction-surfaces",
+          "status": "completed",
+          "depends_on": "EXC-004",
+          "harvested": false,
+          "created_at": "2026-06-21T19:00:00+08:00",
+          "completed_at": "2026-06-21T08:29:18.278Z",
+          "verdict": "BLOCK"
+        },
+        {
+          "id": "PLN-005",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "M2",
+          "path": "scratch/20260621-plan-P2-review-fixes",
+          "status": "completed",
+          "depends_on": [
+            "REV-003"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "source_review": "REV-003",
+          "created_at": "2026-06-21T17:00:00+08:00",
+          "completed_at": "2026-06-21T17:05:00+08:00"
+        },
+        {
+          "id": "EXC-005",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "M2",
+          "path": "scratch/20260621-plan-P2-review-fixes",
+          "status": "completed",
+          "depends_on": "PLN-005",
+          "harvested": false,
+          "gap_mode": true,
+          "created_at": "2026-06-21T17:05:00+08:00",
+          "completed_at": "2026-06-21T17:20:00+08:00"
+        },
+        {
+          "id": "VRF-002",
+          "type": "verify",
+          "milestone": "M2",
+          "phase": 2,
+          "scope": "phase",
+          "path": "scratch/20260621-plan-P2-review-fixes/verification.json",
+          "status": "completed",
+          "depends_on": "EXC-005",
+          "harvested": false,
+          "created_at": "2026-06-21T17:30:00+08:00",
+          "completed_at": "2026-06-21T17:30:00+08:00"
+        }
+      ]
+    },
+    {
+      "id": "F2",
+      "name": "Orchestration — 编排可视化",
+      "status": "completed",
+      "completed_at": "2026-06-23T20:40:00+08:00",
+      "archive_path": "milestones/F2/",
+      "archived_artifacts": [
+        {
+          "id": "ANL-010",
+          "type": "analyze",
+          "scope": "micro",
+          "phase": 2,
+          "milestone": "F2",
+          "path": "scratch/20260623-analyze-P2-command-chain-ui",
+          "context_package": "scratch/20260623-analyze-P2-command-chain-ui/context-package.json",
+          "status": "completed",
+          "harvested": false,
+          "created_at": "2026-06-23T10:00:00+08:00",
+          "completed_at": "2026-06-23T10:05:00+08:00",
+          "verdict": "GO",
+          "scope_verdict": "medium"
+        },
+        {
+          "id": "PLN-020",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "F2",
+          "path": "scratch/20260623-plan-P2-command-chain-ui",
+          "status": "completed",
+          "depends_on": [
+            "ANL-010"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-23T10:30:00+08:00",
+          "completed_at": "2026-06-23T10:45:00+08:00"
+        },
+        {
+          "id": "EXC-009",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "F2",
+          "path": "scratch/20260623-plan-P2-command-chain-ui",
+          "status": "completed",
+          "depends_on": [
+            "PLN-020"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-23T11:00:00+08:00",
+          "completed_at": "2026-06-23T11:30:00+08:00",
+          "tasks_completed": 3,
+          "tasks_total": 3
+        },
+        {
+          "id": "VRF-003",
+          "type": "verify",
+          "milestone": "F2",
+          "phase": 2,
+          "scope": "phase",
+          "path": "scratch/20260623-plan-P2-command-chain-ui/verification.json",
+          "status": "gaps_found",
+          "depends_on": [
+            "EXC-009"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-23T11:30:00+08:00",
+          "completed_at": "2026-06-23T11:30:00+08:00"
+        },
+        {
+          "id": "PLN-021",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "F2",
+          "path": "scratch/20260623-plan-P2-command-chain-ui-gapfix",
+          "status": "completed",
+          "depends_on": [
+            "VRF-003"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "source_gaps": [
+            "GAP-001",
+            "GAP-002",
+            "GAP-003"
+          ],
+          "created_at": "2026-06-23T14:00:00+08:00",
+          "completed_at": "2026-06-23T14:15:00+08:00"
+        },
+        {
+          "id": "EXC-010",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "F2",
+          "path": "scratch/20260623-plan-P2-command-chain-ui-gapfix",
+          "status": "completed",
+          "depends_on": [
+            "PLN-021"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "created_at": "2026-06-23T15:00:00+08:00",
+          "completed_at": "2026-06-23T15:30:00+08:00",
+          "tasks_completed": 3,
+          "tasks_total": 3
+        },
+        {
+          "id": "REV-005",
+          "type": "review",
+          "milestone": "F2",
+          "phase": 2,
+          "scope": "phase",
+          "path": "scratch/20260623-review-P2-command-chain-ui",
+          "status": "completed",
+          "depends_on": [
+            "EXC-010"
+          ],
+          "harvested": false,
+          "verdict": "WARN",
+          "created_at": "2026-06-23T16:00:00+08:00",
+          "completed_at": "2026-06-23T16:00:00+08:00"
+        },
+        {
+          "id": "PLN-022",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "F2",
+          "path": "scratch/20260623-plan-P2-command-chain-ui-review-fix",
+          "status": "completed",
+          "depends_on": [
+            "REV-005"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "source": "review",
+          "source_findings": [
+            "SEC-001",
+            "SEC-002",
+            "SEC-003",
+            "SEC-004",
+            "COR-001",
+            "COR-002",
+            "ARCH-001",
+            "ARCH-002",
+            "ARCH-003",
+            "PERF-001",
+            "PERF-002",
+            "BP-001",
+            "BP-002",
+            "MAINT-001",
+            "MAINT-002"
+          ],
+          "created_at": "2026-06-23T16:30:00+08:00",
+          "completed_at": "2026-06-23T16:45:00+08:00"
+        },
+        {
+          "id": "EXC-011",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "F2",
+          "path": "scratch/20260623-plan-P2-command-chain-ui-review-fix",
+          "status": "completed",
+          "depends_on": [
+            "PLN-022"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "source": "review",
+          "created_at": "2026-06-23T17:00:00+08:00",
+          "completed_at": "2026-06-23T17:30:00+08:00",
+          "tasks_completed": 3,
+          "tasks_total": 3
+        },
+        {
+          "id": "REV-006",
+          "type": "review",
+          "milestone": "F2",
+          "phase": 2,
+          "scope": "phase",
+          "path": "scratch/20260623-review-P2-command-chain-ui-re2",
+          "status": "completed",
+          "depends_on": [
+            "EXC-011"
+          ],
+          "harvested": false,
+          "verdict": "BLOCK",
+          "review_type": "re-review",
+          "created_at": "2026-06-23T17:30:00+08:00",
+          "completed_at": "2026-06-23T17:30:00+08:00"
+        },
+        {
+          "id": "PLN-023",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "F2",
+          "path": "scratch/20260623-plan-P2-command-chain-ui-re2-fix",
+          "status": "completed",
+          "depends_on": [
+            "REV-006"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "source": "re-review",
+          "source_findings": [
+            "REV2-001",
+            "REV2-002",
+            "REV2-003",
+            "REV2-004",
+            "REV2-005",
+            "REV2-006"
+          ],
+          "created_at": "2026-06-23T17:45:00+08:00",
+          "completed_at": "2026-06-23T17:45:00+08:00"
+        },
+        {
+          "id": "EXC-012",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 2,
+          "milestone": "F2",
+          "path": "scratch/20260623-plan-P2-command-chain-ui-re2-fix",
+          "status": "completed",
+          "depends_on": [
+            "PLN-023"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "source": "re-review",
+          "tasks_completed": 1,
+          "tasks_total": 1,
+          "note": "C9 tsc check skipped — tsc not available in current env",
+          "created_at": "2026-06-23T20:00:00+08:00",
+          "completed_at": "2026-06-23T20:15:00+08:00"
+        },
+        {
+          "id": "REV-007",
+          "type": "review",
+          "milestone": "F2",
+          "phase": 2,
+          "scope": "phase",
+          "path": "scratch/20260623-review-P2-command-chain-ui-re3",
+          "status": "completed",
+          "depends_on": [
+            "EXC-012"
+          ],
+          "harvested": false,
+          "verdict": "PASS",
+          "review_type": "re-review (3rd pass)",
+          "prior_reviews": [
+            "REV-005",
+            "REV-006"
+          ],
+          "created_at": "2026-06-23T20:25:00+08:00",
+          "completed_at": "2026-06-23T20:30:00+08:00"
+        }
       ]
     }
   ],
