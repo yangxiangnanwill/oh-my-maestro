@@ -1,0 +1,130 @@
+{
+  "id": "TASK-005",
+  "title": "Agent 生命周期联动 — Ralph 决策节点与 Superset Agent Hooks 桥接",
+  "description": "将 Maestro-flow Ralph 决策引擎的决策节点事件与 Superset Agent 生命周期 hooks 桥接。当 Ralph 产生决策节点（需要用户确认或选择）时，通过 WebSocket 推送 decision-node 事件到 Superset 主进程，触发 Agent hooks（如 onDecisionRequired、onDecisionResolved），使决策节点状态与 Agent 生命周期同步。实现方式：在 TASK-001 的 MCP provider 基础上添加 WebSocket 事件通道，在 setupAgentHooks() 中注册 Ralph 决策事件监听器。",
+  "type": "feature",
+  "priority": "low",
+  "effort": "large",
+  "action": "在 apps/desktop/src/main/lib/agent-setup/ 中创建 ralph-decision-bridge.ts，实现以下功能：(1) createRalphDecisionBridge() — 创建 WebSocket 连接到 Maestro-flow 的决策事件流（ws://localhost:{port}/ralph/decisions），监听 decision-node-created、decision-node-resolved、decision-node-expired 事件；(2) 事件处理器将 Ralph 决策事件映射为 Superset Agent Hook 调用：(a) decision-node-created → onDecisionRequired({nodeId, question, options}) → 通知 UI 渲染决策节点；(b) decision-node-resolved → onDecisionResolved({nodeId, selectedOption}) → 更新 Agent 状态；(c) decision-node-expired → onDecisionExpired({nodeId}) → 标记决策超时；(3) 在 setupAgentHooks() 中注册 ralphDecisionBridge.start()。同时在 apps/desktop/src/main/lib/ 中创建 websocket-event-bus.ts，实现简单的 WebSocket 服务端（基于 ws 库），支持频道订阅和事件推送。",
+  "scope": "apps/desktop/src/main/lib/agent-setup/ + apps/desktop/src/main/lib/",
+  "focus_paths": [
+    "apps/desktop/src/main/lib/agent-setup/",
+    "apps/desktop/src/main/lib/",
+    "apps/desktop/src/main/index.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/src/main/lib/agent-setup/desktop-agent-capabilities.ts",
+    "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+    "apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx",
+    ".workflow/blueprint/BLP-maestro-ide-2026-06-20/architecture/ADR-004-event-driven-state-sync.md",
+    ".workflow/scratch/20260622-analyze-superset-architecture/exploration-codebase.json"
+  ],
+  "depends_on": ["TASK-001"],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "ralph-decision-bridge.ts 文件存在于 apps/desktop/src/main/lib/agent-setup/ 目录中",
+      "createRalphDecisionBridge() 函数创建 WebSocket 连接并监听 decision-node-* 事件",
+      "websocket-event-bus.ts 文件存在于 apps/desktop/src/main/lib/ 目录中",
+      "setupAgentHooks() 中注册了 ralphDecisionBridge.start()",
+      "decision-node-created 事件触发时调用 onDecisionRequired hook",
+      "[UI-observable] Ralph 产生决策节点后，Superset UI 的决策面板自动显示决策选项，用户选择后 Agent 状态更新",
+      "grep -r 'createRalphDecisionBridge' apps/desktop/src/main/ 返回至少 2 处匹配（定义 + 调用）",
+      "grep -r 'WebSocket' apps/desktop/src/main/lib/websocket-event-bus.ts 返回至少 1 处匹配"
+    ],
+    "verification": "在完整 Superset monorepo 中：(1) bun run build 无 TypeScript 错误；(2) 启动应用，触发 Ralph 决策流程（如 maestro ralph next），验证 WebSocket 连接建立；(3) 验证决策节点事件推送到 Superset Agent hooks；(4) 验证 UI 决策面板自动更新",
+    "definition_of_done": "Ralph 决策引擎的决策节点事件通过 WebSocket 推送到 Superset Agent 生命周期，决策状态在 UI 中自动同步，无需手动刷新"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/lib/agent-setup/ralph-decision-bridge.ts",
+      "action": "create",
+      "target": "createRalphDecisionBridge() 函数",
+      "change": "创建 Ralph 决策桥接：WebSocket 客户端连接 Maestro-flow 决策事件流，映射事件到 Superset Agent hooks"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/websocket-event-bus.ts",
+      "action": "create",
+      "target": "WebSocketEventBus 类",
+      "change": "创建 WebSocket 事件总线：基于 ws 库的服务端，支持频道订阅/取消订阅、事件推送、连接管理、自动重连"
+    },
+    {
+      "path": "apps/desktop/src/main/index.ts",
+      "action": "modify",
+      "target": "setupAgentHooks() 调用点 (line 417-421)",
+      "change": "在 setupAgentHooks() 内部注册 ralphDecisionBridge.start()，在 registerMaestroMcpProvider() 之后"
+    }
+  ],
+  "implementation": [
+    "Step 1 (探索): 在完整 Superset monorepo 中定位 setupAgentHooks() 的实现 — 理解 Agent hooks 的接口定义（onDecisionRequired、onDecisionResolved、onDecisionExpired 等）",
+    "Step 2 (探索): 读取 desktop-agent-capabilities.ts 理解 Agent 生命周期事件和 hook 注册机制",
+    "Step 3 (探索): 定位 Maestro-flow 仓库中的 Ralph 决策引擎 — 确认决策事件的数据格式和推送机制（WebSocket endpoint、事件类型、payload schema）",
+    "Step 4 (实现): 创建 websocket-event-bus.ts — 实现 WebSocketEventBus 类：(a) 基于 ws 库创建 WebSocket server；(b) 频道订阅/取消订阅 (subscribe(channel, callback), unsubscribe(channel, callback))；(c) 事件推送 (publish(channel, event))；(d) 连接管理 (onConnection, onDisconnection)；(e) 自动重连 (exponential backoff, max 5 retries)",
+    "Step 5 (实现): 创建 ralph-decision-bridge.ts — 实现 createRalphDecisionBridge()：(a) 创建 WebSocket client 连接到 Maestro-flow 决策事件流；(b) 监听 'decision-node-created' 事件 → 调用 onDecisionRequired({nodeId, question, options})；(c) 监听 'decision-node-resolved' 事件 → 调用 onDecisionResolved({nodeId, selectedOption})；(d) 监听 'decision-node-expired' 事件 → 调用 onDecisionExpired({nodeId})；(e) 错误处理：连接断开时自动重连，重连后重放最近事件",
+    "Step 6 (实现): 在 setupAgentHooks() 中注册 ralphDecisionBridge.start() — 确保在 MCP provider 注册之后启动",
+    "Step 7 (验证): bun run build 确认无 TypeScript 错误；启动应用触发 Ralph 决策流程验证事件推送"
+  ],
+  "test": {
+    "commands": [
+      "cd <superset-repo> && bun run build",
+      "cd <superset-repo> && bun run test -- --grep 'ralph-decision-bridge'",
+      "cd <superset-repo> && bun run test -- --grep 'websocket-event-bus'"
+    ],
+    "unit": [
+      "apps/desktop/src/main/lib/agent-setup/ralph-decision-bridge.test.ts",
+      "apps/desktop/src/main/lib/websocket-event-bus.test.ts"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "bun run build 无 TypeScript 错误",
+      "所有单元测试通过",
+      "WebSocket 连接成功建立（主进程日志确认）",
+      "decision-node-created 事件触发 onDecisionRequired hook",
+      "decision-node-resolved 事件触发 onDecisionResolved hook"
+    ]
+  },
+  "reference": {
+    "pattern": "WebSocket 事件总线遵循 ADR-004 的 Event-Driven + WebSocket 架构。Ralph 决策桥接遵循 Superset 现有的 Agent Hook 模式（desktop-agent-capabilities.ts 中的 setupActions）。",
+    "files": [
+      "apps/desktop/src/main/lib/agent-setup/desktop-agent-capabilities.ts",
+      "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      ".workflow/blueprint/BLP-maestro-ide-2026-06-20/architecture/ADR-004-event-driven-state-sync.md"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "使用 WebSocket 作为 Ralph 决策事件推送通道（而非 HTTP 轮询或 IPC），原因：(1) ADR-004 已决策采用 WebSocket + EventBus 架构；(2) 决策事件需要低延迟推送（用户等待决策确认）；(3) WebSocket 双向通道支持决策响应回传。使用 notify-hook 机制作为松耦合桥接：Ralph 决策事件 → WebSocket → Agent Hook → notify-hook shell 脚本 → Agent 状态变更。",
+    "decision_factors": [
+      "WebSocket → 低延迟事件推送，符合 ADR-004 架构决策",
+      "Agent Hook 模式 → 复用 Superset 现有生命周期机制",
+      "松耦合桥接 → Ralph 决策引擎和 Superset Agent 独立演进",
+      "自动重连 → 确保连接断开后恢复"
+    ],
+    "tradeoffs": "WebSocket 增加了一个新的通信通道（在 tRPC IPC 之外），增加了架构复杂度 → 但 ADR-004 已接受此 tradeoff；WebSocket 连接管理（重连、心跳）增加实现复杂度 → 使用成熟的 ws 库 + 指数退避重连策略"
+  },
+  "risks": [
+    {
+      "description": "Maestro-flow Ralph 决策引擎可能没有 WebSocket 推送机制，需要先实现",
+      "mitigation": "Step 3 优先探索 Ralph 决策引擎代码；如无 WebSocket 支持，使用文件监听（watch decision-events.json）作为临时方案"
+    },
+    {
+      "description": "Agent hooks 接口可能与 Ralph 决策事件格式不匹配",
+      "mitigation": "在 ralph-decision-bridge.ts 中实现事件格式转换层（adapter pattern）"
+    },
+    {
+      "description": "WebSocket 连接在 Windows 上可能有防火墙/代理问题",
+      "mitigation": "使用 localhost 连接（不受防火墙影响）；Phase 0 已验证本地网络通信"
+    }
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "90m",
+    "risk": "high",
+    "autonomous": false,
+    "checkpoint": true,
+    "wave": 3,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

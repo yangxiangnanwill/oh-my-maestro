@@ -84,7 +84,7 @@
       "id": "F3",
       "type": "standard",
       "name": "Deep Integration — 深度融合",
-      "status": "active",
+      "status": "completed",
       "phases": [
         3
       ],
@@ -92,10 +92,11 @@
         "3": "full-integration"
       },
       "roadmap_ref": ".workflow/roadmap.md",
-      "created_at": "2026-06-22T20:00:00+08:00"
+      "created_at": "2026-06-22T20:00:00+08:00",
+      "completed_at": "2026-06-24T16:15:00+08:00"
     }
   ],
-  "current_milestone": "F3",
+  "current_milestone": null,
   "artifacts": [
     {
       "id": "RDM-fusion-2026-06-22",
@@ -308,36 +309,6 @@
       "completed_at": "2026-06-23T09:25:00+08:00",
       "tasks_completed": 3,
       "tasks_total": 3
-    },
-    {
-      "id": "ANL-011",
-      "type": "analyze",
-      "scope": "micro",
-      "phase": 3,
-      "milestone": "F3",
-      "path": "scratch/20260624-analyze-P3-full-integration",
-      "context_package": "scratch/20260624-analyze-P3-full-integration/context-package.json",
-      "status": "completed",
-      "harvested": false,
-      "verdict": "CONDITIONAL_GO",
-      "scope_verdict": "large",
-      "created_at": "2026-06-24T09:00:00+08:00",
-      "completed_at": "2026-06-24T09:30:00+08:00"
-    },
-    {
-      "id": "PLN-011",
-      "type": "plan",
-      "scope": "phase",
-      "phase": 3,
-      "milestone": "F3",
-      "path": "scratch/20260624-plan-P3-full-integration",
-      "status": "completed",
-      "depends_on": [
-        "ANL-011"
-      ],
-      "harvested": false,
-      "created_at": "2026-06-24T09:45:00+08:00",
-      "completed_at": "2026-06-24T10:00:00+08:00"
     }
   ],
   "milestone_history": [
@@ -879,6 +850,168 @@
           "completed_at": "2026-06-23T20:30:00+08:00"
         }
       ]
+    },
+    {
+      "id": "F3",
+      "name": "Deep Integration — 深度融合",
+      "status": "completed",
+      "completed_at": "2026-06-24T16:15:00+08:00",
+      "archive_path": "milestones/F3/",
+      "archived_artifacts": [
+        {
+          "id": "ANL-011",
+          "type": "analyze",
+          "scope": "micro",
+          "phase": 3,
+          "milestone": "F3",
+          "path": "scratch/20260624-analyze-P3-full-integration",
+          "context_package": "scratch/20260624-analyze-P3-full-integration/context-package.json",
+          "status": "completed",
+          "harvested": false,
+          "verdict": "CONDITIONAL_GO",
+          "scope_verdict": "large",
+          "created_at": "2026-06-24T09:00:00+08:00",
+          "completed_at": "2026-06-24T09:30:00+08:00"
+        },
+        {
+          "id": "PLN-011",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 3,
+          "milestone": "F3",
+          "path": "scratch/20260624-plan-P3-full-integration",
+          "status": "completed",
+          "depends_on": [
+            "ANL-011"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-24T09:45:00+08:00",
+          "completed_at": "2026-06-24T10:00:00+08:00"
+        },
+        {
+          "id": "EXC-013",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 3,
+          "milestone": "F3",
+          "path": "scratch/20260624-plan-P3-full-integration",
+          "status": "completed",
+          "depends_on": [
+            "PLN-011"
+          ],
+          "harvested": false,
+          "tasks_completed": 6,
+          "tasks_total": 6,
+          "created_at": "2026-06-24T10:30:00+08:00",
+          "completed_at": "2026-06-24T12:00:00+08:00"
+        },
+        {
+          "id": "VRF-004",
+          "type": "verify",
+          "milestone": "F3",
+          "phase": 3,
+          "scope": "phase",
+          "path": "scratch/20260624-plan-P3-full-integration/verification.json",
+          "status": "gaps_found",
+          "depends_on": [
+            "EXC-013"
+          ],
+          "created_at": "2026-06-24T12:00:00+08:00",
+          "completed_at": "2026-06-24T12:00:00+08:00"
+        },
+        {
+          "id": "DBG-001",
+          "type": "debug",
+          "milestone": "F3",
+          "phase": 3,
+          "scope": "phase",
+          "path": "scratch/20260624-plan-P3-full-integration/.debug/gaps-diagnosis",
+          "status": "completed",
+          "depends_on": [
+            "VRF-004"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-24T12:00:00+08:00",
+          "completed_at": "2026-06-24T12:15:00+08:00"
+        },
+        {
+          "id": "PLN-012",
+          "type": "plan",
+          "scope": "phase",
+          "phase": 3,
+          "milestone": "F3",
+          "path": "scratch/20260624-plan-P3-full-integration-gapfix",
+          "status": "completed",
+          "depends_on": [
+            "DBG-001"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "source_gaps": [
+            "GAP-001",
+            "GAP-002",
+            "GAP-003",
+            "GAP-004",
+            "GAP-005",
+            "GAP-006",
+            "GAP-007",
+            "GAP-008"
+          ],
+          "source_debug": "DBG-001",
+          "source_verification": "VRF-004",
+          "created_at": "2026-06-24T12:15:00+08:00",
+          "completed_at": "2026-06-24T12:20:00+08:00"
+        },
+        {
+          "id": "EXC-014",
+          "type": "execute",
+          "scope": "phase",
+          "phase": 3,
+          "milestone": "F3",
+          "path": "scratch/20260624-plan-P3-full-integration-gapfix",
+          "status": "completed",
+          "depends_on": [
+            "PLN-012"
+          ],
+          "harvested": false,
+          "gap_mode": true,
+          "tasks_completed": 7,
+          "tasks_total": 7,
+          "created_at": "2026-06-24T12:20:00+08:00",
+          "completed_at": "2026-06-24T12:35:00+08:00"
+        },
+        {
+          "id": "REV-008",
+          "type": "review",
+          "milestone": "F3",
+          "phase": 3,
+          "scope": "phase",
+          "path": "scratch/20260624-review-P3-full-integration-gapfix",
+          "status": "completed",
+          "depends_on": [
+            "EXC-014"
+          ],
+          "harvested": false,
+          "verdict": "WARN",
+          "created_at": "2026-06-24T15:50:00+08:00",
+          "completed_at": "2026-06-24T15:55:00+08:00"
+        },
+        {
+          "id": "TST-002",
+          "type": "test",
+          "milestone": "F3",
+          "phase": 3,
+          "scope": "phase",
+          "path": "scratch/20260624-test-P3-full-integration-gapfix",
+          "status": "completed",
+          "depends_on": [
+            "EXC-014"
+          ],
+          "harvested": false,
+          "created_at": "2026-06-24T16:00:00+08:00",
+          "completed_at": "2026-06-24T16:05:00+08:00"
+        }
+      ]
     }
   ],
   "accumulated_context": {
@@ -892,5 +1025,6 @@
       "状态导向模式 (UX-02)",
       "概念翻译层 (UX-03)"
     ]
-  }
+  },
+  "status": "completed"
 }

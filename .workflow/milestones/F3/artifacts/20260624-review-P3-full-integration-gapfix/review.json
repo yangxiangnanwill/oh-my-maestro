@@ -1,0 +1,126 @@
+{
+  "phase": 3,
+  "milestone": "F3",
+  "level": "standard",
+  "verdict": "WARN",
+  "reviewed_at": "2026-06-24T15:50:00+08:00",
+  "reviewer": "workflow-reviewer",
+  "dimensions_reviewed": ["correctness", "security", "performance", "architecture", "maintainability", "best-practices"],
+  "files_reviewed": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "apps/desktop/src/renderer/lib/electron-trpc.ts",
+    "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+    "apps/desktop/src/renderer/components/CommandPalette/CommandPalette.tsx",
+    "apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx",
+    "apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+    "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/package.json"
+  ],
+  "severity_distribution": {
+    "critical": 0,
+    "high": 14,
+    "medium": 36,
+    "low": 38,
+    "total": 88
+  },
+  "critical_files": [
+    {
+      "file": "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+      "dimensions": ["correctness", "security", "architecture", "maintainability", "best-practices"]
+    },
+    {
+      "file": "apps/desktop/src/renderer/components/CommandPalette/CommandPalette.tsx",
+      "dimensions": ["correctness", "security", "performance", "architecture", "maintainability", "best-practices"]
+    },
+    {
+      "file": "apps/desktop/src/lib/trpc/routers/maestro/index.ts",
+      "dimensions": ["correctness", "security", "architecture"]
+    }
+  ],
+  "top_issues": [
+    {
+      "id": "SEC-001",
+      "dimension": "security",
+      "severity": "high",
+      "title": "命令注入：用户可控的 CLI 参数直接拼接到子进程执行，无白名单校验",
+      "file": "apps/desktop/src/renderer/components/CommandPalette/CommandPalette.tsx",
+      "line": 209
+    },
+    {
+      "id": "SEC-002",
+      "dimension": "security",
+      "severity": "high",
+      "title": "环境变量全量泄露到子进程：process.env 完整传递给 spawn 的子进程",
+      "file": "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+      "line": 507
+    },
+    {
+      "id": "SEC-003",
+      "dimension": "security",
+      "severity": "high",
+      "title": "环境变量全量泄露到子进程：execMaestroCli 传递完整 process.env",
+      "file": "apps/desktop/src/lib/trpc/routers/maestro/index.ts",
+      "line": 103
+    },
+    {
+      "id": "ARCH-001",
+      "dimension": "architecture",
+      "severity": "high",
+      "title": "tRPC router 层直接依赖 main 进程模块 — 层级违反",
+      "file": "apps/desktop/src/lib/trpc/routers/maestro/index.ts",
+      "line": 5
+    },
+    {
+      "id": "ARCH-002",
+      "dimension": "architecture",
+      "severity": "high",
+      "title": "command-chain router 直接依赖 main 进程模块 — 层级违反",
+      "file": "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "line": 4
+    },
+    {
+      "id": "ARCH-003",
+      "dimension": "architecture",
+      "severity": "high",
+      "title": "类型定义三元重复 — CommandChainStep/DecisionNode 在 3 个层级独立定义",
+      "file": "apps/desktop/src/main/lib/command-chain-status-poller.ts",
+      "line": 5
+    },
+    {
+      "id": "CORR-001",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "MaestroCommand 缺少 id 字段，但 CommandPalette 使用 cmd.id 作为 React key",
+      "file": "apps/desktop/src/lib/trpc/routers/maestro/index.ts",
+      "line": 318
+    },
+    {
+      "id": "CORR-002",
+      "dimension": "correctness",
+      "severity": "high",
+      "title": "OverallVerdictBanner 中 isNoGo 的默认分支覆盖了所有未知 verdict 值",
+      "file": "apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+      "line": 87
+    },
+    {
+      "id": "MAINT-001",
+      "dimension": "maintainability",
+      "severity": "high",
+      "title": "三个组件面板中 EmptyState/LoadingState/ErrorState 模式高度重复",
+      "file": "apps/desktop/src/renderer/components/CommandPalette/CommandPalette.tsx",
+      "line": 66
+    },
+    {
+      "id": "BP-001",
+      "dimension": "best-practices",
+      "severity": "high",
+      "title": "tRPC 初始化缺少 isDev 上下文和错误格式化",
+      "file": "apps/desktop/src/lib/trpc/index.ts",
+      "line": 3
+    }
+  ],
+  "deep_dives": [],
+  "issues_created": [],
+  "summary": "F3 Phase 3 gap-fix 代码审查完成。0 critical、14 high、36 medium、38 low。主要关注领域：(1) 安全性 — 命令注入风险和环境变量泄露 (2) 架构 — tRPC router 层违反依赖方向 (3) 可维护性 — 三态渲染模式高度重复。建议在继续后续 phase 之前修复 high severity 问题。"
+}

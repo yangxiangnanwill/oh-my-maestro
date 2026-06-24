@@ -1,0 +1,129 @@
+{
+  "id": "TASK-004",
+  "title": "命令面板 — 20 高频 Maestro Command 迁移",
+  "description": "构建 CommandPalette React 组件，将 20 个高频 Maestro-flow command 注册到 Superset 命令面板中，支持搜索过滤和一键触发（在终端 session 中执行）。组件使用 cmdk 风格的下拉搜索 UI（或复用 Superset 已有的命令面板组件），通过 TASK-001 创建的 maestro.commands.list tRPC endpoint 获取可用命令列表。选中命令后，通过现有的 Agent Launch 流程在终端中执行。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "在 apps/desktop/src/renderer/components/CommandPalette/ 中创建以下文件：(1) CommandPalette.tsx — 主组件，使用 electronTrpc.maestro.commands.list.useQuery({filter}) 获取命令列表，实现搜索过滤（输入框 + 实时过滤）+ 命令列表（分组显示：搜索类/分析类/决策类/执行类/管理类）+ 选中触发（调用 Agent Launch API 在终端中执行）；(2) CommandItem.tsx — 单个命令项组件，显示 commandName、description、category 标签、快捷键提示（可选）；(3) types.ts — TypeScript 类型定义：(a) MaestroCommand: { id: string; name: string; description: string; category: 'search' | 'analyze' | 'decide' | 'execute' | 'manage'；args: string[]; example: string }；(b) CommandPaletteProps: { isOpen: boolean; onClose: () => void; cwd: string }。20 个高频 command 列表：maestro search、maestro ralph skills、maestro ralph next、maestro spec load、maestro spec add、maestro analyze、maestro plan、maestro execute、maestro delegate、maestro brainstorm、maestro review、issue:discover、issue:plan、issue:execute、manage-wiki、manage-issue、learn-investigate、learn-decompose、manage-knowhow-capture、quality-review。",
+  "scope": "apps/desktop/src/renderer/components/CommandPalette/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/CommandPalette/",
+    "apps/desktop/src/renderer/components/CommandChainPanel/",
+    "apps/desktop/src/lib/trpc/routers/maestro/"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+    "apps/desktop/src/renderer/lib/electron-trpc.ts",
+    "apps/desktop/src/renderer/lib/agent-launch-command.ts",
+    "apps/desktop/src/lib/trpc/routers/command-chain/index.ts"
+  ],
+  "depends_on": ["TASK-001"],
+  "parallel_group": "ui-panels",
+  "convergence": {
+    "criteria": [
+      "CommandPalette.tsx 文件存在于 apps/desktop/src/renderer/components/CommandPalette/ 目录中",
+      "CommandPalette 使用 electronTrpc.maestro.commands.list.useQuery 获取命令列表",
+      "命令列表包含至少 20 个 Maestro command，按 category 分组显示",
+      "搜索输入框支持实时过滤命令（按 name 和 description 匹配）",
+      "[UI-observable] 用户打开命令面板（Ctrl+K 或按钮触发），输入 'search' 过滤出 maestro search 命令，点击后命令在终端中执行",
+      "grep -r 'electronTrpc.maestro.commands.list' apps/desktop/src/renderer/components/CommandPalette/ 返回至少 1 处匹配"
+    ],
+    "verification": "在完整 Superset monorepo 中：(1) bun run build 无 TypeScript 错误；(2) 启动应用，打开命令面板（快捷键或按钮），验证 20+ 命令显示；(3) 输入 'search' 过滤，验证只显示匹配命令；(4) 点击 maestro search 命令，验证在终端中执行",
+    "definition_of_done": "用户可以通过命令面板搜索和触发 20 个高频 Maestro command，命令在 Superset 终端 session 中执行"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/CommandPalette/CommandPalette.tsx",
+      "action": "create",
+      "target": "CommandPalette React 组件",
+      "change": "创建命令面板主组件：搜索输入框 + 分组命令列表 + 键盘导航 + 选中触发终端执行"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/CommandPalette/CommandItem.tsx",
+      "action": "create",
+      "target": "CommandItem React 组件",
+      "change": "创建命令项组件：命令名、描述、分类标签、快捷键提示"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/CommandPalette/types.ts",
+      "action": "create",
+      "target": "TypeScript 类型定义",
+      "change": "定义 MaestroCommand、CommandPaletteProps 类型"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/CommandPalette/index.ts",
+      "action": "create",
+      "target": "模块导出",
+      "change": "导出 CommandPalette 组件和类型"
+    }
+  ],
+  "implementation": [
+    "Step 1 (探索): 检查 Superset 是否已有命令面板组件（cmdk 或自定义），确认可复用还是需新建",
+    "Step 2 (探索): 读取 agent-launch-command.ts 理解 Agent Launch API — 如何在终端 session 中执行命令",
+    "Step 3 (探索): 读取 TASK-001 创建的 maestro/ router，确认 commands.list endpoint 的输入/输出 schema",
+    "Step 4 (实现): 创建 types.ts — 定义 MaestroCommand (id/name/description/category/args/example) 和 CommandPaletteProps (isOpen/onClose/cwd)",
+    "Step 5 (实现): 创建 CommandItem.tsx — 命令项：commandName (font-mono font-semibold)、description (text-muted-foreground text-xs)、category Badge (5 种颜色对应 5 个分类)、选中高亮背景",
+    "Step 6 (实现): 创建 CommandPalette.tsx — 模态面板（fixed inset-0 z-50 bg-background/80 backdrop-blur-sm）+ 搜索输入框（autoFocus, 实时过滤）+ 分组命令列表（按 category 分组，每组有标题）+ 键盘导航（ArrowUp/ArrowDown/Enter/Escape）+ 选中触发（调用 Agent Launch API 或 terminal session 执行命令）",
+    "Step 7 (实现): 创建 index.ts 导出 CommandPalette 和类型",
+    "Step 8 (验证): bun run build 确认无 TypeScript 错误；启动应用手动测试搜索和触发流程"
+  ],
+  "test": {
+    "commands": [
+      "cd <superset-repo> && bun run build",
+      "cd <superset-repo> && bun run test -- --grep 'CommandPalette'"
+    ],
+    "unit": [
+      "apps/desktop/src/renderer/components/CommandPalette/CommandPalette.test.tsx",
+      "apps/desktop/src/renderer/components/CommandPalette/CommandItem.test.tsx"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "bun run build 无 TypeScript 错误",
+      "所有单元测试通过",
+      "UI 手动测试：打开命令面板显示 20+ 命令",
+      "UI 手动测试：输入 'search' 过滤出 maestro search",
+      "UI 手动测试：点击命令后在终端中执行"
+    ]
+  },
+  "reference": {
+    "pattern": "命令面板 UI 参考 cmdk (https://cmdk.paco.me/) 的搜索+列表+键盘导航模式。组件结构遵循 CommandChainPanel 模式：types.ts → 子组件（CommandItem） → 主组件（CommandPalette） → index.ts 导出",
+    "files": [
+      "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "apps/desktop/src/renderer/lib/agent-launch-command.ts",
+      "apps/desktop/src/renderer/lib/electron-trpc.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "构建独立的 CommandPalette 组件（而非复用 Superset 终端面板的命令输入），原因：(1) 命令面板需要搜索、过滤、分类、快捷键等专用 UI；(2) 终端面板是原始 PTY 输入，不适合结构化命令浏览；(3) 独立组件可通过快捷键（Ctrl+K）快速唤起，提升效率。20 个高频 command 分批迁移策略：优先覆盖搜索/分析/决策/执行/管理 5 个核心分类。",
+    "decision_factors": [
+      "独立组件 → 专用 UI 适合命令浏览和发现",
+      "5 分类分组 → 用户可按工作流阶段筛选",
+      "搜索过滤 → 70+ command 中快速定位",
+      "终端执行 → 复用现有 Agent Launch 流程，不重复造轮子"
+    ],
+    "tradeoffs": "独立命令面板需要额外的 UI 空间（模态面板）→ 使用 overlay 模式避免占用固定面板空间"
+  },
+  "risks": [
+    {
+      "description": "命令在终端中执行的错误处理不完善（命令不存在、权限不足等）",
+      "mitigation": "执行前验证命令名在 commands.list 中存在；终端 session 的错误输出由 xterm.js 原生显示"
+    },
+    {
+      "description": "70+ command 中仅迁移 20 个，用户可能找不到需要的命令",
+      "mitigation": "在命令面板底部显示 '显示 20/70+ 命令，更多命令即将支持'；后续迭代逐步添加"
+    }
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "60m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": "ui-panels",
+    "executor": "agent"
+  }
+}

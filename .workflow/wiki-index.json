@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": 1782258227419,
+  "generatedAt": 1782290407779,
   "entries": [
     {
       "id": "project-project",
@@ -1249,6 +1249,27 @@
       "source": {
         "kind": "file",
         "path": "scratch/20260624-analyze-P3-full-integration/discussion.md"
+      }
+    },
+    {
+      "id": "scratch-20260624-test-p3-full-integration-gapfix-uat",
+      "type": "note",
+      "title": "uat",
+      "summary": "## Current Test",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-24T08:15:48.432Z",
+      "updated": "2026-06-24T08:15:48.445Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260624-test-P3-full-integration-gapfix/uat.md"
       }
     },
     {

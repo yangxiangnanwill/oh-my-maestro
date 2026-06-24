@@ -227,3 +227,34 @@ Milestone: F2
 
 Milestone: F2
 </spec-entry>
+
+<spec-entry category="learning" keywords="tRPC, 基础设施, 分层架构, gap-fix" date="2026-06-24" source="milestone-complete">
+
+### 验证驱动的 gap-fix 闭环
+
+F3 Phase 3 执行完成后，VRF-004 验证发现 8 个 gaps。通过 DBG-001 诊断 → PLN-012 规划 → EXC-014 执行的闭环，所有 gaps 在 7 个 TASK 中修复，UAT 8/8 通过。
+
+关键经验：
+1. **验证门禁必须包含基础设施文件的存在性检查**——`electron-trpc.ts` 和 `lib/trpc/index.ts` 是编译前提，但原始 TASK 分解中遗漏了这两个文件
+2. **tRPC 分层**：`lib/trpc/index.ts` 定义 server 端（initTRPC → router/publicProcedure），`renderer/lib/electron-trpc.ts` 定义 client 端（createTRPCReact<AppRouter>`）——两个文件缺一不可
+3. **外部依赖的降级策略**：`@modelcontextprotocol/sdk` 和 `packages/mcp-v2/` 的缺失通过 try/catch + 静态 catalog 优雅降级
+4. **CLI 可用性检测**：`checkMaestroCliAvailable()` 使用平台自适应（Windows `where` / Unix `which`），结果缓存到模块级 state
+
+Milestone: F3
+</spec-entry>
+
+<spec-entry category="learning" keywords="verification, 验证门禁, 外部模型, 收敛标准" date="2026-06-24" source="milestone-complete">
+
+### 外部模型验证门禁的实践
+
+VRF-004 使用 Claude CLI 进行 3 层结构验证（Existence/Substance/Wiring）+ 收敛标准检查 + 反模式扫描。18/18 收敛标准通过，但发现了 8 个 gaps。
+
+验证门禁的价值：
+1. **结构层验证**（文件存在性）捕获了编译前提缺失（GAP-001, GAP-002）
+2. **收敛标准验证**确认了所有 TASK 的功能产出正确
+3. **反模式扫描**发现了 TODO 注释、调试日志等代码质量问题
+
+建议在每个 phase 的 execute 之后强制运行外部模型验证，避免"后端绿灯=完成"的假象。
+
+Milestone: F3
+</spec-entry>

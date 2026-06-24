@@ -1,0 +1,10 @@
+{"timestamp":"2026-06-24T12:00:00+08:00","gap":"GAP-001","action":"grep -rn electron-trpc 全项目","result":"匹配 0 个文件定义，仅发现引用: KnowledgePanel.tsx:3, AnalysisPanel.tsx:8, CommandPalette.tsx:9, CommandChainPanel.tsx","conclusion":"confirmed: electron-trpc.ts 从未创建"}
+{"timestamp":"2026-06-24T12:01:00+08:00","gap":"GAP-001","action":"find renderer/lib/electron-trpc*","result":"无匹配结果","conclusion":"confirmed: 文件缺失"}
+{"timestamp":"2026-06-24T12:02:00+08:00","gap":"GAP-002","action":"ls lib/trpc/","result":"仅有 routers/ 子目录，无 index.ts","conclusion":"confirmed: lib/trpc/index.ts 缺失"}
+{"timestamp":"2026-06-24T12:03:00+08:00","gap":"GAP-002","action":"grep -rn \"export.*router\\|export.*publicProcedure\\|initTRPC\" apps/desktop/src/","result":"0 匹配——router 和 publicProcedure 从未在项目中定义","conclusion":"confirmed: router 函数无任何定义"}
+{"timestamp":"2026-06-24T12:04:00+08:00","gap":"GAP-003","action":"grep @modelcontextprotocol/sdk apps/desktop/src/","result":"仅在 maestro-mcp-provider.ts 中有 import 声明，但 package.json 中无此依赖","conclusion":"confirmed: @modelcontextprotocol/sdk 未安装"}
+{"timestamp":"2026-06-24T12:05:00+08:00","gap":"GAP-004","action":"ls packages/mcp-v2/","result":"目录不存在——本项目是独立 repo (oh-my-maestro)","conclusion":"confirmed: packages/mcp-v2/ 缺失，需确认跨项目集成策略"}
+{"timestamp":"2026-06-24T12:06:00+08:00","gap":"GAP-005","action":"grep -rn \"which maestro\\|maestro.*PATH\\|maestro.*path\\|maestro.*cli\" apps/desktop/src/","result":"无 PATH 预检或 CLI 路径配置代码","conclusion":"confirmed: maestro CLI 路径检测未实现"}
+{"timestamp":"2026-06-24T12:07:00+08:00","gap":"GAP-006","action":"read CommandPalette.tsx:205-221","result":"handleSelect 函数仅有 TODO 注释，无实际终端执行代码","conclusion":"confirmed: CommandPalette 终端执行未接入"}
+{"timestamp":"2026-06-24T12:08:00+08:00","gap":"GAP-008","action":"read DecisionNodeView.tsx (full)","result":"组件仅作展示: 标签 + 问题文本 + 选项列表(只读) + '当前结论'标记。无 onClick/onSelect/button 等交互元素","conclusion":"confirmed: DecisionNodeView 缺少交互按钮"}
+{"timestamp":"2026-06-24T12:09:00+08:00","gap":"GAP-007","action":"read AnalysisPanel.tsx:41-48 (ErrorState)","result":"ErrorState 仅显示 AlertTriangle 图标 + 错误消息，无重试按钮或 onRetry prop","conclusion":"confirmed: ErrorState 缺少重试按钮"}

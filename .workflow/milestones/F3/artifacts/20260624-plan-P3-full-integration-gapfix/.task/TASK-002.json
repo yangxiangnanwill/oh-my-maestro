@@ -1,0 +1,105 @@
+{
+  "id": "TASK-002",
+  "title": "创建 renderer/lib/electron-trpc.ts — tRPC React 客户端",
+  "description": "创建 apps/desktop/src/renderer/lib/electron-trpc.ts 文件，使用 @trpc/react-query 的 createTRPCReact 创建类型安全的 React hooks 客户端，通过 Electron IPC link 连接到主进程的 tRPC server。该文件被 4 个 UI 面板（CommandChainPanel、KnowledgePanel、AnalysisPanel、CommandPalette）通过 from \"renderer/lib/electron-trpc\" 导入。需要从 lib/trpc/routers/index.ts 导入 AppRouter 类型以提供完整的类型推导。",
+  "type": "fix",
+  "priority": "critical",
+  "effort": "medium",
+  "action": "在 D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts 创建文件，使用 createTRPCReact<AppRouter>() 创建类型化客户端 + 自定义 Electron IPC link（通过 window.electronAPI.trpc 或 ipcRenderer.invoke 通信）",
+  "scope": "apps/desktop/src/renderer/lib/",
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/routers/index.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/KnowledgePanel/KnowledgePanel.tsx",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/CommandPalette/CommandPalette.tsx"
+  ],
+  "depends_on": [
+    "TASK-001"
+  ],
+  "parallel_group": "wave1-trpc",
+  "gap_ref": "GAP-001",
+  "convergence": {
+    "criteria": [
+      "grep -c \"createTRPCReact\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts\" 返回 >=1",
+      "grep -c \"export const electronTrpc\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts\" 返回 >=1",
+      "grep -c \"AppRouter\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts\" 返回 >=1",
+      "grep -c \"from 'renderer/lib/electron-trpc'\" 在整个 src/renderer 目录中返回 >=4（4个 UI 面板均引用此文件）"
+    ],
+    "verification": "cd D:/WorkSpace/VsCode/oh-my-maestro && grep -rn \"electron-trpc\" apps/desktop/src/renderer/",
+    "definition_of_done": "electron-trpc.ts 文件已创建，导出 electronTrpc 的 createTRPCReact 实例，4 个 UI 面板的 import 路径解析成功，类型推导链完整（AppRouter → electronTrpc → useQuery 类型参数）"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts",
+      "action": "create",
+      "target": "tRPC React 客户端模块",
+      "change": "创建文件，使用 createTRPCReact<AppRouter>() 创建类型化客户端，设置 Electron IPC link"
+    }
+  ],
+  "implementation": [
+    "创建目录 D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/（如果不存在）",
+    "创建文件 D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts",
+    "导入 createTRPCReact 从 '@trpc/react-query'",
+    "导入 AppRouter 类型从 'lib/trpc/routers'",
+    "调用 createTRPCReact<AppRouter>() 创建 electronTrpc 实例",
+    "导出 electronTrpc 常量",
+    "（可选）定义 Electron IPC link 函数——通过 ipcRenderer.invoke('trpc:query', ...) 或 window.electronAPI.trpc() 转发请求到主进程",
+    "验证 4 个 UI 面板的 import { electronTrpc } from 'renderer/lib/electron-trpc' 可正确解析"
+  ],
+  "test": {
+    "commands": [
+      "grep -n \"electronTrpc\" D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts",
+      "grep -rn \"from 'renderer/lib/electron-trpc'\" D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "文件存在: D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts",
+      "grep 验证: createTRPCReact + electronTrpc + AppRouter 引用",
+      "4 个 UI 面板的导入路径均指向此文件（CommandChainPanel, KnowledgePanel, AnalysisPanel, CommandPalette）"
+    ]
+  },
+  "reference": {
+    "pattern": "tRPC React 客户端模式: createTRPCReact<AppRouter>() → electronTrpc.<router>.<procedure>.useQuery()。参考 @trpc/react-query 文档: https://trpc.io/docs/react/quickstart",
+    "files": [
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/routers/index.ts"
+    ],
+    "examples": "CommandChainPanel.tsx:41: electronTrpc.commandChain.getStatus.useQuery({ cwd }, {}); — 这是 electronTrpc 的使用模式"
+  },
+  "rationale": {
+    "chosen_approach": "使用 createTRPCReact<AppRouter>() 创建类型安全客户端，通过 Electron IPC 自定义 link 连接主进程。这种模式确保 useQuery 的 input 和 output 类型自动推导，无需在每个面板中重复定义。Electron IPC link 使用 ipcRenderer.invoke 的 request/response 模式",
+    "decision_factors": [
+      "4 个 UI 面板均使用 electronTrpc.<router>.<procedure>.useQuery() 模式",
+      "AppRouter 类型从 lib/trpc/routers/index.ts 导入，提供完整的类型推导链",
+      "Electron IPC link 是 Electron 环境下的标准 trpc 客户端通信方式"
+    ],
+    "tradeoffs": "当前实现使用简化的 IPC link（直接 ipcRenderer.invoke）。完整 Superset monorepo 中可能使用更复杂的 link 配置（如 splitLink 根据 procedure 类型路由到不同的 transport）。后续可根据完整 monorepo 的模式调整"
+  },
+  "risks": [
+    {
+      "description": "@trpc/react-query 和 @trpc/client 可能未安装",
+      "severity": "medium",
+      "mitigation": "TASK-003 中统一检查 npm 依赖"
+    },
+    {
+      "description": "Electron IPC link 的具体实现（ipcRenderer 通信协议）依赖完整 monorepo 中主进程的 trpc server 监听方式，当前独立 repo 中无参考",
+      "severity": "medium",
+      "mitigation": "使用标准 ipcRenderer.invoke 模式，与主进程的 ipcMain.handle 配对。如果完整 monorepo 使用不同的 transport（如 MessagePort），后续可调整 link 实现"
+    }
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "phase": 3,
+  "milestone": "F3",
+  "status": "gaps_found",
+  "verified_at": "2026-06-24T12:00:00+08:00",
+  "verifier": "claude",
+  "must_haves": {
+    "truths": [
+      { "criterion": "TASK-001: registerMaestroMcpProvider() 存在", "status": "verified", "evidence": "maestro-mcp-provider.ts:394" },
+      { "criterion": "TASK-001: main/index.ts 调用 registerMaestroMcpProvider()", "status": "verified", "evidence": "main/index.ts:423-427" },
+      { "criterion": "TASK-001: maestro tRPC router 3 个 endpoints", "status": "verified", "evidence": "maestro/index.ts: knowledge.search, analyze.result, commands.list" },
+      { "criterion": "TASK-001: maestro router 注册到主 router", "status": "verified", "evidence": "routers/index.ts:13 import, :40 register" },
+      { "criterion": "TASK-001: grep registerMaestroMcpProvider >= 2", "status": "verified", "evidence": "3 matches: import + call + definition" },
+      { "criterion": "TASK-001: grep maestro in routers/index.ts >= 1", "status": "verified", "evidence": "2 matches: import + register" },
+      { "criterion": "TASK-002: KnowledgePanel.tsx 存在", "status": "verified", "evidence": "KnowledgePanel/KnowledgePanel.tsx" },
+      { "criterion": "TASK-002: 使用 electronTrpc.maestro.knowledge.search.useQuery", "status": "verified", "evidence": "KnowledgePanel.tsx:138" },
+      { "criterion": "TASK-002: 四态渲染", "status": "verified", "evidence": "LoadingState/ErrorState/EmptyState/DataView + NoResultsState" },
+      { "criterion": "TASK-002: KnowledgeCard 显示 entityName + relevanceScore", "status": "verified", "evidence": "KnowledgeCard.tsx:99,139-144" },
+      { "criterion": "TASK-003: AnalysisPanel.tsx 存在", "status": "verified", "evidence": "AnalysisPanel/AnalysisPanel.tsx" },
+      { "criterion": "TASK-003: 使用 electronTrpc.maestro.analyze.result.useQuery", "status": "verified", "evidence": "AnalysisPanel.tsx: useQuery call" },
+      { "criterion": "TASK-003: ScoreCard 6 维评分 + 星级 + 置信度", "status": "verified", "evidence": "ScoreCard.tsx: Star icons + confidence progress bar" },
+      { "criterion": "TASK-003: RiskMatrix 5x5 网格颜色映射", "status": "verified", "evidence": "RiskMatrix.tsx: 0=gray,1=green,2=yellow,3=orange,4+=red" },
+      { "criterion": "TASK-004: CommandPalette.tsx 存在", "status": "verified", "evidence": "CommandPalette/CommandPalette.tsx" },
+      { "criterion": "TASK-004: 使用 electronTrpc.maestro.commands.list.useQuery", "status": "verified", "evidence": "CommandPalette.tsx: useQuery call" },
+      { "criterion": "TASK-004: >=20 commands 按 category 分组", "status": "verified", "evidence": "29 commands, 4 categories with sticky headers" },
+      { "criterion": "TASK-004: 搜索实时过滤", "status": "verified", "evidence": "filter by name/description/category" },
+      { "criterion": "TASK-005: ralph-decision-bridge.ts 存在", "status": "verified", "evidence": "agent-setup/ralph-decision-bridge.ts" },
+      { "criterion": "TASK-005: createRalphDecisionBridge() WebSocket + decision-node-*", "status": "verified", "evidence": "WebSocket client + 3 event handlers" },
+      { "criterion": "TASK-005: websocket-event-bus.ts 存在", "status": "verified", "evidence": "lib/websocket-event-bus.ts" },
+      { "criterion": "TASK-005: decision-node-created → onDecisionRequired", "status": "verified", "evidence": "ralph-decision-bridge.ts: adapter pattern mapping" },
+      { "criterion": "TASK-006: e2e/phase3-full-flow.spec.ts >= 4 scenarios", "status": "verified", "evidence": "6 describe blocks, 45 test cases" },
+      { "criterion": "TASK-006: docs/phase3/demo-script.md 存在", "status": "verified", "evidence": "docs/phase3/demo-script.md" },
+      { "criterion": "TASK-006: docs/phase3/integration-issues.md 存在", "status": "verified", "evidence": "docs/phase3/integration-issues.md" }
+    ],
+    "artifacts": [
+      { "path": "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts", "status": "exists" },
+      { "path": "apps/desktop/src/main/lib/agent-setup/ralph-decision-bridge.ts", "status": "exists" },
+      { "path": "apps/desktop/src/main/lib/websocket-event-bus.ts", "status": "exists" },
+      { "path": "apps/desktop/src/lib/trpc/routers/maestro/index.ts", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/KnowledgePanel/KnowledgePanel.tsx", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/KnowledgePanel/KnowledgeCard.tsx", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/KnowledgePanel/types.ts", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/KnowledgePanel/index.ts", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/AnalysisPanel/ScoreCard.tsx", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/AnalysisPanel/RiskMatrix.tsx", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/AnalysisPanel/types.ts", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/AnalysisPanel/index.ts", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/CommandPalette/CommandPalette.tsx", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/CommandPalette/CommandItem.tsx", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/CommandPalette/types.ts", "status": "exists" },
+      { "path": "apps/desktop/src/renderer/components/CommandPalette/index.ts", "status": "exists" },
+      { "path": "e2e/phase3-full-flow.spec.ts", "status": "exists" },
+      { "path": "docs/phase3/demo-script.md", "status": "exists" },
+      { "path": "docs/phase3/integration-issues.md", "status": "exists" }
+    ],
+    "key_links": [
+      { "path": "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts", "status": "wired", "importers": ["apps/desktop/src/main/index.ts"] },
+      { "path": "apps/desktop/src/main/lib/agent-setup/ralph-decision-bridge.ts", "status": "wired", "importers": ["apps/desktop/src/main/lib/agent-setup/index.ts"] },
+      { "path": "apps/desktop/src/main/lib/websocket-event-bus.ts", "status": "wired", "importers": ["apps/desktop/src/main/lib/agent-setup/ralph-decision-bridge.ts"] },
+      { "path": "apps/desktop/src/lib/trpc/routers/maestro/index.ts", "status": "wired", "importers": ["apps/desktop/src/lib/trpc/routers/index.ts"] },
+      { "path": "apps/desktop/src/renderer/components/KnowledgePanel/", "status": "wired", "importers": ["electronTrpc.maestro.knowledge.search.useQuery"] },
+      { "path": "apps/desktop/src/renderer/components/AnalysisPanel/", "status": "wired", "importers": ["electronTrpc.maestro.analyze.result.useQuery"] },
+      { "path": "apps/desktop/src/renderer/components/CommandPalette/", "status": "wired", "importers": ["electronTrpc.maestro.commands.list.useQuery"] }
+    ]
+  },
+  "gaps": [
+    { "id": "GAP-001", "type": "missing-dependency", "severity": "critical", "description": "electron-trpc.ts 缺失——所有 UI 面板依赖此文件", "fix_direction": "确认/创建 electron-trpc.ts" },
+    { "id": "GAP-002", "type": "missing-dependency", "severity": "critical", "description": "lib/trpc/index.ts 缺失——tRPC 核心被 maestro/command-chain router 导入", "fix_direction": "确认/创建 lib/trpc/index.ts" },
+    { "id": "GAP-003", "type": "npm-dependency", "severity": "medium", "description": "@modelcontextprotocol/sdk 未安装", "fix_direction": "bun add @modelcontextprotocol/sdk" },
+    { "id": "GAP-004", "type": "missing-package", "severity": "medium", "description": "packages/mcp-v2/ 缺失——工具未注册到 Superset MCP registry", "fix_direction": "确保 Superset monorepo 包含 packages/mcp-v2/" },
+    { "id": "GAP-005", "type": "runtime-dependency", "severity": "high", "description": "maestro CLI 需位于系统 PATH", "fix_direction": "添加 which maestro 预检 + CLI 路径配置" },
+    { "id": "GAP-006", "type": "incomplete-integration", "severity": "high", "description": "CommandPalette 终端执行未接入", "fix_direction": "接入 Agent Launch API" },
+    { "id": "GAP-007", "type": "ux-inconsistency", "severity": "medium", "description": "AnalysisPanel ErrorState 缺少重试按钮", "fix_direction": "添加 onRetry prop" },
+    { "id": "GAP-008", "type": "ux-incomplete", "severity": "medium", "description": "DecisionNodeView 缺少交互按钮", "fix_direction": "添加可点击选项按钮" }
+  ],
+  "antipatterns": [
+    { "type": "TODO 注释", "file": "apps/desktop/src/renderer/components/CommandPalette/CommandPalette.tsx", "line": 214, "severity": "warning", "description": "终端执行集成点 TODO" }
+  ],
+  "coverage_score": 1.0
+}

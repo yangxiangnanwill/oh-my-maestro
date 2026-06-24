@@ -1,0 +1,74 @@
+{
+  "target": "F3 Phase 3 — Full Integration Gap-Fix",
+  "generated_at": "2026-06-24T16:00:00+08:00",
+  "tests": [
+    {
+      "id": "T-001",
+      "name": "lib/trpc/index.ts 文件存在且导出正确",
+      "category": "unit",
+      "expected": "文件 apps/desktop/src/lib/trpc/index.ts 存在，包含 initTRPC.create() 调用，导出 router 和 publicProcedure",
+      "requirement_ref": "GAP-002",
+      "verification": "grep 验证"
+    },
+    {
+      "id": "T-002",
+      "name": "electron-trpc.ts 文件存在且被 4 个 UI 面板引用",
+      "category": "integration",
+      "expected": "文件 apps/desktop/src/renderer/lib/electron-trpc.ts 存在，导出 electronTrpc，4 个面板均从正确路径导入",
+      "requirement_ref": "GAP-001",
+      "verification": "grep 验证"
+    },
+    {
+      "id": "T-003",
+      "name": "@modelcontextprotocol/sdk 已安装",
+      "category": "unit",
+      "expected": "package.json 中声明了 @modelcontextprotocol/sdk 依赖，node_modules 中存在对应目录",
+      "requirement_ref": "GAP-003",
+      "verification": "文件检查"
+    },
+    {
+      "id": "T-004",
+      "name": "maestro CLI PATH 检测函数存在",
+      "category": "unit",
+      "expected": "maestro-mcp-provider.ts 中存在 checkMaestroCliAvailable 函数，使用 which/where 检测 CLI 可用性",
+      "requirement_ref": "GAP-005",
+      "verification": "grep 验证"
+    },
+    {
+      "id": "T-005",
+      "name": "CommandPalette 终端执行 TODO 已移除",
+      "category": "unit",
+      "expected": "CommandPalette.tsx 中不再包含 'TODO: Wave 3' 注释，handleSelect 有实际执行逻辑",
+      "requirement_ref": "GAP-006",
+      "verification": "grep 验证"
+    },
+    {
+      "id": "T-006",
+      "name": "DecisionNodeView 选项可点击",
+      "category": "unit",
+      "expected": "DecisionNodeView.tsx 包含 onSelectOption prop，未决策选项渲染为 button 元素带 onClick 和 cursor-pointer",
+      "requirement_ref": "GAP-008",
+      "verification": "grep 验证"
+    },
+    {
+      "id": "T-007",
+      "name": "AnalysisPanel ErrorState 有重试按钮",
+      "category": "unit",
+      "expected": "AnalysisPanel.tsx ErrorState 包含 onRetry prop 和重试按钮，使用 refetch 作为回调",
+      "requirement_ref": "GAP-007",
+      "verification": "grep 验证"
+    },
+    {
+      "id": "T-008",
+      "name": "maestro-mcp-provider.ts 降级逻辑正确",
+      "category": "integration",
+      "expected": "tryRegisterToSupersetRegistry 使用 try/catch 包裹 packages/mcp-v2 导入，catch 分支有降级日志",
+      "requirement_ref": "GAP-004",
+      "verification": "grep 验证"
+    }
+  ],
+  "coverage": {
+    "requirements_mapped": ["GAP-001", "GAP-002", "GAP-003", "GAP-004", "GAP-005", "GAP-006", "GAP-007", "GAP-008"],
+    "requirements_unmapped": []
+  }
+}

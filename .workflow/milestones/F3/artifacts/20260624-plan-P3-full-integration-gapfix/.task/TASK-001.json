@@ -1,0 +1,92 @@
+{
+  "id": "TASK-001",
+  "title": "创建 lib/trpc/index.ts — tRPC 核心初始化",
+  "description": "创建 apps/desktop/src/lib/trpc/index.ts 文件，使用 @trpc/server 的 initTRPC() 初始化 tRPC 实例，导出 router 和 publicProcedure。该文件被 routers/command-chain/index.ts 和 routers/maestro/index.ts 通过 from \"../..\" 导入，是 tRPC 路由树的根节点。",
+  "type": "fix",
+  "priority": "critical",
+  "effort": "small",
+  "action": "在 D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/index.ts 创建文件，内容: import { initTRPC } from '@trpc/server'; const t = initTRPC.create(); export const router = t.router; export const publicProcedure = t.procedure;",
+  "scope": "apps/desktop/src/lib/trpc/",
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/routers/maestro/index.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/routers/index.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave1-trpc",
+  "gap_ref": "GAP-002",
+  "convergence": {
+    "criteria": [
+      "grep -c \"export const router\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/index.ts\" 返回 >=1",
+      "grep -c \"export const publicProcedure\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/index.ts\" 返回 >=1",
+      "grep -c \"initTRPC\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/index.ts\" 返回 >=1",
+      "文件 lib/trpc/index.ts 存在且不为空"
+    ],
+    "verification": "cd D:/WorkSpace/VsCode/oh-my-maestro && cat apps/desktop/src/lib/trpc/index.ts",
+    "definition_of_done": "lib/trpc/index.ts 文件已创建，导出 router 和 publicProcedure，routers/command-chain/index.ts 和 routers/maestro/index.ts 的 from \"../..\" 导入路径解析成功"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/index.ts",
+      "action": "create",
+      "target": "tRPC 核心初始化模块",
+      "change": "创建文件，使用 initTRPC.create() 初始化 tRPC，导出 router 和 publicProcedure"
+    }
+  ],
+  "implementation": [
+    "创建文件 D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/index.ts",
+    "写入: import { initTRPC } from '@trpc/server';",
+    "写入: const t = initTRPC.create();",
+    "写入: export const router = t.router;",
+    "写入: export const publicProcedure = t.procedure;",
+    "验证 routers/command-chain/index.ts 第 3 行的 from \"../..\" 导入路径可正确解析到本文件"
+  ],
+  "test": {
+    "commands": [
+      "grep -n \"export const router\\|export const publicProcedure\\|initTRPC\" D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/index.ts"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "文件存在: D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/index.ts",
+      "grep 验证导出: router + publicProcedure + initTRPC 引用"
+    ]
+  },
+  "reference": {
+    "pattern": "tRPC 11 initTRPC 模式。参考 tRPC 官方文档: https://trpc.io/docs/server/quickstart。遵循现有 routers 的导入模式——routers 使用 from \"../..\" 导入 router 和 publicProcedure",
+    "files": [
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/lib/trpc/routers/maestro/index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "最小化实现——仅包含 tRPC 初始化所需的 3 行代码。不添加 context、middleware 或其他扩展，因为当前 routers（command-chain、maestro）均使用 publicProcedure（无需认证），且 routers/index.ts 不向子 router 传递 context",
+    "decision_factors": [
+      "command-chain/index.ts 使用 publicProcedure 和 router（无可选链或 context 访问）",
+      "maestro/index.ts 使用 publicProcedure 和 router（无可选链或 context 访问）",
+      "routers/index.ts 仅创建 router({}) 合并子路由，不传递 getWindow 等 context（getWindow 仅用于 window/router）"
+    ],
+    "tradeoffs": "未来如果某些 procedure 需要认证 middleware，可在本文件中扩展 t.procedure.use() 模式。当前 minimal 实现可满足所有现有代码需求"
+  },
+  "risks": [
+    {
+      "description": "@trpc/server 可能未安装，导致编译失败",
+      "severity": "medium",
+      "mitigation": "本任务仅创建源文件。依赖安装在 TASK-003 中处理"
+    }
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

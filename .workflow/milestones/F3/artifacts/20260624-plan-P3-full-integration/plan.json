@@ -1,0 +1,160 @@
+{
+  "plan_id": "PLN-011",
+  "phase": 3,
+  "milestone": "F3",
+  "scope": "phase",
+  "summary": "Phase 3: Full Integration (全功能融合) — 将 Maestro-flow 的 KG、分析、决策能力通过 Superset 的 MCP 端点暴露，使 Agent 可调用。6 个任务，6 个 Wave（每个 Wave 一个独立任务）。Wave 1 优先（MCP Server 注册是所有后续 Wave 的基础设施），Wave 2-4 在 Wave 1 完成后可并行，Wave 5 依赖 Wave 1，Wave 6 依赖 Wave 1-5 全部完成。",
+  "approach": "6 个 Wave 对应 6 个独立验证的交付能力。Wave 1 创建 MCP provider 桥接将 Maestro-flow 的 28+ 工具注册到 Superset MCP registry；Wave 2 和 Wave 3 复用 Phase 2 CommandChainPanel 的四态渲染模式（Loading/Error/Empty/Data）构建知识面板和分析面板，通过新增的 tRPC endpoints 获取数据；Wave 4 将 20 个高频 Maestro command 注册到 Superset 命令面板；Wave 5 将 Ralph 决策节点事件通过 WebSocket 推送到 Superset Agent 生命周期 hooks；Wave 6 执行端到端集成测试验证完整闭环。所有任务设计为 'ready when full Superset monorepo available'，每个任务开头包含探索/发现步骤。",
+  "task_ids": [
+    "TASK-001",
+    "TASK-002",
+    "TASK-003",
+    "TASK-004",
+    "TASK-005",
+    "TASK-006"
+  ],
+  "task_count": 6,
+  "complexity": "high",
+  "estimated_total_minutes": 420,
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001"],
+      "label": "MCP Server 集成 — Maestro MCP provider 注册",
+      "parallel": false,
+      "description": "基础设施：将 Maestro-flow 的 28+ MCP 工具注册为 Superset MCP provider，所有后续 Wave 依赖此层"
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-002", "TASK-003", "TASK-004"],
+      "label": "UI 面板构建（并行）— 知识面板 + 分析面板 + 命令面板",
+      "parallel": true,
+      "description": "三个 UI 面板可独立开发：知识面板依赖 TASK-001 的 tRPC 基础设施，分析面板依赖 TASK-001 的 analyze results 数据流，命令面板依赖 TASK-001 的 MCP tool 列表"
+    },
+    {
+      "wave": 3,
+      "tasks": ["TASK-005"],
+      "label": "Agent 生命周期联动",
+      "parallel": false,
+      "description": "依赖 TASK-001 的 MCP 注册和 WebSocket 基础设施，将 Ralph 决策节点与 Superset Agent hooks 桥接"
+    },
+    {
+      "wave": 4,
+      "tasks": ["TASK-006"],
+      "label": "端到端集成测试 + 演示",
+      "parallel": false,
+      "description": "依赖 TASK-001~005 全部完成，验证完整用户旅程"
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "Wave 1: Maestro-flow MCP Server (外部) → MCP protocol → Superset MCP Registry → tRPC endpoints → Renderer",
+      "Wave 2: KG 搜索 → maestro search CLI → status.json / MCP tool result → tRPC getKnowledgeGraph query → KnowledgePanel React 组件",
+      "Wave 3: maestro-analyze → analyze result JSON → tRPC getAnalysisResult query → AnalysisPanel React 组件 (6 维评分卡 + 风险矩阵)",
+      "Wave 4: Maestro command 列表 → tRPC listCommands query → CommandPalette React 组件 → 选中 command → terminal session 执行",
+      "Wave 5: Ralph 决策节点 → decision-node event → WebSocket → Superset Agent Hook → notify-hook shell script → Agent lifecycle 状态变更",
+      "Wave 6: 完整闭环测试: NL prompt → Agent 选择 Maestro → 命令链执行 → KnowledgePanel 可视化 KG 结果 → AnalysisPanel 渲染评分 → Ralph 决策 → 执行 → 完成"
+    ]
+  },
+  "design_decisions": [
+    "DD-001: MCP 桥接策略 — Maestro-flow 作为独立 MCP Server 通过 stdio transport 注册到 Superset MCP Registry，不复用 Superset 已有的 MCP v2 server",
+    "DD-002: 数据通道 — 新增 3 个 tRPC endpoints (knowledge.search + analyze.result + commands.list) 在 command-chain router 旁，复用 Electron IPC transport 而非为各面板独立建立连接",
+    "DD-003: UI 组件模式 — KnowledgePanel 和 AnalysisPanel 复用 CommandChainPanel 的四态渲染（LoadingState / ErrorState / EmptyState / DataView），抽取共享 StatusPanel 模式",
+    "DD-004: 命令面板分批策略 — Wave 4 先迁移 20 个高频 command（maestro search, ralph skills, ralph next, spec load, spec add, issue:discover, issue:plan, issue:execute, manage-wiki, learn-investigate 等），剩余 ~50 command 在后续迭代",
+    "DD-005: 状态同步演进 — Wave 1 初期保留 Phase 2 的文件轮询（command-chain-status-poller.ts），Wave 5 添加 WebSocket 事件推送作为补充通道（参考 ADR-004），Phase 3 不需要完全移除轮询",
+    "DD-006: Agent 生命周期联动 — 使用 Superset 已有的 notify-hook 机制（notify-hook.template.sh），Ralph 决策节点通过写入 decision-events 触发 hook 脚本，再由 hook 通知 Superset Agent 状态变更",
+    "DD-007: 探索先行 — 每个任务的第一步都是在完整 Superset monorepo 中探索 MCP registry、agent-setup、notify-hook 的实际代码，确认接口契约后再开始实现"
+  ],
+  "shared_context": {
+    "patterns": [
+      "tRPC router 模式（publicProcedure.input().output().query()）",
+      "CommandChainPanel 四态渲染（LoadingState / ErrorState / EmptyState / DataView）",
+      "Electron IPC trpc client（electronTrpc.xxx.useQuery）",
+      "status.json 文件轮询（command-chain-status-poller.ts）",
+      "Zod schema 校验 + TypeScript 类型推导",
+      "Agent Preset 注册模式（desktop-agent-capabilities.ts → DESKTOP_AGENT_SETUP_TARGETS）"
+    ],
+    "conventions": [
+      "electron-vite 构建管道（main / preload / renderer 三入口）",
+      "ESM 模块导入（.js 扩展名）",
+      "TypeScript strict 模式",
+      "React 19 + TanStack Router + Lucide Icons",
+      "tRPC 11 with Electron IPC link",
+      "Zod 运行时校验 + compile-time 类型"
+    ],
+    "dependencies": [
+      "@modelcontextprotocol/sdk（MCP 协议实现）",
+      "@trpc/server + @trpc/client（RPC 框架）",
+      "zod（schema 校验）",
+      "xterm.js（终端渲染）",
+      "node-pty 1.1.0（Windows ConPTY）",
+      "bun 1.3.11+（monorepo 构建）",
+      "electron 40+（桌面壳）",
+      "Drizzle ORM（本地 SQLite + 云端 PostgreSQL）",
+      "ws（WebSocket，待引入）"
+    ]
+  },
+  "risks": [
+    {
+      "id": "RISK-001",
+      "description": "Superset MCP registry 在当前版本中不存在或不兼容，阻塞 Wave 1",
+      "priority": "critical",
+      "mitigation": "在家环境获取完整 Superset repo 后优先验证 MCP registry 存在性；备用方案：直接通过 tRPC endpoint 暴露 Maestro 工具，绕过 MCP registry"
+    },
+    {
+      "id": "RISK-002",
+      "description": "Maestro-flow mcp/ 模块在外部仓库，跨仓库集成需要协调",
+      "priority": "high",
+      "mitigation": "使用 stdio transport 桥接（Maestro-flow 作为子进程运行 MCP Server）；或通过 npm link 本地开发"
+    },
+    {
+      "id": "RISK-003",
+      "description": "70+ command 迁移工作量可能超出预期",
+      "priority": "medium",
+      "mitigation": "Wave 4 仅迁移 20 个高频 command，剩余在后续迭代逐步添加"
+    },
+    {
+      "id": "RISK-004",
+      "description": "Ralph 决策引擎的 Agent 生命周期联动侵入性强，可能影响现有 Agent 稳定性",
+      "priority": "high",
+      "mitigation": "使用 notify-hook 机制作为松耦合桥接；决策事件通过 WebSocket 推送而非直接调用 Agent API"
+    },
+    {
+      "id": "RISK-005",
+      "description": "新增 tRPC endpoints 和 WebSocket 连接可能增加 Electron 主进程负载",
+      "priority": "low",
+      "mitigation": "MCP 工具注册延迟加载；WebSocket 仅推送变更事件（不推送完整状态）"
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "CHK-001",
+      "after_wave": 1,
+      "condition": "Maestro MCP 的 28+ 工具在 Superset Agent 中可发现和调用 → 检查通过则进入 Wave 2-4"
+    },
+    {
+      "id": "CHK-002",
+      "after_wave": 2,
+      "condition": "UI 面板（知识面板、分析面板、命令面板）单体验证通过 → 检查通过则进入 Wave 3"
+    },
+    {
+      "id": "CHK-003",
+      "after_wave": 3,
+      "condition": "Ralph 决策节点触发 Superset Agent hooks → 检查通过则进入 Wave 4"
+    }
+  ],
+  "_metadata": {
+    "timestamp": "2026-06-24T08:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "feature",
+    "milestone": "F3",
+    "phase": "Phase 3 Full Integration",
+    "previous_analysis": "ANL-011",
+    "superset_repo": "(在家环境完整 monorepo)",
+    "oh_my_maestro_repo": "D:/WorkSpace/VsCode/oh-my-maestro",
+    "confidence": 0.72,
+    "status": "pending"
+  }
+}

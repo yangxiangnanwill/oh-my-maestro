@@ -1,0 +1,136 @@
+{
+  "id": "TASK-003",
+  "title": "分析面板 — 6 维评分 + 风险矩阵 UI",
+  "description": "构建 AnalysisPanel React 组件，将 maestro-analyze 的 6 维评分结果（Feasibility / Impact / Risk / Complexity / Dependencies / Alternatives）可视化为评分卡，并将风险矩阵（概率-影响 5x5 网格）渲染为交互式热力图。组件复用 CommandChainPanel 的四态渲染模式，通过 TASK-001 创建的 maestro.analyze.result tRPC endpoint 获取数据。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "在 apps/desktop/src/renderer/components/AnalysisPanel/ 中创建以下文件：(1) AnalysisPanel.tsx — 主组件，使用 electronTrpc.maestro.analyze.result.useQuery({cwd}) 获取分析结果，实现四态渲染（LoadingState / ErrorState / EmptyState / AnalysisView）；(2) ScoreCard.tsx — 单个维度评分卡组件，显示 dimensionName (Feasibility/Impact/Risk/Complexity/Dependencies/Alternatives)、score (1-5 星级)、confidence (百分比进度条)、evidence (可展开的文本说明)；(3) RiskMatrix.tsx — 5x5 风险矩阵热力图，X 轴为概率 (1-5)，Y 轴为影响 (1-5)，每个格子显示风险项数量和颜色（绿/黄/橙/红）；(4) types.ts — TypeScript 类型定义：(a) DimensionScore: { name: string; score: number; confidence: number; evidence: string[] }；(b) RiskItem: { id: string; description: string; probability: number; impact: number; mitigation: string }；(c) AnalysisResult: { dimensions: DimensionScore[]; risks: RiskItem[]; overallVerdict: string; overallConfidence: number }；(d) AnalysisPanelProps: { cwd: string; title?: string }。",
+  "scope": "apps/desktop/src/renderer/components/AnalysisPanel/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/AnalysisPanel/",
+    "apps/desktop/src/renderer/components/CommandChainPanel/",
+    "apps/desktop/src/lib/trpc/routers/maestro/"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+    "apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx",
+    "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+    ".workflow/scratch/20260624-analyze-P3-full-integration/conclusions.json"
+  ],
+  "depends_on": ["TASK-001"],
+  "parallel_group": "ui-panels",
+  "convergence": {
+    "criteria": [
+      "AnalysisPanel.tsx 文件存在于 apps/desktop/src/renderer/components/AnalysisPanel/ 目录中",
+      "AnalysisPanel 使用 electronTrpc.maestro.analyze.result.useQuery 获取数据",
+      "ScoreCard 组件渲染 6 个维度评分（Feasibility/Impact/Risk/Complexity/Dependencies/Alternatives），每个显示星级和置信度",
+      "RiskMatrix 组件渲染 5x5 网格，格子颜色根据风险项数量变化（绿/黄/橙/红）",
+      "[UI-observable] 用户打开分析面板后，看到 6 维评分卡和风险矩阵热力图，点击评分卡可展开 evidence 详情",
+      "grep -r 'electronTrpc.maestro.analyze.result' apps/desktop/src/renderer/components/AnalysisPanel/ 返回至少 1 处匹配"
+    ],
+    "verification": "在完整 Superset monorepo 中：(1) bun run build 无 TypeScript 错误；(2) 启动应用，在包含 analysis 结果的工作目录中打开分析面板，验证 6 维评分卡和风险矩阵渲染；(3) 验证 overallVerdict 和 overallConfidence 显示正确",
+    "definition_of_done": "用户在 Superset UI 的分析面板中看到 maestro-analyze 的 6 维评分结果和风险矩阵，评分卡可展开查看详细 evidence"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+      "action": "create",
+      "target": "AnalysisPanel React 组件",
+      "change": "创建分析面板主组件，包含标题栏 + 总体判定 + 四态渲染（Loading/Error/Empty/AnalysisView）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/AnalysisPanel/ScoreCard.tsx",
+      "action": "create",
+      "target": "ScoreCard React 组件",
+      "change": "创建维度评分卡：星级显示（1-5 星）、置信度进度条、可展开的 evidence 列表"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/AnalysisPanel/RiskMatrix.tsx",
+      "action": "create",
+      "target": "RiskMatrix React 组件",
+      "change": "创建 5x5 风险矩阵热力图：X 轴概率 1-5，Y 轴影响 1-5，格子颜色按风险项数量渐变"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/AnalysisPanel/types.ts",
+      "action": "create",
+      "target": "TypeScript 类型定义",
+      "change": "定义 DimensionScore、RiskItem、AnalysisResult、AnalysisPanelProps"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/AnalysisPanel/index.ts",
+      "action": "create",
+      "target": "模块导出",
+      "change": "导出 AnalysisPanel 组件和类型"
+    }
+  ],
+  "implementation": [
+    "Step 1 (探索): 读取 CommandChainPanel.tsx 理解四态渲染模式 — 特别是 DecisionNodeView.tsx 的交互卡片模式（可展开/折叠）",
+    "Step 2 (探索): 读取 ANL-011 conclusions.json 理解 6 维评分的数据结构 — dimension_scores 的字段格式",
+    "Step 3 (探索): 读取 TASK-001 创建的 maestro/ router，确认 analyze.result endpoint 的输入/输出 schema",
+    "Step 4 (实现): 创建 types.ts — 定义 DimensionScore (name/score/confidence/evidence)、RiskItem (id/description/probability/impact/mitigation)、AnalysisResult (dimensions/risks/overallVerdict/overallConfidence)、AnalysisPanelProps",
+    "Step 5 (实现): 创建 ScoreCard.tsx — 单个维度评分卡：dimensionName (font-semibold)、星级 (Star 图标 1-5 填充/空心)、confidence 进度条 (div + width%)、可展开 evidence (ChevronDown/ChevronUp 切换)",
+    "Step 6 (实现): 创建 RiskMatrix.tsx — 5x5 网格：X 轴标签 '概率 1-5'，Y 轴标签 '影响 1-5'，每个格子 (cell) 显示 count，背景色按 count 映射：0=gray-100, 1=green-200, 2=yellow-200, 3=orange-200, 4+=red-300。格子可点击展开风险项列表",
+    "Step 7 (实现): 创建 AnalysisPanel.tsx — 标题栏 + OverallVerdict 横幅（绿色 GO / 黄色 CONDITIONAL GO / 红色 NO-GO）+ 四态渲染：LoadingState (Loader2 spin)、ErrorState (AlertTriangle + 重试)、EmptyState (BarChart3 图标 + '暂无分析结果')、AnalysisView (6 个 ScoreCard 网格 + RiskMatrix + overallConfidence 环形图)",
+    "Step 8 (实现): 创建 index.ts 导出 AnalysisPanel 和类型",
+    "Step 9 (验证): bun run build 确认无 TypeScript 错误；启动应用手动测试"
+  ],
+  "test": {
+    "commands": [
+      "cd <superset-repo> && bun run build",
+      "cd <superset-repo> && bun run test -- --grep 'AnalysisPanel'"
+    ],
+    "unit": [
+      "apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.test.tsx",
+      "apps/desktop/src/renderer/components/AnalysisPanel/ScoreCard.test.tsx",
+      "apps/desktop/src/renderer/components/AnalysisPanel/RiskMatrix.test.tsx"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "bun run build 无 TypeScript 错误",
+      "所有单元测试通过",
+      "UI 手动测试：6 维评分卡正确渲染星级和置信度",
+      "UI 手动测试：风险矩阵颜色映射正确（0=灰, 1=绿, 2=黄, 3=橙, 4+=红）"
+    ]
+  },
+  "reference": {
+    "pattern": "组件结构遵循 CommandChainPanel 模式：types.ts → 子组件（ScoreCard/RiskMatrix 对应 StepItem/DecisionNodeView） → 主组件（AnalysisPanel 对应 CommandChainPanel） → index.ts 导出。评分卡展开/折叠模式参考 DecisionNodeView.tsx 的交互模式",
+    "files": [
+      "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "apps/desktop/src/renderer/components/CommandChainPanel/DecisionNodeView.tsx",
+      "apps/desktop/src/renderer/components/CommandChainPanel/types.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复用 CommandChainPanel 的四态渲染 + DecisionNodeView 的展开/折叠交互模式。6 维评分使用星级可视化（直观、通用），风险矩阵使用 5x5 热力图（与 ANL-011 分析格式一致）。评分卡可展开显示 evidence 文本，保持界面简洁同时提供深度信息。",
+    "decision_factors": [
+      "星级评分 → 直观的 1-5 可视化，无需解释",
+      "5x5 热力图 → 风险矩阵的标准可视化方式",
+      "展开/折叠 → 渐进式信息披露，参考 DecisionNodeView",
+      "颜色映射 → 绿/黄/橙/红 四级，符合通用风险认知"
+    ],
+    "tradeoffs": "风险矩阵的 5x5 网格在低风险场景下大部分格子为空 → 仍然渲染完整网格以保持结构一致性"
+  },
+  "risks": [
+    {
+      "description": "6 维评分数据格式与 UI 期望不一致（字段名、数值范围）",
+      "mitigation": "Step 3 确认 TASK-001 analyze.result schema；types.ts 使用 Zod 运行时校验"
+    },
+    {
+      "description": "风险矩阵在移动端/小屏幕上显示不佳",
+      "mitigation": "使用 CSS Grid + min-width 确保 5x5 网格最小可读尺寸；移动端支持 deferred to v0.4.0+"
+    }
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "75m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": "ui-panels",
+    "executor": "agent"
+  }
+}

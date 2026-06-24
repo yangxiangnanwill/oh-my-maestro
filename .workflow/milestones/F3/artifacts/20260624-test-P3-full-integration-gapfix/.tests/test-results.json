@@ -1,0 +1,15 @@
+{
+  "target": "F3 Phase 3 — Full Integration Gap-Fix",
+  "completed_at": "2026-06-24T16:05:00+08:00",
+  "results": [
+    { "id": "T-001", "name": "lib/trpc/index.ts 文件存在且导出正确", "status": "pass", "details": "initTRPC.create() + router + publicProcedure 全部确认" },
+    { "id": "T-002", "name": "electron-trpc.ts 文件存在且被 4 个 UI 面板引用", "status": "pass", "details": "createTRPCReact + electronTrpc + AppRouter + 4 面板引用确认" },
+    { "id": "T-003", "name": "@modelcontextprotocol/sdk 已安装", "status": "pass", "details": "package.json 声明 + node_modules 目录存在" },
+    { "id": "T-004", "name": "maestro CLI PATH 检测函数存在", "status": "pass", "details": "checkMaestroCliAvailable + maestroAvailable 状态字段确认" },
+    { "id": "T-005", "name": "CommandPalette 终端执行 TODO 已移除", "status": "pass", "details": "TODO 0 匹配，terminalWrite + terminal:execute fallback 存在" },
+    { "id": "T-006", "name": "DecisionNodeView 选项可点击", "status": "pass", "details": "onSelectOption + onClick + cursor-pointer 确认" },
+    { "id": "T-007", "name": "AnalysisPanel ErrorState 有重试按钮", "status": "pass", "details": "onRetry prop + refetch + 重试按钮确认" },
+    { "id": "T-008", "name": "maestro-mcp-provider.ts 降级逻辑正确", "status": "pass", "details": "tryRegisterToSupersetRegistry + try/catch 降级确认" }
+  ],
+  "summary": { "total": 8, "passed": 8, "issues": 0, "skipped": 0 }
+}

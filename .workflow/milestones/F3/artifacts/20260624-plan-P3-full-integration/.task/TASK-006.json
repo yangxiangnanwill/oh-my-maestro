@@ -1,0 +1,128 @@
+{
+  "id": "TASK-006",
+  "title": "端到端集成测试 — 完整用户旅程验证",
+  "description": "执行 Phase 3 的端到端集成测试，验证完整的用户旅程：自然语言需求 → 命令链执行 → UI 可视化（知识面板 + 分析面板） → Ralph 决策 → 命令执行 → 完成。此任务覆盖 6 个成功标准中的第 6 个（完整终端到终端演示），同时作为 Phase 3 的质量门。测试范围：验证所有 5 个 Wave 的产出正确协同工作，编写集成测试脚本，录制演示流程。",
+  "type": "test",
+  "priority": "low",
+  "effort": "medium",
+  "action": "(1) 编写端到端集成测试脚本 e2e/phase3-full-flow.spec.ts：(a) 场景 1 — KG 搜索流程：启动 Superset → 注册 Maestro Agent → 在终端中执行 maestro search 'topology layout' → 验证 KnowledgePanel 显示搜索结果卡片 → 点击卡片展开详情；(b) 场景 2 — 分析流程：执行 maestro analyze → 验证 AnalysisPanel 显示 6 维评分卡和风险矩阵 → 验证 overallVerdict 正确；(c) 场景 3 — 命令面板流程：打开 CommandPalette (Ctrl+K) → 搜索 'delegate' → 选择 maestro delegate 命令 → 验证命令在终端中执行；(d) 场景 4 — 决策流程：执行 maestro ralph next 触发决策节点 → 验证决策节点在 DecisionNodeView 中显示 → 选择选项 → 验证 Agent 状态更新；(e) 场景 5 — 完整闭环：使用 maestro plan '创建一个 React 组件' 触发完整工作流 → 命令链执行（CommandChainPanel 显示步骤进度）→ 搜索结果在 KnowledgePanel 显示 → 分析结果在 AnalysisPanel 显示 → Ralph 决策节点出现 → 用户确认 → 执行完成。(2) 录制演示流程：使用 Superset 截图或视频录制完整用户旅程，生成 demo-script.md 文档（步骤描述 + 预期结果）。(3) 收集所有集成问题，生成 integration-issues.md（分类为 bug/ux/nit，优先级 P0/P1/P2）。",
+  "scope": "e2e/ + 手动测试",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/KnowledgePanel/",
+    "apps/desktop/src/renderer/components/AnalysisPanel/",
+    "apps/desktop/src/renderer/components/CommandPalette/",
+    "apps/desktop/src/renderer/components/CommandChainPanel/",
+    "apps/desktop/src/main/lib/agent-setup/"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+    "apps/desktop/src/renderer/components/KnowledgePanel/KnowledgePanel.tsx",
+    "apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+    "apps/desktop/src/renderer/components/CommandPalette/CommandPalette.tsx",
+    ".workflow/roadmap.md"
+  ],
+  "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005"],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "e2e/phase3-full-flow.spec.ts 文件存在，包含至少 4 个测试场景",
+      "demo-script.md 文件存在，描述 5 个步骤的完整用户旅程",
+      "场景 1（KG 搜索）通过：KnowledgePanel 显示搜索结果",
+      "场景 2（分析结果）通过：AnalysisPanel 显示 6 维评分",
+      "场景 3（命令面板）通过：CommandPalette 搜索和触发命令",
+      "场景 4（决策联动）通过：决策节点触发 Agent hooks",
+      "[UI-observable] 场景 5（完整闭环）通过：从 NL 需求到命令链执行的完整流程",
+      "integration-issues.md 列出所有发现的问题（按优先级分类）"
+    ],
+    "verification": "在完整 Superset monorepo 中：(1) bun run test -- --grep 'phase3-full-flow' 全部通过；(2) 按照 demo-script.md 手动执行一遍完整流程，截图记录每个步骤；(3) 所有 P0 问题已修复或记录",
+    "definition_of_done": "完整用户旅程（NL 需求 → 命令链 → UI 可视化 → 决策 → 执行 → 完成）可在 Superset 中端到端演示，所有集成问题已记录并分类"
+  },
+  "files": [
+    {
+      "path": "e2e/phase3-full-flow.spec.ts",
+      "action": "create",
+      "target": "端到端集成测试脚本",
+      "change": "编写 5 个场景的端到端测试：KG 搜索、分析结果、命令面板、决策联动、完整闭环"
+    },
+    {
+      "path": "docs/phase3/demo-script.md",
+      "action": "create",
+      "target": "演示脚本文档",
+      "change": "编写逐步演示脚本：5 个步骤，每步包含操作描述、预期结果、截图位置"
+    },
+    {
+      "path": "docs/phase3/integration-issues.md",
+      "action": "create",
+      "target": "集成问题列表",
+      "change": "收集端到端测试中发现的所有问题，按 bug/ux/nit 分类，P0/P1/P2 优先级"
+    }
+  ],
+  "implementation": [
+    "Step 1 (探索): 读取 Superset 现有测试基础设施 — 确认 e2e 测试框架（Playwright? Vitest?）、测试工具函数、mock 模式",
+    "Step 2 (探索): 读取所有 UI 面板组件（KnowledgePanel、AnalysisPanel、CommandPalette、CommandChainPanel）确认组件接口和测试模式",
+    "Step 3 (实现): 配置 e2e 测试环境 — 安装必要依赖（如 @playwright/test），配置 Superset 应用启动钩子",
+    "Step 4 (实现): 编写场景 1 测试（KG 搜索流程）— 模拟 maestro search 输出 → 验证 KnowledgePanel 渲染",
+    "Step 5 (实现): 编写场景 2 测试（分析流程）— 模拟 maestro analyze 输出 → 验证 AnalysisPanel 渲染 6 维评分",
+    "Step 6 (实现): 编写场景 3 测试（命令面板流程）— 模拟命令列表 → 验证 CommandPalette 搜索和选择",
+    "Step 7 (实现): 编写场景 4 测试（决策联动）— 模拟 Ralph 决策事件 → 验证 DecisionNodeView 更新和 Agent hooks 触发",
+    "Step 8 (实现): 编写场景 5 测试（完整闭环）— 模拟完整工作流：NL prompt → 命令链执行 → 所有面板更新 → 决策 → 完成",
+    "Step 9 (执行): 运行 e2e 测试套件 — 修复失败用例",
+    "Step 10 (执行): 按照 demo-script.md 手动演示完整流程 — 截图记录每个步骤",
+    "Step 11 (记录): 编写 integration-issues.md — 列出所有发现的问题，按优先级分类"
+  ],
+  "test": {
+    "commands": [
+      "cd <superset-repo> && bun run build",
+      "cd <superset-repo> && bun run test -- --grep 'phase3-full-flow'",
+      "cd <superset-repo> && bun run test:e2e"
+    ],
+    "unit": [],
+    "integration": [
+      "e2e/phase3-full-flow.spec.ts"
+    ],
+    "success_metrics": [
+      "所有 e2e 测试场景通过（5/5）",
+      "demo-script.md 包含完整的 5 步演示路径",
+      "integration-issues.md 中无 P0 未解决问题",
+      "完整闭环演示可在 5 分钟内完成"
+    ]
+  },
+  "reference": {
+    "pattern": "e2e 测试遵循 Superset 现有测试框架模式。测试场景参考 Phase 3 roadmap 的 6 个成功标准（特别是第 6 个：完整终端到终端演示）。",
+    "files": [
+      "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.test.tsx",
+      ".workflow/roadmap.md"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "结合自动化 e2e 测试和手动演示验证。自动化测试覆盖可编程验证的场景（数据流正确性、组件渲染），手动演示覆盖用户体验路径（视觉正确性、交互流畅度）。5 个场景对应 5 个 Wave 的交付物 + 1 个完整闭环场景。",
+    "decision_factors": [
+      "自动化 e2e → 可重复验证，CI 可集成",
+      "手动演示 → 覆盖视觉和交互质量",
+      "5+1 场景 → 覆盖所有 Wave + 完整闭环",
+      "问题记录 → 确保后续迭代可追踪"
+    ],
+    "tradeoffs": "完整 e2e 测试需要 mock Maestro-flow CLI 输出 → 使用测试夹具（fixtures）模拟各种输出场景"
+  },
+  "risks": [
+    {
+      "description": "e2e 测试框架可能与 Electron 应用不完全兼容",
+      "mitigation": "优先使用 Superset 已有的测试框架；如 e2e 太复杂，降级为手动测试 + 截图验证"
+    },
+    {
+      "description": "手动演示依赖 Maestro-flow 完整环境（npm 包、配置文件等）",
+      "mitigation": "在 demo-script.md 中明确前置条件检查清单"
+    }
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "45m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": true,
+    "wave": 4,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}
