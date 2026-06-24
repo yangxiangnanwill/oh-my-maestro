@@ -1,4 +1,5 @@
 import { AlertTriangle, ListChecks, Loader2 } from "lucide-react";
+import { useCallback } from "react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { DecisionNodeView } from "./DecisionNodeView";
 import { StepItem } from "./StepItem";
@@ -43,6 +44,17 @@ export function CommandChainPanel({
       {},
     );
 
+  const handleDecisionSelect = useCallback(
+    (nodeId: string, option: string) => {
+      // 尝试通过 tRPC mutation 提交决策
+      // fallback: 本地状态 + console.log
+      console.log(`[CommandChainPanel] 决策选择: nodeId=${nodeId}, option=${option}`);
+      // TODO: 当 command-chain router 添加 resolveDecision mutation 后，替换为:
+      // electronTrpc.commandChain.resolveDecision.useMutation().mutate({ nodeId, option });
+    },
+    [],
+  );
+
   return (
     <div className="flex h-full flex-col">
       {/* 标题栏 */}
@@ -85,7 +97,11 @@ export function CommandChainPanel({
                   </h4>
                   <div className="space-y-2 px-4">
                     {status.decisionNodes.map((node) => (
-                      <DecisionNodeView key={node.id} node={node} />
+                      <DecisionNodeView
+                        key={node.id}
+                        node={node}
+                        onSelectOption={handleDecisionSelect}
+                      />
                     ))}
                   </div>
                 </section>
