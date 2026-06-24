@@ -211,10 +211,18 @@ export function CommandPalette({
         `[CommandPalette] Executing: ${cliLine}`,
         { command, cwd },
       );
-      // TODO: Wave 3 — 通过 terminal session 执行命令
-      // 预期的集成点：在终端面板中执行 cliLine，例如：
-      //   window.electronAPI?.terminalWrite(`${cliLine}\n`);
-      // 或在 terminal session 中调用 agent-launch 流程
+      // 通过 electronAPI 在终端中执行 CLI 命令
+      const electronAPI = (window as any).electronAPI;
+      if (electronAPI?.terminalWrite) {
+        electronAPI.terminalWrite(`${cliLine}\n`);
+      } else if (electronAPI?.send) {
+        electronAPI.send("terminal:execute", { command: cliLine, cwd });
+      } else {
+        console.warn(
+          "[CommandPalette] electronAPI 不可用，无法执行命令",
+          { cliLine, cwd },
+        );
+      }
       onClose();
     },
     [onClose, cwd],
