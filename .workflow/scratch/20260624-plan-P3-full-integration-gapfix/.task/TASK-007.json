@@ -1,0 +1,100 @@
+{
+  "id": "TASK-007",
+  "title": "AnalysisPanel ErrorState 添加重试按钮",
+  "description": "为 AnalysisPanel.tsx 的 ErrorState 组件添加重试按钮。当前 ErrorState（第 41-48 行）仅显示错误图标和消息，无重试功能。参考 KnowledgePanel.tsx 的 ErrorState（第 77-98 行）已实现 onRetry prop + 重试按钮模式。修改：添加 onRetry prop，渲染重试按钮，在父组件 AnalysisPanel 中传入 refetch 回调。",
+  "type": "fix",
+  "priority": "low",
+  "effort": "small",
+  "action": "修改 D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx: (1) ErrorState 添加 onRetry?: () => void prop; (2) 添加重试 button（与 KnowledgePanel 的样式一致：mt-2 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90）；(3) AnalysisPanel 中使用 refetch() 作为 onRetry 回调",
+  "scope": "apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/KnowledgePanel/KnowledgePanel.tsx"
+  ],
+  "depends_on": [],
+  "parallel_group": null,
+  "gap_ref": "GAP-007",
+  "convergence": {
+    "criteria": [
+      "grep -c \"onRetry\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx\" 返回 >=2（ErrorState prop 定义 + 调用处传参）",
+      "grep -c \"refetch\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx\" 返回 >=2（解构获取 refetch + 传递给 onRetry）",
+      "grep -c \"重试\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx\" 返回 >=1（重试按钮文本）",
+      "ErrorState 组件的 button 元素包含 onClick={onRetry} 处理"
+    ],
+    "verification": "cd D:/WorkSpace/VsCode/oh-my-maestro && grep -n \"onRetry\\|refetch\\|重试\" apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+    "definition_of_done": "AnalysisPanel 错误状态下显示重试按钮，点击后重新发起 tRPC 查询。UI 交互与 KnowledgePanel ErrorState 一致"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+      "action": "modify",
+      "target": "ErrorState 组件（第 41-48 行）+ AnalysisPanel 主组件（第 140-227 行）",
+      "change": "ErrorState 添加 onRetry prop 和重试 button；AnalysisPanel 从 useQuery 解构 refetch 并传入 ErrorState"
+    }
+  ],
+  "implementation": [
+    "步骤 1: 在 ErrorState 函数签名添加 onRetry prop:",
+    "  function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void })",
+    "步骤 2: 在 ErrorState JSX 中（第 46 行 </p> 之后）添加重试按钮:",
+    "  {onRetry && (",
+    "    <button",
+    "      type=\"button\"",
+    "      className=\"mt-2 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90\"",
+    "      onClick={onRetry}",
+    "    >",
+    "      重试",
+    "    </button>",
+    "  )}",
+    "步骤 3: 在 AnalysisPanel 主组件中:",
+    "  - 从 useQuery 解构中添加 refetch（第 145 行）:",
+    "    改为: const { data: raw, isLoading, error, refetch } = electronTrpc.maestro.analyze.result.useQuery(...)",
+    "  - 在 ErrorState 调用处（第 166-168 行）传入 onRetry={refetch}:",
+    "    改为: <ErrorState message={...} onRetry={refetch} />",
+    "步骤 4: 验证样式与 KnowledgePanel ErrorState（KnowledgePanel.tsx:89-96）一致"
+  ],
+  "test": {
+    "commands": [
+      "grep -n \"onRetry\" D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx",
+      "grep -n \"refetch\" D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "ErrorState 函数接受 onRetry prop",
+      "ErrorState 渲染重试按钮（onRetry 存在时）",
+      "AnalysisPanel 从 useQuery 解构 refetch 并传递给 ErrorState",
+      "按钮样式与 KnowledgePanel ErrorState 一致"
+    ]
+  },
+  "reference": {
+    "pattern": "完全参考 KnowledgePanel.tsx:77-98 的 ErrorState 重试模式。该模式已在 KnowledgePanel 中实现并验证：ErrorState 接收 onRetry prop → 渲染重试 button → 父组件传入 refetch 回调",
+    "files": [
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/KnowledgePanel/KnowledgePanel.tsx",
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/components/AnalysisPanel/AnalysisPanel.tsx"
+    ],
+    "examples": "KnowledgePanel.tsx:77-98 — ErrorState({ message, onRetry }) + button onClick={onRetry} + 重试文本"
+  },
+  "rationale": {
+    "chosen_approach": "直接复制 KnowledgePanel ErrorState 的重试模式。这确保两个面板的 ErrorState 行为一致，符合四态渲染的约定。使用 tRPC 的 refetch() 而非重新挂载组件，避免不必要的网络请求和状态重置",
+    "decision_factors": [
+      "KnowledgePanel 已成功实现该模式，AnalysisPanel 应保持一致",
+      "refetch() 是 @trpc/react-query useQuery 的标准返回值，无需额外依赖",
+      "按钮样式使用项目已有的 Tailwind 类名，无需新增 CSS"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 4,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

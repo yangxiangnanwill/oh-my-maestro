@@ -1,0 +1,97 @@
+{
+  "id": "TASK-004",
+  "title": "添加 maestro CLI PATH 检测",
+  "description": "在 maestro-mcp-provider.ts 中添加 maestro CLI 可用性检测函数 checkMaestroCliAvailable()。该函数在 registerMaestroMcpProvider() 调用前执行（由 main/index.ts 调用），使用 Node.js child_process.execFile 或 spawn 检测 'maestro' 命令是否在系统 PATH 中。检测结果缓存到 state 对象中，影响后续 MCP handshake 和 tool catalog 的暴露策略。参考现有的 tryLoadMcpSdk() 和 tryMcpHandshake() 的 graceful degradation 模式。",
+  "type": "fix",
+  "priority": "high",
+  "effort": "small",
+  "action": "在 D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts 中: (1) 在 state 接口添加 maestroAvailable: boolean 字段；(2) 新增 export function checkMaestroCliAvailable(): Promise<boolean> 函数——使用 execFile('where'/'which', ['maestro']) 检测；(3) 在 registerMaestroMcpProvider() 中调用 checkMaestroCliAvailable() 并缓存结果；(4) 如果 maestro 不可用，跳过 tryMcpHandshake()（因为需要 spawn maestro 子进程）",
+  "scope": "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts"
+  ],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/index.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave2-deps",
+  "gap_ref": "GAP-005",
+  "convergence": {
+    "criteria": [
+      "grep -c \"checkMaestroCliAvailable\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts\" 返回 >=1",
+      "grep -c \"maestroAvailable\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts\" 返回 >=1",
+      "grep -c \"checkMaestroCliAvailable\" \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/index.ts\" 返回 >=1（main/index.ts 中调用检测）",
+      "函数 checkMaestroCliAvailable 使用 execFile 或 spawn 检测 'maestro' 命令（非空实现）"
+    ],
+    "verification": "cd D:/WorkSpace/VsCode/oh-my-maestro && grep -n \"checkMaestroCliAvailable\\|maestroAvailable\" apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts apps/desktop/src/main/index.ts",
+    "definition_of_done": "maestro CLI PATH 检测函数已实现并在 main/index.ts 启动流程中调用，检测结果影响 MCP provider 的启动策略（maestro 不可用时使用静态 catalog only，不尝试 spawn 子进程）"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+      "action": "modify",
+      "target": "MaestroMcpProviderState 接口 + 新增 checkMaestroCliAvailable 函数 + registerMaestroMcpProvider 调用",
+      "change": "添加 maestroAvailable 字段到 state，新增 checkMaestroCliAvailable() 函数，在 registerMaestroMcpProvider() 中集成检测逻辑"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/index.ts",
+      "action": "modify",
+      "target": "app.whenReady() 中的 registerMaestroMcpProvider 调用前",
+      "change": "在 registerMaestroMcpProvider() 前调用 checkMaestroCliAvailable() 进行预检"
+    }
+  ],
+  "implementation": [
+    "步骤 1: 在 MaestroMcpProviderState 接口（第 40-44 行）添加字段: maestroAvailable: true,",
+    "步骤 2: 在 state 对象初始化（第 298-304 行）添加: maestroAvailable: false,",
+    "步骤 3: 在 Helpers 区域添加新函数 checkMaestroCliAvailable():",
+    "  - Windows: execFile('where', ['maestro'])",
+    "  - macOS/Linux: execFile('which', ['maestro'])",
+    "  - 返回 Promise<boolean>",
+    "  - 在 catch 中返回 false（maestro 不在 PATH）",
+    "步骤 4: 在 registerMaestroMcpProvider() 函数开头调用: state.maestroAvailable = await checkMaestroCliAvailable();",
+    "步骤 5: 在 tryMcpHandshake 前添加条件: if (!state.maestroAvailable) { console.warn(...); return; }",
+    "步骤 6: 在 main/index.ts 中添加 import { checkMaestroCliAvailable } from './lib/agent-setup/maestro-mcp-provider'",
+    "步骤 7: 在 main/index.ts 的 registerMaestroMcpProvider() 前添加: const maestroAvailable = await checkMaestroCliAvailable(); if (!maestroAvailable) { console.warn(...); }"
+  ],
+  "test": {
+    "commands": [
+      "grep -n \"maestroAvailable\" D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+      "grep -n \"checkMaestroCliAvailable\" D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "checkMaestroCliAvailable 函数存在且实现完整",
+      "maestroAvailable 状态被正确缓存到 state 对象",
+      "main/index.ts 启动流程包含 maestro CLI 检测调用"
+    ]
+  },
+  "reference": {
+    "pattern": "遵循 maestro-mcp-provider.ts 现有的 graceful degradation 模式：tryLoadMcpSdk() catch 返回 null → tryMcpHandshake() catch 使用静态 catalog。checkMaestroCliAvailable 是此模式的扩展——在启动前预检 CLI 可用性",
+    "files": [
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts"
+    ],
+    "examples": "tryLoadMcpSdk():369-377 — try/catch 返回 null + console.warn 降级模式"
+  },
+  "rationale": {
+    "chosen_approach": "在 maestro-mcp-provider.ts 中新增检测函数，遵循该文件已有的三级降级策略（SDK 不可用 → 静态 catalog；CLI 不可用 → 跳过 MCP handshake；Registry 不可用 → tRPC only）。使用 Node.js 内置 child_process.execFile 而非第三方依赖",
+    "decision_factors": [
+      "maestro-mcp-provider.ts 已有 graceful degradation 架构，新增 CLI 检测是其自然扩展",
+      "Windows 使用 'where'，macOS/Linux 使用 'which'——通过 process.platform 判断",
+      "检测结果缓存在 state 对象中，避免每次调用时重复检测"
+    ],
+    "tradeoffs": "仅在启动时检测一次（非周期性）。如果 maestro 在运行时被安装到 PATH，需要重启应用才能检测到。这是合理的设计——maestro 作为开发工具，安装后重启应用是可接受的"
+  },
+  "risks": [],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "25m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

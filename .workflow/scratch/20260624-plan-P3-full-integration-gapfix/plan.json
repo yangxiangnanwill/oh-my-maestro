@@ -1,0 +1,119 @@
+{
+  "plan_id": "PLN-012",
+  "phase": 3,
+  "milestone": "F3",
+  "scope": "gap-fix",
+  "summary": "Phase 3 gap 修复: 创建缺失的 tRPC 基础设施文件 (lib/trpc/index.ts + renderer/lib/electron-trpc.ts)、安装外部依赖 (@modelcontextprotocol/sdk)、添加 maestro CLI PATH 检测、CommandPalette 终端执行接入、DecisionNodeView 交互按钮、AnalysisPanel ErrorState 重试按钮。8 个 GAP，7 个 TASK，4 个 Wave。",
+  "approach": "Wave 1 (CRITICAL) 创建 tRPC 核心初始化文件 (lib/trpc/index.ts) 和 Electron IPC 客户端 (renderer/lib/electron-trpc.ts)，这是所有 UI 面板的编译前提。Wave 2 安装 @modelcontextprotocol/sdk 并处理 packages/mcp-v2/ 引用（降级为 try/catch 模式，遵循现有 maestro-mcp-provider.ts 的 graceful degradation 策略），同时添加 maestro CLI PATH 检测。Wave 3 实现 CommandPalette 终端执行（通过 tRPC terminal router 执行命令）和 DecisionNodeView 交互按钮（可点击选项触发 tRPC mutation）。Wave 4 为 AnalysisPanel ErrorState 添加重试按钮。所有 GAP 来自 VRF-004 验证 + DBG-001 诊断。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006", "TASK-007"],
+  "task_count": 7,
+  "complexity": "medium",
+  "estimated_total_minutes": 210,
+  "gap_mode": true,
+  "source_gaps": ["GAP-001", "GAP-002", "GAP-003", "GAP-004", "GAP-005", "GAP-006", "GAP-007", "GAP-008"],
+  "source_debug": "DBG-001",
+  "source_verification": "VRF-004",
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001", "TASK-002"],
+      "label": "tRPC 基础设施 — 创建 lib/trpc/index.ts + renderer/lib/electron-trpc.ts",
+      "parallel": false,
+      "description": "两个文件有依赖关系：electron-trpc.ts 的类型推导依赖 lib/trpc/index.ts 导出的 AppRouter 类型。但创建操作本身可并行——TASK-001 定义 tRPC 核心（initTRPC → router, publicProcedure），TASK-002 创建 React client（createTRPCReact + Electron IPC link）。建议先完成 TASK-001 再执行 TASK-002 以确保类型引用正确。"
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-003", "TASK-004"],
+      "label": "外部依赖 — 安装 @modelcontextprotocol/sdk + maestro CLI PATH 检测",
+      "parallel": true,
+      "description": "两个任务完全独立：TASK-003 处理 npm 依赖和 packages/mcp-v2/ 引用降级，TASK-004 在 maestro-mcp-provider.ts 中添加 CLI 可用性检测。"
+    },
+    {
+      "wave": 3,
+      "tasks": ["TASK-005", "TASK-006"],
+      "label": "功能集成 — CommandPalette 终端执行 + DecisionNodeView 交互按钮",
+      "parallel": true,
+      "description": "两个任务修改不同的 UI 组件，无相互依赖。TASK-005 需要 TASK-002 创建的 electronTrpc 可用（Wave 1 完成后即满足）。TASK-006 修改 DecisionNodeView.tsx 添加可点击选项，可能需要新增 tRPC mutation。"
+    },
+    {
+      "wave": 4,
+      "tasks": ["TASK-007"],
+      "label": "UX 修复 — AnalysisPanel ErrorState 重试按钮",
+      "parallel": false,
+      "description": "简单 UX 修复，参考 KnowledgePanel ErrorState 已有的 onRetry 模式。"
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "lib/trpc/index.ts: initTRPC() → { router, publicProcedure } → 被 routers/command-chain/index.ts 和 routers/maestro/index.ts 导入",
+      "renderer/lib/electron-trpc.ts: createTRPCReact<AppRouter>() + Electron IPC link → 被 4 个 UI 面板导入为 electronTrpc",
+      "@modelcontextprotocol/sdk: npm 安装 → maestro-mcp-provider.ts 的 tryLoadMcpSdk() 动态导入成功 → MCP 握手可用",
+      "maestro CLI 检测: which/where maestro → 结果缓存到 state.maestroAvailable → 影响 MCP provider 启动策略",
+      "CommandPalette 终端执行: 用户选中命令 → electronTrpc.terminal.execute.mutate() → 主进程 spawn 子进程 → 输出返回",
+      "DecisionNodeView 交互: 用户点击选项 → electronTrpc.commandChain.resolveDecision.mutate() → 主进程更新 status.json"
+    ]
+  },
+  "design_decisions": [
+    "DD-001: lib/trpc/index.ts 使用 @trpc/server 的 initTRPC() 创建 tRPC 实例，导出 router 和 publicProcedure。遵循 tRPC 11 的 API 模式（与现有 router 的 import 路径一致）",
+    "DD-002: electron-trpc.ts 使用 createTRPCReact<AppRouter>() 创建类型安全的 React hooks，通过 Electron IPC link 连接到主进程。遵循 @trpc/react-query 的 API 模式",
+    "DD-003: @modelcontextprotocol/sdk 的 packages/mcp-v2/ 引用问题——maestro-mcp-provider.ts 已有 try/catch 降级模式，无需修改代码。GAP-004 的修复是确保 npm 依赖安装 + 确认降级逻辑正确",
+    "DD-004: maestro CLI PATH 检测使用 Node.js child_process.spawn('which'/'where') 检测，结果缓存在 maestro-mcp-provider.ts 的 state 对象中，启动时检查一次",
+    "DD-005: CommandPalette 终端执行通过现有的 terminal tRPC router 实现，而非新增 endpoint。如果 terminal router 不可用，则通过 window.electronAPI 发送 IPC 消息到主进程执行",
+    "DD-006: DecisionNodeView 交互按钮遵循 CommandChainPanel 的现有模式——选项变为可点击按钮，点击后通过 tRPC mutation 更新决策状态",
+    "DD-007: AnalysisPanel ErrorState 重试按钮完全参考 KnowledgePanel ErrorState 的 onRetry 模式（KnowledgePanel.tsx:77-98），使用 refetch() 实现重试"
+  ],
+  "shared_context": {
+    "patterns": [
+      "tRPC router 模式: initTRPC() → { router, publicProcedure } → publicProcedure.input(z.object({...})).output(schema).query(async ({ input }) => {...})",
+      "CommandChainPanel 四态渲染: LoadingState / ErrorState / EmptyState / DataView",
+      "Electron IPC trpc client: electronTrpc.<router>.<procedure>.useQuery(input, opts)",
+      "Zod schema 校验 + TypeScript 类型推导",
+      "maestro-mcp-provider.ts graceful degradation: try/catch + 静态 fallback catalog",
+      "KnowledgePanel ErrorState 重试模式: onRetry prop → refetch() 调用"
+    ],
+    "conventions": [
+      "ESM 模块导入（相对路径使用 ../.. 模式）",
+      "TypeScript strict 模式",
+      "React 19 + TanStack Router + Lucide Icons",
+      "tRPC 11 with Electron IPC link",
+      "Zod 运行时校验 + compile-time 类型",
+      "bun 作为包管理器和测试运行器"
+    ],
+    "dependencies": [
+      "@trpc/server（tRPC 服务端，lib/trpc/index.ts 需要）",
+      "@trpc/client + @trpc/react-query（tRPC 客户端，electron-trpc.ts 需要）",
+      "@modelcontextprotocol/sdk（MCP 协议，maestro-mcp-provider.ts 需要）",
+      "zod（schema 校验）",
+      "electron（IPC 通信）"
+    ]
+  },
+  "risks": [
+    {
+      "id": "RISK-001",
+      "description": "tRPC 包 (@trpc/server, @trpc/client, @trpc/react-query) 可能未安装在当前独立 repo 中",
+      "priority": "high",
+      "mitigation": "TASK-001 和 TASK-002 仅创建源文件，不执行编译。安装依赖是 TASK-003 的一部分（与 @modelcontextprotocol/sdk 一起处理）"
+    },
+    {
+      "id": "RISK-002",
+      "description": "Electron IPC link 的实现方式依赖完整 Superset monorepo 中的现有模式，当前独立 repo 中无参考",
+      "priority": "medium",
+      "mitigation": "electron-trpc.ts 使用标准的 @trpc/client 的 createTRPCReact + httpLink/httpBatchLink 模式，通过 Electron IPC 自定义 link。如果完整 monorepo 中有不同的实现，后续可调整"
+    },
+    {
+      "id": "RISK-003",
+      "description": "CommandPalette 终端执行依赖 terminal tRPC router 的存在，但当前独立 repo 中无 terminal router 代码",
+      "priority": "medium",
+      "mitigation": "TASK-005 同时提供两种执行路径：优先使用 tRPC terminal.execute（如果可用），fallback 使用 window.electronAPI IPC 消息"
+    }
+  ],
+  "_metadata": {
+    "timestamp": "2026-06-24T12:00:00+08:00",
+    "source": "workflow-planner",
+    "planning_mode": "gap-fix",
+    "plan_type": "gap",
+    "verification_artifact": "D:/WorkSpace/VsCode/oh-my-maestro/.workflow/scratch/20260624-plan-P3-full-integration/verification.json",
+    "debug_artifact": "DBG-001"
+  }
+}

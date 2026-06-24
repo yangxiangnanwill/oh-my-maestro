@@ -38,12 +38,27 @@ function LoadingState() {
 }
 
 /** 错误状态 */
-function ErrorState({ message }: { message: string }) {
+function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry?: () => void;
+}) {
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm">
       <AlertTriangle className="h-8 w-8 text-amber-500" />
       <p className="text-muted-foreground">获取分析结果失败</p>
       <p className="max-w-[240px] text-xs text-red-500">{message}</p>
+      {onRetry && (
+        <button
+          type="button"
+          className="mt-2 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground hover:bg-primary/90"
+          onClick={onRetry}
+        >
+          重试
+        </button>
+      )}
     </div>
   );
 }
@@ -142,7 +157,7 @@ export function AnalysisPanel({
   topic,
   title = "分析结果",
 }: AnalysisPanelProps) {
-  const { data: raw, isLoading, error } =
+  const { data: raw, isLoading, error, refetch } =
     electronTrpc.maestro.analyze.result.useQuery(
       { cwd, topic },
       {},
@@ -165,6 +180,7 @@ export function AnalysisPanel({
         ) : error ? (
           <ErrorState
             message={error instanceof Error ? error.message : "未知错误"}
+            onRetry={refetch}
           />
         ) : !result ? (
           <EmptyState />
