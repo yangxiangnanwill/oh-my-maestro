@@ -1,4 +1,4 @@
-import { spawn, ChildProcess } from "node:child_process";
+import { spawn, ChildProcess, execFile } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
 
@@ -42,6 +42,7 @@ interface MaestroMcpProviderState {
   tools: McpToolDefinition[];
   registered: boolean;
   startError: string | null;
+  maestroAvailable: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -301,6 +302,7 @@ const state: MaestroMcpProviderState = {
   tools: [],
   registered: false,
   startError: null,
+  maestroAvailable: false,
 };
 
 // ---------------------------------------------------------------------------
@@ -309,6 +311,67 @@ const state: MaestroMcpProviderState = {
 
 function resolveMaestroHome(): string {
   return process.env.MAESTRO_HOME || path.join(os.homedir(), ".maestro");
+}
+
+/**
+ * Check whether the `maestro` CLI is available on the system PATH.
+ *
+ * Uses `where` on Windows and `which` on macOS/Linux to locate the binary.
+ * The result is cached in `state.maestroAvailable` and used to decide
+ * whether to attempt the live MCP handshake (which requires spawning a
+ * `maestro` subprocess).
+ */
+export function checkMaestroCliAvailable(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const isWindows = process.platform === "win32";
+    const command = isWindows ? "where" : "which";
+    const args = ["maestro"];
+
+    try {
+      const child = execFile(command, args, {
+        timeout: 5000,
+        windowsHide: true,
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      child.stdout?.on("data", (data: Buffer) => {
+        stdout += data.toString();
+      });
+
+      child.stderr?.on("data", (data: Buffer) => {
+        stderr += data.toString();
+      });
+
+      child.on("close", (code: number | null) => {
+        if (code === 0 && stdout.trim().length > 0) {
+          console.log(
+            `[maestro-mcp] maestro CLI found at: ${stdout.trim().split("\n")[0]}`,
+          );
+          resolve(true);
+        } else {
+          console.warn(
+            `[maestro-mcp] maestro CLI not found on PATH — MCP handshake will be skipped`,
+          );
+          resolve(false);
+        }
+      });
+
+      child.on("error", (err: Error) => {
+        console.warn(
+          `[maestro-mcp] Failed to check maestro CLI: ${err.message} — MCP handshake will be skipped`,
+        );
+        resolve(false);
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `[maestro-mcp] Failed to check maestro CLI: ${message} — MCP handshake will be skipped`,
+      );
+      resolve(false);
+    }
+  });
 }
 
 /**
@@ -399,13 +462,22 @@ export async function registerMaestroMcpProvider(): Promise<void> {
 
   console.log("[maestro-mcp] Registering Maestro MCP provider...");
 
+  // Check maestro CLI availability before attempting MCP handshake
+  state.maestroAvailable = await checkMaestroCliAvailable();
+
   // Always populate the static tool catalog for tRPC fallback
   state.tools = MAESTRO_TOOL_CATALOG.map(catalogToMcpTool);
 
-  const mcpSdk = await tryLoadMcpSdk();
+  if (state.maestroAvailable) {
+    const mcpSdk = await tryLoadMcpSdk();
 
-  if (mcpSdk) {
-    await tryMcpHandshake(mcpSdk);
+    if (mcpSdk) {
+      await tryMcpHandshake(mcpSdk);
+    }
+  } else {
+    console.warn(
+      "[maestro-mcp] maestro CLI not available — using static tool catalog only",
+    );
   }
 
   // Attempt to register into Superset MCP Registry
@@ -514,6 +586,10 @@ async function tryRegisterToSupersetRegistry(): Promise<void> {
       );
     }
   } catch {
+    // packages/mcp-v2/ is not available in the standalone oh-my-maestro repo.
+    // This is expected — the full Superset monorepo is not required for the
+    // desktop app to function. Tools remain accessible via the tRPC maestro
+    // router and the internal static tool catalog (MAESTRO_TOOL_CATALOG).
     console.log(
       "[maestro-mcp] Superset MCP Registry not available — tools accessible via tRPC maestro router",
     );
