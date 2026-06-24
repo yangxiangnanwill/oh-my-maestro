@@ -1,0 +1,134 @@
+{
+  "id": "TASK-001",
+  "title": "Maestro MCP Server 注册为 Superset MCP Provider",
+  "description": "将 Maestro-flow 的 MCP Server（28+ 工具：KG 搜索、分析、决策、命令执行等）注册为 Superset 的 MCP provider，使 Superset Agent 系统可以发现和调用这些工具。这是 Phase 3 的基础设施任务 — 所有后续 Wave 依赖此层。实现方式：在 setupAgentHooks() 调用点（main/index.ts:417-421）注册 Maestro MCP provider，通过 stdio transport 桥接 Maestro-flow 子进程。同时新增 tRPC endpoints 为 UI 面板提供数据通道。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "在 apps/desktop/src/main/lib/agent-setup/ 中创建 maestro-mcp-provider.ts，实现 registerMaestroMcpProvider() 函数：使用 @modelcontextprotocol/sdk 的 StdioClientTransport 连接 Maestro-flow MCP Server 子进程（command: 'maestro', args: ['mcp', 'serve', '--transport', 'stdio']），将返回的 28+ 工具列表注册到 Superset MCP Registry。在 main/index.ts 的 setupAgentHooks() 之后调用 registerMaestroMcpProvider()。同时在 apps/desktop/src/lib/trpc/routers/ 中新增 maestro/ router，包含三个 query endpoints：(1) knowledge.search(input: {query: string, cwd: string}) → KG 搜索结果；(2) analyze.result(input: {cwd: string}) → 6 维评分 + 风险矩阵；(3) commands.list(input: {filter?: string}) → 可用 command 列表。",
+  "scope": "apps/desktop/src/main/lib/agent-setup/ + apps/desktop/src/lib/trpc/routers/maestro/",
+  "focus_paths": [
+    "apps/desktop/src/main/lib/agent-setup/",
+    "apps/desktop/src/lib/trpc/routers/",
+    "apps/desktop/src/main/index.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/src/main/lib/agent-setup/desktop-agent-capabilities.ts",
+    "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+    "apps/desktop/src/lib/trpc/routers/index.ts",
+    "apps/desktop/src/main/lib/terminal/env.ts",
+    ".workflow/scratch/20260622-analyze-superset-architecture/exploration-codebase.json",
+    ".workflow/blueprint/BLP-maestro-ide-2026-06-20/architecture/ADR-004-event-driven-state-sync.md"
+  ],
+  "depends_on": [],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "registerMaestroMcpProvider() 函数存在于 apps/desktop/src/main/lib/agent-setup/ 目录中",
+      "main/index.ts 中 setupAgentHooks() 之后调用了 registerMaestroMcpProvider()",
+      "新增 maestro/ tRPC router 包含 knowledge.search、analyze.result、commands.list 三个 query endpoints",
+      "maestro/ router 已注册到主 tRPC router (apps/desktop/src/lib/trpc/routers/index.ts)",
+      "grep -r 'registerMaestroMcpProvider' apps/desktop/src/main/ 返回至少 2 处匹配（定义 + 调用）",
+      "grep -r 'maestro' apps/desktop/src/lib/trpc/routers/index.ts 返回至少 1 处匹配（router 注册）"
+    ],
+    "verification": "在完整 Superset monorepo 中执行：(1) bun run build 无 TypeScript 错误；(2) 启动应用后检查 Electron 主进程日志包含 'Maestro MCP provider registered with N tools'；(3) 通过 tRPC playground 或 DevTools 调用 maestro.commands.list 返回非空 command 列表",
+    "definition_of_done": "Maestro-flow 的 MCP 工具在 Superset Agent 系统中可发现，UI 面板可通过 tRPC endpoints 获取 KG 搜索、分析结果和命令列表数据"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+      "action": "create",
+      "target": "registerMaestroMcpProvider() 函数",
+      "change": "创建 Maestro MCP provider 注册逻辑：使用 StdioClientTransport 连接 maestro mcp serve 子进程，将工具列表注册到 Superset MCP Registry"
+    },
+    {
+      "path": "apps/desktop/src/main/index.ts",
+      "action": "modify",
+      "target": "setupAgentHooks() 调用点 (line 417-421)",
+      "change": "在 setupAgentHooks() 之后添加 registerMaestroMcpProvider() 调用，包裹在 try/catch 中"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/maestro/index.ts",
+      "action": "create",
+      "target": "createMaestroRouter() 函数",
+      "change": "创建 maestro tRPC router，包含 knowledge.search、analyze.result、commands.list 三个 query endpoints"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/index.ts",
+      "action": "modify",
+      "target": "主 tRPC router 组合",
+      "change": "导入并注册 maestro router"
+    }
+  ],
+  "implementation": [
+    "Step 1 (探索): 在完整 Superset monorepo 中定位 MCP registry 机制 — 搜索 packages/mcp-v2/src/ 了解现有 MCP server 和 tool 注册模式，确认 MCP provider 接口契约",
+    "Step 2 (探索): 读取 apps/desktop/src/main/lib/agent-setup/ 目录中所有文件，理解 Agent hooks 和 setup 流程",
+    "Step 3 (探索): 定位 Maestro-flow 仓库中的 mcp/ 模块，确认 MCP Server 的启动命令和 transport 选项",
+    "Step 4 (实现): 创建 maestro-mcp-provider.ts，实现 registerMaestroMcpProvider() — 使用 @modelcontextprotocol/sdk 的 StdioClientTransport 启动 maestro mcp serve 子进程，获取工具列表，注册到 Superset MCP Registry",
+    "Step 5 (实现): 在 main/index.ts 的 setupAgentHooks() 之后调用 registerMaestroMcpProvider()，包裹 try/catch 错误处理",
+    "Step 6 (实现): 创建 apps/desktop/src/lib/trpc/routers/maestro/index.ts — 实现 createMaestroRouter() 包含三个 query endpoints：knowledge.search (调用 MCP tool 'maestro_search')、analyze.result (调用 MCP tool 'maestro_analyze')、commands.list (返回可用 Maestro command 列表)",
+    "Step 7 (实现): 在 apps/desktop/src/lib/trpc/routers/index.ts 中注册 maestro router",
+    "Step 8 (验证): bun run build 确认无 TypeScript 错误；启动应用检查主进程日志"
+  ],
+  "test": {
+    "commands": [
+      "cd <superset-repo> && bun run build",
+      "cd <superset-repo> && bun run test -- --grep 'maestro'"
+    ],
+    "unit": [
+      "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.test.ts"
+    ],
+    "integration": [
+      "apps/desktop/src/lib/trpc/routers/maestro/index.test.ts"
+    ],
+    "success_metrics": [
+      "bun run build 无 TypeScript 错误",
+      "registerMaestroMcpProvider() 成功注册至少 20 个 MCP 工具",
+      "maestro.commands.list tRPC query 返回非空列表",
+      "maestro.knowledge.search tRPC query 返回 KG 搜索结果"
+    ]
+  },
+  "reference": {
+    "pattern": "遵循 Superset 现有 MCP v2 server 注册模式（packages/mcp-v2/src/server.ts + packages/mcp-v2/src/tools/register.ts），tRPC router 遵循 command-chain/index.ts 的 createXxxRouter() 模式",
+    "files": [
+      "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+      "apps/desktop/src/main/lib/agent-setup/desktop-agent-capabilities.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "通过 MCP protocol + stdio transport 桥接 Maestro-flow，而非将 Maestro-flow 代码内嵌到 Superset 中。原因：(1) 保持 Maestro-flow 独立可演进；(2) MCP 是标准化协议，符合 Superset 架构方向；(3) stdio transport 在 Windows 上可用（node-pty 已验证）。同时新增 tRPC endpoints 为 UI 面板提供类型安全的数据通道，复用 Electron IPC transport。",
+    "decision_factors": [
+      "MCP 协议标准化 → 未来可替换 Maestro-flow 为其他 MCP Server",
+      "stdio transport → 无需网络端口管理，适合本地桌面应用",
+      "tRPC endpoints → 复用 Electron IPC，类型安全，与现有 command-chain router 模式一致",
+      "独立子进程 → Maestro-flow 崩溃不影响 Superset 主进程"
+    ],
+    "tradeoffs": "stdio transport 延迟略高于 in-process 调用，但对于本地应用可接受（< 100ms）；子进程管理增加复杂度（需处理启动失败、崩溃重启）"
+  },
+  "risks": [
+    {
+      "description": "Superset MCP registry 在当前版本中不存在或接口不兼容",
+      "mitigation": "Step 1 优先探索 MCP registry 代码；备用方案：绕过 MCP registry，直接通过 tRPC endpoints 暴露 Maestro 功能"
+    },
+    {
+      "description": "Maestro-flow mcp/ 模块在外部仓库，stdio transport 连接可能失败",
+      "mitigation": "Step 3 确认 Maestro-flow mcp serve 命令可用；如不可用，使用 maestro CLI 子进程 + JSON 输出作为临时方案"
+    },
+    {
+      "description": "子进程生命周期管理在 Windows 上可能有边界情况",
+      "mitigation": "使用 child_process.spawn 的标准 error/exit 事件处理；Phase 0 已验证 node-pty ConPTY 支持"
+    }
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "90m",
+    "risk": "high",
+    "autonomous": false,
+    "checkpoint": true,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

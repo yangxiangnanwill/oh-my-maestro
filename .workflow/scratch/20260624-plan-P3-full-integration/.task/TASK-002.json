@@ -1,0 +1,127 @@
+{
+  "id": "TASK-002",
+  "title": "知识面板 — KG 搜索结果 React 可视化",
+  "description": "构建 KnowledgePanel React 组件，将 maestro search 的 KG 搜索结果可视化为可交互的知识卡片。组件复用 CommandChainPanel 的四态渲染模式（LoadingState / ErrorState / EmptyState / KnowledgeCardList），通过 TASK-001 创建的 maestro.knowledge.search tRPC endpoint 获取数据。知识卡片支持：显示实体名称/类型/相关度分数、点击展开详情（关联节点、调用链）、高亮匹配关键词。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "在 apps/desktop/src/renderer/components/KnowledgePanel/ 中创建以下文件：(1) KnowledgePanel.tsx — 主组件，使用 electronTrpc.maestro.knowledge.search.useQuery({query, cwd}) 获取 KG 搜索结果，实现四态渲染（LoadingState / ErrorState / EmptyState / KnowledgeCardList）；(2) KnowledgeCard.tsx — 单个知识卡片组件，显示 entityName、entityType、relevanceScore、matchedKeywords，支持点击展开 detail（relatedNodes、callChains）；(3) types.ts — TypeScript 类型定义：(a) KnowledgeSearchInput: { query: string; cwd: string; maxResults?: number }；(b) KnowledgeEntity: { id: string; name: string; type: 'command' | 'skill' | 'spec' | 'knowhow' | 'issue'；relevanceScore: number; matchedKeywords: string[]; relatedNodes: string[] }；(c) KnowledgeSearchResult: { entities: KnowledgeEntity[]; totalCount: number; searchTimeMs: number }；(d) KnowledgePanelProps: { cwd: string; placeholder?: string }。",
+  "scope": "apps/desktop/src/renderer/components/KnowledgePanel/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/KnowledgePanel/",
+    "apps/desktop/src/renderer/components/CommandChainPanel/",
+    "apps/desktop/src/lib/trpc/routers/maestro/"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+    "apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+    "apps/desktop/src/lib/trpc/routers/command-chain/index.ts",
+    "apps/desktop/src/renderer/lib/electron-trpc.ts"
+  ],
+  "depends_on": ["TASK-001"],
+  "parallel_group": "ui-panels",
+  "convergence": {
+    "criteria": [
+      "KnowledgePanel.tsx 文件存在于 apps/desktop/src/renderer/components/KnowledgePanel/ 目录中",
+      "KnowledgePanel 使用 electronTrpc.maestro.knowledge.search.useQuery 获取数据",
+      "KnowledgePanel 实现四态渲染：isLoading → LoadingState, error → ErrorState, empty → EmptyState, data → KnowledgeCardList",
+      "KnowledgeCard 组件显示 entityName 和 relevanceScore 字段",
+      "[UI-observable] 用户在搜索框中输入关键词后，知识卡片列表渲染在面板中，点击卡片可展开详情",
+      "grep -r 'electronTrpc.maestro.knowledge.search' apps/desktop/src/renderer/components/KnowledgePanel/ 返回至少 1 处匹配"
+    ],
+    "verification": "在完整 Superset monorepo 中：(1) bun run build 无 TypeScript 错误；(2) 启动应用，切换到知识面板标签，输入 'topology' 搜索，观察知识卡片渲染；(3) 点击卡片验证详情展开",
+    "definition_of_done": "用户在 Superset UI 的知识面板中输入搜索词后，KG 搜索结果以可交互的知识卡片形式展示，支持点击展开关联节点详情"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/KnowledgePanel/KnowledgePanel.tsx",
+      "action": "create",
+      "target": "KnowledgePanel React 组件",
+      "change": "创建知识面板主组件，包含搜索输入框 + 四态渲染（Loading/Error/Empty/KnowledgeCardList）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/KnowledgePanel/KnowledgeCard.tsx",
+      "action": "create",
+      "target": "KnowledgeCard React 组件",
+      "change": "创建知识卡片组件，显示实体名、类型标签、相关度分数，支持点击展开关联节点详情"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/KnowledgePanel/types.ts",
+      "action": "create",
+      "target": "TypeScript 类型定义",
+      "change": "定义 KnowledgeSearchInput、KnowledgeEntity、KnowledgeSearchResult、KnowledgePanelProps"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/KnowledgePanel/index.ts",
+      "action": "create",
+      "target": "模块导出",
+      "change": "导出 KnowledgePanel 组件和类型"
+    }
+  ],
+  "implementation": [
+    "Step 1 (探索): 读取 CommandChainPanel.tsx 理解四态渲染模式 — LoadingState / ErrorState / EmptyState 的实现细节和 CSS 类名",
+    "Step 2 (探索): 读取 electron-trpc.ts 理解 tRPC client 的 useQuery hook 用法和类型推导",
+    "Step 3 (探索): 读取 TASK-001 创建的 maestro/ router，确认 knowledge.search endpoint 的输入/输出 schema",
+    "Step 4 (实现): 创建 types.ts — 定义 KnowledgeSearchInput、KnowledgeEntity、KnowledgeSearchResult、KnowledgePanelProps 类型",
+    "Step 5 (实现): 创建 KnowledgeCard.tsx — 单个知识卡片：显示 entityName (font-semibold)、entityType 标签 (Badge 组件)、relevanceScore 进度条、matchedKeywords (高亮)，点击展开显示 relatedNodes 和 callChains",
+    "Step 6 (实现): 创建 KnowledgePanel.tsx — 搜索输入框（Input + Search 图标 + debounce 300ms）+ 四态渲染：LoadingState (Loader2 spin)、ErrorState (AlertTriangle + 重试按钮)、EmptyState (Search 图标 + '输入关键词搜索知识图谱')、DataView (KnowledgeCard 列表 + 结果计数)",
+    "Step 7 (实现): 创建 index.ts 导出 KnowledgePanel 和类型",
+    "Step 8 (验证): bun run build 确认无 TypeScript 错误；启动应用手动测试搜索流程"
+  ],
+  "test": {
+    "commands": [
+      "cd <superset-repo> && bun run build",
+      "cd <superset-repo> && bun run test -- --grep 'KnowledgePanel'"
+    ],
+    "unit": [
+      "apps/desktop/src/renderer/components/KnowledgePanel/KnowledgePanel.test.tsx",
+      "apps/desktop/src/renderer/components/KnowledgePanel/KnowledgeCard.test.tsx"
+    ],
+    "integration": [],
+    "success_metrics": [
+      "bun run build 无 TypeScript 错误",
+      "所有单元测试通过",
+      "UI 手动测试：搜索 'topology' 显示知识卡片列表",
+      "UI 手动测试：空搜索显示 EmptyState"
+    ]
+  },
+  "reference": {
+    "pattern": "组件结构遵循 CommandChainPanel 模式：types.ts → 子组件（KnowledgeCard 对应 StepItem） → 主组件（KnowledgePanel 对应 CommandChainPanel） → index.ts 导出。四态渲染复用相同的 UI 模式（Lucide 图标 + CSS 类名）",
+    "files": [
+      "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "apps/desktop/src/renderer/components/CommandChainPanel/types.ts",
+      "apps/desktop/src/renderer/components/CommandChainPanel/StepItem.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复用 CommandChainPanel 的四态渲染模式，而非引入新的 UI 框架或组件库。原因：(1) 保持代码库一致性；(2) 减少学习成本；(3) Loading/Error/Empty/Data 四态是 React 数据获取的标准模式。搜索使用 300ms debounce 避免频繁 tRPC 调用。",
+    "decision_factors": [
+      "复用现有 CommandChainPanel 模式 → 代码一致性",
+      "tRPC useQuery → 类型安全 + 自动 refetch",
+      "300ms debounce → 减少不必要的 tRPC 调用",
+      "知识卡片可展开 → 渐进式信息披露"
+    ],
+    "tradeoffs": "useQuery 的自动 refetch 在搜索场景下可能产生额外请求 → 使用 debounce + staleTime 控制频率"
+  },
+  "risks": [
+    {
+      "description": "KG 搜索结果数据量大时前端渲染性能下降",
+      "mitigation": "KnowledgeCardList 使用虚拟列表（如有大量结果）；TASK-001 的 maxResults 参数限制返回数量"
+    },
+    {
+      "description": "TASK-001 的 maestro.knowledge.search endpoint 返回格式与 UI 期望不一致",
+      "mitigation": "Step 3 确认 schema；types.ts 使用 Zod 运行时校验；如不一致先沟通 TASK-001 调整"
+    }
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "60m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": "ui-panels",
+    "executor": "agent"
+  }
+}
