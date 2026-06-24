@@ -45,3 +45,5 @@
 {"type":"cli","id":"CLI-1782287923704-1","timestamp":"2026-06-24T07:58:43.704Z","command":"spec load","args":{"category":"review","stdin":false}}
 {"type":"cli","id":"CLI-1782288242435-1","timestamp":"2026-06-24T08:04:02.435Z","command":"spec load","args":{"category":"review","stdin":false}}
 {"type":"cli","id":"CLI-1782288250152-1","timestamp":"2026-06-24T08:04:10.152Z","command":"spec load","args":{"category":"coding","stdin":false}}
+{"type":"cli","id":"CLI-1782300934350-1","timestamp":"2026-06-24T11:35:34.350Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782301917521-1","timestamp":"2026-06-24T11:51:57.521Z","command":"load","args":{"type":"spec","category":"debug"}}

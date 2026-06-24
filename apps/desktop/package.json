@@ -4,7 +4,7 @@
   "private": true,
   "description": "Maestro Desktop — Electron-based IDE with Superset agent integration",
   "type": "module",
-  "main": "src/main/index.ts",
+  "main": "main.cjs",
   "scripts": {
     "dev": "electron .",
     "build": "tsc",
@@ -18,8 +18,9 @@
     "zod": "^3.22.0"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "electron": "^33.0.0",
-    "typescript": "^5.5.0",
-    "@types/node": "^22.0.0"
+    "tsx": "^4.22.4",
+    "typescript": "^5.5.0"
   }
 }
