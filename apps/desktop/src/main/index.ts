@@ -24,6 +24,7 @@ import {
 	PROTOCOL_SCHEME,
 } from "shared/constants";
 import { setupAgentHooks } from "./lib/agent-setup";
+import { registerMaestroMcpProvider } from "./lib/agent-setup/maestro-mcp-provider";
 import { initAppState } from "./lib/app-state";
 import { requestAppleEventsAccess } from "./lib/apple-events-permission";
 import { isUpdateReadyToInstall, setupAutoUpdater } from "./lib/auto-updater";
@@ -418,6 +419,11 @@ if (!gotTheLock) {
 			setupAgentHooks();
 		} catch (error) {
 			console.error("[main] Failed to set up agent hooks:", error);
+		}
+		try {
+			registerMaestroMcpProvider();
+		} catch (error) {
+			console.error("[main] Failed to register Maestro MCP provider:", error);
 		}
 		try {
 			installBundledCliShim();

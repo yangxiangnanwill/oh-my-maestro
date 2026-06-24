@@ -10,6 +10,7 @@ import { createChangesRouter } from "./changes";
 import { createChatRuntimeServiceRouter } from "./chat-runtime-service";
 import { createChatServiceRouter } from "./chat-service";
 import { createCommandChainRouter } from "./command-chain";
+import { createMaestroRouter } from "./maestro";
 import { createConfigRouter } from "./config";
 import { createDeviceRouter } from "./device";
 import { createExternalRouter } from "./external";
@@ -36,6 +37,7 @@ export const createAppRouter = (getWindow: () => BrowserWindow | null) => {
 		chatRuntimeService: createChatRuntimeServiceRouter(),
 		chatService: createChatServiceRouter(),
 		commandChain: createCommandChainRouter(),
+		maestro: createMaestroRouter(),
 		analytics: createAnalyticsRouter(),
 		browser: createBrowserRouter(),
 		browserHistory: createBrowserHistoryRouter(),

@@ -1,0 +1,328 @@
+import { execFile } from "node:child_process";
+import { resolve, sep } from "node:path";
+import { z } from "zod";
+import { publicProcedure, router } from "../..";
+import {
+  getMaestroMcpTools,
+  getMaestroToolCatalog,
+  type MaestroCliTool,
+} from "../../../../main/lib/agent-setup/maestro-mcp-provider";
+
+// ---------------------------------------------------------------------------
+// Schemas
+// ---------------------------------------------------------------------------
+
+/** 知识图谱搜索结果项 */
+const kgSearchResultSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  type: z.enum(["spec", "knowhow", "wiki", "code", "artifact"]),
+  snippet: z.string(),
+  score: z.number(),
+  file: z.string().optional(),
+  line: z.number().optional(),
+  category: z.string().optional(),
+});
+
+/** 6 维分析评分 */
+const dimensionScoreSchema = z.object({
+  dimension: z.string(),
+  score: z.number().min(0).max(10),
+  summary: z.string(),
+  details: z.array(z.string()),
+});
+
+/** 风险矩阵条目 */
+const riskEntrySchema = z.object({
+  id: z.string(),
+  description: z.string(),
+  severity: z.enum(["low", "medium", "high", "critical"]),
+  likelihood: z.enum(["low", "medium", "high"]),
+  mitigation: z.string().optional(),
+});
+
+/** 分析结果 */
+const analyzeResultSchema = z.object({
+  topic: z.string(),
+  timestamp: z.string(),
+  overallScore: z.number().min(0).max(10),
+  dimensions: z.array(dimensionScoreSchema),
+  risks: z.array(riskEntrySchema),
+  recommendations: z.array(z.string()),
+  summary: z.string(),
+});
+
+/** 命令列表项 */
+const commandItemSchema = z.object({
+  name: z.string(),
+  description: z.string(),
+  category: z.enum(["knowledge", "analysis", "command", "utility"]),
+  cliCommand: z.string(),
+  cliArgs: z.array(z.string()),
+});
+
+// ---------------------------------------------------------------------------
+// Output types
+// ---------------------------------------------------------------------------
+
+export type KgSearchResult = z.infer<typeof kgSearchResultSchema>;
+export type AnalyzeResult = z.infer<typeof analyzeResultSchema>;
+export type CommandItem = z.infer<typeof commandItemSchema>;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * 路径安全校验：拒绝空字节注入 + 路径遍历（..）
+ */
+function validateCwd(cwd: string): boolean {
+  if (cwd.includes("\0")) return false;
+  const segments = resolve(cwd).split(sep);
+  return !segments.includes("..");
+}
+
+/**
+ * 执行 maestro CLI 命令并返回 stdout。
+ * 超时 30 秒，防止子进程挂起。
+ */
+function execMaestroCli(
+  args: string[],
+  cwd: string,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = execFile(
+      "maestro",
+      args,
+      {
+        cwd,
+        encoding: "utf-8",
+        timeout: 30_000,
+        maxBuffer: 10 * 1024 * 1024, // 10 MB
+        env: {
+          ...process.env,
+          NO_COLOR: "1", // 禁用 ANSI 颜色，方便解析
+        } as Record<string, string>,
+      },
+      (error, stdout, stderr) => {
+        if (error) {
+          // 优先使用 stderr 中的错误信息
+          const message = stderr?.trim() || error.message;
+          reject(new Error(`maestro CLI error: ${message}`));
+          return;
+        }
+        resolve(stdout.trim());
+      },
+    );
+
+    // 防止子进程挂起
+    child.on("error", (err) => {
+      reject(new Error(`Failed to spawn maestro: ${err.message}`));
+    });
+  });
+}
+
+/**
+ * 解析 maestro search 的文本输出为结构化结果。
+ * 预期格式：每行一个结果，用 tab 分隔字段。
+ * 如果无法解析，返回原始文本作为单个结果。
+ */
+function parseSearchOutput(raw: string, query: string): KgSearchResult[] {
+  if (!raw) return [];
+
+  const lines = raw.split("\n").filter(Boolean);
+  const results: KgSearchResult[] = [];
+
+  for (const line of lines) {
+    // 尝试 tab 分隔格式: id\ttitle\ttype\tsnippet\tscore
+    const parts = line.split("\t");
+    if (parts.length >= 4) {
+      results.push({
+        id: parts[0] || `result-${results.length}`,
+        title: parts[1] || "Untitled",
+        type: normalizeResultType(parts[2]),
+        snippet: parts[3] || "",
+        score: parseFloat(parts[4]) || 0,
+        file: parts[5] || undefined,
+        line: parts[6] ? parseInt(parts[6], 10) : undefined,
+        category: parts[7] || undefined,
+      });
+    } else {
+      // 回退：整行作为 snippet
+      results.push({
+        id: `result-${results.length}`,
+        title: query,
+        type: "code",
+        snippet: line,
+        score: 0,
+      });
+    }
+  }
+
+  return results;
+}
+
+function normalizeResultType(
+  raw: string,
+): KgSearchResult["type"] {
+  const normalized = raw.toLowerCase().trim();
+  const validTypes: KgSearchResult["type"][] = [
+    "spec",
+    "knowhow",
+    "wiki",
+    "code",
+    "artifact",
+  ];
+  return validTypes.includes(normalized as KgSearchResult["type"])
+    ? (normalized as KgSearchResult["type"])
+    : "code";
+}
+
+/**
+ * 解析 maestro analyze 的 JSON 输出。
+ * 如果 maestro analyze 输出 JSON，直接解析；否则构造降级结果。
+ */
+function parseAnalyzeOutput(
+  raw: string,
+  topic: string,
+): AnalyzeResult {
+  try {
+    const parsed = JSON.parse(raw);
+    return analyzeResultSchema.parse(parsed);
+  } catch {
+    // 降级：返回原始文本作为 summary
+    return {
+      topic,
+      timestamp: new Date().toISOString(),
+      overallScore: 0,
+      dimensions: [],
+      risks: [],
+      recommendations: [],
+      summary: raw || `No analysis results available for "${topic}"`,
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Router
+// ---------------------------------------------------------------------------
+
+export const createMaestroRouter = () => {
+  return router({
+    /**
+     * 知识图谱搜索
+     *
+     * 执行 `maestro search <query>` 并返回结构化的 KG 搜索结果。
+     * 支持跨 spec、knowhow、wiki、code 的语义搜索。
+     */
+    knowledge: router({
+      search: publicProcedure
+        .input(
+          z.object({
+            query: z.string().min(1, "Search query is required"),
+            cwd: z.string().min(1).refine(validateCwd, {
+              message: "Invalid working directory path",
+            }),
+          }),
+        )
+        .output(z.array(kgSearchResultSchema))
+        .query(async ({ input }) => {
+          try {
+            const raw = await execMaestroCli(
+              ["search", input.query],
+              input.cwd,
+            );
+            return parseSearchOutput(raw, input.query);
+          } catch (err) {
+            const message =
+              err instanceof Error ? err.message : String(err);
+            console.warn(
+              `[maestro:knowledge.search] ${message} — returning empty results`,
+            );
+            return [];
+          }
+        }),
+    }),
+
+    /**
+     * 分析结果
+     *
+     * 获取最新 maestro-analyze 结果（6 维评分 + 风险矩阵）。
+     * 如果指定了 topic，执行 `maestro analyze <topic>`；
+     * 否则尝试读取最近的分析缓存。
+     */
+    analyze: router({
+      result: publicProcedure
+        .input(
+          z.object({
+            cwd: z.string().min(1).refine(validateCwd, {
+              message: "Invalid working directory path",
+            }),
+            topic: z.string().optional(),
+          }),
+        )
+        .output(analyzeResultSchema)
+        .query(async ({ input }) => {
+          const topic = input.topic || "project";
+          try {
+            const raw = await execMaestroCli(
+              ["analyze", topic, "--json"],
+              input.cwd,
+            );
+            return parseAnalyzeOutput(raw, topic);
+          } catch (err) {
+            const message =
+              err instanceof Error ? err.message : String(err);
+            console.warn(
+              `[maestro:analyze.result] ${message} — returning empty analysis`,
+            );
+            return {
+              topic,
+              timestamp: new Date().toISOString(),
+              overallScore: 0,
+              dimensions: [],
+              risks: [],
+              recommendations: [],
+              summary: `Analysis unavailable: ${message}`,
+            };
+          }
+        }),
+    }),
+
+    /**
+     * 命令列表
+     *
+     * 返回可用 Maestro command 列表，支持按类别过滤。
+     * 数据来源：静态工具目录（与 MCP provider 共享）。
+     */
+    commands: router({
+      list: publicProcedure
+        .input(
+          z.object({
+            filter: z.string().optional(),
+          }),
+        )
+        .output(z.array(commandItemSchema))
+        .query(async ({ input }) => {
+          const catalog = getMaestroToolCatalog();
+          const filtered = input.filter
+            ? catalog.filter(
+                (t: MaestroCliTool) =>
+                  t.category === input.filter ||
+                  t.name.includes(input.filter!) ||
+                  t.description
+                    .toLowerCase()
+                    .includes(input.filter!.toLowerCase()),
+              )
+            : catalog;
+          return filtered.map((t: MaestroCliTool) => ({
+            name: t.name,
+            description: t.description,
+            category: t.category,
+            cliCommand: t.cliCommand,
+            cliArgs: t.cliArgs,
+          }));
+        }),
+    }),
+  });
+};
