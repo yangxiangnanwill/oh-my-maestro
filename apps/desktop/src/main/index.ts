@@ -24,7 +24,7 @@ import {
 	PROTOCOL_SCHEME,
 } from "shared/constants";
 import { setupAgentHooks } from "./lib/agent-setup";
-import { registerMaestroMcpProvider } from "./lib/agent-setup/maestro-mcp-provider";
+import { registerMaestroMcpProvider, checkMaestroCliAvailable } from "./lib/agent-setup/maestro-mcp-provider";
 import { initAppState } from "./lib/app-state";
 import { requestAppleEventsAccess } from "./lib/apple-events-permission";
 import { isUpdateReadyToInstall, setupAutoUpdater } from "./lib/auto-updater";
@@ -421,7 +421,13 @@ if (!gotTheLock) {
 			console.error("[main] Failed to set up agent hooks:", error);
 		}
 		try {
-			registerMaestroMcpProvider();
+			const maestroAvailable = await checkMaestroCliAvailable();
+			if (!maestroAvailable) {
+				console.warn(
+					"[main] maestro CLI not detected on PATH — Maestro MCP provider will use static tool catalog only",
+				);
+			}
+			await registerMaestroMcpProvider();
 		} catch (error) {
 			console.error("[main] Failed to register Maestro MCP provider:", error);
 		}
