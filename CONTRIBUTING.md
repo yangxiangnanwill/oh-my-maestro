@@ -1,5 +1,7 @@
 # Contributing to Maestro IDE
 
+Thank you for your interest in contributing to oh-my-maestro! This document outlines the process for contributing to the project.
+
 When contributing to this repository, please first discuss the change you wish to make via [issues](https://github.com/yangxiangnanwill/oh-my-maestro/issues) before making a change.
 
 Please note we have a [code of conduct](./CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
@@ -28,3 +30,9 @@ bun run dev
 - Use Biome for formatting and linting (`bun run lint:fix` before commit)
 - Co-locate tests with source files
 - Follow the project structure conventions in [AGENTS.md](./AGENTS.md)
+
+## Style guide
+
+We try to follow guidelines from [Clean Code](https://gist.github.com/wojteklu/73c6914cc446146b8b533c0988cf8d29) and the boy scoute rule:
+
+"Leave the code cleaner, not messier, than how you found it".

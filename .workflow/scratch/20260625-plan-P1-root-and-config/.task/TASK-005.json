@@ -88,7 +88,8 @@
     "mainExternalizedDependencies 来自 runtime-dependencies.ts，如果该文件尚未创建则需使用空数组占位"
   ],
   "meta": {
-    "status": "pending",
+    "status": "completed",
+    "completed_at": "2026-06-25T20:15:00+08:00",
     "estimated_time": "35m",
     "risk": "medium",
     "autonomous": true,

@@ -7,14 +7,19 @@
   "effort": "high",
   "action": "MODIFY D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json — 大幅改造现有文件：\n1) name: '@oh-my-maestro/desktop'（保持）\n2) productName: 'Maestro'（新增）\n3) description: 'Maestro Desktop — Maestro-flow IDE with AI orchestration'（更新）\n4) version: '0.1.0'（保持）\n5) main: './dist/main/index.js'（更新，匹配 electron-vite 输出）\n6) resources: 'src/resources'（新增，electron-builder 需要）\n7) repository: { type: 'git', url: 'https://github.com/yangxiangnanwill/oh-my-maestro.git' }（新增）\n8) author: { name: 'Maestro', email: '...' }（新增）\n9) scripts: 替换现有 scripts，添加 electron-vite 构建脚本：\n   - 'dev': 'electron-vite dev --watch'\n   - 'build': 'electron-vite build'\n   - 'preview': 'electron-vite preview'\n   - 'package': 'electron-builder --config electron-builder.ts'\n   - 'typecheck': 'tsc --noEmit'\n   - 'test': 'bun test'\n   - 'clean': 'rimraf dist dist-electron release .turbo'\n10) dependencies: 从 Superset 版本中筛选 oh-my-maestro 实际需要的依赖。保留核心依赖：react, react-dom, @tanstack/react-router, @tanstack/react-query, @trpc/client, @trpc/server, @trpc/react-query, zod, electron-log, electron-updater, better-sqlite3, drizzle-orm, lucide-react, tailwind-merge, clsx, framer-motion, zustand, react-hook-form, @hookform/resolvers, @radix-ui/react-dialog, @radix-ui/react-label, simple-git, execa, dotenv, nanoid, superjson, semver, date-fns, fuse.js, strip-ansi, shell-quote, default-shell, os-locale, node-pty, @parcel/watcher, @ast-grep/napi, native-keymap, tree-kill, pidusage, pidtree, @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities, react-dnd, react-dnd-html5-backend, dnd-core, react-resizable-panels, react-mosaic-component, react-hotkeys-hook, react-markdown, remark-gfm, rehype-raw, rehype-sanitize, unified, remark-parse, mdast-util-to-string, tiptap 系列, @tiptap/react, @tiptap/starter-kit, @tiptap/extension-placeholder, tiptap-markdown, @codemirror 系列, @xterm/xterm, @xterm/addon-fit, @xterm/headless, lowdb, dexie, idb-keyval, express, @hono/node-server, http-proxy, jose, mastracode, @mastra/core, ai, @ai-sdk/anthropic, @ai-sdk/openai, @ai-sdk/react, shiki, highlight.js, lowlight, streamdown, @streamdown/mermaid, culori, friendly-words, line-column-path, lodash, file-uri-to-path, bindings, detect-libc, node-addon-api, prebuild-install, bufferutil, utf-8-validate, @t3-oss/env-core, @pierre/diffs, @pierre/trees, @headless-tree/core, @headless-tree/react, @lezer/highlight, @paper-design/shaders-react, @replit/codemirror-css-color-picker, @vercel/blob, @tanstack/db, @tanstack/electron-db-sqlite-persistence, @tanstack/node-db-sqlite-persistence, @tanstack/query-async-storage-persister, @tanstack/react-db, @tanstack/react-query-persist-client, @tanstack/react-table, @tanstack/react-virtual, @tanstack/electric-db-collection, @electric-sql/client, @durable-streams/client, trpc-electron, libsql, tw-animate-css, react-icons, react-syntax-highlighter, tippy.js, use-resize-observer, uuid\n   - 移除：@better-auth/api-key, @better-auth/stripe, @sentry/electron, posthog-js, posthog-node, @superset/* (所有 workspace 依赖暂时移除，后续按需添加)\n11) devDependencies: 保留 electron, electron-vite, electron-builder, @types/node, @types/react, @types/react-dom, @types/better-sqlite3, @types/bun, @types/lodash, @types/semver, @types/http-proxy, @types/culori, @types/react-syntax-highlighter, @types/shell-quote, typescript, vite, @vitejs/plugin-react, vite-tsconfig-paths, @tailwindcss/vite, tailwindcss, @tanstack/router-plugin, @tanstack/router-cli, rimraf, cross-env, tsx, rollup-plugin-inject-process-env, material-icon-theme\n   - 移除：@sentry/vite-plugin, @superset/typescript, code-inspector-plugin",
   "scope": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/",
-  "focus_paths": ["D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json"],
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json"
+  ],
   "read_first": [
     "D:/WorkSpace/Source/superset/apps/desktop/package.json",
     "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json",
     "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts",
     "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts"
   ],
-  "depends_on": ["TASK-005", "TASK-006"],
+  "depends_on": [
+    "TASK-005",
+    "TASK-006"
+  ],
   "parallel_group": null,
   "convergence": {
     "criteria": [
@@ -53,7 +58,11 @@
     ],
     "unit": [],
     "integration": [],
-    "success_metrics": ["JSON 格式有效", "无 Sentry/PostHog/Stripe 依赖", "scripts 包含 electron-vite 命令"]
+    "success_metrics": [
+      "JSON 格式有效",
+      "无 Sentry/PostHog/Stripe 依赖",
+      "scripts 包含 electron-vite 命令"
+    ]
   },
   "reference": {
     "pattern": "Merge existing oh-my-maestro package.json with Superset desktop package.json, keeping only needed deps",
@@ -87,5 +96,13 @@
     "wave": 5,
     "execution_group": null,
     "executor": "agent"
-  }
+  },
+  "status": "completed",
+  "status_history": [
+    {
+      "from": "in_progress",
+      "to": "completed",
+      "changed_at": "2026-06-25T12:36:38.763Z"
+    }
+  ]
 }

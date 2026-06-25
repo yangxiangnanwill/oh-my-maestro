@@ -1,4 +1,4 @@
-# Maestro IDE Monorepo Guide
+# Maestro-flow Monorepo Guide
 
 You're running inside a Maestro IDE workspace — an Electron desktop application that orchestrates AI-powered workflow management. "Workflow" in any user message refers to Maestro-flow's command chain orchestration system.
 

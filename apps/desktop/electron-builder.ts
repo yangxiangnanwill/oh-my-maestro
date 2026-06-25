@@ -15,6 +15,8 @@ import {
 const currentYear = new Date().getFullYear();
 const author = pkg.author?.name ?? pkg.author;
 const productName = pkg.productName;
+const macIconPath = join(pkg.resources, "build/icons/icon.icns");
+const linuxIconPath = join(pkg.resources, "build/icons");
 const winIconPath = join(pkg.resources, "build/icons/icon.ico");
 
 const config: Configuration = {
@@ -22,9 +24,6 @@ const config: Configuration = {
 	productName,
 	copyright: `Copyright © ${currentYear} — ${author}`,
 	electronVersion: pkg.devDependencies.electron.replace(/^\^/, ""),
-
-	// Generate update manifests for all channels
-	generateUpdatesFilesForAllChannels: true,
 
 	// Publish to GitHub Releases
 	publish: {
@@ -45,15 +44,6 @@ const config: Configuration = {
 		...packagedAsarUnpackGlobs,
 	],
 
-	// Extra resources placed outside asar archive
-	extraResources: [
-		{
-			from: "dist/resources/bin",
-			to: "resources/bin",
-			filter: ["**/*"],
-		},
-	],
-
 	files: [
 		"dist/**/*",
 		"package.json",
@@ -69,10 +59,32 @@ const config: Configuration = {
 	// Rebuild native modules for Electron's Node.js version
 	npmRebuild: true,
 
+	// macOS
+	mac: {
+		...(existsSync(macIconPath) ? { icon: macIconPath } : {}),
+		category: "public.app-category.utilities",
+		target: "default",
+		hardenedRuntime: true,
+		gatekeeperAssess: false,
+		extendInfo: {
+			CFBundleName: productName,
+			CFBundleDisplayName: productName,
+		},
+	},
+
 	// Deep linking protocol
 	protocols: {
 		name: productName,
 		schemes: ["maestro"],
+	},
+
+	// Linux
+	linux: {
+		...(existsSync(linuxIconPath) ? { icon: linuxIconPath } : {}),
+		category: "Utility",
+		synopsis: pkg.description,
+		target: ["AppImage"],
+		artifactName: `Maestro-\${version}-\${arch}.\${ext}`,
 	},
 
 	// Windows

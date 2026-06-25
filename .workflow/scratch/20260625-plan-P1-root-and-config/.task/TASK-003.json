@@ -63,7 +63,10 @@
     ],
     "unit": [],
     "integration": [],
-    "success_metrics": ["所有 Superset 品牌引用已替换", "DEVELOPMENT.md 无 Docker/Neon/Caddy/Stripe 引用"]
+    "success_metrics": [
+      "所有 Superset 品牌引用已替换",
+      "DEVELOPMENT.md 无 Docker/Neon/Caddy/Stripe 引用"
+    ]
   },
   "reference": {
     "pattern": "Adapt from Superset source files, replace branding and simplify",
@@ -93,5 +96,13 @@
     "wave": 2,
     "execution_group": null,
     "executor": "agent"
-  }
+  },
+  "status": "completed",
+  "status_history": [
+    {
+      "from": "in_progress",
+      "to": "completed",
+      "changed_at": "2026-06-25T12:08:26.354Z"
+    }
+  ]
 }

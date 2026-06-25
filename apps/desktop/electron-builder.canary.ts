@@ -1,72 +1,57 @@
 /**
- * Electron Builder Configuration — Canary Channel
- * Same as electron-builder.ts but with canary-specific settings.
+ * Electron Builder Configuration - Canary Build
+ *
+ * Extends the base config with canary-specific overrides for internal testing.
+ * Can be installed side-by-side with the stable release.
+ *
+ * @see https://www.electron.build/configuration/configuration
  */
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { Configuration } from "electron-builder";
+import baseConfig from "./electron-builder";
 import pkg from "./package.json";
-import {
-	packagedAsarUnpackGlobs,
-	packagedNodeModuleCopies,
-} from "./runtime-dependencies";
 
-const currentYear = new Date().getFullYear();
-const author = pkg.author?.name ?? pkg.author;
-const productName = `${pkg.productName} Canary`;
-const winIconPath = join(pkg.resources, "build/icons/icon.ico");
+const productName = "Maestro Canary";
+const canaryMacIconPath = join(pkg.resources, "build/icons/icon-canary.icns");
+const canaryLinuxIconPath = join(pkg.resources, "build/icons/icon-canary.png");
+const canaryWinIconPath = join(pkg.resources, "build/icons/icon-canary.ico");
 
 const config: Configuration = {
+	...baseConfig,
 	appId: "com.maestro-flow.desktop.canary",
 	productName,
-	copyright: `Copyright © ${currentYear} — ${author}`,
-	electronVersion: pkg.devDependencies.electron.replace(/^\^/, ""),
-
-	generateUpdatesFilesForAllChannels: true,
 
 	publish: {
 		provider: "github",
 		owner: "yangxiangnanwill",
 		repo: "oh-my-maestro",
+		releaseType: "prerelease",
 	},
 
-	directories: {
-		output: "release",
-		buildResources: join(pkg.resources, "build"),
-	},
-
-	asar: true,
-	asarUnpack: [...packagedAsarUnpackGlobs],
-
-	files: [
-		"dist/**/*",
-		"package.json",
-		{
-			from: pkg.resources,
-			to: "resources",
-			filter: ["**/*"],
+	mac: {
+		...baseConfig.mac,
+		...(existsSync(canaryMacIconPath) ? { icon: canaryMacIconPath } : {}),
+		artifactName: `Maestro-Canary-\${version}-\${arch}.\${ext}`,
+		extendInfo: {
+			...baseConfig.mac?.extendInfo,
+			CFBundleName: productName,
+			CFBundleDisplayName: productName,
 		},
-		...packagedNodeModuleCopies,
-		"!**/.DS_Store",
-	],
+	},
 
-	npmRebuild: true,
-
-	protocols: {
-		name: productName,
-		schemes: ["maestro-canary"],
+	linux: {
+		...baseConfig.linux,
+		...(existsSync(canaryLinuxIconPath) ? { icon: canaryLinuxIconPath } : {}),
+		synopsis: `${pkg.description} (Canary)`,
+		artifactName: `maestro-canary-\${version}-\${arch}.\${ext}`,
 	},
 
 	win: {
-		...(existsSync(winIconPath) ? { icon: winIconPath } : {}),
-		target: [{ target: "nsis", arch: ["x64"] }],
-		artifactName: `${productName}-\${version}-\${arch}.\${ext}`,
-	},
-
-	nsis: {
-		oneClick: false,
-		allowToChangeInstallationDirectory: true,
+		...baseConfig.win,
+		...(existsSync(canaryWinIconPath) ? { icon: canaryWinIconPath } : {}),
+		artifactName: `Maestro-Canary-\${version}-\${arch}.\${ext}`,
 	},
 };
 

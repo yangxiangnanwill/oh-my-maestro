@@ -71,7 +71,11 @@
     ],
     "unit": [],
     "integration": [],
-    "success_metrics": ["4 个文件全部存在", "components.json 为有效 JSON", ".npmrc 内容正确"]
+    "success_metrics": [
+      "4 个文件全部存在",
+      "components.json 为有效 JSON",
+      ".npmrc 内容正确"
+    ]
   },
   "reference": {
     "pattern": "Copy from Superset with minimal path adjustments",
@@ -94,7 +98,7 @@
   },
   "risks": [],
   "meta": {
-    "status": "pending",
+    "status": "completed",
     "estimated_time": "15m",
     "risk": "low",
     "autonomous": true,
@@ -102,5 +106,12 @@
     "wave": 6,
     "execution_group": null,
     "executor": "agent"
-  }
+  },
+  "status_history": [
+    {
+      "from": "in_progress",
+      "to": "completed",
+      "changed_at": "2026-06-25T12:42:06.944Z"
+    }
+  ]
 }

@@ -1,47 +1,39 @@
-# Building Maestro Desktop
+# Development
 
-## Prerequisites
-
-- [Bun](https://bun.sh/) v1.0+
-- Node.js 22+
-- Windows 10/11
-
-## Development Build
+Run the dev server without env validation or auth:
 
 ```bash
-cd apps/desktop
-bun install
-bun run dev
+SKIP_ENV_VALIDATION=1 bun run dev
 ```
 
-This starts electron-vite in watch mode with hot reload.
+This skips environment variable validation and the sign-in screen. Desktop chat also falls back to local-only session bootstrap in this mode, so you can test chat/streaming without the cloud API as long as you have local model credentials configured.
 
-## Production Build
+# Release
+
+When building for release, make sure `node-pty` is built for the correct architecture with `bun run install:deps`, then run `bun run release`.
+
+# Linux (AppImage) local build
+
+From `apps/desktop`:
 
 ```bash
-cd apps/desktop
-bun install
-bun run build
+bun run clean:dev
+bun run compile:app
+bun run package -- --publish never --config electron-builder.ts
 ```
 
-Output goes to `dist/`.
+Expected outputs in `apps/desktop/release/`:
 
-## Packaging
+- `*.AppImage`
+- `*-linux.yml` (Linux auto-update manifest)
+
+# Linux auto-update verification (local)
+
+From `apps/desktop` after packaging:
 
 ```bash
-cd apps/desktop
-bun run package
+ls -la release/*.AppImage
+ls -la release/*-linux.yml
 ```
 
-The installer will be in `release/`.
-
-## Native Modules
-
-The following native modules are externalized from the bundle:
-- `better-sqlite3` — SQLite database
-- `node-pty` — PTY terminal
-- `native-keymap` — Keyboard layout detection
-- `@ast-grep/napi` — AST search
-- `@parcel/watcher` — File system watcher
-
-These are declared in `runtime-dependencies.ts` and copied into the packaged app.
+If both files exist, packaging produced the Linux artifact + updater metadata that `electron-updater` expects.

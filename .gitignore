@@ -9,7 +9,6 @@ lerna-debug.log*
 
 node_modules
 dist
-dist-ssr
 dist-electron
 release
 *.local
@@ -24,7 +23,7 @@ release
 *.sln
 *.sw?
 
-#lockfile
+# lockfile
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
@@ -50,7 +49,6 @@ mise.toml
 # Environment files (secrets)
 .envrc
 .env.local
-.env
 
 # Reference material downloaded for agents
 examples

@@ -19,6 +19,17 @@ function copyWholeModule(moduleName: string): PackagedNodeModuleCopy {
 	};
 }
 
+function copyModuleSubtree(
+	moduleName: string,
+	filter: string[],
+): PackagedNodeModuleCopy {
+	return {
+		from: `node_modules/${moduleName}`,
+		to: `node_modules/${moduleName}`,
+		filter,
+	};
+}
+
 const externalizedRuntimeModules: ExternalizedRuntimeModule[] = [
 	{
 		specifier: "better-sqlite3",
@@ -48,13 +59,19 @@ const externalizedRuntimeModules: ExternalizedRuntimeModule[] = [
 		specifier: "@parcel/watcher",
 		materialize: ["@parcel/watcher"],
 		packagedCopies: [
-			{
-				from: "node_modules/@parcel",
-				to: "node_modules/@parcel",
-				filter: ["watcher/**/*", "watcher-*/**/*"],
-			},
+			copyModuleSubtree("@parcel", ["watcher/**/*", "watcher-*/**/*"]),
 		],
 		asarUnpackGlobs: ["**/node_modules/@parcel/watcher*/**/*"],
+	},
+	{
+		specifier: "libsql",
+		materialize: ["libsql"],
+		packagedCopies: [
+			copyWholeModule("libsql"),
+			copyWholeModule("@libsql"),
+			copyWholeModule("@neon-rs"),
+		],
+		asarUnpackGlobs: ["**/node_modules/@libsql/**/*"],
 	},
 ];
 
@@ -62,6 +79,9 @@ const packagedSupportModules = [
 	copyWholeModule("bindings"),
 	copyWholeModule("file-uri-to-path"),
 	copyWholeModule("detect-libc"),
+	copyWholeModule("is-glob"),
+	copyWholeModule("is-extglob"),
+	copyWholeModule("picomatch"),
 	copyWholeModule("node-addon-api"),
 ];
 
@@ -85,5 +105,8 @@ export const requiredMaterializedNodeModules = [
 	"bindings",
 	"file-uri-to-path",
 	"detect-libc",
+	"is-glob",
+	"is-extglob",
+	"picomatch",
 	"node-addon-api",
 ];
