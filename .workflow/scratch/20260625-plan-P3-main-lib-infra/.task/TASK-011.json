@@ -8,9 +8,9 @@
   "priority": "high",
   "effort": "high",
   "action": "从 Superset 源复制：1) local-db/ 目录（~3 files）；2) persistence/ 目录（~5 files）；3) app-state/ 目录（~2 files）。local-db 中的 @superset/local-db 导入标记为 TODO（后续替换）；persistence 中替换 SUPERSET_HOME_DIR → MAESTRO_HOME_DIR；app-state 直接复制。",
-  "status": "pending",
-  "completed_at": null,
-  "actual_duration": null,
+  "status": "completed",
+  "completed_at": "2026-06-25T19:23:00+08:00",
+  "actual_duration": "15 minutes",
   "scope": "apps/desktop/src/main/lib/",
   "focus_paths": ["apps/desktop/src/main/lib/local-db/", "apps/desktop/src/main/lib/persistence/", "apps/desktop/src/main/lib/app-state/"],
   "read_first": [

@@ -60,3 +60,10 @@
 {"type":"cli","id":"CLI-1782372551479-1","timestamp":"2026-06-25T07:29:11.479Z","command":"load","args":{"type":"spec","category":"coding"}}
 {"type":"cli","id":"CLI-1782372582822-1","timestamp":"2026-06-25T07:29:42.822Z","command":"load","args":{"type":"spec","category":"arch"}}
 {"type":"cli","id":"CLI-1782372599400-1","timestamp":"2026-06-25T07:29:59.400Z","command":"load","args":{"type":"session","list":true}}
+{"type":"cli","id":"CLI-1782385892530-1","timestamp":"2026-06-25T11:11:32.530Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782386005597-1","timestamp":"2026-06-25T11:13:25.597Z","command":"load","args":{"type":"spec","id":"project:coding-conventions"}}
+{"type":"cli","id":"CLI-1782386007139-1","timestamp":"2026-06-25T11:13:27.139Z","command":"load","args":{"type":"spec","id":"project:architecture-constraints"}}
+{"type":"cli","id":"CLI-1782386019433-1","timestamp":"2026-06-25T11:13:39.433Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782386028944-1","timestamp":"2026-06-25T11:13:48.944Z","command":"spec load","args":{"category":"coding","stdin":false}}
+{"type":"cli","id":"CLI-1782386074251-1","timestamp":"2026-06-25T11:14:34.251Z","command":"spec list","args":{}}
+{"type":"cli","id":"CLI-1782386183649-1","timestamp":"2026-06-25T11:16:23.649Z","command":"load","args":{"type":"spec","category":"coding"}}

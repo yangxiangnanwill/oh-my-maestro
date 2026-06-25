@@ -352,7 +352,7 @@ const ALLOWED_ENV_VARS = new Set([
  * These are checked after exact matches fail.
  */
 const ALLOWED_PREFIXES = [
-	"SUPERSET_", // Our own metadata vars
+	"MAESTRO_", // Our own metadata vars
 	"LC_", // Locale settings
 ];
 
@@ -382,7 +382,7 @@ function hasAllowedPrefix(key: string, isWindows: boolean): boolean {
 
 /**
  * Build a safe environment by only including allowlisted variables.
- * This prevents Superset app secrets and build-time config from leaking to terminals.
+ * This prevents Maestro app secrets and build-time config from leaking to terminals.
  *
  * Threat model: Prevent app secrets (DATABASE_URL, API keys from .env) from leaking.
  * User shell config vars (proxy, tool paths) are intentionally allowed so terminals
@@ -473,17 +473,17 @@ export function buildTerminalEnv(params: {
 		COLORTERM: "truecolor",
 		COLORFGBG: colorFgBg,
 		LANG: locale,
-		SUPERSET_PANE_ID: paneId,
-		SUPERSET_TAB_ID: tabId,
-		SUPERSET_WORKSPACE_ID: workspaceId,
-		SUPERSET_WORKSPACE_NAME: workspaceName || "",
-		SUPERSET_WORKSPACE_PATH: workspacePath || "",
-		SUPERSET_ROOT_PATH: rootPath || "",
-		SUPERSET_PORT: String(env.DESKTOP_NOTIFICATIONS_PORT),
+		MAESTRO_PANE_ID: paneId,
+		MAESTRO_TAB_ID: tabId,
+		MAESTRO_WORKSPACE_ID: workspaceId,
+		MAESTRO_WORKSPACE_NAME: workspaceName || "",
+		MAESTRO_WORKSPACE_PATH: workspacePath || "",
+		MAESTRO_ROOT_PATH: rootPath || "",
+		MAESTRO_PORT: String(env.DESKTOP_NOTIFICATIONS_PORT),
 		// Environment identifier for dev/prod separation
-		SUPERSET_ENV: env.NODE_ENV === "development" ? "development" : "production",
+		MAESTRO_ENV: env.NODE_ENV === "development" ? "development" : "production",
 		// Hook protocol version for forward compatibility
-		SUPERSET_HOOK_VERSION: HOOK_PROTOCOL_VERSION,
+		MAESTRO_HOOK_VERSION: HOOK_PROTOCOL_VERSION,
 	};
 
 	delete terminalEnv.GOOGLE_API_KEY;

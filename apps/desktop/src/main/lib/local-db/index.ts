@@ -1,12 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { chmodSync, existsSync } from "node:fs";
 import { join } from "node:path";
-// Phase 3 stub — Phase 4 will replace @superset/local-db with maestro-specific schema
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const schema: any = {};
-
-// Re-export schema types for other modules that import from @superset/local-db
-export type { schema };
+// TODO: Phase 4 — replace @superset/local-db with maestro-specific schema package
+// @ts-expect-error — @superset/local-db package not installed yet, stubs in Phase 4
+import * as schema from "@superset/local-db";
 
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";

@@ -1,4 +1,4 @@
-// Phase 3 stub — replace with @superset/port-scanner in Phase 4
+// Phase 3 stub — replace with @maestro/port-scanner in Phase 4
 import { treeKillWithEscalation } from "../tree-kill";
 
 class PortManager {
