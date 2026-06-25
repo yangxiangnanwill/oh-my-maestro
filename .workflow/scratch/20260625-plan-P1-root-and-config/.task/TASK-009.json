@@ -1,0 +1,121 @@
+{
+  "id": "TASK-009",
+  "title": "创建 runtime-dependencies.ts + RELEASE.md + BUILDING.md + create-release.sh + electron-builder.canary.ts",
+  "description": "创建 5 个 Desktop 构建辅助文件。runtime-dependencies.ts 只声明 oh-my-maestro 实际使用的原生模块；RELEASE.md 替换仓库地址；BUILDING.md 替换构建说明；create-release.sh 替换仓库地址和 tag 命名；electron-builder.canary.ts 替换 appId 和 productName。",
+  "type": "create",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/runtime-dependencies.ts — 从 D:/WorkSpace/Source/superset/apps/desktop/runtime-dependencies.ts 复制并精简：只保留 oh-my-maestro 实际使用的外部化原生模块（better-sqlite3, node-pty, native-keymap, @parcel/watcher, @ast-grep/napi, libsql），移除 @superset/macos-process-metrics 和 @mastra/duckdb；CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/RELEASE.md — 从 D:/WorkSpace/Source/superset/apps/desktop/RELEASE.md 复制，替换所有 superset-sh/superset → yangxiangnanwill/oh-my-maestro，替换 Superset → Maestro，替换 desktop-v → maestro-desktop-v；CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/BUILDING.md — 从 D:/WorkSpace/Source/superset/apps/desktop/BUILDING.md 复制，替换构建命令中的路径引用；CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/create-release.sh — 从 D:/WorkSpace/Source/superset/apps/desktop/create-release.sh 复制，替换仓库地址、tag 命名（desktop-v → maestro-desktop-v）、host-service 引用（移除或注释）；CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.canary.ts — 从 D:/WorkSpace/Source/superset/apps/desktop/electron-builder.canary.ts 复制，替换 appId: 'com.superset.desktop.canary' → 'com.maestro-flow.desktop.canary'，productName: 'Superset Canary' → 'Maestro Canary'，publish.owner/repo 替换。",
+  "scope": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/",
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/runtime-dependencies.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/RELEASE.md",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/BUILDING.md",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/create-release.sh",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.canary.ts"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/runtime-dependencies.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/RELEASE.md",
+    "D:/WorkSpace/Source/superset/apps/desktop/BUILDING.md",
+    "D:/WorkSpace/Source/superset/apps/desktop/create-release.sh",
+    "D:/WorkSpace/Source/superset/apps/desktop/electron-builder.canary.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts"
+  ],
+  "depends_on": ["TASK-006"],
+  "parallel_group": "wave-4-aux-config",
+  "convergence": {
+    "criteria": [
+      "grep -c 'better-sqlite3' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/runtime-dependencies.ts 返回 > 0（确认核心原生模块保留）",
+      "grep -c '@superset/macos-process-metrics' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/runtime-dependencies.ts 返回 0（确认 Superset 特定模块已移除）",
+      "grep -c 'oh-my-maestro' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/RELEASE.md 返回 > 2（确认仓库地址替换）",
+      "grep -c 'maestro-desktop-v' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/create-release.sh 返回 > 0（确认 tag 命名替换）",
+      "grep -c 'com\\.maestro-flow\\.desktop\\.canary' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.canary.ts 返回 > 0（确认 canary appId 替换）",
+      "grep -c 'superset-sh\\|superset\\.sh' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/RELEASE.md D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/BUILDING.md 返回 0（确认无 Superset 品牌残留）"
+    ],
+    "verification": "grep -E 'superset|oh-my-maestro|maestro-flow' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/RELEASE.md D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/create-release.sh",
+    "definition_of_done": "5 个构建辅助文件全部存在，品牌和仓库地址已替换，无 Superset 残留"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/runtime-dependencies.ts",
+      "action": "create",
+      "target": "runtime-dependencies.ts",
+      "change": "从 Superset 复制并精简，只保留实际使用的原生模块"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/RELEASE.md",
+      "action": "create",
+      "target": "RELEASE.md",
+      "change": "从 Superset 复制，替换仓库地址和品牌名"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/BUILDING.md",
+      "action": "create",
+      "target": "BUILDING.md",
+      "change": "从 Superset 复制，替换构建命令引用"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/create-release.sh",
+      "action": "create",
+      "target": "create-release.sh",
+      "change": "从 Superset 复制，替换仓库地址和 tag 命名"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.canary.ts",
+      "action": "create",
+      "target": "electron-builder.canary.ts",
+      "change": "从 Superset 复制，替换 appId/productName/publish"
+    }
+  ],
+  "implementation": [
+    "runtime-dependencies.ts: 读取 Superset 版本，保留 better-sqlite3/node-pty/native-keymap/@parcel/watcher/@ast-grep/napi/libsql 的外部化配置，移除 @superset/macos-process-metrics 和 @mastra/duckdb，移除 mastracode 和 pg-native 从 mainExternalizedDependencies（如不需要）",
+    "RELEASE.md: 读取 Superset 版本，全局替换 superset-sh/superset → yangxiangnanwill/oh-my-maestro，Superset → Maestro，desktop-v → maestro-desktop-v，superset.sh → maestro-flow.dev",
+    "BUILDING.md: 读取 Superset 版本，替换命令路径引用",
+    "create-release.sh: 读取 Superset 版本，替换 TAG_NAME='desktop-v...' → TAG_NAME='maestro-desktop-v...'，替换仓库地址，移除或注释 host-service bump 逻辑",
+    "electron-builder.canary.ts: 读取 Superset 版本，替换 appId/productName/publish.owner/publish.repo，替换 artifactName 中的 Superset → Maestro"
+  ],
+  "test": {
+    "commands": [
+      "grep -c 'superset' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/RELEASE.md",
+      "grep -c 'oh-my-maestro' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/RELEASE.md",
+      "grep -c 'maestro-desktop-v' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/create-release.sh"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["所有文件无 Superset 品牌残留", "create-release.sh tag 命名为 maestro-desktop-v"]
+  },
+  "reference": {
+    "pattern": "Copy from Superset, replace branding and repo references",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/runtime-dependencies.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/RELEASE.md",
+      "D:/WorkSpace/Source/superset/apps/desktop/BUILDING.md",
+      "D:/WorkSpace/Source/superset/apps/desktop/create-release.sh",
+      "D:/WorkSpace/Source/superset/apps/desktop/electron-builder.canary.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "5 个文件合并为一个任务因为它们都是构建辅助文件，修改模式相同（复制 + 品牌替换）。runtime-dependencies.ts 需要精简原生模块列表，其他 4 个文件主要是文本替换。",
+    "decision_factors": [
+      "runtime-dependencies.ts 只应声明 oh-my-maestro 实际使用的原生模块",
+      "RELEASE.md/BUILDING.md/create-release.sh 主要是品牌和仓库地址替换",
+      "electron-builder.canary.ts 与 electron-builder.ts 修改模式一致"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "create-release.sh 引用的 GitHub Actions workflow（release-desktop.yml）在 oh-my-maestro 中可能不存在"
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "25m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 6,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

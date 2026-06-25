@@ -1,0 +1,53 @@
+{
+  "id": "TASK-011",
+  "title": "创建数据层: local-db, persistence 模块和 app-state 初始化",
+  "description": "从 Superset 源复制 local-db/（数据库管理），persistence/（数据持久化），app-state/（应用状态）三个模块。local-db 使用 @superset/local-db 包（后续 Phase 替换），persistence 用 lowdb 存储 UI 状态和窗口几何，app-state 初始化应用状态对象。",
+  "issue_id": null,
+  "issue_refs": ["G-05"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "high",
+  "action": "从 Superset 源复制：1) local-db/ 目录（~3 files）；2) persistence/ 目录（~5 files）；3) app-state/ 目录（~2 files）。local-db 中的 @superset/local-db 导入标记为 TODO（后续替换）；persistence 中替换 SUPERSET_HOME_DIR → MAESTRO_HOME_DIR；app-state 直接复制。",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/lib/",
+  "focus_paths": ["apps/desktop/src/main/lib/local-db/", "apps/desktop/src/main/lib/persistence/", "apps/desktop/src/main/lib/app-state/"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\local-db\\",
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\persistence\\"
+  ],
+  "depends_on": [],
+  "wave": 2,
+  "parallel_group": "data-layer",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "local-db/ 目录存在且包含 ~3 个文件",
+      "persistence/ 目录存在且包含 ~5 个文件",
+      "app-state/ 目录存在且包含 ~2 个文件",
+      "persistence 中不含 SUPERSET_HOME_DIR 字符串（已替换为 MAESTRO_HOME_DIR）",
+      "@superset/local-db 导入标记为 TODO 或仍然存在"
+    ],
+    "verification": "ls apps/desktop/src/main/lib/local-db/ | wc -l; grep -c SUPERSET_HOME_DIR apps/desktop/src/main/lib/persistence/*.ts 返回 0",
+    "definition_of_done": "数据层模块就位，应用状态管理框架完整"
+  },
+  "files": [
+    {"path": "apps/desktop/src/main/lib/local-db/", "action": "create", "target": "本地数据库管理", "change": "复制 + TODO 标记 @superset/local-db"},
+    {"path": "apps/desktop/src/main/lib/persistence/", "action": "create", "target": "状态持久化", "change": "复制 + SUPERSET → MAESTRO"},
+    {"path": "apps/desktop/src/main/lib/app-state/", "action": "create", "target": "应用状态初始化", "change": "直接复制"}
+  ],
+  "implementation": [
+    "复制 local-db/ 目录，标记 @superset/local-db 为 TODO",
+    "复制 persistence/ 目录，替换 SUPERSET_HOME_DIR → MAESTRO_HOME_DIR",
+    "复制 app-state/ 目录"
+  ],
+  "test": {"commands": [], "unit": [], "integration": [], "success_metrics": ["所有目录存在", "TypeScript 编译无错误"]},
+  "reference": {"pattern": "数据持久化模式", "files": [], "examples": null},
+  "rationale": {"chosen_approach": "最小改造复制", "decision_factors": ["保留 lowdb 框架", "延迟 local-db 替换到后续 Phase"], "tradeoffs": null},
+  "risks": [{"risk": "@superset/local-db 包不可用", "mitigation": "标记 TODO，Phase 4 替换"}],
+  "code_skeleton": null,
+  "doc_context": {"affected_features": ["数据持久化"], "affected_components": ["lib/local-db/, lib/persistence/, lib/app-state/"], "affected_requirements": ["G-05"], "adr_ids": []},
+  "meta": {"estimated_time": "40m", "risk": "medium", "autonomous": true, "checkpoint": false}
+}

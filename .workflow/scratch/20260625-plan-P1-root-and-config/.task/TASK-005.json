@@ -1,0 +1,100 @@
+{
+  "id": "TASK-005",
+  "title": "创建 electron.vite.config.ts — Electron-Vite 构建配置",
+  "description": "从 Superset 的 electron.vite.config.ts 复制并改造。替换所有 superset.sh URL 常量，移除 Sentry 和 PostHog 插件，移除不需要的构建入口点，调整 resolve.alias 路径。",
+  "type": "create",
+  "priority": "high",
+  "effort": "high",
+  "action": "CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts — 从 D:/WorkSpace/Source/superset/apps/desktop/electron.vite.config.ts 复制并改造：\n1) 移除 Sentry 相关：删除 `import { sentryVitePlugin } from \"@sentry/vite-plugin\"`、sentryPlugin 变量、sentryPlugin 在 main 和 renderer rollupOptions.plugins 中的引用\n2) 移除 PostHog 相关：删除 main.define 中的 `process.env.NEXT_PUBLIC_POSTHOG_KEY` 和 `process.env.NEXT_PUBLIC_POSTHOG_HOST`、renderer.define 中的 `import.meta.env.NEXT_PUBLIC_POSTHOG_KEY` 和 `import.meta.env.NEXT_PUBLIC_POSTHOG_HOST`\n3) 替换 URL 常量（所有出现位置 main + renderer define）：\n   - https://api.superset.sh → https://api.maestro-flow.dev（或实际 API 地址）\n   - https://app.superset.sh → https://app.maestro-flow.dev\n   - https://superset.sh → https://maestro-flow.dev\n   - https://docs.superset.sh → https://docs.maestro-flow.dev\n   - https://superset-stream.fly.dev → 移除或替换为实际 streams 地址\n4) 移除 Mac 特定入口点：从 main.build.rollupOptions.input 中移除 terminal-host、pty-subprocess、git-task-worker、host-service、pty-daemon（如不需要）\n5) 调整 workspace dependencies 过滤：`dependency.startsWith(\"@superset/\")` → `dependency.startsWith(\"@oh-my-maestro/\")`\n6) 移除 @xterm/headless resolve.alias（如不需要 xterm）\n7) 移除 mainExternalizedDependencies 导入（如 runtime-dependencies.ts 尚未创建，先注释或使用空数组）\n8) 移除 codeInspectorPlugin（如不需要）\n9) 移除或调整 .env 路径：`resolve(__dirname, \"../../.env\")` 保持或改为 `resolve(__dirname, \"../.env\")`\n10) 移除 env.main 验证导入：`await import(\"./src/main/env.main\")` 改为注释或移除\n11) 移除 copyResourcesPlugin 和 htmlEnvTransformPlugin 导入（如 ./vite/helpers 不存在）\n12) 移除 streams/electric 相关 define",
+  "scope": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/",
+  "focus_paths": ["D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts"],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/electron.vite.config.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/runtime-dependencies.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json"
+  ],
+  "depends_on": [],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "grep -c '@sentry/vite-plugin\\|sentryVitePlugin\\|sentryPlugin' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts 返回 0（确认 Sentry 已移除）",
+      "grep -c 'POSTHOG\\|posthog' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts 返回 0（确认 PostHog 已移除）",
+      "grep -c 'superset\\.sh' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts 返回 0（确认 URL 已替换）",
+      "grep -c 'maestro-flow' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts 返回 > 2（确认新 URL 已写入）",
+      "grep -c '@oh-my-maestro/' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts 返回 > 0（确认 workspace dependency 过滤已更新）"
+    ],
+    "verification": "grep -E 'superset|sentry|posthog' -i D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts; echo '---'; grep -E 'maestro-flow|@oh-my-maestro' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts",
+    "definition_of_done": "electron.vite.config.ts 文件存在，无 Sentry/PostHog/Superset URL 残留，workspace dependency 过滤指向 @oh-my-maestro"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts",
+      "action": "create",
+      "target": "electron.vite.config.ts",
+      "change": "从 Superset 复制并改造：移除 Sentry/PostHog，替换 URL，调整入口点和 alias"
+    }
+  ],
+  "implementation": [
+    "读取 D:/WorkSpace/Source/superset/apps/desktop/electron.vite.config.ts 完整内容",
+    "读取 D:/WorkSpace/Source/superset/apps/desktop/runtime-dependencies.ts 了解 mainExternalizedDependencies 结构",
+    "复制文件内容到目标路径",
+    "移除 imports: sentryVitePlugin, codeInspectorPlugin, injectProcessEnvPlugin (posthog), copyResourcesPlugin, htmlEnvTransformPlugin",
+    "移除 sentryPlugin 变量定义 (lines 37-44)",
+    "移除 main.define 中的 SENTRY_DSN_DESKTOP, NEXT_PUBLIC_POSTHOG_KEY, NEXT_PUBLIC_POSTHOG_HOST, STREAMS_URL, ELECTRIC_PORT, SUPERSET_WORKSPACE_NAME",
+    "移除 main.build.rollupOptions.input 中的 terminal-host, pty-subprocess, git-task-worker, host-service, pty-daemon",
+    "移除 main.build.rollupOptions.plugins 中的 sentryPlugin",
+    "移除 main.resolve.alias 中的 @xterm/headless",
+    "替换 main.define 中所有 URL: api.superset.sh → api.maestro-flow.dev, app.superset.sh → app.maestro-flow.dev, superset.sh → maestro-flow.dev, docs.superset.sh → docs.maestro-flow.dev",
+    "移除 main.define 中的 NEXT_PUBLIC_STREAMS_URL, RELAY_URL, DESKTOP_NOTIFICATIONS_PORT, ELECTRIC_PORT, SUPERSET_WORKSPACE_NAME",
+    "更新 workspaceDependencies filter: @superset/ → @oh-my-maestro/",
+    "移除 preload.plugins[0].exclude 中的 @sentry/electron 和 trpc-electron",
+    "简化 renderer.define：移除 posthog, sentry, streams, electric, relay, desktop notifications 相关",
+    "替换 renderer.define 中所有 URL",
+    "移除 renderer.plugins 中的 codeInspectorPlugin, htmlEnvTransformPlugin",
+    "移除 renderer.build.rollupOptions.plugins 中的 sentryPlugin 和 injectProcessEnvPlugin",
+    "移除 .env 加载和 env.main 验证",
+    "移除 copyResourcesPlugin 导入（如果 vite/helpers 不存在）",
+    "简化 renderer 的 TanStack Router 配置（如不需要）"
+  ],
+  "test": {
+    "commands": [
+      "grep -ci 'superset' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts",
+      "grep -ci 'sentry\\|posthog' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["无 Sentry/PostHog 引用", "无 superset.sh URL", "有 maestro-flow URL"]
+  },
+  "reference": {
+    "pattern": "Adapt Superset electron.vite.config.ts — remove third-party integrations, replace URLs",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/electron.vite.config.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/runtime-dependencies.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "从 Superset 源文件复制后逐项改造，而非从零编写。electron-vite 配置结构复杂（main/preload/renderer 三入口），从零编写容易遗漏关键配置。改造方式确保构建管道结构正确。",
+    "decision_factors": [
+      "Sentry 和 PostHog 是排除范围，必须移除",
+      "oh-my-maestro 不需要 terminal-host/pty-subprocess/git-task-worker/host-service/pty-daemon 等 Superset V2 入口点",
+      "URL 替换是品牌适配的核心操作",
+      "workspace dependency 过滤必须匹配 oh-my-maestro 的包命名"
+    ],
+    "tradeoffs": "改造后的配置文件可能引用尚未创建的 helper 文件（如 vite/helpers），需要在后续任务中处理或注释掉"
+  },
+  "risks": [
+    "electron.vite.config.ts 引用的 helper 文件（vite/helpers、env.main）在 oh-my-maestro 中可能不存在，需要注释或创建 stub",
+    "mainExternalizedDependencies 来自 runtime-dependencies.ts，如果该文件尚未创建则需使用空数组占位"
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "35m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 3,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

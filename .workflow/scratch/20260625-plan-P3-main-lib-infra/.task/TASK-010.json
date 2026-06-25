@@ -1,0 +1,113 @@
+{
+  "id": "TASK-010",
+  "title": "创建基础工具类: safe-url, sanitize, tree-kill, data-batcher, keyboardLayout",
+  "description": "从 Superset 源复制 5 个独立的无依赖工具类模块：safe-url/（URL 验证和清理），sanitize/（HTML 清理），tree-kill.ts（进程树终止），data-batcher.ts（数据批处理），keyboardLayout.ts（键盘布局检测）。这些是纯工具类，与品牌无关，直接复制即可。",
+  "issue_id": null,
+  "issue_refs": ["G-05"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "high",
+  "action": "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\ 复制以下文件/目录：1) safe-url/ 目录（~3 files）；2) sanitize/ 目录（~2 files）；3) tree-kill.ts；4) data-batcher.ts；5) keyboardLayout.ts。所有文件直接复制无需改动（与品牌和依赖无关）。",
+  "status": "completed",
+  "completed_at": "2026-06-25T15:15:00Z",
+  "actual_duration": "15 minutes",
+  "scope": "apps/desktop/src/main/lib/",
+  "focus_paths": ["apps/desktop/src/main/lib/safe-url/", "apps/desktop/src/main/lib/sanitize/", "apps/desktop/src/main/lib/tree-kill.ts", "apps/desktop/src/main/lib/data-batcher.ts", "apps/desktop/src/main/lib/keyboardLayout.ts"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\safe-url\\",
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\sanitize\\",
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\tree-kill.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "apps/desktop/src/main/lib/safe-url/ 目录存在且包含 ~3 个 TypeScript 文件",
+      "apps/desktop/src/main/lib/sanitize/ 目录存在且包含 ~2 个 TypeScript 文件",
+      "apps/desktop/src/main/lib/tree-kill.ts 文件存在",
+      "apps/desktop/src/main/lib/data-batcher.ts 文件存在",
+      "apps/desktop/src/main/lib/keyboardLayout.ts 文件存在",
+      "所有文件不包含 Superset 品牌特定引用（品牌无关工具类）"
+    ],
+    "verification": "ls apps/desktop/src/main/lib/safe-url/ | wc -l 返回 ≥3；ls apps/desktop/src/main/lib/sanitize/ | wc -l 返回 ≥2；ls apps/desktop/src/main/lib/*.ts | grep tree-kill",
+    "definition_of_done": "基础工具类模块已就位，5 个独立工具完整可用"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/lib/safe-url/",
+      "action": "create",
+      "target": "URL 验证和清理工具",
+      "change": "从 Superset 源复制，无需改动"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/sanitize/",
+      "action": "create",
+      "target": "HTML 清理工具",
+      "change": "从 Superset 源复制，无需改动"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/tree-kill.ts",
+      "action": "create",
+      "target": "进程树终止工具",
+      "change": "从 Superset 源复制，无需改动"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/data-batcher.ts",
+      "action": "create",
+      "target": "数据批处理工具",
+      "change": "从 Superset 源复制，无需改动"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/keyboardLayout.ts",
+      "action": "create",
+      "target": "键盘布局检测工具",
+      "change": "从 Superset 源复制，无需改动"
+    }
+  ],
+  "implementation": [
+    "从 Superset 源复制 safe-url/ 目录到 apps/desktop/src/main/lib/",
+    "从 Superset 源复制 sanitize/ 目录到 apps/desktop/src/main/lib/",
+    "从 Superset 源复制 tree-kill.ts 到 apps/desktop/src/main/lib/",
+    "从 Superset 源复制 data-batcher.ts 到 apps/desktop/src/main/lib/",
+    "从 Superset 源复制 keyboardLayout.ts 到 apps/desktop/src/main/lib/"
+  ],
+  "test": {
+    "commands": [],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["所有文件存在", "TypeScript 编译无错误（针对这些文件）"]
+  },
+  "reference": {
+    "pattern": "纯工具类模块（品牌无关）",
+    "files": [
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\safe-url\\",
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\sanitize\\"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "直接复制无改动 — 这些都是品牌无关的纯工具类",
+    "decision_factors": [
+      "safe-url 和 sanitize 与任何特定产品无关",
+      "tree-kill、data-batcher、keyboardLayout 都是通用工具"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["工具类库"],
+    "affected_components": ["lib/safe-url/, lib/sanitize/, lib/tree-kill.ts 等"],
+    "affected_requirements": ["G-05"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "25m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

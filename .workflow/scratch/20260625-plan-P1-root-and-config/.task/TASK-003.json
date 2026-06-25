@@ -1,0 +1,97 @@
+{
+  "id": "TASK-003",
+  "title": "创建 CONTRIBUTING.md + DEVELOPMENT.md + CODE_OF_CONDUCT.md",
+  "description": "创建 3 个社区/开发文档。CONTRIBUTING.md 替换仓库地址为 oh-my-maestro；DEVELOPMENT.md 大幅简化移除 Docker/Neon/Caddy/Stripe 相关内容；CODE_OF_CONDUCT.md 直接复制标准 Contributor Covenant 并替换联系邮箱。",
+  "type": "create",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "CREATE D:/WorkSpace/VsCode/oh-my-maestro/CONTRIBUTING.md — 从 Superset 版本适配，替换所有 superset-sh/superset → yangxiangnanwill/oh-my-maestro，移除 Superset 截图；CREATE D:/WorkSpace/VsCode/oh-my-maestro/DEVELOPMENT.md — 从 Superset 版本大幅简化，移除 Docker/Neon/Caddy/Stripe/Electric 相关内容，只保留 bun 安装和 electron-vite dev 流程；CREATE D:/WorkSpace/VsCode/oh-my-maestro/CODE_OF_CONDUCT.md — 直接复制 Superset 版本，替换 founders@superset.sh → maintainers@oh-my-maestro（或等效邮箱）。",
+  "scope": "D:/WorkSpace/VsCode/oh-my-maestro/",
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/CONTRIBUTING.md",
+    "D:/WorkSpace/VsCode/oh-my-maestro/DEVELOPMENT.md",
+    "D:/WorkSpace/VsCode/oh-my-maestro/CODE_OF_CONDUCT.md"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/CONTRIBUTING.md",
+    "D:/WorkSpace/Source/superset/DEVELOPMENT.md",
+    "D:/WorkSpace/Source/superset/CODE_OF_CONDUCT.md",
+    "D:/WorkSpace/VsCode/oh-my-maestro/README.md"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave-1-root-agent-files",
+  "convergence": {
+    "criteria": [
+      "grep -c 'oh-my-maestro' D:/WorkSpace/VsCode/oh-my-maestro/CONTRIBUTING.md 返回 > 1（确认仓库地址替换）",
+      "grep -c 'Docker\\|docker\\|Neon\\|Caddy\\|Stripe\\|Electric' D:/WorkSpace/VsCode/oh-my-maestro/DEVELOPMENT.md 返回 0（确认已移除不需要的依赖）",
+      "grep -c 'bun' D:/WorkSpace/VsCode/oh-my-maestro/DEVELOPMENT.md 返回 > 2（确认 bun 作为主要工具）",
+      "grep -c 'superset.sh' D:/WorkSpace/VsCode/oh-my-maestro/CODE_OF_CONDUCT.md 返回 0（确认邮箱替换）"
+    ],
+    "verification": "grep -E 'oh-my-maestro|bun|electron-vite' D:/WorkSpace/VsCode/oh-my-maestro/CONTRIBUTING.md D:/WorkSpace/VsCode/oh-my-maestro/DEVELOPMENT.md",
+    "definition_of_done": "3 个社区文档全部存在，仓库地址已替换，DEVELOPMENT.md 已简化移除不需要的依赖"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/CONTRIBUTING.md",
+      "action": "create",
+      "target": "CONTRIBUTING.md",
+      "change": "从 Superset 版本适配，替换仓库地址，移除截图"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/DEVELOPMENT.md",
+      "action": "create",
+      "target": "DEVELOPMENT.md",
+      "change": "大幅简化，只保留 bun + electron-vite 开发流程"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/CODE_OF_CONDUCT.md",
+      "action": "create",
+      "target": "CODE_OF_CONDUCT.md",
+      "change": "复制标准 Contributor Covenant，替换联系邮箱"
+    }
+  ],
+  "implementation": [
+    "CONTRIBUTING.md: 读取 Superset 版本，替换所有 superset-sh/superset → yangxiangnanwill/oh-my-maestro，移除 fork PR 流程中的 Superset 截图，保留 PR 流程和 Style guide",
+    "DEVELOPMENT.md: 读取 Superset 版本，移除 Prerequisites 中的 Docker/jq/Caddy，移除 setup.local.sh 整个章节，移除 Signing in 章节，移除 Manual setup 章节，重写为：Prerequisites (bun + git)、Quick Start (bun install + bun run dev)、Building desktop app (bun run build)、Common commands、Troubleshooting（只保留基本问题）",
+    "CODE_OF_CONDUCT.md: 直接复制 Superset 版本，替换 founders@superset.sh → 项目维护者邮箱"
+  ],
+  "test": {
+    "commands": [
+      "grep -c 'superset-sh/superset' D:/WorkSpace/VsCode/oh-my-maestro/CONTRIBUTING.md",
+      "grep -c 'Docker' D:/WorkSpace/VsCode/oh-my-maestro/DEVELOPMENT.md",
+      "grep -c 'superset.sh' D:/WorkSpace/VsCode/oh-my-maestro/CODE_OF_CONDUCT.md"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["所有 Superset 品牌引用已替换", "DEVELOPMENT.md 无 Docker/Neon/Caddy/Stripe 引用"]
+  },
+  "reference": {
+    "pattern": "Adapt from Superset source files, replace branding and simplify",
+    "files": [
+      "D:/WorkSpace/Source/superset/CONTRIBUTING.md",
+      "D:/WorkSpace/Source/superset/DEVELOPMENT.md",
+      "D:/WorkSpace/Source/superset/CODE_OF_CONDUCT.md"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "CONTRIBUTING.md 和 CODE_OF_CONDUCT.md 轻度修改（替换仓库/邮箱），DEVELOPMENT.md 重度简化（移除所有 Docker/Neon/Caddy/Stripe 内容）。三个文件合并为一个任务因为它们都是社区文档，修改模式相似。",
+    "decision_factors": [
+      "oh-my-maestro 不需要 Docker/Neon/Caddy 本地开发栈",
+      "CONTRIBUTING.md 的 PR 流程通用，只需替换仓库地址",
+      "CODE_OF_CONDUCT.md 是标准模板，只需替换联系邮箱"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "20m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

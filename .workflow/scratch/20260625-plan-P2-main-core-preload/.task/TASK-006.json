@@ -1,0 +1,98 @@
+{
+  "id": "TASK-006",
+  "title": "创建 windows/main.ts",
+  "description": "从 Superset 源复制 windows/main.ts 并改造：替换 productName 导入源、替换 preload 路径、移除 notification-manager 和 workspace-runtime 等 Superset 特有依赖。此文件负责创建主 BrowserWindow、IPC 处理器注册、通知系统和窗口状态持久化。",
+  "issue_id": null,
+  "issue_refs": ["G-04"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "high",
+  "action": "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\windows\\main.ts 复制文件内容，执行以下改造：1) import { productName } from \"~/package.json\" — 保留，productName 自动取自 oh-my-maestro 的 package.json；2) import { workspaces, worktrees } from \"@superset/local-db\" — 标记为暂时保留/注释（需要后续 Phase 替换为 Maestro 本地数据库）；3) import { createAppRouter } from \"lib/trpc/routers\" — 标记为暂时保留/注释（需要后续 Phase 替换为 Maestro tRPC router）；4) import { createIPCHandler } from \"trpc-electron/main\" — 同 tRPC；5) preload 路径 join(__dirname, \"../preload/index.js\") 保持不变（路径结构一致）；6) partition: \"persist:superset\" → \"persist:maestro\"；7) notificationManager 相关代码暂时保留（等待 Phase 3 渲染进程补充后启用）；8) workspaceRuntime 相关代码暂时保留/注释（需要后续 Phase 实现）。",
+  "status": "completed",
+  "completed_at": "2026-06-25T06:54:10+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/windows/",
+  "focus_paths": ["apps/desktop/src/main/windows/"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\windows\\main.ts",
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts",
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\package.json"
+  ],
+  "depends_on": [
+    "TASK-001"
+  ],
+  "wave": 4,
+  "parallel_group": "windows-services",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\windows\\main.ts 文件存在",
+      "文件导出 MainWindow 异步函数",
+      "partition 值为 'persist:maestro' 而非 'persist:superset'",
+      "preload 路径为 join(__dirname, '../preload/index.js')",
+      "文件不包含 Superset 品牌特定引用（productName 除外，它是从 package.json 动态读取）"
+    ],
+    "verification": "grep -c 'persist:superset' D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\windows\\main.ts 返回 0；grep -c 'persist:maestro' 返回 ≥1；grep -c 'export async function MainWindow' 返回 1",
+    "definition_of_done": "主窗口创建模块已就位，品牌标识已替换为 Maestro，preload 路径正确，partition 名称已更新"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/windows/main.ts",
+      "action": "create",
+      "target": "主窗口创建模块",
+      "change": "从 Superset 源复制并改造：替换 partition 名称、brand 引用，标记 Superset 特有依赖"
+    }
+  ],
+  "implementation": [
+    "创建 apps/desktop/src/main/windows/ 目录",
+    "从 Superset 源 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\windows\\main.ts 复制完整内容",
+    "替换 partition: 'persist:superset' → 'persist:maestro'",
+    "producName 从 ~/package.json 导入保持不变（自动适配 oh-my-maestro 的 package.json）",
+    "tRPC 相关导入（createAppRouter, createIPCHandler）暂时保留导入但添加 TODO 注释标记后续 Phase 替换",
+    "notificationManager 相关代码保留但添加 TODO 注释",
+    "workspaceRuntime 相关代码暂时注释掉，添加 TODO 注释",
+    "local-db 导入（workspaces, worktrees）暂时保留导入但添加 TODO 注释",
+    "替换所有日志前缀为 '[maestro-window]'（如果 Superset 源使用 '[main-window]' 则保留，因为它是通用前缀）",
+    "保留所有窗口生命周期管理逻辑（move/resize/close/GPU 恢复等）"
+  ],
+  "test": {
+    "commands": [],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["文件通过 TypeScript 类型检查（或标记 TODO 的导入可接受编译错误）", "partition 和 preload 路径正确"]
+  },
+  "reference": {
+    "pattern": "Electron BrowserWindow 工厂函数模式",
+    "files": [
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\windows\\main.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制后改造 — 窗口管理核心逻辑保持不变，仅替换品牌标识和标记需要后续处理的依赖",
+    "decision_factors": [
+      "窗口创建、状态持久化、GPU 恢复等是 Electron 通用功能",
+      "tRPC 和 notification-manager 依赖需要后续 Phase 补充，当前暂时保留占位",
+      "productName 从 package.json 动态读取，自动适配"
+    ],
+    "tradeoffs": "notification-manager 和 workspace-runtime 代码暂时保留但标记 TODO，避免因移除导致后续难以恢复"
+  },
+  "risks": [
+    "notification-manager 和 workspace-runtime 相关代码在 Phase 2 中无法编译通过，需要添加 TODO 注释并在后续 Phase 处理",
+    "tRPC IPC handler 依赖 trpc-electron 包，Phase 2 暂不安装"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["主窗口管理"],
+    "affected_components": ["main/windows/main.ts"],
+    "affected_requirements": ["G-04"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "40m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

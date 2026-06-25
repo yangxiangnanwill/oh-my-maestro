@@ -1,0 +1,88 @@
+{
+  "id": "TASK-005",
+  "title": "创建 pty-daemon/index.ts",
+  "description": "从 Superset 源复制 pty-daemon/index.ts 并改造：替换 SUPERSET_PTY_DAEMON_VERSION → MAESTRO_PTY_DAEMON_VERSION。pty-daemon 是 PTY daemon 的 Electron 端 bundle 入口，负责 fresh-spawn 和 handoff-receiver 两种启动模式。",
+  "issue_id": null,
+  "issue_refs": ["G-04"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\pty-daemon\\index.ts 复制文件内容，执行以下改造：1) 替换 env var 名称 'SUPERSET_PTY_DAEMON_VERSION' → 'MAESTRO_PTY_DAEMON_VERSION'（第79行）；2) 替换日志前缀 '[pty-daemon]' 保持不变（已是通用名称）；3) 所有从 @superset/pty-daemon 的导入保持不变（pty-daemon 是独立包）。",
+  "status": "completed",
+  "completed_at": "2026-06-25T06:54:09+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/pty-daemon/",
+  "focus_paths": ["apps/desktop/src/main/pty-daemon/"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\pty-daemon\\index.ts",
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\terminal-host\\index.ts"
+  ],
+  "depends_on": [],
+  "wave": 3,
+  "parallel_group": "terminal-infra",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\pty-daemon\\index.ts 文件存在",
+      "文件包含 runFresh 和 runHandoffReceiver 两个异步函数",
+      "文件不包含 'SUPERSET_PTY_DAEMON_VERSION' 字符串",
+      "文件包含 'MAESTRO_PTY_DAEMON_VERSION' 环境变量引用"
+    ],
+    "verification": "grep -c 'SUPERSET_PTY_DAEMON_VERSION' D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\pty-daemon\\index.ts 返回 0；grep -c 'MAESTRO_PTY_DAEMON_VERSION' 返回 1",
+    "definition_of_done": "pty-daemon 入口文件已创建，Superset 品牌引用已替换，fresh-spawn 和 handoff-receiver 两种模式逻辑完整"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/pty-daemon/index.ts",
+      "action": "create",
+      "target": "PTY daemon Electron bundle 入口",
+      "change": "从 Superset 源复制，替换 SUPERSET_PTY_DAEMON_VERSION → MAESTRO_PTY_DAEMON_VERSION"
+    }
+  ],
+  "implementation": [
+    "创建 apps/desktop/src/main/pty-daemon/ 目录",
+    "从 Superset 源 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\pty-daemon\\index.ts 复制完整内容",
+    "替换第79行: process.env.SUPERSET_PTY_DAEMON_VERSION → process.env.MAESTRO_PTY_DAEMON_VERSION",
+    "保留所有 @superset/pty-daemon 包的导入路径（pty-daemon 是独立 npm 包）",
+    "保留所有日志前缀 '[pty-daemon]'"
+  ],
+  "test": {
+    "commands": [],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["文件通过 TypeScript 类型检查", "不包含 'SUPERSET_PTY_DAEMON_VERSION' 引用"]
+  },
+  "reference": {
+    "pattern": "electron-vite bundle target 入口模式",
+    "files": [
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\pty-daemon\\index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "直接复制并替换环境变量名称 — pty-daemon 是纯基础设施层，与 Superset 业务无关",
+    "decision_factors": [
+      "pty-daemon 是 electron-vite 的独立 bundle target，逻辑完全自包含",
+      "唯一品牌相关的是环境变量前缀 SUPERSET_PTY_DAEMON_VERSION",
+      "pty-daemon 核心逻辑在 @superset/pty-daemon 独立包中，本文件只是入口 shim"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "@superset/pty-daemon 包是否在 oh-my-maestro 中可用 — 如果不可用，需要后续 Phase 创建替代包"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["PTY daemon 管理"],
+    "affected_components": ["main/pty-daemon/"],
+    "affected_requirements": ["G-04"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

@@ -1,0 +1,116 @@
+{
+  "id": "TASK-008",
+  "title": "合并 main/index.ts（保留 Maestro 特有功能 + 添加 Superset 缺失功能）",
+  "description": "oh-my-maestro 已有 main/index.ts 包含 Maestro 特有功能（MCP provider 注册、Ralph decision bridge）。本任务是增量合并 Superset 源的三个缺失功能：macOS 字体协议处理（superset-font → maestro-font）、确认退出对话框（已存在但需确认）、Windows 字体目录支持（Superset 源仅 macOS，oh-my-maestro 已扩展支持 Windows）。同时需要将所有 'superset-' 前缀的协议方案名改为 'maestro-' 前缀。",
+  "issue_id": null,
+  "issue_refs": ["G-04"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "high",
+  "action": "在 D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts 已存在文件上执行以下增量修改：1) 将自定义协议方案名从 'superset-icon' 改为 'maestro-icon'、'superset-font' 改为 'maestro-font'（第307-325行 protocol.registerSchemesAsPrivileged）；2) 将 protocol.handle('superset-icon', ...) 改为 protocol.handle('maestro-icon', ...)（第357行）；3) 将 protocol.handle('superset-font', ...) 改为 protocol.handle('maestro-font', ...)（第394行）；4) 将 session.fromPartition('persist:superset') 改为 session.fromPartition('persist:maestro')（第358, 396行）；5) 将 app.setName('Superset (...)') 改为 app.setName('Maestro (...)')（第67行）；6) 将确认退出对话框标题 'Quit Superset' 改为 'Quit Maestro'（第214行）；7) 确认 deep link 协议方案 PROTOCOL_SCHEME 已正确定义为 'maestro' 系列；8) 保留所有 Maestro 特有代码：registerMaestroMcpProvider、checkMaestroCliAvailable、import from ./lib/agent-setup/maestro-mcp-provider；9) 保留所有 Maestro 特有代码：import from ./lib/agent-setup（setupAgentHooks）、import from ./lib/agent-setup/ralph-decision-bridge 相关。",
+  "status": "completed",
+  "completed_at": "2026-06-25T06:54:10+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/",
+  "focus_paths": ["apps/desktop/src/main/"],
+  "read_first": [
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts",
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\index.ts",
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\lib\\agent-setup\\maestro-mcp-provider.ts",
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\lib\\agent-setup\\ralph-decision-bridge.ts"
+  ],
+  "depends_on": [
+    "TASK-002",
+    "TASK-003",
+    "TASK-004",
+    "TASK-006",
+    "TASK-007"
+  ],
+  "wave": 5,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts 文件存在",
+      "文件中 protocol.registerSchemesAsPrivileged 使用的方案名为 'maestro-icon' 和 'maestro-font'",
+      "文件中所有 session.fromPartition 调用使用 'persist:maestro'",
+      "文件中不包含 'superset-icon' 或 'superset-font' 协议方案名",
+      "文件中不包含 'persist:superset' 字符串",
+      "文件中 app.setName 调用使用 'Maestro' 品牌名",
+      "文件中确认退出对话框标题为 'Quit Maestro'",
+      "文件中保留 registerMaestroMcpProvider 和 checkMaestroCliAvailable 导入和调用",
+      "文件中保留 ./lib/agent-setup/maestro-mcp-provider 导入"
+    ],
+    "verification": "grep -c 'superset-icon\\|superset-font' D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts 返回 0；grep -c 'maestro-icon\\|maestro-font' 返回 ≥4；grep -c 'persist:maestro' 返回 ≥2；grep -c 'registerMaestroMcpProvider' 返回 ≥1；grep -c 'ralph-decision-bridge' 返回 ≥1",
+    "definition_of_done": "main/index.ts 已更新，所有 Superset 品牌引用已替换为 Maestro，同时保留了 Maestro 特有功能（MCP provider 和 Ralph decision bridge），macOS 字体协议和 Windows 字体目录支持已就位"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/index.ts",
+      "action": "modify",
+      "target": "应用主入口文件",
+      "change": "替换所有 'superset-' 协议方案名为 'maestro-'，替换 partition 名称，替换品牌名，保留 Maestro 特有代码"
+    }
+  ],
+  "implementation": [
+    "读取当前 D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts（已存在）",
+    "替换 protocol.registerSchemesAsPrivileged 中的方案名: 'superset-icon' → 'maestro-icon', 'superset-font' → 'maestro-font'",
+    "替换所有 protocol.handle('superset-icon', ...) → protocol.handle('maestro-icon', ...)",
+    "替换所有 protocol.handle('superset-font', ...) → protocol.handle('maestro-font', ...)",
+    "替换所有 session.fromPartition('persist:superset') → session.fromPartition('persist:maestro')",
+    "替换 app.setName('Superset (...)') → app.setName('Maestro (...)')",
+    "替换 dialog.showMessageBox 中的 title: 'Quit Superset' → 'Quit Maestro'",
+    "替换所有注释和日志中的 'Superset' → 'Maestro'（仅在 main/index.ts 中）",
+    "确认保留: import { registerMaestroMcpProvider, checkMaestroCliAvailable } from './lib/agent-setup/maestro-mcp-provider'",
+    "确认保留: createRalphDecisionBridge 相关导入和调用",
+    "确认保留: setupAgentHooks 导入和调用",
+    "确认保留: installBundledCliShim 导入和调用",
+    "确认 SYSTEM_FONT_DIRS 包含 Windows 路径（当前文件已有）"
+  ],
+  "test": {
+    "commands": [],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "文件中无 'superset-icon'/'superset-font'/'persist:superset' 引用",
+      "Maestro 特有功能导入和调用保持完整",
+      "macOS 字体协议和 Windows 字体目录支持保持完整"
+    ]
+  },
+  "reference": {
+    "pattern": "Electron 主进程入口模式 + 增量合并",
+    "files": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts",
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "在现有 Maestro main/index.ts 基础上做增量修改，而非从 Superset 源覆盖 — 这样可以保留已投入的 Maestro 特有功能",
+    "decision_factors": [
+      "oh-my-maestro 已有完整的 main/index.ts 包含 MCP provider、Ralph bridge、agent-setup 等功能",
+      "从 Superset 同步覆盖会导致 Maestro 特有功能丢失",
+      "只需替换品牌标识（协议方案名、partition、对话框标题）即可完成 Superset → Maestro 迁移",
+      "现有文件已包含 Superset 源缺失的 Windows 字体目录支持（第374-376行）"
+    ],
+    "tradeoffs": "增量修改比完全覆盖更安全，但需要仔细对比两个文件确保不遗漏关键改动"
+  },
+  "risks": [
+    "如果 oh-my-maestro 的 main/index.ts 与 Superset 源存在结构性差异，某些 Superset 特有功能（如 deep link 处理、auto-updater）可能不完全兼容",
+    "PROTOCOL_SCHEME 常量需要在 shared/constants 中正确定义为 maestro 系列协议"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["应用主入口", "协议注册", "窗口生命周期", "MCP provider 注册", "Ralph decision bridge"],
+    "affected_components": ["main/index.ts"],
+    "affected_requirements": ["G-04"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "45m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

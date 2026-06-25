@@ -1,0 +1,77 @@
+{
+  "id": "TASK-001",
+  "title": "创建 AGENTS.md — Maestro-flow Monorepo 指南",
+  "description": "参考 Superset 的 AGENTS.md 结构，创建 oh-my-maestro 专有版本。描述 monorepo 结构（apps/desktop）、技术栈（Electron + React + tRPC + Maestro-flow CLI + bun）、项目结构约定和 Agent 规则。排除计费/Stripe、GitHub 集成、Mac 权限、PostHog/Sentry、V2 特有功能相关的规则。",
+  "type": "create",
+  "priority": "high",
+  "effort": "medium",
+  "action": "CREATE D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md — 内容从 D:/WorkSpace/Source/superset/AGENTS.md 适配改造：替换所有 Superset 引用为 Maestro-flow，重写 monorepo 结构部分只保留 apps/desktop，重写技术栈部分为 Electron + React + tRPC + Maestro-flow CLI + bun，重写 Agent Rules 部分移除 DB migration/Neon/TanStack DB/Linear ticket/Mastra/Next.js 规则，添加 Maestro-flow 特有规则（maestro CLI 命令、tRPC IPC transport、MCP provider 降级策略）。",
+  "scope": "D:/WorkSpace/VsCode/oh-my-maestro/",
+  "focus_paths": ["D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md"],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/AGENTS.md",
+    "D:/WorkSpace/VsCode/oh-my-maestro/README.md"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave-1-root-agent-files",
+  "convergence": {
+    "criteria": [
+      "grep -c 'Maestro' D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md 返回 > 3（确认品牌替换）",
+      "grep -c 'apps/desktop' D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md 返回 > 2（确认 monorepo 结构描述）",
+      "grep -c 'superset' D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md 返回 0（确认无 Superset 残留）",
+      "grep -c 'electron-vite' D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md 返回 > 0（确认构建工具提及）"
+    ],
+    "verification": "grep -E 'Maestro|apps/desktop|electron-vite|tRPC|bun' D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md",
+    "definition_of_done": "AGENTS.md 文件存在，描述 Maestro-flow monorepo 结构、技术栈和 Agent 规则，无 Superset 品牌残留"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md",
+      "action": "create",
+      "target": "AGENTS.md 文件",
+      "change": "从 Superset AGENTS.md 适配创建，替换品牌/技术栈/规则"
+    }
+  ],
+  "implementation": [
+    "读取 D:/WorkSpace/Source/superset/AGENTS.md 了解结构和规则模式",
+    "读取 D:/WorkSpace/VsCode/oh-my-maestro/README.md 了解项目实际技术栈和结构",
+    "重写头部：标题改为 'Maestro-flow Monorepo Guide'，描述改为 Maestro-flow workspace",
+    "重写 Structure 部分：只保留 apps/desktop，移除 web/marketing/admin/api/docs/mobile 和 packages",
+    "重写 Tech Stack 部分：Electron 40+、React 19、TypeScript、tRPC 11、electron-vite、bun、Maestro-flow CLI、Zod",
+    "重写 Common Commands 部分：bun run dev (electron-vite dev)、bun test、bun run typecheck",
+    "重写 Agent Rules 部分：移除 DB migration/Neon/TanStack DB/Linear ticket/Mastra/Next.js/Biome 相关规则，添加 Maestro-flow CLI 使用规则",
+    "保留 Question Tool 规则（如适用）",
+    "保留 Project Structure 约定（如适用）"
+  ],
+  "test": {
+    "commands": ["grep -c 'Maestro' D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md", "grep -c 'superset' D:/WorkSpace/VsCode/oh-my-maestro/AGENTS.md"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["文件中无 Superset 品牌引用", "技术栈与 README.md 一致"]
+  },
+  "reference": {
+    "pattern": "Follow D:/WorkSpace/Source/superset/AGENTS.md structure, adapt content",
+    "files": ["D:/WorkSpace/Source/superset/AGENTS.md", "D:/WorkSpace/VsCode/oh-my-maestro/README.md"],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "完全重写 AGENTS.md 而非逐行修改，因为 monorepo 结构和技术栈差异巨大。保留 Superset 版本的文件结构模式（分段清晰、命令示例、规则列表），但内容全部替换为 Maestro-flow 上下文。",
+    "decision_factors": [
+      "oh-my-maestro 只有一个 apps/desktop，不需要描述复杂的 packages 和多个 apps",
+      "Maestro-flow CLI 是核心编排工具，需要在 Agent Rules 中明确说明",
+      "不需要 DB migration/Neon/Stripe 相关规则"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "25m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

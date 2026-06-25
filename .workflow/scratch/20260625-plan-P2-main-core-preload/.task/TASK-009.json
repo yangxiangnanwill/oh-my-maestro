@@ -1,0 +1,86 @@
+{
+  "id": "TASK-009",
+  "title": "创建 network-logger/index.ts",
+  "description": "从 Superset 源复制 network-logger/index.ts 并改造：替换 session partition 名称 persist:superset → persist:maestro。network-logger 使用 Electron 的 netLog API 记录网络请求日志到磁盘，支持会话归档和自动清理。",
+  "issue_id": null,
+  "issue_refs": ["G-04"],
+  "type": "feature",
+  "priority": "low",
+  "effort": "low",
+  "action": "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\network-logger\\index.ts 复制文件内容，执行以下改造：1) 替换第5行 PARTITION 常量值 'persist:superset' → 'persist:maestro'；2) 其余代码保持不变（日志路径使用 app.getPath('userData') 动态获取，无需修改）。",
+  "status": "completed",
+  "completed_at": "2026-06-25T06:54:10+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/network-logger/",
+  "focus_paths": ["apps/desktop/src/main/network-logger/"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\network-logger\\index.ts",
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts"
+  ],
+  "depends_on": [],
+  "wave": 5,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\network-logger\\index.ts 文件存在",
+      "文件导出 startNetworkLogger 和 stopNetworkLogger 两个异步函数",
+      "PARTITION 常量值为 'persist:maestro'",
+      "文件不包含 'persist:superset' 字符串",
+      "文件使用 session.fromPartition(PARTITION).netLog.startLogging 模式"
+    ],
+    "verification": "grep -c 'persist:superset' D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\network-logger\\index.ts 返回 0；grep -c 'persist:maestro' 返回 1；grep -c 'startNetworkLogger' 返回 1；grep -c 'stopNetworkLogger' 返回 1",
+    "definition_of_done": "network-logger 模块已创建，partition 名称已替换为 persist:maestro，网络日志记录和会话管理功能完整"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/network-logger/index.ts",
+      "action": "create",
+      "target": "网络日志记录模块",
+      "change": "从 Superset 源复制，替换 PARTITION 常量 'persist:superset' → 'persist:maestro'"
+    }
+  ],
+  "implementation": [
+    "创建 apps/desktop/src/main/network-logger/ 目录",
+    "从 Superset 源 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\network-logger\\index.ts 复制完整内容",
+    "替换第5行: const PARTITION = \"persist:superset\" → const PARTITION = \"persist:maestro\"",
+    "其他代码保持不变（日志路径动态获取，归档和清理逻辑与 Superset 相同）"
+  ],
+  "test": {
+    "commands": [],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["文件通过 TypeScript 类型检查", "PARTITION 常量值为 'persist:maestro'", "不包含 Superset 品牌引用"]
+  },
+  "reference": {
+    "pattern": "Electron netLog API 模式",
+    "files": [
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\network-logger\\index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "直接复制并替换 partition 名称 — network-logger 是纯工具模块，与 Superset 业务逻辑完全无关",
+    "decision_factors": [
+      "Electron netLog API 是 Electron 内置功能，不需要任何第三方依赖",
+      "唯一需要改造的是 session partition 名称",
+      "会话归档和自动清理逻辑与 Superset 完全相同"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["网络请求日志"],
+    "affected_components": ["main/network-logger/"],
+    "affected_requirements": ["G-04"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

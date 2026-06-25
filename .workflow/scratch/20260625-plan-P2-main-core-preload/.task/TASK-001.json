@@ -1,0 +1,90 @@
+{
+  "id": "TASK-001",
+  "title": "创建 src/preload/index.ts",
+  "description": "从 Superset 源复制 preload/index.ts 并改造：移除 @sentry/electron/preload 导入、移除 exposeElectronTRPC 调用、保留 contextBridge.exposeInMainWorld 核心逻辑。preload 脚本负责在渲染进程和主进程之间建立安全的 IPC 桥接。",
+  "issue_id": null,
+  "issue_refs": ["G-03"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\preload\\index.ts 复制文件内容，执行以下改造：1) 删除第1行 import \"@sentry/electron/preload\"; 2) 删除第4行 import { exposeElectronTRPC } from \"trpc-electron/main\"; 3) 删除第62行 exposeElectronTRPC(); 调用；4) 保留 contextBridge.exposeInMainWorld(\"App\", API)、contextBridge.exposeInMainWorld(\"ipcRenderer\", ipcRendererAPI)、contextBridge.exposeInMainWorld(\"webUtils\", {...})。",
+  "status": "completed",
+  "completed_at": "2026-06-25T06:54:08+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/preload/",
+  "focus_paths": ["apps/desktop/src/preload/"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\preload\\index.ts",
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\preload\\index.ts 文件存在",
+      "文件内容不包含 '@sentry/electron/preload' 导入",
+      "文件内容不包含 'exposeElectronTRPC' 调用",
+      "文件内容包含 contextBridge.exposeInMainWorld(\"App\", API) 调用",
+      "文件内容包含 contextBridge.exposeInMainWorld(\"ipcRenderer\", ipcRendererAPI) 调用",
+      "文件内容包含 contextBridge.exposeInMainWorld(\"webUtils\", ...) 调用"
+    ],
+    "verification": "grep -c '@sentry/electron/preload' D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\preload\\index.ts 返回 0；grep -c 'exposeElectronTRPC' 返回 0；grep -c 'contextBridge.exposeInMainWorld' 返回 3",
+    "definition_of_done": "preload 脚本已创建，移除了 Sentry 和 tRPC 依赖，保留了 contextBridge 核心 IPC 桥接逻辑"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/preload/index.ts",
+      "action": "create",
+      "target": "preload 脚本",
+      "change": "从 Superset 源复制并移除 @sentry/electron/preload 导入和 exposeElectronTRPC 调用，保留 contextBridge.exposeInMainWorld 核心逻辑"
+    }
+  ],
+  "implementation": [
+    "创建 apps/desktop/src/preload/ 目录",
+    "从 Superset 源 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\preload\\index.ts 复制完整内容",
+    "删除第1行: import \"@sentry/electron/preload\";",
+    "删除第4行: import { exposeElectronTRPC } from \"trpc-electron/main\";",
+    "删除第62行: exposeElectronTRPC(); 及其前后的空行和注释",
+    "保留 contextBridge.exposeInMainWorld 的三次调用和 IPC API 定义"
+  ],
+  "test": {
+    "commands": ["npx tsc --noEmit --project apps/desktop/tsconfig.json 2>&1 | grep -c preload"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["TypeScript 编译无错误（preload 文件相关）", "preload 文件不包含 Sentry/tRPC 引用"]
+  },
+  "reference": {
+    "pattern": "Electron contextBridge preload 模式",
+    "files": [
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\preload\\index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "从 Superset 源直接复制并做最小化改造，保留经过验证的 IPC 桥接逻辑",
+    "decision_factors": [
+      "Sentry 错误追踪和 tRPC IPC 是 Superset 特有功能，oh-my-maestro 不需要",
+      "contextBridge.exposeInMainWorld 是 Electron 安全 IPC 的标准模式，必须保留"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "移除 exposeElectronTRPC 后，如果后续 Phase 需要 tRPC IPC 通信，需要单独引入"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["preload IPC bridge"],
+    "affected_components": ["preload"],
+    "affected_requirements": ["G-03"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "20m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

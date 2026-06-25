@@ -1,0 +1,126 @@
+{
+  "plan_id": "PLN-014",
+  "phase": 1,
+  "phase_slug": "root-and-config",
+  "milestone": "S1",
+  "summary": "补充 oh-my-maestro 项目根目录文件和 Desktop 构建配置文件。从 Superset 源项目适配 8 个根目录文件和 12 个 Desktop 配置文件，排除计费/Stripe、GitHub 集成、Mac 权限、PostHog/Sentry、V2 特有功能。",
+  "approach": "分 8 个 Wave 执行。Wave 1 创建 AGENTS.md（被 TASK-002 依赖）；Wave 2 并行创建 3 个指针文件（CLAUDE/CODEX/WARP.md）和 3 个社区文档（CONTRIBUTING/DEVELOPMENT/CODE_OF_CONDUCT）+ 基础配置（.gitignore/.env.example）；Wave 3 创建 electron.vite.config.ts；Wave 4 创建 electron-builder.ts（依赖 electron.vite.config.ts 的设计决策）；Wave 5 改造 package.json（依赖前两个构建配置）；Wave 6 并行创建 8 个辅助配置文件；Wave 7 执行 bun install 验证。Wave 3-5 为串行链，因为每个步骤依赖前一步的输出。",
+  "task_ids": [
+    "TASK-001",
+    "TASK-002",
+    "TASK-003",
+    "TASK-004",
+    "TASK-005",
+    "TASK-006",
+    "TASK-007",
+    "TASK-008",
+    "TASK-009",
+    "TASK-010"
+  ],
+  "task_count": 10,
+  "complexity": "medium",
+  "estimated_time": "3h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {
+      "id": "wave-1",
+      "tasks": ["TASK-001"],
+      "description": "AGENTS.md — 被 TASK-002 指针文件依赖，必须先创建"
+    },
+    {
+      "id": "wave-2",
+      "tasks": ["TASK-002", "TASK-003", "TASK-004"],
+      "description": "指针文件 + 社区文档 + 基础配置 — 并行创建 8 个文件"
+    },
+    {
+      "id": "wave-3",
+      "tasks": ["TASK-005"],
+      "description": "electron.vite.config.ts — 核心构建配置第一步"
+    },
+    {
+      "id": "wave-4",
+      "tasks": ["TASK-006"],
+      "description": "electron-builder.ts — 依赖 electron.vite.config.ts 的设计决策"
+    },
+    {
+      "id": "wave-5",
+      "tasks": ["TASK-007"],
+      "description": "package.json — 依赖前两个构建配置文件"
+    },
+    {
+      "id": "wave-6",
+      "tasks": ["TASK-008", "TASK-009"],
+      "description": "其他 Desktop 配置文件 — 并行创建 8 个辅助配置文件"
+    },
+    {
+      "id": "wave-7",
+      "tasks": ["TASK-010"],
+      "description": "验证 — bun install 依赖安装验证"
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "读取 Superset 源文件",
+      "适配改造（替换仓库地址/品牌名/技术栈引用）",
+      "写入 oh-my-maestro 目标位置",
+      "bun install 验证"
+    ]
+  },
+  "design_decisions": [
+    "AGENTS.md 完全重写为 Maestro-flow 版本，描述 monorepo 结构（apps/desktop）、技术栈（Electron + React + tRPC + Maestro-flow CLI）",
+    "CLAUDE.md/CODEX.md/WARP.md 统一指向 AGENTS.md（与 Superset 模式一致）",
+    "CONTRIBUTING.md 替换仓库地址为 oh-my-maestro，移除 fork PR 流程中的 Superset 截图",
+    "DEVELOPMENT.md 大幅简化：移除 Docker/Neon/Caddy/Stripe 相关内容，只保留 bun 安装和 electron-vite dev 流程",
+    "CODE_OF_CONDUCT.md 直接复制标准 Contributor Covenant，替换联系邮箱",
+    ".gitignore 从 Superset 精简，移除 Next.js/Streams/Wrangler/Caddy 等不相关条目",
+    ".env.example 大幅精简，只保留 Maestro 实际需要的变量",
+    "electron.vite.config.ts 移除 Sentry/PostHog 插件，替换所有 superset.sh URL 为 maestro-flow 对应 URL，移除不需要的入口点",
+    "electron-builder.ts 替换 appId 为 com.maestro-flow.desktop，productName 为 Maestro，publish 仓库为 oh-my-maestro",
+    "package.json 改造 name 为 @oh-my-maestro/desktop，scripts 适配 electron-vite 构建流程，dependencies 按需裁剪",
+    "bunfig.toml 调整 test preload 路径匹配 oh-my-maestro 实际文件结构",
+    "components.json 调整 aliases 路径匹配 oh-my-maestro 目录结构",
+    "runtime-dependencies.ts 只保留 oh-my-maestro 实际使用的外部化原生模块",
+    "create-release.sh 替换仓库地址和 tag 命名约定"
+  ],
+  "shared_context": {
+    "patterns": [
+      "指针文件模式（CLAUDE.md/CODEX.md/WARP.md → @AGENTS.md）",
+      "electron-vite 三入口构建模式（main/preload/renderer）",
+      "electron-builder 跨平台打包配置模式",
+      "native module 外部化声明模式（runtime-dependencies.ts）"
+    ],
+    "conventions": [
+      "Bun 作为包管理器（不使用 npm/yarn/pnpm）",
+      "ESM 模块系统",
+      "TypeScript 严格模式",
+      "electron-vite 构建工具链",
+      "Biome 格式化（如项目已配置）"
+    ],
+    "dependencies": [
+      "electron 40.x",
+      "electron-vite 4.x",
+      "electron-builder 26.x",
+      "react 19.x",
+      "@tanstack/react-router",
+      "tRPC 11.x",
+      "zod"
+    ]
+  },
+  "confidence": {
+    "overall": 0.85,
+    "dimensions": {
+      "root_files": 0.90,
+      "desktop_config": 0.85,
+      "package_json": 0.75,
+      "build_verification": 0.80
+    }
+  },
+  "_metadata": {
+    "timestamp": "2025-06-25T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "feature",
+    "upstream_analysis": "ANL-010"
+  }
+}

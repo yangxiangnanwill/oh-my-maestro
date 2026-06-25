@@ -1,0 +1,92 @@
+{
+  "id": "TASK-002",
+  "title": "创建 src/main/env.main.ts",
+  "description": "从 Superset 源复制 env.main.ts 并改造：替换所有 superset.sh URL 为 maestro-flow 对应值，移除 SENTRY_DSN、POSTHOG_KEY、STREAMS_URL、RELAY_URL 等 Superset 特有环境变量，保留 t3-env 验证框架。同时需要创建或确认 shared/constants.ts 中定义 PROTOCOL_SCHEME 和 MAESTRO_DIR_NAME 常量。",
+  "issue_id": null,
+  "issue_refs": ["G-04"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\env.main.ts 复制文件内容，执行以下改造：1) NEXT_PUBLIC_API_URL 默认值改为 'https://api.maestro-flow.dev'；2) NEXT_PUBLIC_STREAMS_URL → 删除整行；3) NEXT_PUBLIC_ELECTRIC_URL → 删除整行；4) NEXT_PUBLIC_WEB_URL 默认值改为 'https://app.maestro-flow.dev'；5) NEXT_PUBLIC_MARKETING_URL 默认值改为 'https://maestro-flow.dev'；6) NEXT_PUBLIC_POSTHOG_KEY → 删除整行；7) NEXT_PUBLIC_POSTHOG_HOST → 删除整行；8) SENTRY_DSN_DESKTOP → 删除整行；9) STREAMS_URL → 删除整行；10) RELAY_URL → 删除整行。runtimeEnv 部分同步删除对应项。保留 NODE_ENV 和 NEXT_PUBLIC_API_URL 验证。",
+  "status": "completed",
+  "completed_at": "2026-06-25T06:54:08+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/",
+  "focus_paths": ["apps/desktop/src/main/"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\env.main.ts",
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts"
+  ],
+  "depends_on": [],
+  "wave": 2,
+  "parallel_group": "env-foundation",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\env.main.ts 文件存在",
+      "文件包含 createEnv 调用，使用 '@t3-oss/env-core' 和 'zod/v4'",
+      "文件不包含 'superset.sh' 字符串",
+      "文件不包含 'SENTRY_DSN'、'POSTHOG_KEY'、'STREAMS_URL'、'RELAY_URL' 键名",
+      "文件包含 'maestro-flow.dev' 或类似 Maestro 品牌 URL",
+      "文件保留 NODE_ENV 和 NEXT_PUBLIC_API_URL 验证"
+    ],
+    "verification": "grep -c 'superset.sh' D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\env.main.ts 返回 0；grep -c 'SENTRY_DSN\\|POSTHOG_KEY\\|STREAMS_URL\\|RELAY_URL' 返回 0；grep -c 'createEnv' 返回 1",
+    "definition_of_done": "主进程环境变量配置文件已创建，移除了 Superset 特有变量，保留了 t3-env 验证框架，URL 替换为 Maestro-flow 品牌"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/env.main.ts",
+      "action": "create",
+      "target": "主进程环境变量配置",
+      "change": "从 Superset 源复制并替换所有 URL 和移除 Superset 特有 env var"
+    }
+  ],
+  "implementation": [
+    "从 Superset 源 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\env.main.ts 复制完整内容",
+    "替换 NEXT_PUBLIC_API_URL 默认值为 'https://api.maestro-flow.dev'",
+    "删除 NEXT_PUBLIC_STREAMS_URL、NEXT_PUBLIC_ELECTRIC_URL 行",
+    "替换 NEXT_PUBLIC_WEB_URL 默认值为 'https://app.maestro-flow.dev'",
+    "替换 NEXT_PUBLIC_MARKETING_URL 默认值为 'https://maestro-flow.dev'",
+    "删除 NEXT_PUBLIC_POSTHOG_KEY、NEXT_PUBLIC_POSTHOG_HOST 行",
+    "删除 SENTRY_DSN_DESKTOP、STREAMS_URL、RELAY_URL 行",
+    "同步删除 runtimeEnv 中对应的 process.env 展开项",
+    "更新文件头部注释，将 'Superset desktop' 改为 'Maestro desktop'"
+  ],
+  "test": {
+    "commands": [],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["文件通过 TypeScript 类型检查", "不包含任何 Superset 品牌引用", "不包含已排除的环境变量"]
+  },
+  "reference": {
+    "pattern": "t3-env createEnv 模式",
+    "files": [
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\env.main.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "最小化改造 — 只替换 URL 和删除不需要的变量，保留 t3-env 验证框架以确保环境变量类型安全",
+    "decision_factors": [
+      "t3-env 提供运行时环境变量验证，是良好实践应保留",
+      "PostHog/Sentry/Streams/Relay 是 Superset 特有基础设施，oh-my-maestro 不需要",
+      "保留 zod validation 框架可以方便后续添加 Maestro 特有环境变量"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["主进程环境变量配置"],
+    "affected_components": ["main/env.main.ts"],
+    "affected_requirements": ["G-04"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "25m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

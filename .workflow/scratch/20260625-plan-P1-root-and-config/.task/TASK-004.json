@@ -1,0 +1,86 @@
+{
+  "id": "TASK-004",
+  "title": "创建 .gitignore + .env.example — 基础配置文件",
+  "description": "从 Superset 源文件精简创建 .gitignore 和 .env.example。.gitignore 移除 Next.js/Streams/Wrangler/Caddy/Superset 特定条目；.env.example 大幅精简只保留 Maestro 实际需要的环境变量。",
+  "type": "create",
+  "priority": "high",
+  "effort": "medium",
+  "action": "CREATE D:/WorkSpace/VsCode/oh-my-maestro/.gitignore — 从 D:/WorkSpace/Source/superset/.gitignore 精简：保留 node_modules/dist/dist-electron/release/.turbo/.env*.log 等通用条目，移除 Next.js (.next/out/next-env.d.ts)、Streams (apps/streams/data/)、Wrangler (.wrangler/.dev.vars)、Caddy (Caddyfile/superset-dev-data/)、Superset 特定 (.superset/ports.json/.superset/config.local.json)、Codex (.codex/*/.amp/*)、MCP (.mcp.json) 条目；CREATE D:/WorkSpace/VsCode/oh-my-maestro/.env.example — 精简版，只保留 ANTHROPIC_API_KEY、DATABASE_URL（如需要本地 DB）、NEXT_PUBLIC_API_URL（Maestro API 地址）、BETTER_AUTH_SECRET（如需要认证），移除 Neon/Stripe/PostHog/Sentry/Slack/Linear/GitHub OAuth/Resend/Upstash/Durable Streams 等不需要的变量。",
+  "scope": "D:/WorkSpace/VsCode/oh-my-maestro/",
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/.gitignore",
+    "D:/WorkSpace/VsCode/oh-my-maestro/.env.example"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/.gitignore",
+    "D:/WorkSpace/Source/superset/.env.example",
+    "D:/WorkSpace/VsCode/oh-my-maestro/README.md"
+  ],
+  "depends_on": [],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "grep -c 'node_modules' D:/WorkSpace/VsCode/oh-my-maestro/.gitignore 返回 > 0（确认通用条目保留）",
+      "grep -c '.next\\|next-env\\.d\\.ts\\|streams/data\\|.wrangler\\|Caddyfile\\|superset-dev-data' D:/WorkSpace/VsCode/oh-my-maestro/.gitignore 返回 0（确认 Superset 特定条目已移除）",
+      "grep -c 'ANTHROPIC_API_KEY' D:/WorkSpace/VsCode/oh-my-maestro/.env.example 返回 > 0（确认必要变量保留）",
+      "grep -c 'STRIPE\\|POSTHOG\\|SENTRY\\|NEON\\|SLACK\\|LINEAR\\|RESEND\\|UPSTASH\\|DURABLE_STREAMS' D:/WorkSpace/VsCode/oh-my-maestro/.env.example 返回 0（确认不需要的变量已移除）"
+    ],
+    "verification": "grep -E 'STRIPE|POSTHOG|SENTRY|NEON' D:/WorkSpace/VsCode/oh-my-maestro/.env.example; grep -E '.next|streams/data|.wrangler' D:/WorkSpace/VsCode/oh-my-maestro/.gitignore",
+    "definition_of_done": ".gitignore 和 .env.example 文件存在，已精简移除 Superset 特定和不需要的条目"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/.gitignore",
+      "action": "create",
+      "target": ".gitignore",
+      "change": "从 Superset 版本精简，移除 Next.js/Streams/Wrangler/Caddy/Superset 特定条目"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/.env.example",
+      "action": "create",
+      "target": ".env.example",
+      "change": "精简版环境变量模板，只保留 Maestro 实际需要的变量"
+    }
+  ],
+  "implementation": [
+    ".gitignore: 读取 Superset 版本，逐段审查。保留：logs/node_modules/dist/dist-electron/release/*.local/Editor dirs/lockfiles/test-results/.env/.turbo/.cache/tsbuildinfo。移除：Next.js (.next/out/next-env.d.ts)、Streams (apps/streams/data/)、Wrangler (.wrangler/.dev.vars)、Caddy (Caddyfile/superset-dev-data/)、Superset (.superset/ports.json/.superset/config.local.json)、Codex (.codex/*/.amp/*)、MCP (.mcp.json/.cursor/mcp.json)、plans/local/、examples、apps/desktop/resources/bin/",
+    ".env.example: 读取 Superset 版本，只保留 ANTHROPIC_API_KEY、DATABASE_URL（如需要）、NEXT_PUBLIC_API_URL、BETTER_AUTH_SECRET。添加注释说明每个变量的用途。移除所有 Neon/Stripe/PostHog/Sentry/Slack/Linear/GitHub/Resend/Upstash/Durable Streams/Blob/Relay 变量"
+  ],
+  "test": {
+    "commands": [
+      "grep -c 'STRIPE\\|POSTHOG\\|SENTRY\\|NEON' D:/WorkSpace/VsCode/oh-my-maestro/.env.example",
+      "grep -c '.next' D:/WorkSpace/VsCode/oh-my-maestro/.gitignore"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [".env.example 无 Stripe/PostHog/Sentry/Neon 变量", ".gitignore 无 Next.js/Streams/Wrangler 条目"]
+  },
+  "reference": {
+    "pattern": "Simplify Superset .gitignore and .env.example for Maestro-flow context",
+    "files": [
+      "D:/WorkSpace/Source/superset/.gitignore",
+      "D:/WorkSpace/Source/superset/.env.example"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "从 Superset 源文件精简而非从零创建，确保不遗漏通用最佳实践条目。.env.example 只保留 Maestro 实际需要的变量（ANTHROPIC_API_KEY 用于 AI 功能），移除所有不需要的服务变量。",
+    "decision_factors": [
+      "oh-my-maestro 不需要 Neon/Stripe/PostHog/Sentry/Slack/Linear 等第三方服务",
+      ".gitignore 中的通用条目（node_modules/dist 等）是标准实践，应保留",
+      "ANTHROPIC_API_KEY 是 Maestro AI 功能的核心依赖"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

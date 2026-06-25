@@ -1,0 +1,164 @@
+{
+  "id": "TASK-004",
+  "title": "复制 terminal-host/ 全部 13 个文件",
+  "description": "从 Superset 源直接复制 terminal-host/ 目录下全部 13 个文件到 oh-my-maestro，仅改造 index.ts 中的 SUPERSET_DIR_NAME → MAESTRO_DIR_NAME 引用。terminal-host 负责 PTY 子进程管理、终端会话生命周期、信号处理和 xterm 环境 polyfill。",
+  "issue_id": null,
+  "issue_refs": ["G-04"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "high",
+  "action": "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\terminal-host\\ 复制全部 13 个文件到 D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\terminal-host\\，文件名列表：index.ts, pty-subprocess.ts, pty-subprocess-ipc.ts, session.ts, session.test.ts, session-shell-ready.test.ts, signal-handlers.ts, terminal-host.ts, terminal-host.test.ts, test-helpers.ts, transient-error-window.ts, transient-error-window.test.ts, xterm-env-polyfill.ts。仅改造 index.ts：将 'shared/constants' 导入的 SUPERSET_DIR_NAME 改为 MAESTRO_DIR_NAME，并将第27行和第58-60行的 SUPERSET_DIR_NAME/Maestro 常量引用相应替换。",
+  "status": "completed",
+  "completed_at": "2026-06-25T06:54:09+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/terminal-host/",
+  "focus_paths": ["apps/desktop/src/main/terminal-host/"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\terminal-host\\index.ts",
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\terminal-host\\terminal-host.ts",
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\terminal-host\\session.ts"
+  ],
+  "depends_on": [
+    "TASK-003"
+  ],
+  "wave": 3,
+  "parallel_group": "terminal-infra",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\terminal-host\\ 目录存在且包含 13 个文件",
+      "terminal-host/index.ts 不包含 'SUPERSET_DIR_NAME' 字符串（仅可能有注释残留）",
+      "terminal-host/index.ts 导入 MAESTRO_DIR_NAME 从 'shared/constants'",
+      "所有 .ts 文件的 import 路径使用相对路径或与 Superset 源一致的别名路径"
+    ],
+    "verification": "ls D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\terminal-host\\ | wc -l 输出 13；grep -r 'SUPERSET_DIR_NAME' D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\terminal-host\\ 仅匹配注释或 0 结果",
+    "definition_of_done": "terminal-host/ 全部 13 个文件已复制到位，index.ts 中 Superset 品牌引用已替换为 Maestro"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/terminal-host/index.ts",
+      "action": "create",
+      "target": "terminal-host 入口",
+      "change": "从 Superset 源复制，替换 SUPERSET_DIR_NAME → MAESTRO_DIR_NAME"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/pty-subprocess.ts",
+      "action": "create",
+      "target": "PTY 子进程管理",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/pty-subprocess-ipc.ts",
+      "action": "create",
+      "target": "PTY 子进程 IPC",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/session.ts",
+      "action": "create",
+      "target": "终端会话管理",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/session.test.ts",
+      "action": "create",
+      "target": "会话测试",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/session-shell-ready.test.ts",
+      "action": "create",
+      "target": "Shell 就绪测试",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/signal-handlers.ts",
+      "action": "create",
+      "target": "信号处理器",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/terminal-host.ts",
+      "action": "create",
+      "target": "TerminalHost 主类",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/terminal-host.test.ts",
+      "action": "create",
+      "target": "TerminalHost 测试",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/test-helpers.ts",
+      "action": "create",
+      "target": "测试辅助工具",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/transient-error-window.ts",
+      "action": "create",
+      "target": "瞬态错误窗口",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/transient-error-window.test.ts",
+      "action": "create",
+      "target": "瞬态错误窗口测试",
+      "change": "DIRECT_COPY 从 Superset 源"
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/xterm-env-polyfill.ts",
+      "action": "create",
+      "target": "xterm 环境 polyfill",
+      "change": "DIRECT_COPY 从 Superset 源"
+    }
+  ],
+  "implementation": [
+    "创建 apps/desktop/src/main/terminal-host/ 目录",
+    "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\terminal-host\\ 复制全部 13 个文件",
+    "编辑 terminal-host/index.ts：替换 import { SUPERSET_DIR_NAME } → import { MAESTRO_DIR_NAME }",
+    "编辑 terminal-host/index.ts：替换 SUPERSET_HOME_DIR 变量定义中的 SUPERSET_DIR_NAME → MAESTRO_DIR_NAME",
+    "编辑 terminal-host/index.ts：替换注释中的 'SUPERSET_DIR_NAME' → 'MAESTRO_DIR_NAME'"
+  ],
+  "test": {
+    "commands": [],
+    "unit": ["apps/desktop/src/main/terminal-host/session.test.ts", "apps/desktop/src/main/terminal-host/terminal-host.test.ts"],
+    "integration": [],
+    "success_metrics": ["13 个文件全部复制到位", "index.ts 不包含 Superset 品牌引用", "测试文件保持完整"]
+  },
+  "reference": {
+    "pattern": "Electron PTY terminal host 模式",
+    "files": [
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\terminal-host\\index.ts",
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\terminal-host\\terminal-host.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "直接复制全部文件，仅改造 index.ts 的品牌引用 — terminal-host 是纯 PTY 基础设施，与 Superset 业务逻辑无关",
+    "decision_factors": [
+      "terminal-host 是底层终端基础设施，不包含 Superset 业务逻辑",
+      "PTY 子进程管理、信号处理、会话生命周期是通用功能",
+      "唯一需要改造的是数据目录名称（SUPERSET_DIR_NAME → MAESTRO_DIR_NAME）"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "测试文件可能引用 Superset 特有的测试基础设施（需要后续 Phase 处理测试适配）"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["终端 PTY 管理"],
+    "affected_components": ["main/terminal-host/"],
+    "affected_requirements": ["G-04"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

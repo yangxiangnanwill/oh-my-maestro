@@ -1,0 +1,87 @@
+{
+  "id": "TASK-002",
+  "title": "创建 CLAUDE.md + CODEX.md + WARP.md — 指针文件",
+  "description": "创建 3 个指针文件，内容均为 '@AGENTS.md'，与 Superset 模式一致。CLAUDE.md 确保项目级存在（用户级 CLAUDE.md 已有 Maestro-flow 上下文），CODEX.md 和 WARP.md 为对应 Agent 提供入口。",
+  "type": "create",
+  "priority": "high",
+  "effort": "low",
+  "action": "CREATE D:/WorkSpace/VsCode/oh-my-maestro/CLAUDE.md — 内容为 '@AGENTS.md'；CREATE D:/WorkSpace/VsCode/oh-my-maestro/CODEX.md — 内容为 '@AGENTS.md'；CREATE D:/WorkSpace/VsCode/oh-my-maestro/WARP.md — 内容为 '@AGENTS.md'。",
+  "scope": "D:/WorkSpace/VsCode/oh-my-maestro/",
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/CLAUDE.md",
+    "D:/WorkSpace/VsCode/oh-my-maestro/CODEX.md",
+    "D:/WorkSpace/VsCode/oh-my-maestro/WARP.md"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/CLAUDE.md",
+    "D:/WorkSpace/Source/superset/CODEX.md",
+    "D:/WorkSpace/Source/superset/WARP.md"
+  ],
+  "depends_on": ["TASK-001"],
+  "parallel_group": "wave-1-root-agent-files",
+  "convergence": {
+    "criteria": [
+      "cat D:/WorkSpace/VsCode/oh-my-maestro/CLAUDE.md 输出为 '@AGENTS.md'",
+      "cat D:/WorkSpace/VsCode/oh-my-maestro/CODEX.md 输出为 '@AGENTS.md'",
+      "cat D:/WorkSpace/VsCode/oh-my-maestro/WARP.md 输出为 '@AGENTS.md'"
+    ],
+    "verification": "for f in CLAUDE.md CODEX.md WARP.md; do echo \"=== $f ===\"; cat \"D:/WorkSpace/VsCode/oh-my-maestro/$f\"; done",
+    "definition_of_done": "3 个指针文件全部存在，内容均为 '@AGENTS.md'"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/CLAUDE.md",
+      "action": "create",
+      "target": "CLAUDE.md 指针文件",
+      "change": "创建文件，内容 '@AGENTS.md'"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/CODEX.md",
+      "action": "create",
+      "target": "CODEX.md 指针文件",
+      "change": "创建文件，内容 '@AGENTS.md'"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/WARP.md",
+      "action": "create",
+      "target": "WARP.md 指针文件",
+      "change": "创建文件，内容 '@AGENTS.md'"
+    }
+  ],
+  "implementation": [
+    "读取 Superset 源文件确认指针模式（均为 '@AGENTS.md'）",
+    "创建 CLAUDE.md，写入 '@AGENTS.md'",
+    "创建 CODEX.md，写入 '@AGENTS.md'",
+    "创建 WARP.md，写入 '@AGENTS.md'"
+  ],
+  "test": {
+    "commands": ["cat D:/WorkSpace/VsCode/oh-my-maestro/CLAUDE.md", "cat D:/WorkSpace/VsCode/oh-my-maestro/CODEX.md", "cat D:/WorkSpace/VsCode/oh-my-maestro/WARP.md"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["3 个文件内容均为 '@AGENTS.md'"]
+  },
+  "reference": {
+    "pattern": "Pointer file pattern from Superset — all point to AGENTS.md",
+    "files": ["D:/WorkSpace/Source/superset/CLAUDE.md", "D:/WorkSpace/Source/superset/CODEX.md", "D:/WorkSpace/Source/superset/WARP.md"],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "直接创建指针文件，与 Superset 模式完全一致。CLAUDE.md 在项目级存在确保 Agent 能找到 AGENTS.md 入口。",
+    "decision_factors": [
+      "Superset 源文件均为 '@AGENTS.md'，无额外内容",
+      "用户级 CLAUDE.md 已有 Maestro-flow 上下文，项目级只需指针"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "5m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

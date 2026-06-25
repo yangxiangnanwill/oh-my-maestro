@@ -1,0 +1,92 @@
+{
+  "id": "TASK-003",
+  "title": "创建 src/main/lib/app-environment.ts",
+  "description": "从 Superset 源复制 lib/app-environment.ts 并改造：将 SUPERSET_DIR_NAME 替换为 MAESTRO_DIR_NAME，将 SUPERSET_HOME_DIR 相关命名改为 MAESTRO_HOME_DIR。此文件定义应用数据目录路径常量和目录初始化逻辑。同时需要确保 shared/constants.ts 中已定义 MAESTRO_DIR_NAME 常量（值为 '.maestro'）。",
+  "issue_id": null,
+  "issue_refs": ["G-04"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "low",
+  "action": "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\app-environment.ts 复制文件内容，执行以下替换：1) import { SUPERSET_DIR_NAME } from \"shared/constants\" → import { MAESTRO_DIR_NAME } from \"shared/constants\"；2) SUPERSET_HOME_DIR_ENV 常量名改为 MAESTRO_HOME_DIR_ENV，值 'SUPERSET_HOME_DIR' → 'MAESTRO_HOME_DIR'；3) SUPERSET_HOME_DIR 导出改为 MAESTRO_HOME_DIR，使用 MAESTRO_DIR_NAME；4) SUPERSET_HOME_DIR_MODE → MAESTRO_HOME_DIR_MODE；5) SUPERSET_SENSITIVE_FILE_MODE → MAESTRO_SENSITIVE_FILE_MODE；6) ensureSupersetHomeDirExists → ensureMaestroHomeDirExists，内部引用同步替换；7) 日志前缀 '[app-environment]' 保留不变。",
+  "status": "completed",
+  "completed_at": "2026-06-25T06:54:09+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/lib/",
+  "focus_paths": ["apps/desktop/src/main/lib/"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\app-environment.ts",
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\index.ts"
+  ],
+  "depends_on": [],
+  "wave": 2,
+  "parallel_group": "env-foundation",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\lib\\app-environment.ts 文件存在",
+      "文件不包含 'SUPERSET' 字符串（大小写不敏感检查：常量名、变量名、函数名）",
+      "文件包含 'MAESTRO_DIR_NAME' 导入",
+      "文件导出 MAESTRO_HOME_DIR、MAESTRO_HOME_DIR_MODE、MAESTRO_SENSITIVE_FILE_MODE",
+      "文件导出 ensureMaestroHomeDirExists 函数"
+    ],
+    "verification": "grep -i 'superset' D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\lib\\app-environment.ts 返回 0；grep -c 'MAESTRO_DIR_NAME' 返回 ≥1；grep -c 'MAESTRO_HOME_DIR' 返回 ≥3",
+    "definition_of_done": "应用环境路径模块已创建，所有 Superset 品牌标识已替换为 Maestro，路径常量和目录初始化函数已就位"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/lib/app-environment.ts",
+      "action": "create",
+      "target": "应用环境路径常量模块",
+      "change": "从 Superset 源复制并替换所有 SUPERSET → MAESTRO 命名"
+    }
+  ],
+  "implementation": [
+    "从 Superset 源 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\app-environment.ts 复制完整内容",
+    "替换 import: SUPERSET_DIR_NAME → MAESTRO_DIR_NAME",
+    "全局替换常量名: SUPERSET_HOME_DIR_ENV → MAESTRO_HOME_DIR_ENV",
+    "全局替换导出名: SUPERSET_HOME_DIR → MAESTRO_HOME_DIR",
+    "全局替换: SUPERSET_HOME_DIR_MODE → MAESTRO_HOME_DIR_MODE",
+    "全局替换: SUPERSET_SENSITIVE_FILE_MODE → MAESTRO_SENSITIVE_FILE_MODE",
+    "全局替换函数名: ensureSupersetHomeDirExists → ensureMaestroHomeDirExists",
+    "替换环境变量字符串值: 'SUPERSET_HOME_DIR' → 'MAESTRO_HOME_DIR'",
+    "替换 APP_STATE_PATH 和 WINDOW_STATE_PATH 中的 SUPERSET_HOME_DIR → MAESTRO_HOME_DIR"
+  ],
+  "test": {
+    "commands": [],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["文件通过 TypeScript 类型检查", "不包含任何 'SUPERSET' 字符串（大小写不敏感）", "所有导出符号名称以 MAESTRO 开头"]
+  },
+  "reference": {
+    "pattern": "Electron app.getPath + 自定义 home dir 模式",
+    "files": [
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\app-environment.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "从 Superset 源复制并做纯文本替换 — 这是纯粹的命名空间迁移，逻辑无需改变",
+    "decision_factors": [
+      "应用数据目录路径逻辑与 Superset 完全一致，仅品牌名称需要更换",
+      "保留原有的目录权限设置（0o700）和安全文件权限（0o600）"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "MAESTRO_DIR_NAME 常量需要先在 shared/constants.ts 中定义（如果尚未定义）"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["应用数据目录管理"],
+    "affected_components": ["main/lib/app-environment.ts"],
+    "affected_requirements": ["G-04"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

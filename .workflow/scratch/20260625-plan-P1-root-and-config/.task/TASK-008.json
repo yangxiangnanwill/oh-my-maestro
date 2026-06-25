@@ -1,0 +1,106 @@
+{
+  "id": "TASK-008",
+  "title": "创建 bunfig.toml + .npmrc + components.json + index.d.ts",
+  "description": "创建 4 个 Desktop 辅助配置文件。bunfig.toml 调整 test preload 路径；.npmrc 直接复制 electron-builder 配置；components.json 调整 shadcn/ui aliases 路径；index.d.ts 适配 TypeScript 全局类型。",
+  "type": "create",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/bunfig.toml — 从 D:/WorkSpace/Source/superset/apps/desktop/bunfig.toml 复制，调整 preload 路径：'./src/main/terminal-host/xterm-env-polyfill.ts' → 移除（如不需要 xterm），'./test-setup.ts' 保持；CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/.npmrc — 直接复制 D:/WorkSpace/Source/superset/apps/desktop/.npmrc，内容为 'shamefully-hoist=true'；CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/components.json — 从 D:/WorkSpace/Source/superset/apps/desktop/components.json 复制，调整 aliases 路径：'renderer/components' → 'src/renderer/components'，'renderer/utils' → 'src/renderer/utils'，'renderer/components/ui' → 'src/renderer/components/ui'，'renderer/lib' → 'src/renderer/lib'，'renderer/hooks' → 'src/renderer/hooks'，css 路径 'src/renderer/globals.css' 保持；CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/index.d.ts — 从 D:/WorkSpace/Source/superset/apps/desktop/index.d.ts 复制，保留 vite/client 引用、ImportMetaEnv 扩展、webview JSX 声明。",
+  "scope": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/",
+  "focus_paths": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/bunfig.toml",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/.npmrc",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/components.json",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/index.d.ts"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/bunfig.toml",
+    "D:/WorkSpace/Source/superset/apps/desktop/.npmrc",
+    "D:/WorkSpace/Source/superset/apps/desktop/components.json",
+    "D:/WorkSpace/Source/superset/apps/desktop/index.d.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave-4-aux-config",
+  "convergence": {
+    "criteria": [
+      "grep -c 'shamefully-hoist=true' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/.npmrc 返回 1（确认 .npmrc 正确）",
+      "grep -c 'test-setup' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/bunfig.toml 返回 > 0（确认 test preload 配置）",
+      "grep -c 'src/renderer/components/ui' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/components.json 返回 1（确认 aliases 路径调整）",
+      "grep -c 'webview' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/index.d.ts 返回 > 0（确认 webview JSX 声明保留）"
+    ],
+    "verification": "for f in bunfig.toml .npmrc components.json index.d.ts; do echo \"=== $f ===\"; ls -la \"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/$f\"; done",
+    "definition_of_done": "4 个辅助配置文件全部存在，内容已适配 oh-my-maestro 路径结构"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/bunfig.toml",
+      "action": "create",
+      "target": "bunfig.toml",
+      "change": "从 Superset 复制，调整 test preload 路径"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/.npmrc",
+      "action": "create",
+      "target": ".npmrc",
+      "change": "直接复制 Superset 版本"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/components.json",
+      "action": "create",
+      "target": "components.json",
+      "change": "从 Superset 复制，调整 aliases 路径前缀"
+    },
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/index.d.ts",
+      "action": "create",
+      "target": "index.d.ts",
+      "change": "从 Superset 复制，保留 TypeScript 全局类型声明"
+    }
+  ],
+  "implementation": [
+    "bunfig.toml: 读取 Superset 版本，保留 [test] 和 [test.env] 配置，移除 xterm-env-polyfill preload（如不需要 xterm），保留 test-setup.ts preload",
+    ".npmrc: 直接复制 Superset 版本（内容为 'shamefully-hoist=true'，electron-builder 需要）",
+    "components.json: 读取 Superset 版本，将所有 aliases 值从 'renderer/...' 改为 'src/renderer/...'，保持其他配置不变",
+    "index.d.ts: 读取 Superset 版本，直接复制全部内容（vite/client 引用、ImportMetaEnv、webview JSX 声明均为通用配置）"
+  ],
+  "test": {
+    "commands": [
+      "cat D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/.npmrc",
+      "cat D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/bunfig.toml",
+      "node -e \"JSON.parse(require('fs').readFileSync('D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/components.json','utf8'))\" && echo 'Valid JSON'"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["4 个文件全部存在", "components.json 为有效 JSON", ".npmrc 内容正确"]
+  },
+  "reference": {
+    "pattern": "Copy from Superset with minimal path adjustments",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/bunfig.toml",
+      "D:/WorkSpace/Source/superset/apps/desktop/.npmrc",
+      "D:/WorkSpace/Source/superset/apps/desktop/components.json",
+      "D:/WorkSpace/Source/superset/apps/desktop/index.d.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "4 个文件合并为一个任务因为它们都是轻度修改的辅助配置文件。.npmrc 和 index.d.ts 几乎不需要修改，bunfig.toml 和 components.json 只需要路径调整。",
+    "decision_factors": [
+      ".npmrc 的 shamefully-hoist=true 是 electron-builder 的通用需求",
+      "components.json 的 aliases 路径需要匹配 oh-my-maestro 的 src/renderer 目录结构",
+      "index.d.ts 的 webview 声明是 Electron 应用的通用需求"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 6,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

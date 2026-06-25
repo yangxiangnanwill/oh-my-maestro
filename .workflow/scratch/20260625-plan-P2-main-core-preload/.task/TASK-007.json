@@ -1,0 +1,106 @@
+{
+  "id": "TASK-007",
+  "title": "创建 host-service/index.ts 和 host-service/env.ts",
+  "description": "从 Superset 源复制 host-service/ 模块（2 个文件）并改造：替换 @superset/host-service 导入为 Maestro MCP endpoint 对应路径，替换品牌相关引用。host-service 是工作区服务的 Electron 端入口，负责启动 HTTP 服务器、JWT 认证、health check 轮询和 Relay 隧道连接。",
+  "issue_id": null,
+  "issue_refs": ["G-04"],
+  "type": "feature",
+  "priority": "medium",
+  "effort": "high",
+  "action": "从 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\host-service\\ 复制 index.ts 和 env.ts 两个文件。index.ts 改造：1) @superset/host-service 相关导入需要检查 Maestro 中对应包路径，如不可用则标记 TODO；2) 所有 Superset 品牌引用替换为 Maestro；3) RELAY_URL 相关代码标记为可选（oh-my-maestro 可能不需要 Relay 隧道）。env.ts 改造：1) 替换变量名 SUPERSET_API_URL → MAESTRO_API_URL；2) 移除 RELAY_URL（如不需要）；3) 保留核心变量 AUTH_TOKEN, HOST_DB_PATH, HOST_MIGRATIONS_FOLDER, HOST_SERVICE_SECRET, HOST_SERVICE_PORT, ORGANIZATION_ID, DESKTOP_VITE_PORT。",
+  "status": "completed",
+  "completed_at": "2026-06-25T06:54:10+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/host-service/",
+  "focus_paths": ["apps/desktop/src/main/host-service/"],
+  "read_first": [
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\host-service\\index.ts",
+    "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\host-service\\env.ts",
+    "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\env.main.ts"
+  ],
+  "depends_on": [
+    "TASK-002"
+  ],
+  "wave": 4,
+  "parallel_group": "windows-services",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\host-service\\index.ts 文件存在",
+      "D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\host-service\\env.ts 文件存在",
+      "host-service/env.ts 包含 createEnv 调用，使用 '@t3-oss/env-core'",
+      "host-service/env.ts 不包含 'SUPERSET_API_URL' 键名",
+      "host-service/env.ts 包含 'MAESTRO_API_URL' 键名",
+      "host-service/index.ts 包含 serve from '@hono/node-server' 导入",
+      "host-service/index.ts 不包含 'superset.sh' URL"
+    ],
+    "verification": "grep -c 'SUPERSET_API_URL' D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\host-service\\env.ts 返回 0；grep -c 'MAESTRO_API_URL' 返回 1；ls D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\main\\host-service\\ 输出 index.ts 和 env.ts",
+    "definition_of_done": "host-service 模块已创建，环境变量已替换为 Maestro 品牌，核心 HTTP 服务器启动逻辑已就位"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/host-service/index.ts",
+      "action": "create",
+      "target": "host-service HTTP 服务器入口",
+      "change": "从 Superset 源复制并改造：替换品牌引用、标记 @superset/host-service 依赖"
+    },
+    {
+      "path": "apps/desktop/src/main/host-service/env.ts",
+      "action": "create",
+      "target": "host-service 环境变量配置",
+      "change": "从 Superset 源复制并替换变量名和品牌引用"
+    }
+  ],
+  "implementation": [
+    "创建 apps/desktop/src/main/host-service/ 目录",
+    "复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\host-service\\env.ts → 目标 env.ts",
+    "编辑 env.ts: SUPERSET_API_URL → MAESTRO_API_URL",
+    "编辑 env.ts: 移除 RELAY_URL 或在注释中标记为可选",
+    "编辑 env.ts: 更新文件头部注释",
+    "复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\host-service\\index.ts → 目标 index.ts",
+    "编辑 index.ts: 替换日志前缀和注释中的 Superset 引用",
+    "编辑 index.ts: RELAY_URL 相关代码块添加条件判断或 TODO 标记",
+    "编辑 index.ts: loadToken 和 auth-functions 导入路径检查是否可用，如不可用则标记 TODO"
+  ],
+  "test": {
+    "commands": [],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["两个文件通过 TypeScript 类型检查（标记 TODO 的导入可接受）", "env.ts 不包含 Superset 品牌引用"]
+  },
+  "reference": {
+    "pattern": "Hono HTTP server + t3-env 模式",
+    "files": [
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\host-service\\index.ts",
+      "D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\host-service\\env.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制核心框架逻辑，替换品牌标识，标记需要后续处理的 Superset 包依赖",
+    "decision_factors": [
+      "host-service 是 MCP endpoint 服务的基础设施，oh-my-maestro 需要类似功能",
+      "@superset/host-service 包可能不可用 — 需要后续 Phase 创建 Maestro 替代包或直接使用 MCP SDK",
+      "Relay 隧道是 Superset 特有功能，oh-my-maestro 可能不需要"
+    ],
+    "tradeoffs": "暂时保留完整的 host-service 框架代码但标记依赖 TODO，避免丢失架构参考"
+  },
+  "risks": [
+    "@superset/host-service 和 @hono/node-server 依赖需要确认是否存在",
+    "loadToken 等认证函数依赖 Superset 的认证体系，需要后续 Phase 适配 Maestro 认证"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["MCP endpoint HTTP 服务"],
+    "affected_components": ["main/host-service/"],
+    "affected_requirements": ["G-04"],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "35m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

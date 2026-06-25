@@ -1,0 +1,82 @@
+{
+  "summary": "Phase 2: 补充 Electron 主进程核心模块和 preload 脚本。从 Superset 源迁移并改造 9 个模块（1 preload + 8 main），排除 Git 集成、计费、Sentry/PostHog 等 Superset 特有功能。保留 oh-my-maestro 已有的 MCP provider 注册和 Ralph decision bridge。",
+  "approach": "分 5 个波次执行：Wave 1 创建 preload（独立无依赖）；Wave 2 创建环境变量基础（env.main.ts + app-environment.ts）；Wave 3 直接复制终端基础设施（terminal-host/ 13 文件 + pty-daemon）；Wave 4 创建窗口和服务模块；Wave 5 合并 main/index.ts（保留 Maestro 特有功能 + 添加 Superset 缺失功能）和 network-logger。所有 ADAPT 类型文件均从 Superset 源复制后替换品牌标识、URL、依赖路径。",
+  "task_ids": [
+    "TASK-001",
+    "TASK-002",
+    "TASK-003",
+    "TASK-004",
+    "TASK-005",
+    "TASK-006",
+    "TASK-007",
+    "TASK-008",
+    "TASK-009"
+  ],
+  "task_count": 9,
+  "complexity": "high",
+  "estimated_time": "4h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {"wave": 1, "tasks": ["TASK-001"]},
+    {"wave": 2, "tasks": ["TASK-002", "TASK-003"]},
+    {"wave": 3, "tasks": ["TASK-004", "TASK-005"]},
+    {"wave": 4, "tasks": ["TASK-006", "TASK-007"]},
+    {"wave": 5, "tasks": ["TASK-008", "TASK-009"]}
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "preload: contextBridge 暴露 API 到渲染进程",
+      "env.main.ts: t3-env 验证主进程环境变量",
+      "app-environment.ts: 定义 MAESTRO_HOME_DIR 路径常量",
+      "terminal-host/: PTY 子进程管理和终端会话生命周期",
+      "pty-daemon: PTY daemon 入口（electron-vite bundle target）",
+      "windows/main.ts: 创建 BrowserWindow + IPC + 通知管理",
+      "host-service/: MCP endpoint HTTP 服务入口",
+      "main/index.ts: 应用入口 — 协议注册、窗口创建、生命周期管理",
+      "network-logger: Electron netLog 会话级网络日志记录"
+    ]
+  },
+  "design_decisions": [
+    "preload 移除 @sentry/electron/preload 和 exposeElectronTRPC，保留 contextBridge 核心",
+    "env.main.ts 替换所有 superset.sh URL 为 maestro-flow 对应值，移除 SENTRY_DSN/POSTHOG_KEY/STREAMS_URL/RELAY_URL",
+    "app-environment.ts 将 SUPERSET_DIR_NAME 替换为 MAESTRO_DIR_NAME（需先在 shared/constants 中定义）",
+    "terminal-host/ 直接复制全部 13 文件，仅 index.ts 中替换 SUPERSET_DIR_NAME → MAESTRO_DIR_NAME",
+    "pty-daemon 直接复制，仅替换 SUPERSET_PTY_DAEMON_VERSION → MAESTRO_PTY_DAEMON_VERSION",
+    "windows/main.ts 替换 productName、preload 路径、移除 notification-manager 和 workspace-runtime 依赖",
+    "host-service 替换 @superset/host-service 导入为 Maestro MCP endpoint 对应包",
+    "main/index.ts 保留现有 Maestro 特有功能（MCP provider + Ralph bridge），从 Superset 源合并 macOS 字体协议、确认退出对话框、开发模式父进程监控",
+    "network-logger 替换 partition 名称 persist:superset → persist:maestro"
+  ],
+  "shared_context": {
+    "patterns": [
+      "t3-env 环境变量验证模式（createEnv + zod schema）",
+      "Electron protocol.handle 自定义协议模式",
+      "contextBridge.exposeInMainWorld preload 暴露模式",
+      "electron-vite bundle target 模式（pty-daemon 作为独立入口）",
+      "app.requestSingleInstanceLock 单实例锁模式"
+    ],
+    "conventions": [
+      "ESM 导入（TypeScript + Electron）",
+      "主进程文件位于 src/main/，preload 位于 src/preload/",
+      "环境变量通过 env.main.ts 集中管理",
+      "窗口创建通过 MainWindow() 工厂函数",
+      "使用 process.env.NODE_ENV === 'development' 判断开发模式"
+    ],
+    "dependencies": [
+      "@t3-oss/env-core",
+      "zod",
+      "electron",
+      "@hono/node-server（host-service）",
+      "@modelcontextprotocol/sdk（maestro-mcp-provider，已存在）"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-25T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "feature",
+    "schema_version": "2.0",
+    "git_commit": null
+  }
+}

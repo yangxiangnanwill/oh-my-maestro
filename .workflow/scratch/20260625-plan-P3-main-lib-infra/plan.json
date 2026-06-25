@@ -1,0 +1,82 @@
+{
+  "summary": "Phase 3: 补充 Electron 主进程 lib/ 基础设施模块。从 Superset 源迁移约 70+ 文件（utilities、数据层、终端管理、agent-setup、UI 管理、服务协调等），排除 Relay、PostHog、Sentry、V2 相关模块。保留 oh-my-maestro 已有的 Maestro 特有模块（MCP provider、Ralph bridge、event-bus、command-chain-status-poller）。",
+  "approach": "分 6 个 wave 执行：Wave 1 创建基础工具类（safe-url、sanitize、tree-kill 等）；Wave 2 建立数据层（local-db、persistence、app-state）；Wave 3 补充终端管理模块（terminal/、terminal-escape-filter、terminal-history）；Wave 4 扩展 agent-setup（agent wrappers + templates）；Wave 5 补充 UI 和服务模块（window-state、menu、auto-updater、bundled-cli）；Wave 6 补充剩余协调器和工具（host-service-*、browser、extensions、project-icons 等）。所有 DIRECT_COPY 文件从 Superset 源复制无改动；ADAPT 类型文件替换品牌标识和依赖路径。",
+  "task_ids": [
+    "TASK-010",
+    "TASK-011",
+    "TASK-012",
+    "TASK-013",
+    "TASK-014",
+    "TASK-015",
+    "TASK-016",
+    "TASK-017",
+    "TASK-018",
+    "TASK-019",
+    "TASK-020",
+    "TASK-021"
+  ],
+  "task_count": 12,
+  "complexity": "very_high",
+  "estimated_time": "8h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {"wave": 1, "tasks": ["TASK-010"]},
+    {"wave": 2, "tasks": ["TASK-011", "TASK-012"]},
+    {"wave": 3, "tasks": ["TASK-013", "TASK-014"]},
+    {"wave": 4, "tasks": ["TASK-015", "TASK-016"]},
+    {"wave": 5, "tasks": ["TASK-017", "TASK-018"]},
+    {"wave": 6, "tasks": ["TASK-019", "TASK-020", "TASK-021"]}
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "safe-url/sanitize/utilities: 无依赖工具层",
+      "local-db/persistence: 数据存储和状态管理",
+      "app-state: 应用状态初始化",
+      "terminal/: PTY 会话管理和 daemon 协调",
+      "agent-setup/: Agent wrappers 和 templates（Maestro MCP + CLI）",
+      "window-state/menu/auto-updater: UI 生命周期管理",
+      "host-service-*/browser/extensions: 服务协调和浏览器集成",
+      "main/index.ts: 应用入口集成所有模块"
+    ]
+  },
+  "design_decisions": [
+    "safe-url/sanitize 工具类直接从 Superset 复制（与品牌无关）",
+    "local-db 保留 @superset/local-db 导入但标记为后续 Phase 替换",
+    "terminal/ 完整复制 Superset 源，仅替换路径引用",
+    "agent-setup/ 补充 Maestro wrappers（gemini, qwen, codex 等）",
+    "window-state 直接复制（与品牌无关）",
+    "auto-updater 标记为可选（oh-my-maestro desktop 可能需要定制）",
+    "保留 oh-my-maestro 独有模块：command-chain-status-poller、websocket-event-bus、maestro-mcp-provider、ralph-decision-bridge"
+  ],
+  "shared_context": {
+    "patterns": [
+      "模块工厂模式（getTerminalHostClient、getHostServiceCoordinator）",
+      "lazy singleton 模式（localDb、tanstackDb）",
+      "事件驱动通信（EventEmitter、session.on/once）",
+      "agent wrapper 工厂模式（AgentType → executor 类）"
+    ],
+    "conventions": [
+      "lib 模块通过 index.ts barrel export",
+      "状态文件存储在 app.getPath('userData')/",
+      "临时目录使用 os.tmpdir()",
+      "所有异步操作返回 Promise，支持 try-catch",
+      "服务协调器支持 start/stop/dispose 生命周期"
+    ],
+    "dependencies": [
+      "@superset/local-db（后续替换）",
+      "lowdb（状态持久化）",
+      "@electron/remote（如需）",
+      "node-pty（PTY 管理，已有）",
+      "zod（环境变量验证，已有）"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-25T14:35:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "feature",
+    "schema_version": "2.0",
+    "git_commit": null
+  }
+}

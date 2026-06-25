@@ -1,0 +1,51 @@
+{
+  "id": "TASK-012",
+  "title": "补充终端管理: terminal/ 核心模块 + terminal-escape-filter + terminal-history",
+  "description": "从 Superset 源复制 terminal/（终端会话和 daemon 管理）完整模块（~20 files），补充 terminal-escape-filter.ts 和 terminal-history.ts。terminal/ 是 PTY 管理的核心，支持 session reattach、daemon lifecycle、port manager 等。替换路径引用但保留所有逻辑。",
+  "issue_id": null,
+  "issue_refs": ["G-05"],
+  "type": "feature",
+  "priority": "high",
+  "effort": "very_high",
+  "action": "从 Superset 源复制：1) terminal/ 目录（~20 files）；2) terminal-escape-filter.ts；3) terminal-history.ts。terminal/ 中仅替换路径和常量引用（无品牌标识）；terminal-escape-filter 和 terminal-history 直接复制。",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/lib/",
+  "focus_paths": ["apps/desktop/src/main/lib/terminal/", "apps/desktop/src/main/lib/terminal-escape-filter.ts", "apps/desktop/src/main/lib/terminal-history.ts"],
+  "read_first": ["D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\main\\lib\\terminal\\"],
+  "depends_on": ["TASK-003", "TASK-004"],
+  "wave": 3,
+  "parallel_group": "terminal-infra",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "terminal/ 目录存在且包含 ~20 个文件",
+      "terminal-escape-filter.ts 存在",
+      "terminal-history.ts 存在",
+      "所有文件 import 路径正确（相对路径）",
+      "不含 Superset 品牌特定引用"
+    ],
+    "verification": "ls apps/desktop/src/main/lib/terminal/ | wc -l 返回 ≥18; ls apps/desktop/src/main/lib/terminal-*.ts",
+    "definition_of_done": "终端管理完整框架就位，session reattach 和 daemon lifecycle 支持完整"
+  },
+  "files": [
+    {"path": "apps/desktop/src/main/lib/terminal/", "action": "create", "target": "终端会话和 daemon 管理", "change": "复制 + 路径替换"},
+    {"path": "apps/desktop/src/main/lib/terminal-escape-filter.ts", "action": "create", "target": "终端转义码过滤", "change": "直接复制"},
+    {"path": "apps/desktop/src/main/lib/terminal-history.ts", "action": "create", "target": "终端历史记录", "change": "直接复制"}
+  ],
+  "implementation": [
+    "从 Superset 源复制 terminal/ 目录到 apps/desktop/src/main/lib/",
+    "修复 terminal/ 内的路径引用（如 ../lib/app-environment 等）",
+    "复制 terminal-escape-filter.ts",
+    "复制 terminal-history.ts"
+  ],
+  "test": {"commands": [], "unit": [], "integration": [], "success_metrics": ["所有文件存在", "import 路径正确", "TypeScript 编译无错误"]},
+  "reference": {"pattern": "终端管理模式", "files": [], "examples": null},
+  "rationale": {"chosen_approach": "完整复制 — terminal/ 是独立的终端管理框架", "decision_factors": ["与品牌无关", "与 Superset 业务逻辑无关"], "tradeoffs": null},
+  "risks": [{"risk": "路径引用遗漏", "mitigation": "逐个检查 import 语句"}],
+  "code_skeleton": null,
+  "doc_context": {"affected_features": ["终端管理"], "affected_components": ["lib/terminal/"], "affected_requirements": ["G-05"], "adr_ids": []},
+  "meta": {"estimated_time": "50m", "risk": "medium", "autonomous": true, "checkpoint": false}
+}

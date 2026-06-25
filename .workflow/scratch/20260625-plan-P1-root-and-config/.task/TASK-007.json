@@ -1,0 +1,91 @@
+{
+  "id": "TASK-007",
+  "title": "改造 package.json — Desktop 包配置",
+  "description": "大幅改造 apps/desktop/package.json。更新 name 为 @oh-my-maestro/desktop，添加 electron-vite 构建脚本，按需裁剪 dependencies 和 devDependencies。这是整个 Phase 1 最复杂的任务，需要仔细分析 Superset 的依赖列表，只保留 oh-my-maestro 实际需要的。",
+  "type": "modify",
+  "priority": "high",
+  "effort": "high",
+  "action": "MODIFY D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json — 大幅改造现有文件：\n1) name: '@oh-my-maestro/desktop'（保持）\n2) productName: 'Maestro'（新增）\n3) description: 'Maestro Desktop — Maestro-flow IDE with AI orchestration'（更新）\n4) version: '0.1.0'（保持）\n5) main: './dist/main/index.js'（更新，匹配 electron-vite 输出）\n6) resources: 'src/resources'（新增，electron-builder 需要）\n7) repository: { type: 'git', url: 'https://github.com/yangxiangnanwill/oh-my-maestro.git' }（新增）\n8) author: { name: 'Maestro', email: '...' }（新增）\n9) scripts: 替换现有 scripts，添加 electron-vite 构建脚本：\n   - 'dev': 'electron-vite dev --watch'\n   - 'build': 'electron-vite build'\n   - 'preview': 'electron-vite preview'\n   - 'package': 'electron-builder --config electron-builder.ts'\n   - 'typecheck': 'tsc --noEmit'\n   - 'test': 'bun test'\n   - 'clean': 'rimraf dist dist-electron release .turbo'\n10) dependencies: 从 Superset 版本中筛选 oh-my-maestro 实际需要的依赖。保留核心依赖：react, react-dom, @tanstack/react-router, @tanstack/react-query, @trpc/client, @trpc/server, @trpc/react-query, zod, electron-log, electron-updater, better-sqlite3, drizzle-orm, lucide-react, tailwind-merge, clsx, framer-motion, zustand, react-hook-form, @hookform/resolvers, @radix-ui/react-dialog, @radix-ui/react-label, simple-git, execa, dotenv, nanoid, superjson, semver, date-fns, fuse.js, strip-ansi, shell-quote, default-shell, os-locale, node-pty, @parcel/watcher, @ast-grep/napi, native-keymap, tree-kill, pidusage, pidtree, @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities, react-dnd, react-dnd-html5-backend, dnd-core, react-resizable-panels, react-mosaic-component, react-hotkeys-hook, react-markdown, remark-gfm, rehype-raw, rehype-sanitize, unified, remark-parse, mdast-util-to-string, tiptap 系列, @tiptap/react, @tiptap/starter-kit, @tiptap/extension-placeholder, tiptap-markdown, @codemirror 系列, @xterm/xterm, @xterm/addon-fit, @xterm/headless, lowdb, dexie, idb-keyval, express, @hono/node-server, http-proxy, jose, mastracode, @mastra/core, ai, @ai-sdk/anthropic, @ai-sdk/openai, @ai-sdk/react, shiki, highlight.js, lowlight, streamdown, @streamdown/mermaid, culori, friendly-words, line-column-path, lodash, file-uri-to-path, bindings, detect-libc, node-addon-api, prebuild-install, bufferutil, utf-8-validate, @t3-oss/env-core, @pierre/diffs, @pierre/trees, @headless-tree/core, @headless-tree/react, @lezer/highlight, @paper-design/shaders-react, @replit/codemirror-css-color-picker, @vercel/blob, @tanstack/db, @tanstack/electron-db-sqlite-persistence, @tanstack/node-db-sqlite-persistence, @tanstack/query-async-storage-persister, @tanstack/react-db, @tanstack/react-query-persist-client, @tanstack/react-table, @tanstack/react-virtual, @tanstack/electric-db-collection, @electric-sql/client, @durable-streams/client, trpc-electron, libsql, tw-animate-css, react-icons, react-syntax-highlighter, tippy.js, use-resize-observer, uuid\n   - 移除：@better-auth/api-key, @better-auth/stripe, @sentry/electron, posthog-js, posthog-node, @superset/* (所有 workspace 依赖暂时移除，后续按需添加)\n11) devDependencies: 保留 electron, electron-vite, electron-builder, @types/node, @types/react, @types/react-dom, @types/better-sqlite3, @types/bun, @types/lodash, @types/semver, @types/http-proxy, @types/culori, @types/react-syntax-highlighter, @types/shell-quote, typescript, vite, @vitejs/plugin-react, vite-tsconfig-paths, @tailwindcss/vite, tailwindcss, @tanstack/router-plugin, @tanstack/router-cli, rimraf, cross-env, tsx, rollup-plugin-inject-process-env, material-icon-theme\n   - 移除：@sentry/vite-plugin, @superset/typescript, code-inspector-plugin",
+  "scope": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/",
+  "focus_paths": ["D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json"],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/package.json",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts"
+  ],
+  "depends_on": ["TASK-005", "TASK-006"],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "grep -c '\"@oh-my-maestro/desktop\"' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json 返回 1（确认 name 正确）",
+      "grep -c '\"electron-vite' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json 返回 > 0（确认 electron-vite 在 devDependencies）",
+      "grep -c '\"electron-builder' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json 返回 > 0（确认 electron-builder 在 devDependencies）",
+      "grep -c '\"@sentry\\|posthog\\|@better-auth/stripe' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json 返回 0（确认已移除排除的依赖）",
+      "grep -c '\"productName\".*\"Maestro\"' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json 返回 1（确认 productName 正确）",
+      "grep -c '\"electron-vite dev\"' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json 返回 > 0（确认 dev script 使用 electron-vite）"
+    ],
+    "verification": "node -e \"const p = require('D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json'); console.log('name:', p.name); console.log('productName:', p.productName); console.log('scripts:', Object.keys(p.scripts).join(', ')); console.log('dep count:', Object.keys(p.dependencies||{}).length); console.log('devDep count:', Object.keys(p.devDependencies||{}).length);\"",
+    "definition_of_done": "package.json 已改造完成，name/productName/scripts 正确，dependencies 已裁剪移除 Sentry/PostHog/Stripe/Superset workspace 依赖"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json",
+      "action": "modify",
+      "target": "package.json",
+      "change": "大幅改造：更新 name/productName/scripts/dependencies/devDependencies"
+    }
+  ],
+  "implementation": [
+    "读取 D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json 当前内容",
+    "读取 D:/WorkSpace/Source/superset/apps/desktop/package.json 作为参考",
+    "更新 name/productName/description/main/resources/repository/author 字段",
+    "替换 scripts 为 electron-vite 构建脚本",
+    "构建 dependencies 列表：从 Superset 版本中筛选保留核心依赖，移除 Sentry/PostHog/Stripe/@superset/* 等",
+    "构建 devDependencies 列表：保留构建工具链，移除 @sentry/vite-plugin/code-inspector-plugin/@superset/typescript",
+    "确保版本号与 Superset 源保持一致（便于后续升级）",
+    "写入最终 JSON"
+  ],
+  "test": {
+    "commands": [
+      "node -e \"JSON.parse(require('fs').readFileSync('D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json','utf8'))\" && echo 'Valid JSON'",
+      "grep -c '@sentry\\|posthog' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["JSON 格式有效", "无 Sentry/PostHog/Stripe 依赖", "scripts 包含 electron-vite 命令"]
+  },
+  "reference": {
+    "pattern": "Merge existing oh-my-maestro package.json with Superset desktop package.json, keeping only needed deps",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/package.json",
+      "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/package.json"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "以 Superset 的 package.json 为蓝本，保留核心依赖结构，移除排除范围内的依赖。这是最复杂的任务，因为依赖列表很长且需要逐项判断。",
+    "decision_factors": [
+      "Sentry (@sentry/electron, @sentry/vite-plugin) 是排除范围",
+      "PostHog (posthog-js, posthog-node) 是排除范围",
+      "Stripe (@better-auth/stripe) 是排除范围",
+      "@superset/* workspace 依赖在 oh-my-maestro 中不存在，需要移除或替换为 @oh-my-maestro/*",
+      "核心依赖（React/tRPC/electron-vite/electron-builder/TanStack/tiptap/CodeMirror/xterm）是 Desktop 应用必需的"
+    ],
+    "tradeoffs": "依赖版本号保持与 Superset 源一致，但实际安装时可能需要调整。部分依赖（如 @tanstack/db, @electric-sql/client）在 oh-my-maestro 中可能暂不需要，但保留它们不会造成问题。"
+  },
+  "risks": [
+    "依赖列表裁剪可能遗漏实际需要的包或保留不需要的包，需要在 TASK-010 bun install 中验证",
+    "workspace 依赖 (@oh-my-maestro/*) 在 monorepo 其他包创建之前无法解析"
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "40m",
+    "risk": "high",
+    "autonomous": true,
+    "checkpoint": true,
+    "wave": 5,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

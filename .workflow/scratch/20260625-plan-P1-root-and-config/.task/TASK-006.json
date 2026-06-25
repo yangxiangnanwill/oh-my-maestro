@@ -1,0 +1,95 @@
+{
+  "id": "TASK-006",
+  "title": "创建 electron-builder.ts — Electron 打包配置",
+  "description": "从 Superset 的 electron-builder.ts 复制并改造。替换 appId 为 com.maestro-flow.desktop，productName 为 Maestro，publish 仓库为 oh-my-maestro，移除 Mac 特定 entitlements（如不需要 Mac 支持），调整 deep link protocol scheme。",
+  "type": "create",
+  "priority": "high",
+  "effort": "medium",
+  "action": "CREATE D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts — 从 D:/WorkSpace/Source/superset/apps/desktop/electron-builder.ts 复制并改造：\n1) appId: 'com.superset.desktop' → 'com.maestro-flow.desktop'\n2) productName 从 pkg.productName 读取（将由 TASK-007 的 package.json 设置为 'Maestro'）\n3) copyright 中 author 从 pkg.author?.name 读取\n4) publish.owner: 'superset-sh' → 'yangxiangnanwill'，publish.repo: 'superset' → 'oh-my-maestro'\n5) mac 部分：移除 entitlements/entitlementsInherit 引用（如不需要 Mac 签名），移除 extendInfo 中的 NSMicrophoneUsageDescription/NSLocalNetworkUsageDescription/NSBonjourServices/NSAppleEventsUsageDescription（如不需要 Mac 权限），移除 notarize 设置\n6) protocols.schemes: ['superset'] → ['maestro']\n7) linux.artifactName: 'superset-...' → 'Maestro-...'\n8) win.artifactName: 保持 ${productName}-${pkg.version}-${arch}.${ext} 模式\n9) dmg 部分：如不需要 Mac 构建则移除\n10) 移除 generateUpdatesFilesForAllChannels（如不需要自动更新）\n11) 移除 extraResources 中的 migrations 和 bin（如不需要）\n12) 移除 files 中的 packagedNodeModuleCopies（如 runtime-dependencies.ts 尚未创建，使用空数组）",
+  "scope": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/",
+  "focus_paths": ["D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts"],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/electron-builder.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/runtime-dependencies.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron.vite.config.ts"
+  ],
+  "depends_on": ["TASK-005"],
+  "parallel_group": null,
+  "convergence": {
+    "criteria": [
+      "grep -c 'com\\.maestro-flow\\.desktop' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts 返回 > 0（确认 appId 已替换）",
+      "grep -c 'superset-sh\\|superset\\.sh\\|com\\.superset' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts 返回 0（确认 Superset 品牌已移除）",
+      "grep -c 'oh-my-maestro' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts 返回 > 0（确认仓库名已替换）",
+      "grep -c \"'maestro'\" D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts 返回 > 0（确认 deep link scheme 已替换）"
+    ],
+    "verification": "grep -E 'appId|productName|publish|schemes' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts",
+    "definition_of_done": "electron-builder.ts 文件存在，appId/productName/publish/schemes 已替换为 Maestro-flow 值，无 Superset 品牌残留"
+  },
+  "files": [
+    {
+      "path": "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts",
+      "action": "create",
+      "target": "electron-builder.ts",
+      "change": "从 Superset 复制并改造：替换 appId/productName/publish/schemes，移除 Mac entitlements"
+    }
+  ],
+  "implementation": [
+    "读取 D:/WorkSpace/Source/superset/apps/desktop/electron-builder.ts 完整内容",
+    "复制文件内容到目标路径",
+    "替换 appId: 'com.superset.desktop' → 'com.maestro-flow.desktop'",
+    "替换 publish.owner: 'superset-sh' → 'yangxiangnanwill'",
+    "替换 publish.repo: 'superset' → 'oh-my-maestro'",
+    "替换 protocols.schemes: ['superset'] → ['maestro']",
+    "替换 linux.artifactName: 'superset-...' → 'Maestro-...'",
+    "移除 mac.entitlements 和 mac.entitlementsInherit 引用",
+    "移除 mac.extendInfo 中的 NSMicrophoneUsageDescription/NSLocalNetworkUsageDescription/NSBonjourServices/NSAppleEventsUsageDescription",
+    "移除 mac.notarize",
+    "移除 dmg 配置（如不需要 Mac 构建）",
+    "移除 generateUpdatesFilesForAllChannels",
+    "移除 extraResources（migrations/bin）",
+    "移除 files 中的 packagedNodeModuleCopies 引用（使用空数组占位）",
+    "移除 packagedAsarUnpackGlobs 引用（使用空数组占位）",
+    "保留 npmRebuild: true",
+    "保留 win/nsis 配置"
+  ],
+  "test": {
+    "commands": [
+      "grep -c 'superset' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts",
+      "grep -c 'maestro-flow' D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/electron-builder.ts"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["无 Superset 品牌引用", "appId 为 com.maestro-flow.desktop", "publish repo 为 oh-my-maestro"]
+  },
+  "reference": {
+    "pattern": "Adapt Superset electron-builder.ts — replace branding, remove Mac entitlements",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/electron-builder.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/runtime-dependencies.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "从 Superset 源文件复制后改造。electron-builder 配置结构标准化，改造点明确（appId/productName/publish/schemes）。保留跨平台构建框架（win/linux），移除 Mac 特定签名和权限配置。",
+    "decision_factors": [
+      "oh-my-maestro 可能不需要 Mac 构建支持，但保留 linux/win 配置",
+      "appId 遵循反向域名约定：com.maestro-flow.desktop",
+      "publish 仓库指向 yangxiangnanwill/oh-my-maestro",
+      "deep link scheme 改为 'maestro'"
+    ],
+    "tradeoffs": "移除 Mac entitlements 意味着 macOS 构建需要后续补充签名配置"
+  },
+  "risks": [
+    "runtime-dependencies.ts 的 packagedNodeModuleCopies 和 packagedAsarUnpackGlobs 导出如果不存在，需要临时使用空数组"
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "20m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 4,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}
