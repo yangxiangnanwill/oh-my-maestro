@@ -47,3 +47,16 @@
 {"type":"cli","id":"CLI-1782288250152-1","timestamp":"2026-06-24T08:04:10.152Z","command":"spec load","args":{"category":"coding","stdin":false}}
 {"type":"cli","id":"CLI-1782300934350-1","timestamp":"2026-06-24T11:35:34.350Z","command":"load","args":{"type":"spec","category":"coding"}}
 {"type":"cli","id":"CLI-1782301917521-1","timestamp":"2026-06-24T11:51:57.521Z","command":"load","args":{"type":"spec","category":"debug"}}
+{"type":"cli","id":"CLI-1782336782520-1","timestamp":"2026-06-24T21:33:02.520Z","command":"load","args":{"type":"spec","category":"arch"}}
+{"type":"cli","id":"CLI-1782336790822-1","timestamp":"2026-06-24T21:33:10.822Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782349198377-1","timestamp":"2026-06-25T00:59:58.377Z","command":"load","args":{"type":"spec","category":"arch"}}
+{"type":"cli","id":"CLI-1782350695124-1","timestamp":"2026-06-25T01:24:55.124Z","command":"load","args":{"type":"spec","category":"arch"}}
+{"type":"cli","id":"CLI-1782350705689-1","timestamp":"2026-06-25T01:25:05.689Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782353627403-1","timestamp":"2026-06-25T02:13:47.403Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782357304453-1","timestamp":"2026-06-25T03:15:04.453Z","command":"load","args":{"type":"spec","category":"arch"}}
+{"type":"cli","id":"CLI-1782357318066-1","timestamp":"2026-06-25T03:15:18.066Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782368914102-1","timestamp":"2026-06-25T06:28:34.102Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782370922768-1","timestamp":"2026-06-25T07:02:02.768Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782372551479-1","timestamp":"2026-06-25T07:29:11.479Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782372582822-1","timestamp":"2026-06-25T07:29:42.822Z","command":"load","args":{"type":"spec","category":"arch"}}
+{"type":"cli","id":"CLI-1782372599400-1","timestamp":"2026-06-25T07:29:59.400Z","command":"load","args":{"type":"session","list":true}}
