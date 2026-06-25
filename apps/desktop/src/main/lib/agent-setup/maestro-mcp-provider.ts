@@ -542,8 +542,11 @@ async function tryMcpHandshake(mcpSdk: {
     state.startError = message;
 
     // Clean up failed process
-    if (childProcess && !childProcess.killed) {
-      childProcess.kill();
+    if (childProcess != null) {
+      const proc: ChildProcess = childProcess;
+      if (!proc.killed) {
+        proc.kill();
+      }
       childProcess = null;
     }
   }

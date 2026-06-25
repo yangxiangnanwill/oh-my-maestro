@@ -1,9 +1,12 @@
 import { exec } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
-import path from "node:path";
 import defaultShell from "default-shell";
-import { env } from "shared/env.shared";
+// Phase 3 stub — replace with shared/env.shared in Phase 4
+const env = {
+  DESKTOP_NOTIFICATIONS_PORT: Number(process.env.DESKTOP_NOTIFICATIONS_PORT) || 11434,
+  NODE_ENV: process.env.NODE_ENV || "production",
+};
 import { getShellEnv } from "../agent-setup/shell-wrappers";
 
 const MACOS_SYSTEM_CERT_FILE = "/etc/ssl/cert.pem";
@@ -20,13 +23,6 @@ let cachedMacosSystemCertAvailable: boolean | null = null;
 
 function startLocaleProbe(): void {
 	if (cachedUtf8Locale || localeProbeInFlight) return;
-
-	// Windows has no `locale` command — skip the probe and use a UTF-8 default.
-	if (os.platform() === "win32") {
-		cachedUtf8Locale = "en_US.UTF-8";
-		return;
-	}
-
 	localeProbeInFlight = true;
 
 	exec(
@@ -89,19 +85,7 @@ export function getDefaultShell(): string {
 	const platform = os.platform();
 
 	if (platform === "win32") {
-		// Prefer PowerShell over CMD for better terminal experience (ANSI colors,
-		// tab completion, scripting). Try pwsh.exe (PowerShell 7) first, then
-		// built-in Windows PowerShell, then fall back to COMSPEC/cmd.exe.
-		const pwshPath = "C:\\Program Files\\PowerShell\\7\\pwsh.exe";
-		const builtinPsPath =
-			"C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe";
-		if (fs.existsSync(pwshPath)) {
-			return pwshPath;
-		}
-		if (fs.existsSync(builtinPsPath)) {
-			return builtinPsPath;
-		}
-		return process.env.COMSPEC || "cmd.exe";
+		return process.env.COMSPEC || "powershell.exe";
 	}
 
 	if (process.env.SHELL) {
@@ -274,7 +258,6 @@ const ALLOWED_ENV_VARS = new Set([
 	"BUN_INSTALL",
 	"PNPM_HOME",
 	"VOLTA_HOME",
-	"MAESTRO_HOME",
 	"ASDF_DIR",
 	"ASDF_DATA_DIR",
 	"FNM_DIR",
@@ -501,8 +484,6 @@ export function buildTerminalEnv(params: {
 		SUPERSET_ENV: env.NODE_ENV === "development" ? "development" : "production",
 		// Hook protocol version for forward compatibility
 		SUPERSET_HOOK_VERSION: HOOK_PROTOCOL_VERSION,
-		// Maestro-flow home directory for config, workflows, and agent definitions
-		MAESTRO_HOME: path.join(os.homedir(), ".maestro"),
 	};
 
 	delete terminalEnv.GOOGLE_API_KEY;

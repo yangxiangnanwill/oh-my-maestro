@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@main/*": ["./src/main/*"],
+      "@renderer/*": ["./src/renderer/*"],
+      "@preload/*": ["./src/preload/*"],
+      "@shared/*": ["./src/lib/*"],
+      "main/*": ["./src/main/*"],
+      "shared/*": ["./src/lib/*"],
+      "@superset/local-db": ["./src/main/lib/local-db/index.ts"],
+      "@superset/shared/agent-command": ["./src/main/lib/agent-setup/desktop-agent-capabilities.ts"],
+      "@superset/shared/host-info": ["./src/main/lib/host-service-coordinator.ts"],
+      "@superset/shared/constants": ["./src/lib/shared/constants.ts"],
+      "@superset/pty-daemon/process-tree": ["./src/main/lib/terminal-host/client.ts"],
+      "@superset/port-scanner": ["./src/main/lib/terminal/port-manager.ts"],
+      "@superset/mcp-v2/tools/register": ["./src/main/lib/agent-setup/superset-registry.d.ts"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts",
+    "index.d.ts",
+    "electron.vite.config.ts",
+    "electron-builder.ts",
+    "electron-builder.canary.ts",
+    "runtime-dependencies.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "dist-electron",
+    "release",
+    "src/main/lib/agent-setup/templates"
+  ]
+}

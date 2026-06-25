@@ -1,4 +1,5 @@
-import type { AgentType } from "@superset/shared/agent-command";
+// Phase 3 stub — replace with @superset/shared/agent-command in Phase 4
+type AgentType = string;
 
 export type SupersetManagedBinary = AgentType;
 

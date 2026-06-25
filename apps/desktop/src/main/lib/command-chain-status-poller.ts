@@ -80,30 +80,29 @@ function validateStatus(data: unknown): CommandChainStatus | null {
 		return null;
 	}
 
-	const steps: CommandChainStep[] = data.steps.map((step: unknown) => {
-		// null 元素防御：拒绝 null 或非对象元素
-		if (step === null || typeof step !== "object") {
-			return null;
-		}
-		if (!isRecord(step)) {
-			return null;
-		}
-		return {
-			id: String(step.id ?? ""),
-			label: String(step.label ?? ""),
-			status: validateStepState(step.status),
-			startedAt: typeof step.startedAt === "string" ? step.startedAt : undefined,
-			completedAt:
-				typeof step.completedAt === "string" ? step.completedAt : undefined,
-			error: typeof step.error === "string" ? step.error : undefined,
-		};
-	}).filter((s): s is CommandChainStep => s !== null);
+	const filteredSteps = data.steps
+		.map((step: unknown) => {
+			if (step === null || typeof step !== "object") {
+				return null;
+			}
+			if (!isRecord(step)) {
+				return null;
+			}
+			return {
+				id: String(step.id ?? ""),
+				label: String(step.label ?? ""),
+				status: validateStepState(step.status),
+				startedAt: typeof step.startedAt === "string" ? step.startedAt : undefined,
+				completedAt:
+					typeof step.completedAt === "string" ? step.completedAt : undefined,
+				error: typeof step.error === "string" ? step.error : undefined,
+			};
+		})
+		.filter((s): s is NonNullable<typeof s> => s !== null);
+	const steps: CommandChainStep[] = filteredSteps;
 
-	const decisionNodes: CommandChainDecisionNode[] = Array.isArray(
-		data.decisionNodes,
-	)
+	const filteredNodes = Array.isArray(data.decisionNodes)
 		? data.decisionNodes.map((node: unknown) => {
-				// null 元素防御：拒绝 null 或非对象元素
 				if (node === null || typeof node !== "object") {
 					return null;
 				}
@@ -123,8 +122,9 @@ function validateStatus(data: unknown): CommandChainStatus | null {
 							: undefined,
 					resolved: Boolean(node.resolved),
 				};
-			}).filter((n): n is CommandChainDecisionNode => n !== null)
+			}).filter((n): n is NonNullable<typeof n> => n !== null)
 		: [];
+	const decisionNodes: CommandChainDecisionNode[] = filteredNodes;
 
 	return {
 		steps,

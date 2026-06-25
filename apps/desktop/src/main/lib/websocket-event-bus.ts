@@ -135,7 +135,7 @@ function encodePongFrame(data?: Buffer): Buffer {
  */
 function parseFrames(
   buffer: Buffer,
-): { messages: string[]; remaining: Buffer } {
+): { messages: string[]; remaining: Buffer<ArrayBuffer> } {
   const messages: string[] = [];
   let offset = 0;
 
@@ -204,7 +204,7 @@ function parseFrames(
     messages.push(data.toString("utf-8"));
   }
 
-  return { messages, remaining: buffer.subarray(offset) };
+  return { messages, remaining: buffer.subarray(offset) as Buffer<ArrayBuffer> };
 }
 
 // ---------------------------------------------------------------------------
