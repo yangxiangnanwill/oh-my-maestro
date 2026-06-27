@@ -7,7 +7,13 @@
  */
 
 export class ProcessSignalError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    public readonly error: Error,
+    public readonly target: "pid" | "pgid",
+    public readonly signal: string,
+    public readonly id: number,
+  ) {
     super(message);
     this.name = "ProcessSignalError";
   }
@@ -23,6 +29,8 @@ export interface ProcessSignalTarget {
 
 export function signalProcessTargets(
   _targets: ProcessSignalTarget[],
+  _signal?: string,
+  _onError?: (target: ProcessSignalTarget, error: Error) => void,
 ): Promise<void> {
   // Stub
   return Promise.resolve();
@@ -31,7 +39,11 @@ export function signalProcessTargets(
 export function signalProcessTreeAndGroups(
   _pid: number,
   _signal?: string,
-): Promise<void> {
+  _options?: {
+    signalPids?: boolean;
+    onSignalError?: (error: ProcessSignalError) => void;
+  },
+): ProcessSignalTarget[] {
   // Stub
-  return Promise.resolve();
+  return [];
 }
