@@ -1,0 +1,10 @@
+{
+  "target": "react",
+  "routesDirectory": "./src/renderer/routes",
+  "generatedRouteTree": "./src/renderer/routeTree.gen.ts",
+  "indexToken": "page",
+  "routeToken": "layout",
+  "routeFileIgnorePrefix": "-",
+  "autoCodeSplitting": true,
+  "routeFileIgnorePattern": "^(?!(__root|page|layout)\\.tsx$).*\\.(tsx?|jsx?)$"
+}
