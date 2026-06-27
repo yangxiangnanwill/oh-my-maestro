@@ -80,9 +80,7 @@
     "dist-electron",
     "release",
     "src/main/lib/agent-setup/templates",
-    "src/main/index.full.ts",
     "src/main/terminal-host/pty-subprocess.ts",
-    "src/renderer/routes/-layout.tsx",
     "src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx"
   ]
 }
