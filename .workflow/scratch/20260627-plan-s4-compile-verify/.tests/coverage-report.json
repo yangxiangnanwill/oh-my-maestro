@@ -1,0 +1,19 @@
+{
+  "target": "S4",
+  "generated_at": "2026-06-27T21:40:00+08:00",
+  "requirements_covered": [
+    "TASK-001.criteria (npm deps)",
+    "TASK-006.criteria (routeTree)",
+    "TASK-007.criteria (type errors)",
+    "TASK-008.criteria (build + exclude)",
+    "SEC-001 (XSS risk)",
+    "BP-001 (noImplicitAny)"
+  ],
+  "requirements_uncovered": [
+    "TASK-002.criteria (stub props — compile-time only)",
+    "TASK-003.criteria (store modules — compile-time only)",
+    "TASK-004.criteria (process-tree-stub — compile-time only)",
+    "TASK-005.criteria (missing files — compile-time only)"
+  ],
+  "coverage_percentage": 60.0
+}

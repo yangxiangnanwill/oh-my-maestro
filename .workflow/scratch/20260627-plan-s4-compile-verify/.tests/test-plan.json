@@ -1,0 +1,85 @@
+{
+  "target": "S4",
+  "generated_at": "2026-06-27T21:35:00+08:00",
+  "tests": [
+    {
+      "id": "T-001",
+      "name": "TypeScript 编译零错误",
+      "category": "integration",
+      "expected": "cd apps/desktop && bun run typecheck 退出码为 0，无任何 error TS 输出",
+      "requirement_ref": "TASK-007.criteria[0], TASK-008.criteria[2]"
+    },
+    {
+      "id": "T-002",
+      "name": "electron-vite 构建成功",
+      "category": "integration",
+      "expected": "cd apps/desktop && bun run build 退出码为 0，三个目标 (main, preload, renderer) 全部构建成功",
+      "requirement_ref": "TASK-008.criteria[3]"
+    },
+    {
+      "id": "T-003",
+      "name": "构建产物完整性",
+      "category": "integration",
+      "expected": "dist/main/index.js, dist/preload/index.mjs, dist/renderer/index.html 三个文件均存在且非空",
+      "requirement_ref": "TASK-008.criteria[4-6]"
+    },
+    {
+      "id": "T-004",
+      "name": "tsconfig exclude 已清理",
+      "category": "unit",
+      "expected": "tsconfig.json exclude 列表中不包含 index.full.ts 和 -layout.tsx，DashboardSidebar.tsx 保持排除",
+      "requirement_ref": "TASK-008.criteria[0-1]"
+    },
+    {
+      "id": "T-005",
+      "name": "npm 依赖完整性",
+      "category": "integration",
+      "expected": "bun install 无错误，package.json 包含所有关键依赖 (@tiptap/core, tippy.js, streamdown, @xterm/addon-fit, @radix-ui/react-slot 等)",
+      "requirement_ref": "TASK-001.criteria[0,2]"
+    },
+    {
+      "id": "T-006",
+      "name": "routeTree.gen.ts 完整性",
+      "category": "unit",
+      "expected": "routeTree.gen.ts 不包含 @ts-nocheck，FileRoutesByFullPath 不为空对象",
+      "requirement_ref": "TASK-006.criteria[0-1]"
+    },
+    {
+      "id": "T-007",
+      "name": "测试套件运行",
+      "category": "integration",
+      "expected": "bun test 运行完成（允许 Windows 环境预存失败，但不应有新增失败）",
+      "requirement_ref": "TASK-008.notes"
+    },
+    {
+      "id": "T-008",
+      "name": "审查高危发现 — XSS 风险",
+      "category": "integration",
+      "expected": "MarkdownEditor.tsx 中 html: true 确认是 Phase 3 stub 阶段的已知风险，有对应的 TODO/Phase 4 计划",
+      "requirement_ref": "SEC-001 (review finding)"
+    },
+    {
+      "id": "T-009",
+      "name": "审查高危发现 — noImplicitAny",
+      "category": "unit",
+      "expected": "tsconfig.json 中 noImplicitAny: false 确认为临时措施，有对应的 Phase 4 恢复计划",
+      "requirement_ref": "BP-001 (review finding)"
+    }
+  ],
+  "coverage": {
+    "requirements_mapped": [
+      "TASK-001.criteria",
+      "TASK-006.criteria",
+      "TASK-007.criteria",
+      "TASK-008.criteria",
+      "SEC-001",
+      "BP-001"
+    ],
+    "requirements_unmapped": [
+      "TASK-002.criteria (stub props 扩展 — 编译期验证，无运行时测试)",
+      "TASK-003.criteria (store 模块创建 — 编译期验证)",
+      "TASK-004.criteria (process-tree-stub 签名 — 编译期验证)",
+      "TASK-005.criteria (缺失文件补充 — 编译期验证)"
+    ]
+  }
+}
