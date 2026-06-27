@@ -1,0 +1,36 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "analyze",
+    "artifact_id": "ANL-011",
+    "session_path": ".workflow/scratch/20260626-analyze-S3-P4-shared-layer/",
+    "generated_at": "2026-06-26T12:00:00+08:00"
+  },
+  "requirements": [],
+  "constraints": [
+    { "status": "locked", "title": "保留 oh-my-maestro 独有路由", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "排除 Mac 特有权限", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "排除 GitHub 集成", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "Sentry 标记为可选", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "目录结构保持", "ref": "context.md#Locked" },
+    { "status": "open", "title": "superjson 是否启用", "ref": "context.md#Free" },
+    { "status": "open", "title": "ADAPT 路由替换逻辑", "ref": "context.md#Free" },
+    { "status": "deferred", "title": "Sentry 完整集成", "ref": "context.md#Deferred" },
+    { "status": "deferred", "title": "GitHub PR/Issue 路由", "ref": "context.md#Deferred" }
+  ],
+  "domain": {},
+  "non_goals": [
+    { "title": "Sentry 完整集成", "rationale": "推迟到 Phase 5 或独立 Phase", "ref": "context.md#Deferred" },
+    { "title": "GitHub PR/Issue 路由", "rationale": "独立 Phase（如果需要）", "ref": "context.md#Deferred" },
+    { "title": "PostHog 分析", "rationale": "永久排除", "ref": "context.md#Deferred" }
+  ],
+  "insights": [
+    { "role": "analyzer", "area": "迁移范围", "summary": "S3 Phase 4 需迁移 ~60 个文件：33 路由 + electron-app(~6) + workers(3) + window-loader(1)。当前全部为 Phase 3 stub。" },
+    { "role": "analyzer", "area": "分类", "summary": "DIRECT_COPY ~24 模块（可直接复制），ADAPT ~7 模块（需替换 Superset 引用），KEEP 2 模块（command-chain, maestro），EXCLUDE 3 类（Mac 权限、GitHub、Sentry）" },
+    { "role": "analyzer", "area": "执行策略", "summary": "分 4 Wave：Wave 1 基础层 → Wave 2 DIRECT_COPY 并行 → Wave 3 ADAPT 串行 → Wave 4 编译验证" }
+  ],
+  "open_questions": [],
+  "references": [
+    { "type": "analysis", "path": "context.md" }
+  ]
+}

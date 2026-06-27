@@ -15,6 +15,7 @@ export const env = createEnv({
 			.enum(["development", "production", "test"])
 			.default("development"),
 		DESKTOP_VITE_PORT: z.string().default("5173"),
+		NEXT_PUBLIC_API_URL: z.string().default("https://api.maestro.sh"),
 		ANTHROPIC_API_KEY: z.string().optional(),
 		OPENAI_API_KEY: z.string().optional(),
 	},
@@ -23,6 +24,7 @@ export const env = createEnv({
 		...process.env,
 		NODE_ENV: process.env.NODE_ENV,
 		DESKTOP_VITE_PORT: process.env.DESKTOP_VITE_PORT,
+		NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
 		ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
 		OPENAI_API_KEY: process.env.OPENAI_API_KEY,
 	},

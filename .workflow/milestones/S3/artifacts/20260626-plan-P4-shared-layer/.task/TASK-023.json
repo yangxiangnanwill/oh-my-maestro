@@ -1,0 +1,103 @@
+{
+  "id": "TASK-023",
+  "title": "创建 electron-app/ 目录：factories + utils",
+  "description": "从 Superset 复制 electron-app/ 完整目录（4 个文件：app/instance.ts、app/setup.ts、windows/create.ts、utils/ignore-console-warnings.ts），替换 import 路径",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\lib\\electron-app/ 全部 4 个文件到 D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\lib\\electron-app/，替换所有 @superset 引用为 tsconfig paths 别名",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/electron-app/",
+  "focus_paths": [
+    "apps/desktop/src/lib/electron-app/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/electron-app/factories/app/instance.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/electron-app/factories/app/setup.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/electron-app/factories/windows/create.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/electron-app/utils/ignore-console-warnings.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -f apps/desktop/src/lib/electron-app/factories/app/instance.ts",
+      "test -f apps/desktop/src/lib/electron-app/factories/app/setup.ts",
+      "test -f apps/desktop/src/lib/electron-app/factories/windows/create.ts",
+      "test -f apps/desktop/src/lib/electron-app/utils/ignore-console-warnings.ts",
+      "! grep -r '@superset' apps/desktop/src/lib/electron-app/"
+    ],
+    "verification": "find apps/desktop/src/lib/electron-app -type f | sort && echo '---' && grep -r '@superset' apps/desktop/src/lib/electron-app/ | wc -l | grep '^0$'",
+    "definition_of_done": "electron-app/ 目录包含全部 4 个文件，无 @superset 引用残留"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/electron-app/factories/app/instance.ts",
+      "action": "create",
+      "target": "Electron app 实例工厂",
+      "change": "从 Superset 复制并替换 import 路径"
+    },
+    {
+      "path": "apps/desktop/src/lib/electron-app/factories/app/setup.ts",
+      "action": "create",
+      "target": "Electron app setup 工厂",
+      "change": "从 Superset 复制并替换 import 路径"
+    },
+    {
+      "path": "apps/desktop/src/lib/electron-app/factories/windows/create.ts",
+      "action": "create",
+      "target": "窗口创建工厂",
+      "change": "从 Superset 复制并替换 import 路径"
+    },
+    {
+      "path": "apps/desktop/src/lib/electron-app/utils/ignore-console-warnings.ts",
+      "action": "create",
+      "target": "控制台警告过滤工具",
+      "change": "从 Superset 复制并替换 import 路径"
+    }
+  ],
+  "implementation": [
+    "Step 1: 创建目录结构 apps/desktop/src/lib/electron-app/factories/app/",
+    "Step 2: 创建目录结构 apps/desktop/src/lib/electron-app/factories/windows/",
+    "Step 3: 创建目录结构 apps/desktop/src/lib/electron-app/utils/",
+    "Step 4: 逐个复制 4 个文件",
+    "Step 5: 替换 @superset 引用为 tsconfig paths 别名",
+    "Step 6: 验证无 @superset 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -i electron-app | head -20"
+    ],
+    "success_metrics": [
+      "4 个文件全部存在",
+      "无 @superset 引用残留",
+      "TypeScript 编译通过"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset electron-app 目录结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/electron-app/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "完整复制目录结构，替换 @superset import 路径",
+    "decision_factors": [
+      "electron-app 是 Electron 应用生命周期管理的基础层",
+      "文件与 Superset 品牌无关，可直接复制",
+      "import 路径替换通过 tsconfig paths 完成"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "instance.ts 和 setup.ts 可能引用 oh-my-maestro 中不存在的模块"
+  ],
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": true
+  }
+}

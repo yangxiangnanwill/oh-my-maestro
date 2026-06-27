@@ -1,0 +1,104 @@
+{
+  "id": "TASK-043",
+  "title": "Wave 2: lib/ 终端系统 — terminal/ + agent-session-orchestrator/ + agent-launch-command",
+  "description": "批量迁移 lib/ 终端相关模块：terminal/（~37 files，xterm 终端核心）、agent-session-orchestrator/（6 files，Agent 会话编排）、agent-launch-command.ts（Agent 启动命令）。terminal/ 是最大的 lib 子模块，包含链接检测、剪贴板、字体、WebSocket 传输等。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "从 Superset 源复制 terminal/（~37 files）、agent-session-orchestrator/（6 files）、agent-launch-command.ts（含 .test.ts）到 apps/desktop/src/renderer/lib/；terminal/ 中的 ADAPT 文件（terminal-ws-transport.ts、links/link-resolver.ts、links/local-link-detector.ts）需替换 @superset 引用",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/lib/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/lib/terminal/",
+    "apps/desktop/src/renderer/lib/agent-session-orchestrator/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/terminal/terminal-runtime.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/terminal/terminal-ws-transport.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/terminal/links/link-resolver.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/agent-session-orchestrator/agent-session-orchestrator.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/agent-launch-command.ts"
+  ],
+  "depends_on": ["TASK-039"],
+  "wave": 2,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/lib/terminal/ && test -f apps/desktop/src/renderer/lib/terminal/terminal-runtime.ts",
+      "test -d apps/desktop/src/renderer/lib/terminal/links/ && test -f apps/desktop/src/renderer/lib/terminal/links/link-detector-adapter.ts",
+      "test -d apps/desktop/src/renderer/lib/agent-session-orchestrator/ && test -f apps/desktop/src/renderer/lib/agent-session-orchestrator/index.ts",
+      "test -f apps/desktop/src/renderer/lib/agent-launch-command.ts",
+      "! grep -r '@superset' apps/desktop/src/renderer/lib/terminal/terminal-ws-transport.ts",
+      "! grep -r '@superset' apps/desktop/src/renderer/lib/terminal/links/link-resolver.ts"
+    ],
+    "verification": "find apps/desktop/src/renderer/lib/terminal/ -type f | wc -l && find apps/desktop/src/renderer/lib/agent-session-orchestrator/ -type f | wc -l",
+    "definition_of_done": "terminal/（~37 files）、agent-session-orchestrator/（6 files）、agent-launch-command.ts（+ test）均就位，ADAPT 文件的 @superset 引用已替换"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/lib/terminal/",
+      "action": "create",
+      "target": "xterm 终端系统",
+      "change": "从 Superset 源复制全部 ~37 files；terminal-ws-transport.ts、links/link-resolver.ts、links/local-link-detector.ts 需替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/agent-session-orchestrator/",
+      "action": "create",
+      "target": "Agent 会话编排",
+      "change": "从 Superset 源复制全部 6 files（adapters/chat-adapter.ts、adapters/terminal-adapter.ts 需替换 @superset 引用）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/agent-launch-command.ts",
+      "action": "create",
+      "target": "Agent 启动命令",
+      "change": "从 Superset 源复制（含 agent-launch-command.test.ts）"
+    }
+  ],
+  "implementation": [
+    "Step 1: 批量复制 terminal/ 全部文件（~37 files）",
+    "Step 2: 编辑 terminal/terminal-ws-transport.ts：替换 @superset 引用为本地路径或移除",
+    "Step 3: 编辑 terminal/links/link-resolver.ts：替换 @superset 引用",
+    "Step 4: 编辑 terminal/links/local-link-detector.ts：替换 @superset 引用",
+    "Step 5: 复制 agent-session-orchestrator/ 全部文件（6 files）",
+    "Step 6: 编辑 agent-session-orchestrator/adapters/chat-adapter.ts：替换 @superset 引用",
+    "Step 7: 编辑 agent-session-orchestrator/adapters/terminal-adapter.ts：替换 @superset 引用",
+    "Step 8: 复制 agent-launch-command.ts + agent-launch-command.test.ts"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "terminal/ 目录包含 ~37 个文件",
+      "agent-session-orchestrator/ 包含 6 个文件",
+      "ADAPT 文件无 @superset 引用残留",
+      "所有 import 路径正确"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset terminal/ 模块结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/terminal/",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/agent-session-orchestrator/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "批量复制 terminal/ 全部文件，对含 @superset 引用的 3 个文件进行适配替换",
+    "decision_factors": [
+      "terminal/ 是最大的 lib 子模块（~37 files），是终端功能的核心",
+      "大部分文件是 DIRECT_COPY，仅 3 个文件需要 ADAPT",
+      "agent-session-orchestrator/ 是 Agent 与终端交互的桥梁"
+    ],
+    "tradeoffs": "terminal/ 中的 @superset 引用可能涉及 @superset/api-types（外部包），需确认是否已安装或需要 stub"
+  },
+  "risks": [
+    "terminal-ws-transport.ts 可能依赖 @superset/api-types 的 WebSocket 类型定义",
+    "agent-session-orchestrator 的 adapter 文件可能依赖 @superset 的 Agent 类型"
+  ],
+  "meta": {
+    "estimated_time": "40m",
+    "risk": "medium",
+    "autonomous": false
+  }
+}

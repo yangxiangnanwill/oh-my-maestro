@@ -1,0 +1,95 @@
+{
+  "id": "TASK-051",
+  "title": "Wave 5: MarkdownEditor + MarkdownRenderer 组件迁移",
+  "description": "迁移 Superset 的 MarkdownEditor（21 files，Tiptap 富文本编辑器）和 MarkdownRenderer（25 files，Markdown 渲染器）组件。这两个组件是最大的通用组件模块，包含 Tiptap 集成、代码块渲染、文件引用节点等。需要适配 @superset 引用。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "从 Superset 源复制 MarkdownEditor/（21 files）和 MarkdownRenderer/（25 files）到 apps/desktop/src/renderer/components/；替换所有 @superset 引用",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/components/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/MarkdownEditor/",
+    "apps/desktop/src/renderer/components/MarkdownRenderer/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/MarkdownEditor/MarkdownEditor.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/MarkdownRenderer/MarkdownRenderer.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/MarkdownEditor/components/CodeBlockView/CodeBlockView.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/MarkdownRenderer/components/CodeBlock/CodeBlock.tsx"
+  ],
+  "depends_on": ["TASK-050"],
+  "wave": 5,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/components/MarkdownEditor/ && test -f apps/desktop/src/renderer/components/MarkdownEditor/MarkdownEditor.tsx",
+      "test -d apps/desktop/src/renderer/components/MarkdownRenderer/ && test -f apps/desktop/src/renderer/components/MarkdownRenderer/MarkdownRenderer.tsx",
+      "test -d apps/desktop/src/renderer/components/MarkdownEditor/components/CodeBlockView/",
+      "test -d apps/desktop/src/renderer/components/MarkdownRenderer/components/TipTapMarkdownRenderer/",
+      "! grep -r '@superset' apps/desktop/src/renderer/components/MarkdownEditor/ --include='*.ts' --include='*.tsx'",
+      "! grep -r '@superset' apps/desktop/src/renderer/components/MarkdownRenderer/ --include='*.ts' --include='*.tsx'",
+      "[UI-observable] MarkdownEditor 和 MarkdownRenderer 可导入且无编译错误"
+    ],
+    "verification": "find apps/desktop/src/renderer/components/MarkdownEditor/ -type f | wc -l && find apps/desktop/src/renderer/components/MarkdownRenderer/ -type f | wc -l && grep -r '@superset' apps/desktop/src/renderer/components/MarkdownEditor/ apps/desktop/src/renderer/components/MarkdownRenderer/ --include='*.ts' --include='*.tsx' | grep -v node_modules",
+    "definition_of_done": "MarkdownEditor（21 files）和 MarkdownRenderer（25 files）完整迁移，所有 @superset 引用已替换"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/MarkdownEditor/",
+      "action": "create",
+      "target": "Tiptap Markdown 编辑器",
+      "change": "从 Superset 源完整复制（21 files：主组件 + CodeBlockView + FileMention + styles），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/MarkdownRenderer/",
+      "action": "create",
+      "target": "Markdown 渲染器",
+      "change": "从 Superset 源完整复制（25 files：主组件 + CodeBlock + SelectionContextMenu + TipTapMarkdownRenderer + styles），替换 @superset 引用"
+    }
+  ],
+  "implementation": [
+    "Step 1: 完整复制 MarkdownEditor/ 目录（21 files）",
+    "Step 2: 检查 MarkdownEditor 中所有 @superset 引用并替换",
+    "Step 3: 完整复制 MarkdownRenderer/ 目录（25 files）",
+    "Step 4: 检查 MarkdownRenderer 中所有 @superset 引用并替换",
+    "Step 5: 验证所有 import 路径正确，Tiptap 扩展可用"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "MarkdownEditor 包含 21 个文件",
+      "MarkdownRenderer 包含 25 个文件",
+      "所有 @superset 引用已替换",
+      "无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset Markdown 编辑器 + 渲染器结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/MarkdownEditor/MarkdownEditor.tsx",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/MarkdownRenderer/MarkdownRenderer.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "完整迁移 MarkdownEditor 和 MarkdownRenderer 两个最大的通用组件模块",
+    "decision_factors": [
+      "MarkdownEditor 是 Chat 输入的核心（Tiptap 富文本编辑器）",
+      "MarkdownRenderer 是消息渲染的核心",
+      "两个组件合计 46 files，是最大的通用组件模块"
+    ],
+    "tradeoffs": "Tiptap 扩展可能依赖 @tiptap/ 包（需确认已安装），@superset 引用可能在 Tiptap 节点类型中"
+  },
+  "risks": [
+    "MarkdownEditor 依赖 Tiptap 扩展包（@tiptap/react、@tiptap/extension-* 等），需确认已安装",
+    "MarkdownRenderer 的 streamdown 集成可能依赖特定版本"
+  ],
+  "meta": {
+    "estimated_time": "45m",
+    "risk": "medium",
+    "autonomous": false
+  }
+}

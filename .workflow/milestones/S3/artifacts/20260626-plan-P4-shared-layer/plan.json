@@ -1,0 +1,79 @@
+{
+  "summary": "S3 Phase 4: 从 Superset 源迁移 ~60 个共享层文件到 oh-my-maestro，包括 trpc/index.ts 增强、electron-app/、trpc/workers/、window-loader.ts 及 31 个 tRPC 路由（24 DIRECT_COPY + 7 ADAPT），分 4 个 Wave 执行",
+  "approach": "Wave 1 建立基础层（trpc/index.ts 增强、electron-app、workers、window-loader）；Wave 2 批量迁移 24 个 DIRECT_COPY 路由（按功能分 5 组并行）；Wave 3 逐个适配 7 个 ADAPT 路由（串行，每个需替换 @superset 引用）；Wave 4 编译验证 + 路由合并",
+  "task_ids": [
+    "TASK-022", "TASK-023", "TASK-024", "TASK-025",
+    "TASK-026", "TASK-027", "TASK-028", "TASK-029", "TASK-030",
+    "TASK-031", "TASK-032", "TASK-033", "TASK-034", "TASK-035", "TASK-036", "TASK-037",
+    "TASK-038"
+  ],
+  "task_count": 17,
+  "complexity": "high",
+  "estimated_time": "6h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-022", "TASK-023", "TASK-024", "TASK-025"],
+      "description": "基础层：trpc/index.ts 增强、electron-app/、trpc/workers/、window-loader.ts"
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-026", "TASK-027", "TASK-028", "TASK-029", "TASK-030"],
+      "description": "DIRECT_COPY 路由：24 个模块按功能分 5 组并行迁移"
+    },
+    {
+      "wave": 3,
+      "tasks": ["TASK-031", "TASK-032", "TASK-033", "TASK-034", "TASK-035", "TASK-036", "TASK-037"],
+      "description": "ADAPT 路由：7 个模块逐个适配（串行，每个需替换 @superset 引用）"
+    },
+    {
+      "wave": 4,
+      "tasks": ["TASK-038"],
+      "description": "编译验证：tsconfig paths 补充、路由合并、typecheck"
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "Wave 1: 建立基础层（trpc/index.ts + electron-app + workers + window-loader）",
+      "Wave 2: 批量复制 DIRECT_COPY 路由（替换 import 路径）",
+      "Wave 3: 逐个适配 ADAPT 路由（替换 @superset 业务逻辑）",
+      "Wave 4: 编译验证 + tsconfig paths + 路由合并"
+    ]
+  },
+  "design_decisions": [
+    "trpc/index.ts 完整复制 Superset 版本，Sentry middleware 用 try-catch 包裹（已有 @sentry/electron 依赖时不阻塞）",
+    "单文件 Superset 路由（device.ts 等 8 个）转为 oh-my-maestro 目录结构（device/index.ts）",
+    "保留 command-chain 和 maestro 路由不动",
+    "排除 changes/workers（GitHub 集成）、permissions/full-disk-access（Mac 特有）",
+    "workspace-fs-service 和 utils 路由需要新建目录（oh-my-maestro 中不存在）",
+    "@superset 路径别名已在 tsconfig.json 中配置，新增缺失的别名映射"
+  ],
+  "shared_context": {
+    "patterns": [
+      "tRPC router factory pattern（createXxxRouter 函数）",
+      "publicProcedure + router 模式",
+      "superjson transformer",
+      "Sentry middleware（try-catch 可选）"
+    ],
+    "conventions": [
+      "目录结构：module/index.ts（非单文件 .ts）",
+      "ESM imports",
+      "严格 TypeScript",
+      "import 路径替换：@superset/* → tsconfig paths 别名"
+    ],
+    "dependencies": [
+      "superjson（已安装 2.2.6）",
+      "@trpc/server（已安装 11.16.0）",
+      "@sentry/electron（可选，try-catch 包裹）",
+      "zod（已安装 4.3.6）"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-26T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "migration"
+  }
+}

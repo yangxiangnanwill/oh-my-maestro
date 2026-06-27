@@ -1,0 +1,160 @@
+{
+  "id": "TASK-050",
+  "title": "Wave 5: 通用组件 DIRECT_COPY — BootErrorBoundary + CommentMarkdown + icons + ThemeSwatch + HotkeyMenuShortcut + ColorSelector + EmojiTextInput + PickerTrigger + ConfigFilePreview + ThemedToaster + OpenInButton + OpenInExternalDropdown + RemotePathPicker",
+  "description": "批量迁移通用组件（DIRECT_COPY，无 @superset 品牌依赖）。包括启动错误边界、评论 Markdown、图标库、主题色板、快捷键标签、颜色选择器、Emoji 输入、选择器触发器、配置文件预览、主题 Toast、外部打开按钮等 ~13 个组件。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "从 Superset 源复制 13 个通用组件目录到 apps/desktop/src/renderer/components/；排除 Paywall、PostHogSurfaceTagger、PostHogUserIdentifier、TelemetrySync、UpdateRequiredPage、UpdateToast、V2AvailableBanner",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/components/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/BootErrorBoundary/BootErrorBoundary.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/icons/",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/ThemedToaster/ThemedToaster.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/ThemeSwatch/ThemeSwatch.tsx"
+  ],
+  "depends_on": ["TASK-042"],
+  "wave": 5,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/components/BootErrorBoundary/",
+      "test -d apps/desktop/src/renderer/components/CommentMarkdown/",
+      "test -d apps/desktop/src/renderer/components/icons/",
+      "test -d apps/desktop/src/renderer/components/ThemeSwatch/",
+      "test -d apps/desktop/src/renderer/components/ThemedToaster/",
+      "test -d apps/desktop/src/renderer/components/OpenInButton/",
+      "! test -d apps/desktop/src/renderer/components/Paywall",
+      "! test -d apps/desktop/src/renderer/components/PostHogSurfaceTagger",
+      "[UI-observable] 13 个通用组件目录均存在于 apps/desktop/src/renderer/components/，无 EXCLUDE 组件残留"
+    ],
+    "verification": "ls -d apps/desktop/src/renderer/components/BootErrorBoundary apps/desktop/src/renderer/components/icons apps/desktop/src/renderer/components/ThemedToaster apps/desktop/src/renderer/components/ThemeSwatch && test ! -d apps/desktop/src/renderer/components/Paywall && echo 'EXCLUDE verified'",
+    "definition_of_done": "13 个通用组件目录完整迁移，EXCLUDE 组件（Paywall、PostHog*、TelemetrySync、Update*、V2AvailableBanner）不存在"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/BootErrorBoundary/",
+      "action": "create",
+      "target": "启动错误边界",
+      "change": "从 Superset 源复制（2 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/CommentMarkdown/",
+      "action": "create",
+      "target": "评论 Markdown 渲染",
+      "change": "从 Superset 源复制（4 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/icons/",
+      "action": "create",
+      "target": "图标库",
+      "change": "从 Superset 源复制（2 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/ThemeSwatch/",
+      "action": "create",
+      "target": "主题色板",
+      "change": "从 Superset 源复制（2 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/HotkeyMenuShortcut/",
+      "action": "create",
+      "target": "快捷键菜单标签",
+      "change": "从 Superset 源复制（2 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/ColorSelector/",
+      "action": "create",
+      "target": "颜色选择器",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/EmojiTextInput/",
+      "action": "create",
+      "target": "Emoji 文本输入",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/PickerTrigger/",
+      "action": "create",
+      "target": "选择器触发器",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/ConfigFilePreview/",
+      "action": "create",
+      "target": "配置文件预览",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/ThemedToaster/",
+      "action": "create",
+      "target": "主题 Toast",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/OpenInButton/",
+      "action": "create",
+      "target": "外部打开按钮",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/OpenInExternalDropdown/",
+      "action": "create",
+      "target": "外部打开下拉菜单",
+      "change": "从 Superset 源复制（3 files），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/RemotePathPicker/",
+      "action": "create",
+      "target": "远程路径选择器",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 DIRECT_COPY 组件（无 @superset 引用）：BootErrorBoundary、CommentMarkdown、icons、ThemeSwatch",
+    "Step 2: 复制 ADAPT 组件（含 @superset 引用）：HotkeyMenuShortcut、ColorSelector、EmojiTextInput、PickerTrigger、ConfigFilePreview、ThemedToaster、OpenInButton、OpenInExternalDropdown、RemotePathPicker",
+    "Step 3: 逐个替换 ADAPT 组件的 @superset 引用",
+    "Step 4: 验证所有组件 import 路径正确"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "13 个通用组件目录完整",
+      "EXCLUDE 组件目录不存在",
+      "所有组件无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset 通用组件结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/BootErrorBoundary/",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/ThemedToaster/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "批量迁移通用组件（DIRECT_COPY + ADAPT），排除 Superset 特有组件",
+    "decision_factors": [
+      "通用组件是 UI 层的基础构建块",
+      "部分组件（ColorSelector、ThemedToaster 等）含 @superset 引用需要适配",
+      "EXCLUDE 组件是 Superset 特有功能（分析追踪、计费、V2）"
+    ],
+    "tradeoffs": "ADAPT 组件的 @superset 引用通常是对 @superset/ui 或 @superset/api-types 的引用，可能需要 stub 或替换"
+  },
+  "risks": [
+    "ThemedToaster 可能依赖 sonner toast 库（需确认已安装）",
+    "OpenInExternalDropdown 可能依赖 Superset 特定的外部应用列表"
+  ],
+  "meta": {
+    "estimated_time": "45m",
+    "risk": "medium",
+    "autonomous": false
+  }
+}

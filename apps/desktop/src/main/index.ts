@@ -32,3 +32,13 @@ app.on("window-all-closed", () => {
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
+
+// Phase 3 stub — will be replaced by index.full.ts
+// Called by auto-updater before quitAndInstall so the before-quit handler
+// skips the confirmation dialog.
+export function setSkipQuitConfirmation(): void {}
+
+// Phase 4: Exit immediately without confirmation (migrated from Superset)
+export function exitImmediately(): void {
+	app.exit(0);
+}

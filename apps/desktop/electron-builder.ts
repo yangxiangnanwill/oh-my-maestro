@@ -5,12 +5,14 @@
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import type { Configuration } from "electron-builder";
 import pkg from "./package.json";
 import {
 	packagedAsarUnpackGlobs,
 	packagedNodeModuleCopies,
 } from "./runtime-dependencies";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Configuration = any;
 
 const currentYear = new Date().getFullYear();
 const author = pkg.author?.name ?? pkg.author;

@@ -1,0 +1,95 @@
+{
+  "id": "TASK-034",
+  "title": "ADAPT：projects 路由适配",
+  "description": "适配 projects 路由，替换 Superset 项目路径逻辑。projects/projects.ts 引用 @superset/local-db，需替换为 tsconfig paths 别名",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "从 Superset 复制 projects/index.ts、projects/projects.ts 和 projects/utils/ 文件，替换 @superset/local-db 引用为 tsconfig paths 别名",
+  "status": "completed",
+  "scope": "apps/desktop/src/lib/trpc/routers/projects/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/projects/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/projects/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/projects/projects.ts",
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/main/lib/local-db/index.ts"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 3,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createProjectsRouter' apps/desktop/src/lib/trpc/routers/projects/index.ts",
+      "! grep -r '@superset/local-db' apps/desktop/src/lib/trpc/routers/projects/"
+    ],
+    "verification": "grep -rn '@superset' apps/desktop/src/lib/trpc/routers/projects/ || echo 'CLEAN'",
+    "definition_of_done": "projects 路由完整迁移，所有 @superset 引用已替换为 tsconfig paths 别名"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/projects/index.ts",
+      "action": "modify",
+      "target": "项目路由入口",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/projects/projects.ts",
+      "action": "create",
+      "target": "项目核心逻辑",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 Superset projects/index.ts，替换 @superset/local-db import",
+    "Step 2: 复制 Superset projects/projects.ts，替换 @superset/local-db import",
+    "Step 3: 复制 projects/utils/ 子目录文件（如果存在）",
+    "Step 4: 验证 projects 模块中使用的 local-db 类型（SelectProject 等）在 oh-my-maestro 中可用",
+    "Step 5: 验证无 @superset 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -i projects | head -20"
+    ],
+    "success_metrics": [
+      "createProjectsRouter 可导出",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset projects 路由模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/projects/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制并替换 @superset/local-db import，projects 是项目管理的核心路由",
+    "decision_factors": [
+      "projects 路由引用 @superset/local-db 的类型和实例",
+      "oh-my-maestro local-db 使用 @superset/local-db schema（通过 tsconfig alias）",
+      "projects 是 workspaces 和 changes 的依赖"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "projects.ts 大量使用 @superset/local-db 的类型（SelectProject、SelectWorktree 等），需确认 oh-my-maestro 的 local-db schema 包含这些类型"
+  ],
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": true
+  },
+  "status_history": [
+    {
+      "from": "pending",
+      "to": "completed",
+      "changed_at": "2026-06-26T08:16:45.009Z"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "id": "TASK-045",
+  "title": "Wave 3: hotkeys/ — 快捷键系统完整迁移",
+  "description": "完整迁移 Superset 的 hotkeys/ 模块（22 files）：快捷键注册表、显示工具、hooks（useBinding、useHotkey、useHotkeyDisplay、useRecordHotkeys）、stores（hotkeyOverridesStore、keyboardLayoutStore、keyboardPreferencesStore）、组件（HotkeyLabel）、工具函数（binding、resolveHotkeyFromEvent）。这是用户交互层的核心基础设施。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "从 Superset 源复制 hotkeys/ 全部 22 files 到 apps/desktop/src/renderer/hotkeys/；所有文件为 DIRECT_COPY（无 @superset 引用）",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/hotkeys/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/hotkeys/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hotkeys/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hotkeys/registry.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hotkeys/types.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hotkeys/display.ts"
+  ],
+  "depends_on": ["TASK-039"],
+  "wave": 3,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/hotkeys/",
+      "test -f apps/desktop/src/renderer/hotkeys/index.ts",
+      "test -f apps/desktop/src/renderer/hotkeys/registry.ts",
+      "test -f apps/desktop/src/renderer/hotkeys/display.ts",
+      "test -d apps/desktop/src/renderer/hotkeys/hooks/",
+      "test -d apps/desktop/src/renderer/hotkeys/stores/",
+      "test -d apps/desktop/src/renderer/hotkeys/components/HotkeyLabel/",
+      "[UI-observable] 快捷键注册表可导入且无编译错误"
+    ],
+    "verification": "find apps/desktop/src/renderer/hotkeys/ -type f | wc -l && grep 'HotkeyRegistry' apps/desktop/src/renderer/hotkeys/registry.ts",
+    "definition_of_done": "hotkeys/ 模块（22 files）完整迁移：registry、display、hooks（4个）、stores（3个）、components（1个）、utils（2个）、types 全部就位"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/hotkeys/",
+      "action": "create",
+      "target": "快捷键系统完整模块",
+      "change": "从 Superset 源完整复制 hotkeys/ 全部 22 files（4 hooks + 3 stores + 1 component + 2 utils + registry + display + types + tests）"
+    }
+  ],
+  "implementation": [
+    "Step 1: 读取 Superset hotkeys/ 目录结构确认所有文件",
+    "Step 2: 完整复制 hotkeys/ 目录到 apps/desktop/src/renderer/hotkeys/",
+    "Step 3: 验证所有 import 路径正确（相对路径引用）"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -30"
+    ],
+    "success_metrics": [
+      "hotkeys/ 目录包含 22 个文件",
+      "registry.ts 导出 HotkeyRegistry 类",
+      "display.ts 导出快捷键显示工具",
+      "所有 hooks/stores/components 文件完整"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset hotkeys/ 模块结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hotkeys/index.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hotkeys/registry.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "完整 DIRECT_COPY hotkeys/ 模块（22 files），无 Superset 品牌依赖",
+    "decision_factors": [
+      "hotkeys/ 是自包含的快捷键系统，无外部品牌依赖",
+      "被多个组件和 hooks 引用",
+      "stores 使用 Zustand 模式（keyboardLayoutStore 等）"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "hotkeys/stores 可能依赖 Zustand（需确认已安装）"
+  ],
+  "meta": {
+    "estimated_time": "20m",
+    "risk": "low",
+    "autonomous": true
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "id": "TASK-033",
+  "title": "ADAPT：permissions 路由适配（排除 full-disk-access）",
+  "description": "适配 permissions 路由，复制 native-permissions.ts 和 native-permissions.test.ts，排除 full-disk-access.ts 和 full-disk-access.test.ts（Mac 特有）",
+  "type": "feature",
+  "priority": "high",
+  "effort": "small",
+  "action": "从 Superset 复制 permissions/native-permissions.ts 和 permissions/native-permissions.test.ts，排除 full-disk-access 文件",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/routers/permissions/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/permissions/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/permissions/native-permissions.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/permissions/native-permissions.test.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/permissions/full-disk-access.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 3,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createPermissionsRouter' apps/desktop/src/lib/trpc/routers/permissions/index.ts",
+      "test -f apps/desktop/src/lib/trpc/routers/permissions/native-permissions.ts",
+      "! test -f apps/desktop/src/lib/trpc/routers/permissions/full-disk-access.ts",
+      "! test -f apps/desktop/src/lib/trpc/routers/permissions/full-disk-access.test.ts"
+    ],
+    "verification": "ls -la apps/desktop/src/lib/trpc/routers/permissions/ && echo '---' && grep -rn '@superset' apps/desktop/src/lib/trpc/routers/permissions/ || echo 'CLEAN'",
+    "definition_of_done": "permissions 路由迁移完成，full-disk-access 文件已排除，无 @superset 引用残留"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/permissions/index.ts",
+      "action": "modify",
+      "target": "权限路由入口",
+      "change": "从 Superset 复制并移除 full-disk-access 相关 import/procedure"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/permissions/native-permissions.ts",
+      "action": "create",
+      "target": "原生权限查询",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/permissions/native-permissions.test.ts",
+      "action": "create",
+      "target": "原生权限测试",
+      "change": "从 Superset 复制"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 Superset permissions/index.ts，移除 full-disk-access 相关的 import 和 procedure 注册",
+    "Step 2: 复制 native-permissions.ts 和 native-permissions.test.ts",
+    "Step 3: 确保不复制 full-disk-access.ts 和 full-disk-access.test.ts",
+    "Step 4: 替换 @superset 引用为 tsconfig paths 别名",
+    "Step 5: 验证 full-disk-access 文件不存在"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -i permissions | head -10"
+    ],
+    "success_metrics": [
+      "createPermissionsRouter 可导出",
+      "full-disk-access 文件不存在",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset permissions 路由模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/permissions/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制核心权限文件，排除 Mac 特有的 full-disk-access",
+    "decision_factors": [
+      "full-disk-access 是 Mac 特有权限，Windows 不需要",
+      "native-permissions 是跨平台权限查询",
+      "permissions 路由无 @superset 引用"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "index.ts 中移除 full-disk-access 后，createPermissionsRouter 返回的 router 类型可能变化"
+  ],
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true
+  }
+}

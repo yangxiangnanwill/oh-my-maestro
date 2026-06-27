@@ -1,0 +1,167 @@
+{
+  "id": "TASK-042",
+  "title": "Wave 2: lib/ 工具集 — fileIcons + formatPath + formatRelativeTime + pathBasename + getWorkspaceDisplayName + workspaceBaseBranch + persistent-hash-history + pierreTree + ringtones + tiptap + performance + project-scripts + slug-width + invalidate-file-save-queries + trpc-storage",
+  "description": "批量迁移 lib/ 通用工具模块（DIRECT_COPY，无 Superset 品牌依赖）。包括文件图标系统、路径格式化、相对时间格式化、持久化历史、Pierre 树样式、铃声、Tiptap 配置、性能工具等 ~15 个模块。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "large",
+  "action": "从 Superset 源复制 fileIcons/（8 files）、formatPath/（2）、formatRelativeTime/（3）、pathBasename/（3）、getWorkspaceDisplayName/（2）、workspaceBaseBranch/（3）、persistent-hash-history/（3）、pierreTree/（4）、ringtones/（2）、tiptap/（1）、performance/（1）、project-scripts.ts、slug-width.ts、invalidate-file-save-queries.ts、trpc-storage.ts 到 apps/desktop/src/renderer/lib/",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/lib/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/lib/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/fileIcons/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/persistent-hash-history/persistent-hash-history.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/formatRelativeTime/formatRelativeTime.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/pierreTree/index.ts"
+  ],
+  "depends_on": ["TASK-039"],
+  "wave": 2,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/lib/fileIcons/ && test -f apps/desktop/src/renderer/lib/fileIcons/FileIcon.tsx",
+      "test -d apps/desktop/src/renderer/lib/persistent-hash-history/ && test -f apps/desktop/src/renderer/lib/persistent-hash-history/persistent-hash-history.ts",
+      "test -d apps/desktop/src/renderer/lib/pierreTree/ && test -f apps/desktop/src/renderer/lib/pierreTree/index.ts",
+      "test -f apps/desktop/src/renderer/lib/project-scripts.ts",
+      "test -f apps/desktop/src/renderer/lib/trpc-storage.ts",
+      "test -d apps/desktop/src/renderer/lib/ringtones/"
+    ],
+    "verification": "find apps/desktop/src/renderer/lib/ -type f | wc -l && ls apps/desktop/src/renderer/lib/fileIcons/ apps/desktop/src/renderer/lib/persistent-hash-history/ apps/desktop/src/renderer/lib/pierreTree/",
+    "definition_of_done": "~15 个 lib/ 工具模块（~50 files）完整复制到 apps/desktop/src/renderer/lib/，所有模块目录结构完整"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/lib/fileIcons/",
+      "action": "create",
+      "target": "文件图标系统",
+      "change": "从 Superset 源完整复制（8 files：FileIcon.tsx、getFileIcon.ts、manifest.ts、resolveFileIconAssetUrl.ts 等）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/formatPath/",
+      "action": "create",
+      "target": "路径格式化",
+      "change": "从 Superset 源复制（2 files：formatPath.ts + index.ts）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/formatRelativeTime/",
+      "action": "create",
+      "target": "相对时间格式化",
+      "change": "从 Superset 源复制（3 files：formatRelativeTime.ts + test + index.ts）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/pathBasename/",
+      "action": "create",
+      "target": "路径 basename 工具",
+      "change": "从 Superset 源复制（3 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/getWorkspaceDisplayName/",
+      "action": "create",
+      "target": "工作区显示名称",
+      "change": "从 Superset 源复制（2 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/workspaceBaseBranch/",
+      "action": "create",
+      "target": "工作区基础分支",
+      "change": "从 Superset 源复制（3 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/persistent-hash-history/",
+      "action": "create",
+      "target": "持久化 hash 历史",
+      "change": "从 Superset 源复制（3 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/pierreTree/",
+      "action": "create",
+      "target": "Pierre 树样式",
+      "change": "从 Superset 源复制（4 files：createPierreTreeStyle.ts、pierreGitStatus.ts、treePaths.ts、index.ts）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/ringtones/",
+      "action": "create",
+      "target": "铃声播放",
+      "change": "从 Superset 源复制（2 files：play.ts、urls.ts）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/tiptap/",
+      "action": "create",
+      "target": "Tiptap 编辑器配置",
+      "change": "从 Superset 源复制（1 file：code-block-languages.ts）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/performance/",
+      "action": "create",
+      "target": "性能工具",
+      "change": "从 Superset 源复制（1 file：stress-instrumentation.ts）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/project-scripts.ts",
+      "action": "create",
+      "target": "项目脚本工具",
+      "change": "从 Superset 源复制"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/slug-width.ts",
+      "action": "create",
+      "target": "Slug 宽度计算",
+      "change": "从 Superset 源复制"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/invalidate-file-save-queries.ts",
+      "action": "create",
+      "target": "文件保存查询失效",
+      "change": "从 Superset 源复制"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/trpc-storage.ts",
+      "action": "create",
+      "target": "tRPC 存储工具",
+      "change": "从 Superset 源复制"
+    }
+  ],
+  "implementation": [
+    "Step 1: 批量复制所有 DIRECT_COPY lib/ 目录：fileIcons、formatPath、formatRelativeTime、pathBasename、getWorkspaceDisplayName、workspaceBaseBranch、persistent-hash-history、pierreTree、ringtones、tiptap、performance",
+    "Step 2: 批量复制所有 DIRECT_COPY lib/ 单文件：project-scripts.ts、slug-width.ts、invalidate-file-save-queries.ts、trpc-storage.ts",
+    "Step 3: 验证所有文件 import 路径正确"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -30"
+    ],
+    "success_metrics": [
+      "~50 个工具文件全部就位",
+      "所有模块目录结构完整",
+      "无 @superset/posthog/sentry 引用"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset lib/ 工具模块结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/fileIcons/",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/persistent-hash-history/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "批量 DIRECT_COPY 所有无 Superset 品牌依赖的工具模块",
+    "decision_factors": [
+      "这些模块是纯工具函数，无品牌/业务依赖",
+      "fileIcons 被多个组件引用（文件树、侧边栏等）",
+      "persistent-hash-history 是路由持久化的基础"
+    ],
+    "tradeoffs": "部分模块（如 pierreTree）名称包含 Superset 内部代号，保留原样避免破坏引用链"
+  },
+  "risks": [
+    "fileIcons 中的 resolveFileIconAssetUrl 可能依赖 Vite 资源路径配置"
+  ],
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "low",
+    "autonomous": true
+  }
+}

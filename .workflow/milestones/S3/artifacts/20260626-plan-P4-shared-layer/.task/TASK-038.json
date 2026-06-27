@@ -1,0 +1,117 @@
+{
+  "id": "TASK-038",
+  "title": "编译验证：tsconfig paths 补充 + 路由合并 + typecheck",
+  "description": "补充 tsconfig.json 中缺失的 @superset 路径别名，更新 routers/index.ts 合并所有路由导出，运行 bun install + bun run typecheck 验证编译通过",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "1) 在 apps/desktop/tsconfig.json paths 中新增缺失的 @superset 别名（@superset/shared/agent-catalog、@superset/shared/agent-settings、@superset/shared/agent-permissions-migration、@superset/shared/workspace-launch、@superset/shared/simple-git-options、@superset/chat/server/desktop、@superset/chat/server/shared、@superset/chat/server/trpc、@superset/workspace-fs/host、@superset/local-db/schema/zod）; 2) 更新 routers/index.ts 补充所有 31 个路由的 import 和注册; 3) 运行 bun run typecheck",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/",
+  "focus_paths": [
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/lib/trpc/routers/index.ts"
+  ],
+  "read_first": [
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/lib/trpc/routers/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/index.ts",
+    "apps/desktop/src/lib/trpc/index.ts"
+  ],
+  "depends_on": [
+    "TASK-022",
+    "TASK-023",
+    "TASK-024",
+    "TASK-025",
+    "TASK-026",
+    "TASK-027",
+    "TASK-028",
+    "TASK-029",
+    "TASK-030",
+    "TASK-031",
+    "TASK-032",
+    "TASK-033",
+    "TASK-034",
+    "TASK-035",
+    "TASK-036",
+    "TASK-037"
+  ],
+  "wave": 4,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep '@superset/shared/agent-catalog' apps/desktop/tsconfig.json",
+      "grep '@superset/shared/workspace-launch' apps/desktop/tsconfig.json",
+      "grep '@superset/workspace-fs/host' apps/desktop/tsconfig.json",
+      "grep 'createWorkspacesRouter' apps/desktop/src/lib/trpc/routers/index.ts",
+      "grep 'createCommandChainRouter' apps/desktop/src/lib/trpc/routers/index.ts",
+      "grep 'createMaestroRouter' apps/desktop/src/lib/trpc/routers/index.ts",
+      "cd apps/desktop && bun run typecheck 退出码 0"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck 2>&1 | tail -5",
+    "definition_of_done": "tsconfig.json 包含所有必要的 @superset 路径别名，routers/index.ts 包含全部 31 个路由（含 command-chain 和 maestro），bun run typecheck 通过"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/tsconfig.json",
+      "action": "modify",
+      "target": "TypeScript 路径别名配置",
+      "change": "新增缺失的 @superset 子包路径别名（~10 个），指向 oh-my-maestro 对应模块或 stub 文件"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/index.ts",
+      "action": "modify",
+      "target": "路由聚合入口",
+      "change": "补充所有 31 个路由的 import/createXxxRouter 调用，包括 DIRECT_COPY（+workspace-fs-service/utils）、ADAPT、KEEP（command-chain/maestro）"
+    }
+  ],
+  "implementation": [
+    "Step 1: 扫描所有路由文件中残留的 @superset 引用，列出需要新增 tsconfig alias 的包",
+    "Step 2: 为每个缺失的 @superset 子包创建 tsconfig paths 别名（指向现有模块或新建 stub 文件）",
+    "Step 3: 更新 routers/index.ts，补充以下 import：changes、permissions、projects、settings、terminal、workspaces、device、keyboardLayout、menu、notifications、resource-metrics、system、window、utils、workspace-fs-service",
+    "Step 4: 在 createAppRouter 返回对象中注册所有路由（保持与 Superset 一致的命名），保留 command-chain 和 maestro",
+    "Step 5: 运行 bun install 确保无缺失依赖",
+    "Step 6: 运行 bun run typecheck，修复编译错误",
+    "Step 7: 迭代修复直到 typecheck 通过"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun install",
+      "cd apps/desktop && bun run typecheck",
+      "cd apps/desktop && bun run lint"
+    ],
+    "success_metrics": [
+      "bun run typecheck 退出码 0",
+      "routers/index.ts 包含全部 31 个路由",
+      "tsconfig.json 包含所有必要的 @superset 别名"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset routers/index.ts 聚合模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/index.ts",
+      "apps/desktop/tsconfig.json"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "先扫描缺失的 @superset 引用，再补充 tsconfig alias，最后合并路由并验证",
+    "decision_factors": [
+      "Wave 1-3 完成后，所有路由文件已就位",
+      "tsconfig paths 别名是 @superset 引用解析的关键",
+      "routers/index.ts 需要手动补充 import，因为新增了 utils/workspace-fs-service 等路由",
+      "typecheck 是最终验证手段"
+    ],
+    "tradeoffs": "可能需要创建 stub 文件来处理 oh-my-maestro 中不存在的 @superset 子包"
+  },
+  "risks": [
+    "大量 @superset 子包在 oh-my-maestro 中无对应实现，可能需要创建 stub 文件",
+    "settings 和 workspaces 的依赖链可能导致大量编译错误",
+    "typecheck 可能暴露 Phase 3 stub 中未发现的类型不匹配问题"
+  ],
+  "meta": {
+    "estimated_time": "60m",
+    "risk": "high",
+    "autonomous": false
+  }
+}

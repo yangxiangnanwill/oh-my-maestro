@@ -2,7 +2,7 @@ import { chmodSync, existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const MAESTRO_DIR_NAME = ".maestro";
+export const MAESTRO_DIR_NAME = ".maestro";
 const MAESTRO_HOME_DIR_ENV = "MAESTRO_HOME";
 
 export const MAESTRO_HOME_DIR =

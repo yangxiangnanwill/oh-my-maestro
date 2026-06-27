@@ -1,0 +1,103 @@
+{
+	"id": "TASK-047",
+	"title": "Wave 3: hooks/ 业务 — host-service/ + ports/",
+	"description": "迁移 hooks/ 业务相关子模块：host-service/（10 hooks，工作区生命周期管理）和 ports/（usePortKillActions，端口管理）。这些是工作区和端口管理的核心 hooks，包含 @superset 引用需要适配。",
+	"type": "feature",
+	"priority": "medium",
+	"effort": "large",
+	"action": "从 Superset 源复制 hooks/host-service/（10 hooks，~21 files）和 hooks/ports/（usePortKillActions，~4 files）到 apps/desktop/src/renderer/hooks/；替换所有 @superset 引用",
+	"status": "completed",
+	"scope": "apps/desktop/src/renderer/hooks/",
+	"focus_paths": [
+		"apps/desktop/src/renderer/hooks/host-service/",
+		"apps/desktop/src/renderer/hooks/ports/"
+	],
+	"read_first": [
+		"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/host-service/useDestroyWorkspace/useDestroyWorkspace.ts",
+		"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/host-service/useFileTree/useFileTree.ts",
+		"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/host-service/useWorkspaceEvent/useWorkspaceEvent.ts",
+		"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/ports/usePortKillActions/usePortKillActions.ts"
+	],
+	"depends_on": [
+		"TASK-046"
+	],
+	"wave": 3,
+	"executor": "agent",
+	"convergence": {
+		"criteria": [
+			"test -d apps/desktop/src/renderer/hooks/host-service/useDestroyWorkspace/",
+			"test -d apps/desktop/src/renderer/hooks/host-service/useFileTree/",
+			"test -d apps/desktop/src/renderer/hooks/host-service/useGitStatus/",
+			"test -d apps/desktop/src/renderer/hooks/host-service/useWorkspaceEvent/",
+			"test -d apps/desktop/src/renderer/hooks/ports/usePortKillActions/",
+			"! grep -r '@superset' apps/desktop/src/renderer/hooks/host-service/ --include='*.ts' --include='*.tsx' | grep -v '.test.'",
+			"[UI-observable] host-service hooks 可导入且无编译错误"
+		],
+		"verification": "find apps/desktop/src/renderer/hooks/host-service/ -type f | wc -l && find apps/desktop/src/renderer/hooks/ports/ -type f | wc -l",
+		"definition_of_done": "host-service/（10 hooks，~21 files）和 ports/（1 hook，~4 files）均就位，所有 @superset 引用已替换"
+	},
+	"files": [
+		{
+			"path": "apps/desktop/src/renderer/hooks/host-service/",
+			"action": "create",
+			"target": "Host-service hooks 模块",
+			"change": "从 Superset 源复制全部 10 hooks（useDestroyWorkspace、useDiffStats、useFileTree、useGitStatus、useGitStatusMap、useHostTargetUrl、useSendToTerminalAgent、useTerminalAgentBindings、useWorkspaceEvent、useWorkspaceHostUrl），替换 @superset 引用"
+		},
+		{
+			"path": "apps/desktop/src/renderer/hooks/ports/",
+			"action": "create",
+			"target": "端口管理 hooks",
+			"change": "从 Superset 源复制 usePortKillActions（~4 files），替换 @superset 引用"
+		}
+	],
+	"implementation": [
+		"Step 1: 复制 host-service/ 全部 10 hooks（~21 files）",
+		"Step 2: 逐个检查并替换 @superset 引用：useDestroyWorkspace、useFileTree、useGitStatus、useGitStatusMap、useHostTargetUrl、useSendToTerminalAgent、useWorkspaceEvent、useWorkspaceHostUrl",
+		"Step 3: 复制 ports/usePortKillActions（~4 files），替换 @superset 引用",
+		"Step 4: 验证所有 import 路径正确"
+	],
+	"test": {
+		"commands": [
+			"cd apps/desktop && bun run typecheck 2>&1 | head -50"
+		],
+		"success_metrics": [
+			"host-service/ 包含 10 个 hook 子目录",
+			"ports/ 包含 usePortKillActions",
+			"所有 @superset 引用已替换",
+			"所有 hooks 无 TypeScript 错误"
+		]
+	},
+	"reference": {
+		"pattern": "Superset host-service hooks 模式",
+		"files": [
+			"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/host-service/useDestroyWorkspace/useDestroyWorkspace.ts",
+			"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/host-service/useFileTree/useFileTree.ts"
+		],
+		"examples": null
+	},
+	"rationale": {
+		"chosen_approach": "完整迁移 host-service/ 和 ports/ 模块，逐个替换 @superset 引用",
+		"decision_factors": [
+			"host-service/ 是工作区生命周期管理的核心（创建、销毁、文件树、Git 状态等）",
+			"ports/ 是端口管理功能的基础",
+			"这些 hooks 被多个组件和路由引用"
+		],
+		"tradeoffs": "host-service hooks 可能依赖 @superset/api-types 的类型定义，需要确认替代方案"
+	},
+	"risks": [
+		"host-service hooks 大量使用 electronTrpc 调用，需要确保 tRPC 路由已就位（Phase 4 已迁移）",
+		"useHostTargetUrl 可能依赖 Superset 特定的 URL 解析逻辑"
+	],
+	"meta": {
+		"estimated_time": "40m",
+		"risk": "medium",
+		"autonomous": false
+	},
+	"status_history": [
+		{
+			"from": "in_progress",
+			"to": "completed",
+			"changed_at": "2026-06-26T13:20:13.562Z"
+		}
+	]
+}

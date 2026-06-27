@@ -1,0 +1,113 @@
+{
+  "id": "TASK-055",
+  "title": "Wave 6: routes/ 路由适配 + commandPalette/ 框架迁移",
+  "description": "适配 Superset 的路由层：重写 -layout.tsx（移除 PostHogProvider/PostHogUserIdentifier/PostHogSurfaceTagger/TelemetrySync，保留 ElectronTRPCProvider + AuthProvider + TranslationProvider + ThemedToaster）；检查 __root.tsx 兼容性；迁移 commandPalette/ 框架层（core/ + modules/，排除 ui/ 组件因为 oh-my-maestro 已有自己的 CommandPalette 组件）。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "重写 apps/desktop/src/renderer/routes/-layout.tsx：移除 PostHog 相关 Provider 和组件，保留 ElectronTRPCProvider + AuthProvider + TranslationProvider + ThemedToaster + Alerter；迁移 commandPalette/core/（6 files）+ commandPalette/modules/（6 files）+ commandPalette/index.ts + CommandPaletteHost.tsx 到 apps/desktop/src/renderer/commandPalette/；排除 commandPalette/ui/ 组件",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/routes/ + apps/desktop/src/renderer/commandPalette/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/routes/-layout.tsx",
+    "apps/desktop/src/renderer/routes/__root.tsx",
+    "apps/desktop/src/renderer/commandPalette/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/routes/-layout.tsx",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/routes/__root.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/routes/-layout.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/commandPalette/core/registry.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/commandPalette/index.ts",
+    "apps/desktop/src/renderer/components/CommandPalette/"
+  ],
+  "depends_on": ["TASK-048", "TASK-054"],
+  "wave": 6,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'ElectronTRPCProvider' apps/desktop/src/renderer/routes/-layout.tsx",
+      "grep 'AuthProvider' apps/desktop/src/renderer/routes/-layout.tsx",
+      "! grep 'PostHogProvider' apps/desktop/src/renderer/routes/-layout.tsx",
+      "! grep 'PostHogUserIdentifier' apps/desktop/src/renderer/routes/-layout.tsx",
+      "! grep 'PostHogSurfaceTagger' apps/desktop/src/renderer/routes/-layout.tsx",
+      "! grep 'TelemetrySync' apps/desktop/src/renderer/routes/-layout.tsx",
+      "test -d apps/desktop/src/renderer/commandPalette/core/",
+      "test -f apps/desktop/src/renderer/commandPalette/core/registry.ts",
+      "test -f apps/desktop/src/renderer/commandPalette/index.ts",
+      "! grep -r '@superset' apps/desktop/src/renderer/routes/ --include='*.ts' --include='*.tsx'",
+      "[UI-observable] 路由布局不包含 PostHog 组件，commandPalette 框架层可导入，bun run typecheck 通过"
+    ],
+    "verification": "grep -c 'PostHog\\|TelemetrySync' apps/desktop/src/renderer/routes/-layout.tsx && find apps/desktop/src/renderer/commandPalette/ -type f | wc -l",
+    "definition_of_done": "-layout.tsx 已清理 PostHog/TelemetrySync 组件；commandPalette/ core + modules 框架层就位（排除 ui/ 组件）；所有 @superset 引用已清除"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/routes/-layout.tsx",
+      "action": "modify",
+      "target": "根布局组件",
+      "change": "移除 PostHogProvider、PostHogUserIdentifier、PostHogSurfaceTagger、TelemetrySync 的 import 和 JSX 使用；保留 ElectronTRPCProvider + AuthProvider + TranslationProvider + ThemedToaster + Alerter"
+    },
+    {
+      "path": "apps/desktop/src/renderer/routes/__root.tsx",
+      "action": "keep",
+      "target": "根路由定义",
+      "change": "检查兼容性，如需要则更新 RouterContext 类型"
+    },
+    {
+      "path": "apps/desktop/src/renderer/commandPalette/",
+      "action": "create",
+      "target": "命令面板框架层",
+      "change": "从 Superset 源复制 core/（6 files：ContextProvider、execute、frames、registry、sections、types、useActiveCommands）、modules/（6 files：actions、index、navigation、openIn、settings、workspace）、CommandPaletteHost.tsx、index.ts；排除 ui/ 目录（oh-my-maestro 已有自己的 CommandPalette 组件）"
+    }
+  ],
+  "implementation": [
+    "Step 1: 重写 -layout.tsx：移除 PostHogProvider、PostHogUserIdentifier、PostHogSurfaceTagger、TelemetrySync 相关代码",
+    "Step 2: 保留 ElectronTRPCProvider、AuthProvider、TranslationProvider、ThemedToaster、Alerter",
+    "Step 3: 检查 __root.tsx 兼容性（oh-my-maestro 版本 vs Superset 版本）",
+    "Step 4: 创建 commandPalette/ 目录",
+    "Step 5: 复制 commandPalette/core/（6 files）",
+    "Step 6: 复制 commandPalette/modules/（6 files）",
+    "Step 7: 复制 commandPalette/CommandPaletteHost.tsx + index.ts",
+    "Step 8: 排除 commandPalette/ui/ 目录（Maestro 已有自己的 CommandPalette 组件）",
+    "Step 9: 替换 commandPalette/ 中所有 @superset 引用"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "-layout.tsx 无 PostHog/TelemetrySync 引用",
+      "commandPalette/ core + modules 框架层就位",
+      "commandPalette/ui/ 未迁移",
+      "所有 @superset 引用已清除",
+      "无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset 路由布局 + commandPalette 框架",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/routes/-layout.tsx",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/commandPalette/core/registry.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "重写 -layout.tsx 清理 PostHog/TelemetrySync；迁移 commandPalette 框架层但排除 UI 组件（Maestro 已有）",
+    "decision_factors": [
+      "-layout.tsx 中的 PostHogProvider 等是分析追踪组件，Maestro 不需要",
+      "commandPalette UI 组件与 Maestro 已有的 CommandPalette 组件冲突",
+      "commandPalette core/ + modules/ 是命令注册和执行的框架层，不冲突"
+    ],
+    "tradeoffs": "commandPalette modules/ 中的命令可能引用 Superset 特有的路由和功能，需要适配"
+  },
+  "risks": [
+    "移除 PostHogProvider 后，子组件中可能有 usePostHog() 调用需要处理",
+    "commandPalette modules 中的命令可能依赖 Superset 特有的 tRPC 路由"
+  ],
+  "meta": {
+    "estimated_time": "40m",
+    "risk": "medium",
+    "autonomous": false
+  }
+}

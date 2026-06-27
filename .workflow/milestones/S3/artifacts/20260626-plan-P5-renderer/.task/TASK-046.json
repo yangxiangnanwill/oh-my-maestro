@@ -1,0 +1,158 @@
+{
+  "id": "TASK-046",
+  "title": "Wave 3: hooks/ 通用 — useCopyToClipboard + useCreateOrAttachWithTheme + useDebouncedValue + useOnlineStatus + useWorkspaceShortcuts + useNow + useVersionCheck + useCurrentPlan + useAgentLaunchPreferences + useEnabledAgents + useSignOut + useFileOpenMode",
+  "description": "批量迁移 hooks/ 通用 hooks（~12 个）。包括复制到剪贴板、主题创建、防抖值、在线状态、快捷键、时间、版本检查、计划、Agent 偏好等。排除 V2/Relay/EnsureV2 相关 hooks。部分 hooks 需要适配 @superset 引用。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "large",
+  "action": "从 Superset 源复制 hooks/ 通用 hooks 到 apps/desktop/src/renderer/hooks/；EXCLUDE：useIsV2CloudEnabled.ts、useEnsureV2Project/、useRelayUrl/、useV2AgentChoices/、useV2AgentConfigs/、useV2UserPreferences/",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/hooks/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/hooks/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/useCopyToClipboard.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/useCurrentPlan.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/useEnabledAgents/useEnabledAgents.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/useSignOut/useSignOut.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/useAgentLaunchPreferences/useAgentLaunchPreferences.ts"
+  ],
+  "depends_on": ["TASK-039"],
+  "wave": 3,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -f apps/desktop/src/renderer/hooks/useCopyToClipboard.ts",
+      "test -f apps/desktop/src/renderer/hooks/useDebouncedValue.ts",
+      "test -f apps/desktop/src/renderer/hooks/useOnlineStatus.ts",
+      "test -f apps/desktop/src/renderer/hooks/useWorkspaceShortcuts.ts",
+      "test -d apps/desktop/src/renderer/hooks/useNow/",
+      "test -d apps/desktop/src/renderer/hooks/useVersionCheck/",
+      "test -d apps/desktop/src/renderer/hooks/useAgentLaunchPreferences/",
+      "test -d apps/desktop/src/renderer/hooks/useEnabledAgents/",
+      "! test -d apps/desktop/src/renderer/hooks/useV2AgentChoices",
+      "! test -d apps/desktop/src/renderer/hooks/useRelayUrl"
+    ],
+    "verification": "find apps/desktop/src/renderer/hooks/ -type f | wc -l && ls apps/desktop/src/renderer/hooks/",
+    "definition_of_done": "~12 个通用 hooks（含子目录）均就位，EXCLUDE hooks 不存在，ADAPT hooks 的 @superset 引用已替换"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/hooks/useCopyToClipboard.ts",
+      "action": "create",
+      "target": "复制到剪贴板 hook",
+      "change": "从 Superset 源复制（DIRECT_COPY）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useCreateOrAttachWithTheme.ts",
+      "action": "create",
+      "target": "主题创建/附加 hook",
+      "change": "从 Superset 源复制（DIRECT_COPY）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useDebouncedValue.ts",
+      "action": "create",
+      "target": "防抖值 hook",
+      "change": "从 Superset 源复制（DIRECT_COPY）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useOnlineStatus.ts",
+      "action": "create",
+      "target": "在线状态 hook",
+      "change": "从 Superset 源复制（DIRECT_COPY）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useWorkspaceShortcuts.ts",
+      "action": "create",
+      "target": "工作区快捷键 hook",
+      "change": "从 Superset 源复制（DIRECT_COPY）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useCurrentPlan.ts",
+      "action": "create",
+      "target": "当前计划 hook",
+      "change": "从 Superset 源复制，替换 @superset 引用（ADAPT）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useNow/",
+      "action": "create",
+      "target": "当前时间 hook",
+      "change": "从 Superset 源复制（2 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useVersionCheck/",
+      "action": "create",
+      "target": "版本检查 hook",
+      "change": "从 Superset 源复制（2 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useAgentLaunchPreferences/",
+      "action": "create",
+      "target": "Agent 启动偏好 hook",
+      "change": "从 Superset 源复制（2 files）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useEnabledAgents/",
+      "action": "create",
+      "target": "已启用 Agent hook",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用（ADAPT）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useSignOut/",
+      "action": "create",
+      "target": "登出 hook",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用（ADAPT）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useFileOpenMode/",
+      "action": "create",
+      "target": "文件打开模式 hook",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用（ADAPT）"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 DIRECT_COPY hooks（4 个单文件）：useCopyToClipboard.ts、useCreateOrAttachWithTheme.ts、useDebouncedValue.ts、useOnlineStatus.ts、useWorkspaceShortcuts.ts",
+    "Step 2: 复制 DIRECT_COPY hooks（3 个目录）：useNow/（2 files）、useVersionCheck/（2 files）、useAgentLaunchPreferences/（2 files）",
+    "Step 3: 复制 ADAPT hooks（4 个目录）：useCurrentPlan.ts（替换 @superset）、useEnabledAgents/（2 files，替换 @superset）、useSignOut/（2 files，替换 @superset）、useFileOpenMode/（2 files，替换 @superset）",
+    "Step 4: 复制 useCurrentPlan.test.ts（保留测试）",
+    "Step 5: 验证所有 import 路径正确"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -30"
+    ],
+    "success_metrics": [
+      "~20 hooks 文件全部就位",
+      "EXCLUDE hooks（useV2AgentChoices、useRelayUrl 等）不存在",
+      "ADAPT hooks @superset 引用已替换",
+      "所有 hooks 无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset hooks/ 通用 hooks 模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/useCopyToClipboard.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/hooks/useCurrentPlan.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "分类迁移 hooks：DIRECT_COPY（7 个）先复制，ADAPT（4 个）后复制并替换 @superset 引用",
+    "decision_factors": [
+      "通用 hooks 是组件和路由的基础依赖",
+      "ADAPT hooks 需要替换 @superset 引用（通常是对 @superset/api-types 或 @superset/auth 的引用）",
+      "排除 V2/Relay 相关 hooks（Superset V2 特有功能）"
+    ],
+    "tradeoffs": "useCurrentPlan 和 useSignOut 可能依赖 Superset 后端 API，替换可能需要 stub"
+  },
+  "risks": [
+    "useCurrentPlan.ts 的 @superset 引用可能是 @superset/api-types（外部包），需要确认替代方案",
+    "useSignOut 可能依赖 Superset 特定的认证流程"
+  ],
+  "meta": {
+    "estimated_time": "35m",
+    "risk": "medium",
+    "autonomous": false
+  }
+}

@@ -1,0 +1,124 @@
+{
+  "id": "TASK-041",
+  "title": "Wave 2: lib/ 核心工具 — electron-trpc + trpc-client + session-id-link + boot-errors + argv + dev-chat + dnd",
+  "description": "批量迁移 lib/ 核心工具文件：electron-trpc.ts（替换现有）、trpc-client.ts（新增）、session-id-link.ts、boot-errors.ts、argv.ts、dev-chat.ts、dnd.ts 及其测试文件。这些是 tRPC IPC 通信和基础工具的核心依赖。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "替换 apps/desktop/src/renderer/lib/electron-trpc.ts 为 Superset 版本；新增 trpc-client.ts、session-id-link.ts、boot-errors.ts、argv.ts（含 .test.ts）、dev-chat.ts（含 .test.ts）、dnd.ts",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/lib/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/lib/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/electron-trpc.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/trpc-client.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/session-id-link.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/boot-errors.ts",
+    "apps/desktop/src/lib/trpc/routers/index.ts"
+  ],
+  "depends_on": ["TASK-039"],
+  "wave": 2,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'abortOnUnmount: true' apps/desktop/src/renderer/lib/electron-trpc.ts",
+      "grep 'ElectronRouterOutputs' apps/desktop/src/renderer/lib/electron-trpc.ts",
+      "grep 'sessionIdLink' apps/desktop/src/renderer/lib/trpc-client.ts",
+      "[UI-observable] electron-trpc.ts 替换后 tRPC React client 可正常创建，Electron 窗口不出现 IPC 通信错误",
+      "grep 'ipcLink' apps/desktop/src/renderer/lib/trpc-client.ts",
+      "test -f apps/desktop/src/renderer/lib/boot-errors.ts",
+      "test -f apps/desktop/src/renderer/lib/session-id-link.ts",
+      "test -f apps/desktop/src/renderer/lib/argv.ts"
+    ],
+    "verification": "ls -la apps/desktop/src/renderer/lib/electron-trpc.ts apps/desktop/src/renderer/lib/trpc-client.ts apps/desktop/src/renderer/lib/boot-errors.ts apps/desktop/src/renderer/lib/session-id-link.ts apps/desktop/src/renderer/lib/argv.ts apps/desktop/src/renderer/lib/dev-chat.ts apps/desktop/src/renderer/lib/dnd.ts",
+    "definition_of_done": "7 个核心 lib 文件（electron-trpc 替换、trpc-client 新增、session-id-link 新增、boot-errors 新增、argv 新增、dev-chat 新增、dnd 新增）均就位，electron-trpc 包含 abortOnUnmount + ElectronRouterOutputs"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/lib/electron-trpc.ts",
+      "action": "modify",
+      "target": "tRPC React client 创建",
+      "change": "替换为 Superset 版本（添加 abortOnUnmount: true + ElectronRouterOutputs 类型导出）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/trpc-client.ts",
+      "action": "create",
+      "target": "tRPC Electron IPC client",
+      "change": "从 Superset 源复制：electronReactClient（React hooks）+ electronTrpcClient（proxy client）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/session-id-link.ts",
+      "action": "create",
+      "target": "tRPC session ID link",
+      "change": "从 Superset 源复制：在 tRPC 请求中注入 session-id header"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/boot-errors.ts",
+      "action": "create",
+      "target": "启动错误处理工具",
+      "change": "从 Superset 源复制：initBootErrorHandling、reportBootError、markBootMounted、isBootErrorReported"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/argv.ts",
+      "action": "create",
+      "target": "命令行参数解析",
+      "change": "从 Superset 源复制（含 argv.test.ts）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/dev-chat.ts",
+      "action": "create",
+      "target": "Dev chat WebSocket",
+      "change": "从 Superset 源复制（含 dev-chat.test.ts）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/dnd.ts",
+      "action": "create",
+      "target": "拖拽工具",
+      "change": "从 Superset 源复制：拖拽类型定义和工具函数"
+    }
+  ],
+  "implementation": [
+    "Step 1: 读取 Superset electron-trpc.ts，替换 oh-my-maestro 版本（添加 abortOnUnmount + ElectronRouterOutputs）",
+    "Step 2: 复制 trpc-client.ts、session-id-link.ts、boot-errors.ts",
+    "Step 3: 复制 argv.ts + argv.test.ts、dev-chat.ts + dev-chat.test.ts、dnd.ts",
+    "Step 4: 验证所有 import 路径正确（renderer/、lib/ 别名）"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -30"
+    ],
+    "success_metrics": [
+      "7 个核心 lib 文件无 TypeScript 错误",
+      "electronTrpc 导出 abortOnUnmount 配置",
+      "trpc-client.ts 导出 electronReactClient 和 electronTrpcClient"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset lib 目录核心文件",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/electron-trpc.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/trpc-client.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "批量 DIRECT_COPY 核心 lib 文件（无 Superset 品牌依赖）",
+    "decision_factors": [
+      "这些文件是 tRPC IPC 通信的核心依赖",
+      "无 @superset/posthog/sentry 引用",
+      "app.trpc-client.ts 虽然引用了 @superset，但是引用的是 @superset/api-types（来自外部包），需验证"
+    ],
+    "tradeoffs": "electron-trpc.ts 替换现有简化版本（添加 abortOnUnmount 和类型导出）"
+  },
+  "risks": [
+    "api-trpc-client.ts 引用了 @superset/api-types，此文件移到 ADAPT 任务处理"
+  ],
+  "meta": {
+    "estimated_time": "20m",
+    "risk": "low",
+    "autonomous": true
+  }
+}

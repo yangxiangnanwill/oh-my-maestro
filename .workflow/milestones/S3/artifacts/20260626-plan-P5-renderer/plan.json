@@ -1,0 +1,106 @@
+{
+  "summary": "S3 Phase 5: 从 Superset 源迁移 ~100+ 前端文件到 oh-my-maestro renderer，包括 assets、globals.css、env.*、hooks、hotkeys、providers、react-query、20+ 组件、~35 lib 文件。分 6 个 Wave 执行，总计 19 个任务。排除 PostHog/Paywall/V2/Relay/Stripe/Sentry，保留所有 4 个 Maestro 独有组件不动。",
+  "approach": "Wave 1 建立入口层（assets、globals.css、env.*、index.html、index.tsx）；Wave 2 批量迁移工具层 lib/（~35 DIRECT_COPY + 6 ADAPT）；Wave 3 迁移交互层（hotkeys/ + hooks/ 通用）；Wave 4 建立数据层（providers/ + react-query/）；Wave 5 迁移组件层（~15 DIRECT_COPY + ~10 ADAPT）；Wave 6 路由层适配 + 编译验证。每个 Wave 结束时 bun run typecheck 验证。",
+  "task_ids": [
+    "TASK-039", "TASK-040",
+    "TASK-041", "TASK-042", "TASK-043", "TASK-044",
+    "TASK-045", "TASK-046", "TASK-047",
+    "TASK-048", "TASK-049",
+    "TASK-050", "TASK-051", "TASK-052", "TASK-053", "TASK-054",
+    "TASK-055", "TASK-056"
+  ],
+  "task_count": 18,
+  "complexity": "high",
+  "estimated_time": "8h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-039", "TASK-040"],
+      "description": "入口层：assets + globals.css + env.* + index.html + index.tsx 适配"
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-041", "TASK-042", "TASK-043", "TASK-044"],
+      "description": "工具层：lib/ DIRECT_COPY（~35 files）+ ADAPT（~6 files）按功能分组"
+    },
+    {
+      "wave": 3,
+      "tasks": ["TASK-045", "TASK-046", "TASK-047"],
+      "description": "交互层：hotkeys/（10 files）+ hooks/ 通用（~15 files）+ hooks/ 业务（~6 files）"
+    },
+    {
+      "wave": 4,
+      "tasks": ["TASK-048", "TASK-049"],
+      "description": "数据层：providers/（2）+ react-query/（3+）"
+    },
+    {
+      "wave": 5,
+      "tasks": ["TASK-050", "TASK-051", "TASK-052", "TASK-053", "TASK-054"],
+      "description": "组件层：通用组件（~15）+ 业务组件（~10）分组迁移"
+    },
+    {
+      "wave": 6,
+      "tasks": ["TASK-055", "TASK-056"],
+      "description": "路由层：routes/ + commandPalette/ + 编译验证"
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "Wave 1: 入口层（assets + globals.css + env.* + index.html + index.tsx）→ 页面可渲染",
+      "Wave 2: 工具层（lib/ ~41 files）→ 工具函数可用",
+      "Wave 3: 交互层（hotkeys + hooks）→ 快捷键和交互逻辑可用",
+      "Wave 4: 数据层（providers + react-query）→ 数据流可用",
+      "Wave 5: 组件层（components ~25 dirs）→ UI 组件可用",
+      "Wave 6: 路由层（routes + commandPalette）→ 完整路由可用 + 编译通过"
+    ]
+  },
+  "design_decisions": [
+    "globals.css 直接复制 Superset 版本（包含完整的 TailwindCSS + CSS 变量主题系统），替换 oh-my-maestro 空版本",
+    "index.html 从 oh-my-maestro 的 <div id='root'> 改为 Superset 的 <app> 根元素模式（与 globals.css 中的 app 选择器匹配）",
+    "index.tsx 合并 Superset 的 boot-error-handling + persistent-hash-history + router context 模式，保留 oh-my-maestro 的 Maestro 路由",
+    "lib/electron-trpc.ts 替换为 Superset 版本（添加 abortOnUnmount + ElectronRouterOutputs 类型导出）",
+    "lib/trpc-client.ts 新增（tRPC React client + proxy client 创建）",
+    "lib/ 中 EXCLUDE 文件：posthog.ts、sentry.ts、analytics/（分析追踪）",
+    "providers/ 排除 PostHogProvider，AuthProvider 需要适配（移除 SupersetLogo 引用）",
+    "react-query/ 排除 GitHub 相关（PR/Issue），保留 presets + projects + workspaces 基础",
+    "components/ 排除 Paywall、PostHogSurfaceTagger、PostHogUserIdentifier、TelemetrySync、UpdateRequiredPage、UpdateToast、V2AvailableBanner",
+    "routes/-layout.tsx 需要重写：移除 PostHogProvider/PostHogUserIdentifier/PostHogSurfaceTagger/TelemetrySync，保留 ElectronTRPCProvider + AuthProvider + TranslationProvider + ThemedToaster",
+    "commandPalette/ 排除 Superset 命令面板 UI 组件（oh-my-maestro 已有自己的 CommandPalette 组件），仅迁移 core/ 框架层"
+  ],
+  "shared_context": {
+    "patterns": [
+      "组件目录结构：ComponentName/ComponentName.tsx + index.ts barrel export",
+      "tRPC React hooks 模式（electronTrpc.xxx.useQuery/useMutation）",
+      "React Query persist client（IndexedDB 持久化）",
+      "TanStack Router 文件路由（__root.tsx + -layout.tsx）",
+      "TailwindCSS v4 + CSS 变量主题系统"
+    ],
+    "conventions": [
+      "import 路径：renderer/xxx 别名指向 src/renderer/",
+      "ESM imports",
+      "严格 TypeScript",
+      "Biome 格式化 + linting",
+      "组件 co-locate：hooks/utils 放在组件目录内"
+    ],
+    "dependencies": [
+      "@tanstack/react-router（已安装）",
+      "@tanstack/react-query（已安装）",
+      "@tanstack/query-async-storage-persister",
+      "@trpc/react-query（已安装）",
+      "idb-keyval",
+      "superjson（已安装）",
+      "tailwindcss（已安装）",
+      "tw-animate-css",
+      "streamdown",
+      "zod（已安装）"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-26T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "migration"
+  }
+}

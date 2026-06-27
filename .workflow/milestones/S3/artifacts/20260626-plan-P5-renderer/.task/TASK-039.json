@@ -1,0 +1,115 @@
+{
+	"id": "TASK-039",
+	"title": "Wave 1: 入口基础层 — assets + globals.css + env.d.ts + env.renderer.ts",
+	"description": "复制 Superset 的 assets/（品牌图标）、globals.css（TailwindCSS + CSS 变量主题系统）、env.d.ts（Vite 类型引用）、env.renderer.ts（环境变量 schema）到 oh-my-maestro renderer。这是整个前端的样式和配置基础。",
+	"type": "feature",
+	"priority": "high",
+	"effort": "medium",
+	"action": "复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\renderer\\assets\\ 到 apps/desktop/src/renderer/assets/；复制 globals.css、env.d.ts、env.renderer.ts 到 apps/desktop/src/renderer/；env.renderer.ts 中移除 RELAY_URL、NEXT_PUBLIC_POSTHOG_KEY、NEXT_PUBLIC_POSTHOG_HOST、SENTRY_DSN_DESKTOP 字段",
+	"status": "completed",
+	"scope": "apps/desktop/src/renderer/",
+	"focus_paths": [
+		"apps/desktop/src/renderer/assets/",
+		"apps/desktop/src/renderer/globals.css",
+		"apps/desktop/src/renderer/env.d.ts",
+		"apps/desktop/src/renderer/env.renderer.ts"
+	],
+	"read_first": [
+		"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/globals.css",
+		"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/env.renderer.ts",
+		"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/env.d.ts",
+		"D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/index.html"
+	],
+	"depends_on": [],
+	"wave": 1,
+	"executor": "agent",
+	"convergence": {
+		"criteria": [
+			"test -d apps/desktop/src/renderer/assets/ && test -f apps/desktop/src/renderer/assets/app-icons/vscode.svg",
+			"grep '@import \"tailwindcss\"' apps/desktop/src/renderer/globals.css",
+			"grep '--background:' apps/desktop/src/renderer/globals.css",
+			"grep 'vite/client' apps/desktop/src/renderer/env.d.ts",
+			"grep 'envSchema' apps/desktop/src/renderer/env.renderer.ts",
+			"! grep -r 'RELAY_URL\\|POSTHOG\\|SENTRY_DSN' apps/desktop/src/renderer/env.renderer.ts",
+			"[UI-observable] 复制后项目结构完整：assets/、globals.css、env.d.ts、env.renderer.ts 均存在于 apps/desktop/src/renderer/"
+		],
+		"verification": "ls apps/desktop/src/renderer/assets/app-icons/ | head -5 && grep -c '@import' apps/desktop/src/renderer/globals.css && grep -c 'envSchema' apps/desktop/src/renderer/env.renderer.ts",
+		"definition_of_done": "assets/（含 app-icons 子目录）、globals.css（完整 TailwindCSS v4 + CSS 变量主题）、env.d.ts、env.renderer.ts（已清理 Superset 特有字段）均就位"
+	},
+	"files": [
+		{
+			"path": "apps/desktop/src/renderer/assets/",
+			"action": "create",
+			"target": "品牌图标资源目录",
+			"change": "从 Superset 源完整复制 assets/ 目录（含 app-icons/ 子目录下 ~28 个图标文件）"
+		},
+		{
+			"path": "apps/desktop/src/renderer/globals.css",
+			"action": "create",
+			"target": "全局样式文件",
+			"change": "从 Superset 源复制完整 globals.css（TailwindCSS v4 + CSS 变量主题 + xterm 样式 + 滚动条样式）"
+		},
+		{
+			"path": "apps/desktop/src/renderer/env.d.ts",
+			"action": "create",
+			"target": "Vite 环境类型声明",
+			"change": "复制 Superset 的 env.d.ts（/// <reference types='vite/client' />）"
+		},
+		{
+			"path": "apps/desktop/src/renderer/env.renderer.ts",
+			"action": "create",
+			"target": "渲染进程环境变量",
+			"change": "复制 Superset 的 env.renderer.ts，移除 RELAY_URL、POSTHOG_KEY、POSTHOG_HOST、SENTRY_DSN_DESKTOP 字段"
+		}
+	],
+	"implementation": [
+		"Step 1: 复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\renderer\\assets\\ 整个目录到 apps/desktop/src/renderer/assets/",
+		"Step 2: 复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\renderer\\globals.css 到 apps/desktop/src/renderer/globals.css",
+		"Step 3: 复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\renderer\\env.d.ts 到 apps/desktop/src/renderer/env.d.ts",
+		"Step 4: 复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\renderer\\env.renderer.ts 到 apps/desktop/src/renderer/env.renderer.ts",
+		"Step 5: 编辑 env.renderer.ts：从 envSchema 中移除 RELAY_URL、NEXT_PUBLIC_POSTHOG_KEY、NEXT_PUBLIC_POSTHOG_HOST、SENTRY_DSN_DESKTOP 字段，从 rawEnv 中移除对应条目"
+	],
+	"test": {
+		"commands": [
+			"cd apps/desktop && bun run typecheck 2>&1 | head -30"
+		],
+		"success_metrics": [
+			"assets/ 目录包含 app-icons/ 子目录且至少有 20 个图标文件",
+			"globals.css 包含 @import 'tailwindcss' 和 :root CSS 变量定义",
+			"env.renderer.ts 无 RELAY_URL/POSTHOG/SENTRY 引用",
+			"env.renderer.ts 通过 typecheck"
+		]
+	},
+	"reference": {
+		"pattern": "Superset renderer 入口文件结构",
+		"files": [
+			"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/globals.css",
+			"D:/WorkSpace/Source/superset/apps/desktop/src/renderer/env.renderer.ts"
+		],
+		"examples": null
+	},
+	"rationale": {
+		"chosen_approach": "直接复制 Superset 的 globals.css（完整主题系统）和 env.renderer.ts（清理 Superset 特有字段），assets/ 完整复制",
+		"decision_factors": [
+			"globals.css 包含完整的 TailwindCSS v4 + CSS 变量主题系统，是组件渲染的基础",
+			"env.renderer.ts 需要清理 Superset 特有字段（PostHog/Sentry/Relay）",
+			"assets/ 包含 app-icons 被多个组件引用"
+		],
+		"tradeoffs": "globals.css 中的 --superset-terminal-font-family 变量名保留（后续品牌统一时再改）"
+	},
+	"risks": [
+		"globals.css 中的 @source 路径可能引用不存在的 packages/ui 目录，需要验证"
+	],
+	"meta": {
+		"estimated_time": "20m",
+		"risk": "low",
+		"autonomous": true
+	},
+	"status_history": [
+		{
+			"from": "in_progress",
+			"to": "completed",
+			"changed_at": "2026-06-26T11:53:47.303Z"
+		}
+	]
+}

@@ -28,7 +28,7 @@ interface McpToolDefinition {
   inputSchema?: Record<string, unknown>;
 }
 
-interface MaestroCliTool {
+export interface MaestroCliTool {
   name: string;
   description: string;
   category: "knowledge" | "analysis" | "command" | "utility";

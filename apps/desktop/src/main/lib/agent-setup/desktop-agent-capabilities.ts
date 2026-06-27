@@ -1,4 +1,5 @@
-// Phase 3 stub — replace with @superset/shared/agent-command in Phase 4
+// Phase 3 stub — replace with shared agent-command type in Phase 4
+// TODO(Phase4): Import AgentType from the Maestro shared agent-command module
 type AgentType = string;
 
 export type SupersetManagedBinary = AgentType;
@@ -105,3 +106,34 @@ export const DESKTOP_AGENT_SETUP_TARGETS = [
 export const SUPERSET_MANAGED_BINARIES = DESKTOP_AGENT_SETUP_TARGETS.filter(
 	(target) => "managedBinary" in target && target.managedBinary,
 ).map((target) => target.id) satisfies SupersetManagedBinary[];
+
+// ============================================================
+// Phase 4: Agent preset commands (migrated from Superset @superset/shared/agent-command)
+// ============================================================
+
+export const DEFAULT_TERMINAL_PRESET_AGENT_TYPES = [
+	"claude",
+	"codex",
+	"gemini",
+	"opencode",
+	"cursor-agent",
+	"copilot",
+] as const;
+
+export const AGENT_PRESET_COMMANDS: Record<string, string[]> = {
+	claude: ["claude"],
+	codex: ["codex"],
+	gemini: ["gemini"],
+	opencode: ["opencode"],
+	"cursor-agent": ["cursor-agent"],
+	copilot: ["copilot"],
+};
+
+export const AGENT_PRESET_DESCRIPTIONS: Record<string, string> = {
+	claude: "Anthropic Claude",
+	codex: "OpenAI Codex",
+	gemini: "Google Gemini",
+	opencode: "OpenCode",
+	"cursor-agent": "Cursor Agent",
+	copilot: "GitHub Copilot",
+};

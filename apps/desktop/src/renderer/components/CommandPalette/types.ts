@@ -2,7 +2,7 @@ import type { CommandItem } from "lib/trpc/routers/maestro";
 
 /** UI 层映射的 Maestro 命令（精简版，用于渲染） */
 export interface MaestroCommand {
-  id: string;
+  id?: string;
   name: string;
   description: string;
   category: CommandItem["category"];

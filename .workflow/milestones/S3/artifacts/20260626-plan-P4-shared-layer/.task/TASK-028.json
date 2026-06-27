@@ -1,0 +1,136 @@
+{
+  "id": "TASK-028",
+  "title": "DIRECT_COPY 路由组 3：配置和外部（config、external、ports）",
+  "description": "迁移 config（2 文件）、external（3 文件含测试）、ports（3 文件）路由。这些路由引用 @superset/local-db 类型，需替换为 tsconfig paths 别名",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "复制 config/config.ts+index.ts、external/helpers.ts+helpers.test.ts+index.ts、ports/ports.ts+label-cache.ts+index.ts，替换 @superset/local-db 引用为 tsconfig paths 别名",
+  "status": "completed",
+  "scope": "apps/desktop/src/lib/trpc/routers/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/config/",
+    "apps/desktop/src/lib/trpc/routers/external/",
+    "apps/desktop/src/lib/trpc/routers/ports/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/config/config.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/config/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/external/helpers.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/external/helpers.test.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/external/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/ports/ports.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/ports/label-cache.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/ports/index.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 2,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createConfigRouter' apps/desktop/src/lib/trpc/routers/config/index.ts",
+      "grep 'createExternalRouter' apps/desktop/src/lib/trpc/routers/external/index.ts",
+      "grep 'createPortsRouter' apps/desktop/src/lib/trpc/routers/ports/index.ts",
+      "! grep -r '@superset/local-db' apps/desktop/src/lib/trpc/routers/config/",
+      "! grep -r '@superset/local-db' apps/desktop/src/lib/trpc/routers/external/",
+      "! grep -r '@superset/local-db' apps/desktop/src/lib/trpc/routers/ports/"
+    ],
+    "verification": "for dir in config external ports; do echo \"=== $dir ===\" && grep -rn '@superset' apps/desktop/src/lib/trpc/routers/$dir/ || echo 'CLEAN'; done",
+    "definition_of_done": "config/external/ports 路由完整迁移，无 @superset/local-db 引用残留"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/config/config.ts",
+      "action": "create",
+      "target": "配置路由逻辑",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/config/index.ts",
+      "action": "modify",
+      "target": "配置路由入口",
+      "change": "从 Superset 复制内容"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/external/helpers.ts",
+      "action": "create",
+      "target": "外部应用助手",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/external/helpers.test.ts",
+      "action": "create",
+      "target": "外部应用助手测试",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/external/index.ts",
+      "action": "modify",
+      "target": "外部集成路由入口",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/ports/ports.ts",
+      "action": "create",
+      "target": "端口管理逻辑",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/ports/label-cache.ts",
+      "action": "create",
+      "target": "端口标签缓存",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/ports/index.ts",
+      "action": "modify",
+      "target": "端口路由入口",
+      "change": "从 Superset 复制内容"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 config/config.ts 和 config/index.ts，替换 config.ts 中的 @superset/local-db import",
+    "Step 2: 复制 external/ 全部 3 个文件，替换 helpers.ts 和 index.ts 中的 @superset/local-db import",
+    "Step 3: 复制 ports/ 全部 3 个文件，替换 label-cache.ts 中的 @superset/local-db import",
+    "Step 4: 验证所有文件无 @superset/local-db 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -E 'config|external|ports' | head -20"
+    ],
+    "success_metrics": [
+      "8 个文件全部创建/更新",
+      "无 @superset/local-db 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset config/external/ports 路由模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/config/",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/external/",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/ports/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "合并 3 个功能相关的路由（配置/外部/端口）为一个任务",
+    "decision_factors": [
+      "3 个路由都引用 @superset/local-db 类型",
+      "替换模式一致（import 路径替换）",
+      "共 8 个文件，工作量适中"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "external/helpers.ts 引用 ExternalApp 类型，需确认 oh-my-maestro local-db 中有对应类型"
+  ],
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": true
+  }
+}

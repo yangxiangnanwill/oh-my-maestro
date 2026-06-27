@@ -68,3 +68,15 @@
 {"type":"cli","id":"CLI-1782386074251-1","timestamp":"2026-06-25T11:14:34.251Z","command":"spec list","args":{}}
 {"type":"cli","id":"CLI-1782386183649-1","timestamp":"2026-06-25T11:16:23.649Z","command":"load","args":{"type":"spec","category":"coding"}}
 {"type":"cli","id":"CLI-1782388974928-1","timestamp":"2026-06-25T12:02:54.929Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782437414827-1","timestamp":"2026-06-26T01:30:14.827Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782443818787-1","timestamp":"2026-06-26T03:16:58.787Z","command":"load","args":{"type":"spec","category":"arch"}}
+{"type":"cli","id":"CLI-1782443825307-1","timestamp":"2026-06-26T03:17:05.307Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782443887261-1","timestamp":"2026-06-26T03:18:07.261Z","command":"load","args":{"type":"scratch","id":"scratch-20260626-analyze-s3-p4-shared-layer-context"}}
+{"type":"cli","id":"CLI-1782443890140-1","timestamp":"2026-06-26T03:18:10.140Z","command":"load","args":{"type":"scratch","id":"scratch-20260626-analyze-s3-p4-shared-layer-discussion"}}
+{"type":"cli","id":"CLI-1782472134199-1","timestamp":"2026-06-26T11:08:54.199Z","command":"load","args":{"type":"spec","category":"coding"}}
+{"type":"cli","id":"CLI-1782472135980-1","timestamp":"2026-06-26T11:08:55.980Z","command":"load","args":{"type":"spec","category":"arch"}}
+{"type":"cli","id":"CLI-1782472142338-1","timestamp":"2026-06-26T11:09:02.338Z","command":"load","args":{"type":"note","id":"scratch-20260626-analyze-s3-p5-renderer-context"}}
+{"type":"cli","id":"CLI-1782472144287-1","timestamp":"2026-06-26T11:09:04.287Z","command":"load","args":{"type":"scratch","list":true}}
+{"type":"cli","id":"CLI-1782472153573-1","timestamp":"2026-06-26T11:09:13.573Z","command":"load","args":{"type":"scratch","id":"scratch-20260625-analyze-macro-superset-migration-gap-roadmap"}}
+{"type":"cli","id":"CLI-1782472155357-1","timestamp":"2026-06-26T11:09:15.357Z","command":"load","args":{"type":"spec","category":"ui"}}
+{"type":"cli","id":"CLI-1782483247643-1","timestamp":"2026-06-26T14:14:07.643Z","command":"load","args":{"type":"spec","category":"coding"}}

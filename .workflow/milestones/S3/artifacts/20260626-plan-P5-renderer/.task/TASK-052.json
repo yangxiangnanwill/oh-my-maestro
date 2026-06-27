@@ -1,0 +1,102 @@
+{
+  "id": "TASK-052",
+  "title": "Wave 5: Chat 组件核心迁移",
+  "description": "迁移 Superset 的 Chat 组件（187 files，最大的组件模块）。Chat 是 AI 对话界面的核心，包含 ChatInterface（消息列表、输入框、模型选择器、工具调用块、斜杠命令等）、SubagentInnerToolCall、chat-service-client 等。需要大量适配 @superset 引用。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "从 Superset 源复制 Chat/ 全部 187 files 到 apps/desktop/src/renderer/components/Chat/；替换所有 @superset 引用；排除 Stripe/Paywall 相关子组件",
+  "status": "completed",
+  "scope": "apps/desktop/src/renderer/components/Chat/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/Chat/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/ChatInterface.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessageList/MessageList.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/ChatInputFooter/ChatInputFooter.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/ModelPicker/ModelPicker.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/ToolCallBlock/ToolCallBlock.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/Chat/utils/chat-service-client.ts"
+  ],
+  "depends_on": [
+    "TASK-051"
+  ],
+  "wave": 5,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/components/Chat/",
+      "test -d apps/desktop/src/renderer/components/Chat/ChatInterface/",
+      "test -d apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessageList/",
+      "test -d apps/desktop/src/renderer/components/Chat/ChatInterface/components/ChatInputFooter/",
+      "test -d apps/desktop/src/renderer/components/Chat/ChatInterface/components/ModelPicker/",
+      "test -d apps/desktop/src/renderer/components/Chat/ChatInterface/components/ToolCallBlock/",
+      "! grep -r '@superset' apps/desktop/src/renderer/components/Chat/ --include='*.ts' --include='*.tsx' | grep -v '.test.'",
+      "[UI-observable] Chat 组件可导入且无编译错误"
+    ],
+    "verification": "find apps/desktop/src/renderer/components/Chat/ -type f | wc -l && grep -r '@superset' apps/desktop/src/renderer/components/Chat/ --include='*.ts' --include='*.tsx' | grep -v node_modules | head -20",
+    "definition_of_done": "Chat 组件（~187 files）完整迁移，所有 @superset 引用已替换，Stripe/Paywall 子组件已排除"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/",
+      "action": "create",
+      "target": "AI 对话界面完整模块",
+      "change": "从 Superset 源完整复制 Chat/ 全部 ~187 files；替换所有 @superset 引用；排除 Stripe/Paywall 相关子组件"
+    }
+  ],
+  "implementation": [
+    "Step 1: 完整复制 Chat/ 目录（~187 files）",
+    "Step 2: 识别并排除 Stripe/Paywall 相关子组件",
+    "Step 3: 逐个替换 Chat 中所有 @superset 引用（ChatInterface、MessageList、ChatInputFooter、ModelPicker、ToolCallBlock、TiptapPromptEditor 等）",
+    "Step 4: 替换 chat-service-client.ts 中的 @superset 引用",
+    "Step 5: 验证所有 import 路径正确"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "Chat/ 目录包含 ~187 个文件",
+      "所有 @superset 引用已替换",
+      "Stripe/Paywall 子组件已排除",
+      "无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset Chat 组件结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/ChatInterface.tsx",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessageList/MessageList.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "完整迁移 Chat 组件（187 files），逐个替换 @superset 引用",
+    "decision_factors": [
+      "Chat 是 AI 对话界面的核心（最大组件模块）",
+      "包含 ChatInterface（消息列表、输入框、模型选择器、工具调用块、斜杠命令等）",
+      "SubagentInnerToolCall 是子 Agent 工具调用的渲染组件",
+      "chat-service-client 是 Chat 的 HTTP 服务客户端"
+    ],
+    "tradeoffs": "Chat 组件引用 @superset 最多（~50+ 文件），适配工作量最大"
+  },
+  "risks": [
+    "Chat 组件大量依赖 @superset/api-types（Agent、Message、ToolCall 类型），可能需要创建本地类型 stub",
+    "ModelPicker 依赖 OpenAI/Anthropic API key 管理，可能需要适配 Maestro 的 Agent 配置",
+    "TiptapPromptEditor 依赖 Tiptap 扩展（需确认已安装）"
+  ],
+  "meta": {
+    "estimated_time": "90m",
+    "risk": "high",
+    "autonomous": false
+  },
+  "status_history": [
+    {
+      "from": "pending",
+      "to": "completed",
+      "changed_at": "2026-06-26T14:11:25.750Z"
+    }
+  ]
+}

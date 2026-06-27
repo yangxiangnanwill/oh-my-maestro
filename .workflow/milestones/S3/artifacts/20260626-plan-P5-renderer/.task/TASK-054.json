@@ -1,0 +1,90 @@
+{
+  "id": "TASK-054",
+  "title": "Wave 5: 组件层验证 — 全部组件导入 + typecheck",
+  "description": "对 Wave 5 迁移的所有组件进行集中验证：确认所有组件目录完整、EXCLUDE 组件不存在、所有 @superset 引用已清除、typecheck 通过。这是组件层的质量门禁。",
+  "type": "verification",
+  "priority": "high",
+  "effort": "medium",
+  "action": "验证 apps/desktop/src/renderer/components/ 目录完整性：25 个 Superset 源组件中排除 7 个（Paywall、PostHogSurfaceTagger、PostHogUserIdentifier、TelemetrySync、UpdateRequiredPage、UpdateToast、V2AvailableBanner），保留 4 个 Maestro 独有组件，迁移 14 个 Superset 组件；运行 bun run typecheck",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/components/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/"
+  ],
+  "depends_on": ["TASK-050", "TASK-051", "TASK-052", "TASK-053"],
+  "wave": 5,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/components/AnalysisPanel/",
+      "test -d apps/desktop/src/renderer/components/CommandChainPanel/",
+      "test -d apps/desktop/src/renderer/components/CommandPalette/",
+      "test -d apps/desktop/src/renderer/components/KnowledgePanel/",
+      "test -d apps/desktop/src/renderer/components/Chat/",
+      "test -d apps/desktop/src/renderer/components/MarkdownEditor/",
+      "test -d apps/desktop/src/renderer/components/MarkdownRenderer/",
+      "! test -d apps/desktop/src/renderer/components/Paywall",
+      "! test -d apps/desktop/src/renderer/components/PostHogSurfaceTagger",
+      "! test -d apps/desktop/src/renderer/components/V2AvailableBanner",
+      "! grep -r '@superset' apps/desktop/src/renderer/components/ --include='*.ts' --include='*.tsx' | grep -v '.test.' | grep -v node_modules",
+      "[UI-observable] 所有组件目录完整，Maestro 独有组件保留，EXCLUDE 组件不存在，bun run typecheck 通过"
+    ],
+    "verification": "ls -d apps/desktop/src/renderer/components/*/ | wc -l && ls apps/desktop/src/renderer/components/ | sort && cd apps/desktop && bun run typecheck 2>&1 | tail -20",
+    "definition_of_done": "组件目录包含 4 个 Maestro 独有 + 14 个 Superset 迁移 = 18 个组件目录；EXCLUDE 组件不存在；@superset 引用已清除；typecheck 通过"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/",
+      "action": "verify",
+      "target": "组件目录完整性",
+      "change": "验证组件目录结构：18 个目录（4 Maestro + 14 Superset），7 个 EXCLUDE 不存在"
+    }
+  ],
+  "implementation": [
+    "Step 1: 列出 apps/desktop/src/renderer/components/ 所有子目录",
+    "Step 2: 确认 Maestro 独有组件存在：AnalysisPanel、CommandChainPanel、CommandPalette、KnowledgePanel",
+    "Step 3: 确认 EXCLUDE 组件不存在：Paywall、PostHogSurfaceTagger、PostHogUserIdentifier、TelemetrySync、UpdateRequiredPage、UpdateToast、V2AvailableBanner",
+    "Step 4: 搜索所有组件中的 @superset 引用残留",
+    "Step 5: 运行 cd apps/desktop && bun run typecheck",
+    "Step 6: 修复 typecheck 错误"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1",
+      "cd apps/desktop && bun run lint 2>&1 | tail -20"
+    ],
+    "success_metrics": [
+      "组件目录数量 = 18（4 Maestro + 14 Superset）",
+      "EXCLUDE 组件目录 0 个",
+      "@superset 引用残留 0 个",
+      "typecheck 通过（0 errors）"
+    ]
+  },
+  "reference": {
+    "pattern": "组件层验证门禁",
+    "files": [
+      "apps/desktop/src/renderer/components/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "集中验证组件层完整性，作为 Wave 5 的质量门禁",
+    "decision_factors": [
+      "组件层是最大的迁移模块（~250+ files），需要集中验证",
+      "确保 Maestro 独有组件未被覆盖",
+      "确保 EXCLUDE 组件未被误迁移"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "typecheck 可能发现大量错误（组件间依赖未满足），需要逐个修复"
+  ],
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": false
+  }
+}

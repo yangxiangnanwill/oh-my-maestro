@@ -1,0 +1,112 @@
+{
+  "id": "TASK-040",
+  "title": "Wave 1: 入口适配 — index.html + index.tsx 合并 Superset 模式",
+  "description": "重写 oh-my-maestro 的 index.html 和 index.tsx，合并 Superset 的启动模式（<app> 根元素、boot-error-handling、persistent-hash-history、router context with queryClient、BootErrorBoundary），同时保留 Maestro 路由结构。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "重写 apps/desktop/src/renderer/index.html 使用 <app> 根元素替代 <div id='root'>；重写 apps/desktop/src/renderer/index.tsx 添加 boot-error-handling + persistent-hash-history + router context（queryClient）+ BootErrorBoundary",
+  "status": "completed",
+  "scope": "apps/desktop/src/renderer/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/index.html",
+    "apps/desktop/src/renderer/index.tsx",
+    "apps/desktop/src/renderer/App.tsx"
+  ],
+  "read_first": [
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/index.html",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/index.tsx",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/App.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/index.html",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/index.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/App.tsx"
+  ],
+  "depends_on": [
+    "TASK-039"
+  ],
+  "wave": 1,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep '<app></app>' apps/desktop/src/renderer/index.html",
+      "grep 'persistentHistory' apps/desktop/src/renderer/index.tsx",
+      "grep 'BootErrorBoundary' apps/desktop/src/renderer/index.tsx",
+      "grep 'queryClient' apps/desktop/src/renderer/index.tsx",
+      "grep 'import.*globals\\.css' apps/desktop/src/renderer/index.tsx",
+      "grep 'boot-error' apps/desktop/src/renderer/index.tsx",
+      "[UI-observable] Electron 窗口加载后不出现白屏，React 应用正常挂载到 <app> 根元素"
+    ],
+    "verification": "grep -n '<app>\\|persistentHistory\\|BootErrorBoundary\\|queryClient\\|boot-error\\|globals\\.css' apps/desktop/src/renderer/index.tsx",
+    "definition_of_done": "index.html 使用 <app> 根元素 + CSP meta 标签；index.tsx 集成 boot-error-handling + persistent-hash-history + router context（queryClient）+ BootErrorBoundary + globals.css 导入；App.tsx 保留 Maestro 路由结构"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/index.html",
+      "action": "modify",
+      "target": "HTML 入口模板",
+      "change": "将 <div id='root'> 替换为 <app></app>；添加 CSP meta 标签；保留 Maestro 专属 title"
+    },
+    {
+      "path": "apps/desktop/src/renderer/index.tsx",
+      "action": "modify",
+      "target": "React 渲染入口",
+      "change": "合并 Superset 启动模式：boot-error-handling + persistent-hash-history + router context queryClient + BootErrorBoundary + globals.css 导入 + 路由注册"
+    },
+    {
+      "path": "apps/desktop/src/renderer/App.tsx",
+      "action": "keep",
+      "target": "Maestro 路由组件",
+      "change": "保留不动（Maestro 独有路由配置）"
+    }
+  ],
+  "implementation": [
+    "Step 1: 读取 Superset 源 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\renderer\\index.html",
+    "Step 2: 读取 Superset 源 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\renderer\\index.tsx",
+    "Step 3: 重写 oh-my-maestro index.html：将 <div id='root'> 替换为 <app></app>；添加 CSP meta 标签；引用 /theme-boot.js（如需要）；保留 <title>Maestro IDE</title>",
+    "Step 4: 重写 oh-my-maestro index.tsx：合并 Superset 的 boot-error-handling + persistent-hash-history + router context + BootErrorBoundary 模式，移除 posthog/sentry/superset 相关代码"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -30"
+    ],
+    "success_metrics": [
+      "index.html 包含 <app></app> 根元素",
+      "index.tsx 无 posthog/sentry/superset 引用",
+      "index.tsx 通过 typecheck",
+      "保留 Maestro 路由结构不变"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset 启动模式（boot-error-handling + persistent-hash-history + router context）",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/index.tsx",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/index.html"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "合并 Superset 入口模式（BootErrorBoundary + persistent-hash-history + router context），同时保留 oh-my-maestro 的 App.tsx 路由结构",
+    "decision_factors": [
+      "BootErrorBoundary 提供优雅的错误处理",
+      "persistent-hash-history 支持 hash 路由持久化",
+      "router context queryClient 是 ElectronTRPCProvider 数据流的基础",
+      "Maestro 路由结构需要保留"
+    ],
+    "tradeoffs": "移除 Superset 的 posthog pageview tracking + deep-link IPC 处理（Maestro 暂不需要）"
+  },
+  "risks": [
+    "boot-error handling 依赖 lib/boot-errors.ts（Wave 2 才迁移，可能需要先占位）"
+  ],
+  "meta": {
+    "estimated_time": "25m",
+    "risk": "medium",
+    "autonomous": false
+  },
+  "status_history": [
+    {
+      "from": "in_progress",
+      "to": "completed",
+      "changed_at": "2026-06-26T12:09:34.284Z"
+    }
+  ]
+}

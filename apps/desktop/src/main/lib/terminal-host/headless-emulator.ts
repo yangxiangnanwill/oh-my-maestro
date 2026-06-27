@@ -8,12 +8,9 @@
  */
 
 import "../../terminal-host/xterm-env-polyfill";
-// Phase 3 stub — @xterm/addon-serialize not yet installed
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const SerializeAddon: any = class {};
-
+import { SerializeAddon } from "@xterm/addon-serialize";
 import { Terminal } from "@xterm/headless";
-// Phase 3 stub — replace with shared/constants in Phase 4
+// Local constant: shared/constants module not yet available
 const DEFAULT_TERMINAL_SCROLLBACK = 1000;
 import {
 	DEFAULT_MODES,
@@ -65,7 +62,7 @@ export interface HeadlessEmulatorOptions {
 
 export class HeadlessEmulator {
 	private terminal: Terminal;
-	private serializeAddon: InstanceType<typeof SerializeAddon> | null = null;
+	private serializeAddon: SerializeAddon;
 	private modes: TerminalModes;
 	private cwd: string | null = null;
 	private disposed = false;
@@ -95,7 +92,8 @@ export class HeadlessEmulator {
 		});
 
 		this.serializeAddon = new SerializeAddon();
-		this.terminal.loadAddon(this.serializeAddon);
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			this.terminal.loadAddon(this.serializeAddon as any);
 
 		// Initialize mode state
 		this.modes = { ...DEFAULT_MODES };

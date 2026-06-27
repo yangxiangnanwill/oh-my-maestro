@@ -1,0 +1,102 @@
+{
+  "id": "TASK-030",
+  "title": "DIRECT_COPY 路由组 5：聊天和设备（chat-runtime-service、chat-service、device）",
+  "description": "迁移 chat-runtime-service（1 文件）、chat-service（1 文件）和 device（1 文件）路由。chat-* 引用 @superset/chat/server/trpc 和 @superset/chat/server/desktop，device 引用 @superset/shared/host-info，需替换为 tsconfig paths 别名",
+  "type": "feature",
+  "priority": "high",
+  "effort": "small",
+  "action": "复制 chat-runtime-service/index.ts、chat-service/index.ts、device.ts 内容到 oh-my-maestro，替换 @superset/chat/* 和 @superset/shared/host-info 引用为 tsconfig paths 别名",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/routers/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/chat-runtime-service/",
+    "apps/desktop/src/lib/trpc/routers/chat-service/",
+    "apps/desktop/src/lib/trpc/routers/device/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/chat-runtime-service/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/chat-service/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/device.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 2,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createChatRuntimeServiceRouter' apps/desktop/src/lib/trpc/routers/chat-runtime-service/index.ts",
+      "grep 'createChatServiceRouter' apps/desktop/src/lib/trpc/routers/chat-service/index.ts",
+      "grep 'createDeviceRouter' apps/desktop/src/lib/trpc/routers/device/index.ts",
+      "! grep '@superset/chat' apps/desktop/src/lib/trpc/routers/chat-runtime-service/index.ts",
+      "! grep '@superset/chat' apps/desktop/src/lib/trpc/routers/chat-service/index.ts",
+      "! grep '@superset/shared/host-info' apps/desktop/src/lib/trpc/routers/device/index.ts"
+    ],
+    "verification": "for dir in chat-runtime-service chat-service device; do echo \"=== $dir ===\" && grep -rn '@superset' apps/desktop/src/lib/trpc/routers/$dir/ || echo 'CLEAN'; done",
+    "definition_of_done": "chat-runtime-service/chat-service/device 路由完整迁移，无 @superset 引用残留"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/chat-runtime-service/index.ts",
+      "action": "modify",
+      "target": "聊天运行时服务路由",
+      "change": "从 Superset 复制并替换 @superset/chat/server/trpc import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/chat-service/index.ts",
+      "action": "modify",
+      "target": "聊天服务路由",
+      "change": "从 Superset 复制并替换 @superset/chat/server/desktop import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/device/index.ts",
+      "action": "modify",
+      "target": "设备路由",
+      "change": "从 Superset device.ts 复制并替换 @superset/shared/host-info import"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 chat-runtime-service/index.ts，替换 @superset/chat/server/trpc → tsconfig alias",
+    "Step 2: 复制 chat-service/index.ts，替换 @superset/chat/server/desktop → tsconfig alias",
+    "Step 3: 复制 Superset device.ts 内容到 oh-my-maestro device/index.ts，替换 @superset/shared/host-info → tsconfig alias",
+    "Step 4: 验证所有文件无 @superset 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -E 'chat|device' | head -20"
+    ],
+    "success_metrics": [
+      "3 个路由文件全部包含 createXxxRouter 导出",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset chat/device 路由模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/chat-runtime-service/index.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/chat-service/index.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/device.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "合并聊天和设备路由为一个任务",
+    "decision_factors": [
+      "chat-runtime-service 和 chat-service 功能相关",
+      "device 是单文件转目录结构",
+      "3 个路由都有 @superset 引用需要替换"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "chat-runtime-service 引用 ChatRuntimeService 类，oh-my-maestro 中可能不存在该实现",
+    "chat-service 引用 @superset/chat/server/desktop 的多个导出，需确认 tsconfig alias 覆盖"
+  ],
+  "meta": {
+    "estimated_time": "20m",
+    "risk": "medium",
+    "autonomous": true
+  }
+}

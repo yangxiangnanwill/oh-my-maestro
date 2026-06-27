@@ -1,24 +1,54 @@
 /**
  * UI state schemas (persisted from renderer zustand stores)
  */
-// Phase 3 stub types — will be replaced by Phase 4 shared modules
+
+interface ChatState {
+  sessionId?: string | null;
+  launchConfig?: {
+    initialPrompt?: string;
+    metadata?: { model?: string };
+    retryCount?: number;
+  } | null;
+}
+
+interface PaneBase {
+  id: string;
+  tabId: string;
+  type: string;
+  name: string;
+  chat?: ChatState;
+  workspaceRun?: {
+    workspaceId: string;
+    state: string;
+  };
+  [key: string]: unknown;
+}
+
+interface TabBase {
+  id: string;
+  name: string;
+  workspaceId: string;
+  userTitle?: string;
+  createdAt: number;
+  layout: unknown;
+}
+
 interface BaseTabsState {
-  tabs: unknown[];
-  panes: Record<string, unknown>;
+  tabs: TabBase[];
+  panes: Record<string, PaneBase>;
   activeTabIds: Record<string, string>;
   focusedPaneIds: Record<string, string>;
   tabHistoryStacks: Record<string, string[]>;
 }
 
-interface Pane {
-  id: string;
-  type: string;
+interface Theme {
+	id: string;
+	type: "dark" | "light";
+	[key: string]: unknown;
 }
 
-type Theme = Record<string, unknown>;
-
 // Re-export for convenience
-export type { BaseTabsState as TabsState, Pane };
+export type { BaseTabsState as TabsState, PaneBase as Pane, TabBase as Tab, ChatState };
 
 export interface ThemeState {
 	activeThemeId: string;

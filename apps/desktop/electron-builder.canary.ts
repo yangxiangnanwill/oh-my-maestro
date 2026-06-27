@@ -9,9 +9,11 @@
 
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import type { Configuration } from "electron-builder";
 import baseConfig from "./electron-builder";
 import pkg from "./package.json";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Configuration = any;
 
 const productName = "Maestro Canary";
 const canaryMacIconPath = join(pkg.resources, "build/icons/icon-canary.icns");

@@ -1,0 +1,82 @@
+{
+  "id": "TASK-022",
+  "title": "增强 trpc/index.ts：superjson + Sentry middleware",
+  "description": "将 oh-my-maestro 的 trpc/index.ts 从基础 initTRPC 升级为完整版本，添加 superjson transformer 和 Sentry middleware（try-catch 可选），导出 mergeRouters",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\lib\\trpc\\index.ts 的完整内容到 D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\lib\\trpc\\index.ts，移除 NotGitRepoError import（oh-my-maestro 中不存在），保留 superjson transformer 和 Sentry middleware",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/index.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/index.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'superjson' apps/desktop/src/lib/trpc/index.ts",
+      "grep 'sentryMiddleware' apps/desktop/src/lib/trpc/index.ts",
+      "grep 'mergeRouters' apps/desktop/src/lib/trpc/index.ts",
+      "grep 'transformer: superjson' apps/desktop/src/lib/trpc/index.ts",
+      "! grep 'NotGitRepoError' apps/desktop/src/lib/trpc/index.ts"
+    ],
+    "verification": "grep -n 'superjson\\|sentryMiddleware\\|mergeRouters\\|transformer' apps/desktop/src/lib/trpc/index.ts && grep -c 'NotGitRepoError' apps/desktop/src/lib/trpc/index.ts | grep ':0$'",
+    "definition_of_done": "trpc/index.ts 包含 superjson transformer、Sentry middleware（try-catch 包裹）、mergeRouters 导出，不包含 NotGitRepoError"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/index.ts",
+      "action": "modify",
+      "target": "tRPC 初始化",
+      "change": "替换为基础 initTRPC + superjson transformer + Sentry middleware + mergeRouters 导出"
+    }
+  ],
+  "implementation": [
+    "Step 1: 读取 Superset 源文件 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\lib\\trpc\\index.ts",
+    "Step 2: 复制全部内容到 oh-my-maestro apps/desktop/src/lib/trpc/index.ts",
+    "Step 3: 移除 NotGitRepoError import 和相关的 instanceof 检查（oh-my-maestro 中无此类型）",
+    "Step 4: 保持 Sentry middleware 的 try-catch 结构（import('@sentry/electron/main') 失败时静默降级）",
+    "Step 5: 验证导出：router, mergeRouters, publicProcedure, trpc"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "trpc/index.ts 无 TypeScript 编译错误",
+      "superjson transformer 启用",
+      "mergeRouters 可导出"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset trpc/index.ts 结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制 Superset 版本并移除 NotGitRepoError，Sentry 保持 try-catch 可选",
+    "decision_factors": [
+      "superjson 是 tRPC 最佳实践，已安装",
+      "Sentry middleware 用 try-catch 包裹不会阻塞启动",
+      "mergeRouters 是 Wave 4 路由合并所必需"
+    ],
+    "tradeoffs": "Sentry middleware 暂时为空操作（@sentry/electron 未安装），但代码结构已就绪"
+  },
+  "risks": [
+    "NotGitRepoError 移除后 Sentry middleware 可能还有对其他 Superset 类型的引用需要检查"
+  ],
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true
+  }
+}

@@ -1,0 +1,132 @@
+{
+  "id": "TASK-035",
+  "title": "ADAPT：settings 路由适配",
+  "description": "适配 settings 路由，替换 Superset agent preset 引用。settings 引用 @superset/local-db、@superset/shared/agent-* 等多个包，需替换为 tsconfig paths 别名",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "从 Superset 复制 settings/ 全部 8 个文件，替换所有 @superset 引用为 tsconfig paths 别名",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/routers/settings/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/settings/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/settings/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/settings/agent-preset-router.utils.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/settings/font-settings.utils.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/settings/preset-execution-mode.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/settings/preset-trigger-selection.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 3,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createSettingsRouter' apps/desktop/src/lib/trpc/routers/settings/index.ts",
+      "! grep -r '@superset/local-db' apps/desktop/src/lib/trpc/routers/settings/",
+      "! grep -r '@superset/shared/agent-' apps/desktop/src/lib/trpc/routers/settings/"
+    ],
+    "verification": "grep -rn '@superset' apps/desktop/src/lib/trpc/routers/settings/ || echo 'CLEAN'",
+    "definition_of_done": "settings 路由完整迁移（8 个文件），所有 @superset 引用已替换为 tsconfig paths 别名"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/settings/index.ts",
+      "action": "modify",
+      "target": "设置路由入口",
+      "change": "从 Superset 复制并替换所有 @superset import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/settings/agent-preset-router.utils.ts",
+      "action": "create",
+      "target": "Agent preset 路由工具",
+      "change": "从 Superset 复制并替换 @superset import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/settings/font-settings.utils.ts",
+      "action": "create",
+      "target": "字体设置工具",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/settings/font-settings.test.ts",
+      "action": "create",
+      "target": "字体设置测试",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/settings/preset-execution-mode.ts",
+      "action": "create",
+      "target": "预设执行模式",
+      "change": "从 Superset 复制并替换 @superset import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/settings/preset-execution-mode.test.ts",
+      "action": "create",
+      "target": "预设执行模式测试",
+      "change": "从 Superset 复制并替换 @superset import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/settings/preset-trigger-selection.ts",
+      "action": "create",
+      "target": "预设触发选择",
+      "change": "从 Superset 复制并替换 @superset import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/settings/preset-trigger-selection.test.ts",
+      "action": "create",
+      "target": "预设触发选择测试",
+      "change": "从 Superset 复制并替换 @superset import"
+    }
+  ],
+  "implementation": [
+    "Step 1: 逐个复制 8 个文件从 Superset 到 oh-my-maestro",
+    "Step 2: 替换 index.ts 中的 @superset/local-db、@superset/shared/agent-command、@superset/shared/agent-permissions-migration、@superset/shared/agent-settings",
+    "Step 3: 替换 agent-preset-router.utils.ts 中的 @superset/local-db、@superset/shared/agent-catalog、@superset/shared/agent-settings",
+    "Step 4: 替换 preset-execution-mode.ts 中的 @superset/local-db/schema/zod",
+    "Step 5: 替换 preset-trigger-selection.ts 中的 @superset/local-db",
+    "Step 6: 替换测试文件中的 @superset 引用",
+    "Step 7: 验证无 @superset 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -i settings | head -20"
+    ],
+    "success_metrics": [
+      "createSettingsRouter 可导出",
+      "8 个文件全部存在",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset settings 路由模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/settings/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制全部 8 个文件，替换所有 @superset 引用",
+    "decision_factors": [
+      "settings 是最大的 ADAPT 路由之一（8 个文件）",
+      "引用 5 个不同的 @superset 子包",
+      "tsconfig 已有 @superset/shared/agent-command 别名",
+      "其他 @superset/shared/agent-* 路径可能需要新增 tsconfig alias"
+    ],
+    "tradeoffs": "部分 @superset/shared/agent-* 路径在 tsconfig 中无别名，需要新增或 stubbed"
+  },
+  "risks": [
+    "@superset/shared/agent-catalog、@superset/shared/agent-settings、@superset/shared/agent-permissions-migration 在 tsconfig 中无别名",
+    "@superset/local-db/schema/zod 在 tsconfig 中无别名（只有 @superset/local-db）"
+  ],
+  "meta": {
+    "estimated_time": "40m",
+    "risk": "high",
+    "autonomous": true
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "analyze",
+    "artifact_id": "ANL-012",
+    "session_path": ".workflow/scratch/20260626-analyze-S3-P5-renderer/",
+    "generated_at": "2026-06-26T15:00:00+08:00"
+  },
+  "requirements": [],
+  "constraints": [
+    { "status": "locked", "title": "保留 Maestro 独有组件", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "排除 PostHog/Paywall/V2/Relay/Stripe", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "保持现有路由结构", "ref": "context.md#Locked" },
+    { "status": "locked", "title": "CSS 使用 TailwindCSS + shadcn/ui", "ref": "context.md#Locked" },
+    { "status": "open", "title": "组件目录结构风格", "ref": "context.md#Free" },
+    { "status": "open", "title": "部分 hooks 替换策略", "ref": "context.md#Free" },
+    { "status": "deferred", "title": "完整 UI 品牌统一", "ref": "context.md#Deferred" },
+    { "status": "deferred", "title": "Maestro 独有主题系统", "ref": "context.md#Deferred" }
+  ],
+  "domain": {},
+  "non_goals": [
+    { "title": "PostHog 分析", "rationale": "永久排除", "ref": "context.md#Deferred" },
+    { "title": "Paywall 组件", "rationale": "计费相关，永久排除", "ref": "context.md#Deferred" },
+    { "title": "V2 相关组件/hooks", "rationale": "Superset V2 特有", "ref": "context.md#Deferred" }
+  ],
+  "insights": [
+    { "role": "analyzer", "area": "迁移范围", "summary": "S3 Phase 5 需迁移 ~100+ 前端文件：assets(3) + components(25) + hooks(21) + hotkeys(10) + lib(42) + providers(3) + react-query(3) + routes(3) + commandPalette(5)。oh-my-maestro 仅有 4 个独有组件 + 基础路由。" },
+    { "role": "analyzer", "area": "分类", "summary": "DIRECT_COPY ~70 文件（通用工具/组件），ADAPT ~30 文件（业务组件/hooks/lib），KEEP 4 组件（AnalysisPanel/CommandChainPanel/CommandPalette/KnowledgePanel），EXCLUDE PostHog/Paywall/V2/Relay/Stripe" },
+    { "role": "analyzer", "area": "执行策略", "summary": "分 6 Wave：入口层 → 工具层 → 交互层 → 数据层 → 组件层 → 路由层。scope_verdict=large（3+ 子系统，串行依赖）" }
+  ],
+  "open_questions": [],
+  "references": [
+    { "type": "analysis", "path": "context.md" }
+  ]
+}

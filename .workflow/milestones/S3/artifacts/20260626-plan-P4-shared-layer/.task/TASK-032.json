@@ -1,0 +1,132 @@
+{
+  "id": "TASK-032",
+  "title": "ADAPT：changes 路由适配（排除 GitHub workers）",
+  "description": "适配 changes 路由，复制核心 git 操作文件，排除 workers/ 子目录（GitHub 集成）。changes 引用 @superset/local-db，需替换为 tsconfig paths 别名",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "从 Superset 复制 changes/ 目录中除 workers/ 外的所有文件（~22 个），替换 @superset/local-db 引用为 tsconfig paths 别名",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/routers/changes/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/changes/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/changes/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/changes/branches.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/changes/git-operations.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/changes/status.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/changes/staging.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/changes/file-contents.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/changes/git-utils.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 3,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createChangesRouter' apps/desktop/src/lib/trpc/routers/changes/index.ts",
+      "! test -d apps/desktop/src/lib/trpc/routers/changes/workers",
+      "! grep -r '@superset/local-db' apps/desktop/src/lib/trpc/routers/changes/"
+    ],
+    "verification": "grep -rn '@superset' apps/desktop/src/lib/trpc/routers/changes/ || echo 'CLEAN' && echo '---' && test -d apps/desktop/src/lib/trpc/routers/changes/workers && echo 'WORKERS STILL EXISTS' || echo 'workers excluded OK'",
+    "definition_of_done": "changes 路由完整迁移（排除 workers/），所有 @superset 引用已替换"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/changes/index.ts",
+      "action": "modify",
+      "target": "变更路由入口",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/changes/branches.ts",
+      "action": "create",
+      "target": "分支操作",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/changes/git-operations.ts",
+      "action": "create",
+      "target": "Git 操作",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/changes/git-operations.test.ts",
+      "action": "create",
+      "target": "Git 操作测试",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/changes/status.ts",
+      "action": "create",
+      "target": "状态查询",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/changes/staging.ts",
+      "action": "create",
+      "target": "暂存操作",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/changes/file-contents.ts",
+      "action": "create",
+      "target": "文件内容",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/changes/git-utils.ts",
+      "action": "create",
+      "target": "Git 工具",
+      "change": "从 Superset 复制"
+    }
+  ],
+  "implementation": [
+    "Step 1: 列出 Superset changes/ 目录中除 workers/ 外的所有文件",
+    "Step 2: 创建子目录：security/、utils/",
+    "Step 3: 逐个复制所有文件（~22 个），跳过 workers/ 子目录",
+    "Step 4: 替换所有 @superset/local-db 引用为 tsconfig paths 别名",
+    "Step 5: 在 index.ts 中移除对 workers/ 的 import（如果有）",
+    "Step 6: 验证无 @superset 残留且 workers/ 不存在"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -i changes | head -20"
+    ],
+    "success_metrics": [
+      "createChangesRouter 可导出",
+      "workers/ 目录不存在",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset changes 路由模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/changes/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制除 workers/ 外的所有文件，替换 @superset/local-db import",
+    "decision_factors": [
+      "changes 是最大的路由模块（~25 个文件）",
+      "workers/ 是 GitHub 集成，明确排除",
+      "核心 git 操作（branches、status、staging、operations）是通用功能"
+    ],
+    "tradeoffs": "changes 路由大量依赖 workspaces/utils 中的函数，需等 workspaces 迁移后才能编译通过"
+  },
+  "risks": [
+    "changes 内部大量引用 workspaces/utils 中的函数（如 getWorkspacePath），Wave 3 串行执行时需确保 workspaces 先完成",
+    "index.ts 可能引用 workers/ 中的类型，需要 stubbed 或移除"
+  ],
+  "meta": {
+    "estimated_time": "45m",
+    "risk": "high",
+    "autonomous": true
+  }
+}

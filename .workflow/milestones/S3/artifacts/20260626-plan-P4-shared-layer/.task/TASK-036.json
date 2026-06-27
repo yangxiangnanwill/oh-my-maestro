@@ -1,0 +1,102 @@
+{
+  "id": "TASK-036",
+  "title": "ADAPT：terminal 路由适配",
+  "description": "适配 terminal 路由，替换 Superset 终端主题引用。terminal/terminal.ts 引用 @superset/local-db，utils/workspace-terminal-context.ts 引用 @superset/local-db，需替换为 tsconfig paths 别名",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "从 Superset 复制 terminal/ 全部文件（~7 个），替换 @superset/local-db 引用为 tsconfig paths 别名",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/routers/terminal/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/terminal/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/terminal/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/terminal/terminal.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/terminal/theme-type.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/terminal/theme-type.test.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/terminal/utils/workspace-terminal-context.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 3,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createTerminalRouter' apps/desktop/src/lib/trpc/routers/terminal/index.ts",
+      "! grep -r '@superset/local-db' apps/desktop/src/lib/trpc/routers/terminal/"
+    ],
+    "verification": "grep -rn '@superset' apps/desktop/src/lib/trpc/routers/terminal/ || echo 'CLEAN'",
+    "definition_of_done": "terminal 路由完整迁移（~7 个文件），所有 @superset 引用已替换为 tsconfig paths 别名"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/terminal/index.ts",
+      "action": "modify",
+      "target": "终端路由入口",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/terminal/terminal.ts",
+      "action": "create",
+      "target": "终端核心逻辑",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/terminal/theme-type.ts",
+      "action": "create",
+      "target": "终端主题类型",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/terminal/theme-type.test.ts",
+      "action": "create",
+      "target": "终端主题测试",
+      "change": "从 Superset 复制"
+    }
+  ],
+  "implementation": [
+    "Step 1: 列出 Superset terminal/ 目录所有文件",
+    "Step 2: 创建 terminal/utils/ 子目录（如果不存在）",
+    "Step 3: 逐个复制所有文件，替换 @superset/local-db import",
+    "Step 4: 检查 terminal.ts 中引用的 workspaces/worktrees 从 local-db 是否可用",
+    "Step 5: 验证无 @superset 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -i terminal | head -20"
+    ],
+    "success_metrics": [
+      "createTerminalRouter 可导出",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset terminal 路由模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/terminal/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制全部文件，替换 @superset/local-db import",
+    "decision_factors": [
+      "terminal 路由引用 @superset/local-db 的 workspaces/worktrees",
+      "theme-type 相关的文件和测试无 @superset 引用",
+      "~7 个文件，中等规模"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "terminal.ts 中使用的 workspaces/worktrees 从 local-db 的类型可能不完全匹配 oh-my-maestro schema"
+  ],
+  "meta": {
+    "estimated_time": "25m",
+    "risk": "medium",
+    "autonomous": true
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "id": "TASK-056",
+  "title": "Wave 6: 编译验证 + 最终质量门禁",
+  "description": "对整个 Phase 5 迁移进行最终编译验证和质量检查：运行 bun install（确认所有依赖已安装）、bun run typecheck（TypeScript 编译检查）、bun run lint（Biome 格式化和 lint 检查）、验证文件计数、确认所有 EXCLUDE 规则生效。",
+  "type": "verification",
+  "priority": "high",
+  "effort": "medium",
+  "action": "运行 cd apps/desktop && bun install && bun run typecheck && bun run lint；验证 renderer 目录文件计数；确认所有 EXCLUDE 规则生效；修复所有编译错误",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/"
+  ],
+  "read_first": [
+    "apps/desktop/package.json",
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/renderer/"
+  ],
+  "depends_on": ["TASK-055"],
+  "wave": 6,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "bun install 无错误",
+      "bun run typecheck 通过（0 errors）",
+      "bun run lint 通过（0 warnings）",
+      "find apps/desktop/src/renderer/ -type f | wc -l > 100",
+      "! grep -r 'posthog\\|PostHog' apps/desktop/src/renderer/ --include='*.ts' --include='*.tsx' | grep -v '.test.' | grep -v node_modules",
+      "! grep -r 'paywall\\|Paywall' apps/desktop/src/renderer/ --include='*.ts' --include='*.tsx' | grep -v node_modules",
+      "! grep -r 'stripe\\|Stripe' apps/desktop/src/renderer/ --include='*.ts' --include='*.tsx' | grep -v node_modules",
+      "! grep -r 'sentry\\|Sentry' apps/desktop/src/renderer/ --include='*.ts' --include='*.tsx' | grep -v '.test.' | grep -v node_modules",
+      "! grep -r 'V2AgentChoices\\|V2AgentConfigs\\|V2UserPreferences\\|useRelayUrl\\|useEnsureV2Project' apps/desktop/src/renderer/ --include='*.ts' --include='*.tsx' | grep -v node_modules",
+      "[UI-observable] bun run typecheck 通过，bun run lint 通过，所有 EXCLUDE 规则生效"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck 2>&1 && bun run lint 2>&1 && find src/renderer/ -type f | wc -l",
+    "definition_of_done": "bun install + typecheck + lint 全部通过；renderer 目录文件数 > 100；所有 EXCLUDE 规则生效（PostHog/Paywall/Stripe/Sentry/V2/Relay 无残留）"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/",
+      "action": "verify",
+      "target": "完整 renderer 目录",
+      "change": "验证文件计数、EXCLUDE 规则、编译通过"
+    }
+  ],
+  "implementation": [
+    "Step 1: 运行 cd apps/desktop && bun install（确认所有依赖已安装）",
+    "Step 2: 运行 cd apps/desktop && bun run typecheck",
+    "Step 3: 分析 typecheck 错误，分类修复（缺失依赖、类型错误、import 路径错误）",
+    "Step 4: 运行 cd apps/desktop && bun run lint",
+    "Step 5: 分析 lint 警告/错误，分类修复",
+    "Step 6: 验证 EXCLUDE 规则：grep 检查 PostHog/Paywall/Stripe/Sentry/V2/Relay 无残留",
+    "Step 7: 统计 renderer 文件数",
+    "Step 8: 运行 cd apps/desktop && bun run lint:fix（自动修复格式问题）"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun install 2>&1 | tail -5",
+      "cd apps/desktop && bun run typecheck 2>&1 | tail -20",
+      "cd apps/desktop && bun run lint 2>&1 | tail -20",
+      "find apps/desktop/src/renderer/ -type f | wc -l"
+    ],
+    "success_metrics": [
+      "bun install 无错误",
+      "bun run typecheck 0 errors",
+      "bun run lint 0 warnings",
+      "renderer 文件数 > 100",
+      "所有 EXCLUDE 规则生效"
+    ]
+  },
+  "reference": {
+    "pattern": "Phase 编译验证门禁",
+    "files": [
+      "apps/desktop/package.json",
+      "apps/desktop/tsconfig.json"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "集中运行 bun install + typecheck + lint 作为最终质量门禁",
+    "decision_factors": [
+      "Phase 5 是最大的迁移阶段（~100+ files），需要集中验证",
+      "typecheck 是编译正确性的最低保证",
+      "lint 确保代码风格一致",
+      "EXCLUDE 规则验证确保没有 Superset 特有代码残留"
+    ],
+    "tradeoffs": "如果 typecheck 错误过多，可能需要回退到前面的 task 修复"
+  },
+  "risks": [
+    "typecheck 可能发现大量错误（~50+），需要逐个分类修复",
+    "部分依赖包可能未安装（idb-keyval、sonner、@tiptap/* 等），需要补充安装"
+  ],
+  "meta": {
+    "estimated_time": "45m",
+    "risk": "high",
+    "autonomous": false
+  }
+}

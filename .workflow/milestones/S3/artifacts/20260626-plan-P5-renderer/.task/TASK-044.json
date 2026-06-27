@@ -1,0 +1,149 @@
+{
+  "id": "TASK-044",
+  "title": "Wave 2: lib/ 业务适配 — clickPolicy + githubQueryPolicy + host-service + preset-icon + auth-client + api-trpc-client + workspaces",
+  "description": "迁移并适配 lib/ 业务相关模块：clickPolicy/（25 files，点击策略系统）、githubQueryPolicy/（4 files，GitHub 查询策略）、host-service-*.ts（3 files，host-service 客户端）、preset-icon.ts + preset-icon-key.ts、auth-client.ts、api-trpc-client.ts、workspaces/。这些文件包含 @superset 引用需要适配。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "large",
+  "action": "从 Superset 源复制 clickPolicy/（25 files）、githubQueryPolicy/（4 files）、host-service-auth.ts、host-service-client.ts、host-service-unavailable.ts、preset-icon.ts、preset-icon-key.ts（含 .test.ts）、auth-client.ts、api-trpc-client.ts、workspaces/showWorkspaceAutoNameWarningToast.ts 到 apps/desktop/src/renderer/lib/；替换所有 @superset 引用",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/lib/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/lib/clickPolicy/",
+    "apps/desktop/src/renderer/lib/githubQueryPolicy/",
+    "apps/desktop/src/renderer/lib/host-service-*.ts"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/clickPolicy/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/clickPolicy/types.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/host-service-client.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/auth-client.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/preset-icon.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/api-trpc-client.ts"
+  ],
+  "depends_on": ["TASK-041"],
+  "wave": 2,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/lib/clickPolicy/ && test -f apps/desktop/src/renderer/lib/clickPolicy/index.ts",
+      "test -d apps/desktop/src/renderer/lib/githubQueryPolicy/ && test -f apps/desktop/src/renderer/lib/githubQueryPolicy/index.ts",
+      "test -f apps/desktop/src/renderer/lib/host-service-client.ts",
+      "test -f apps/desktop/src/renderer/lib/auth-client.ts",
+      "test -f apps/desktop/src/renderer/lib/preset-icon.ts",
+      "! grep -r '@superset' apps/desktop/src/renderer/lib/clickPolicy/ --include='*.ts' --include='*.tsx' | grep -v '.test.'",
+      "! grep -r '@superset' apps/desktop/src/renderer/lib/host-service-client.ts"
+    ],
+    "verification": "find apps/desktop/src/renderer/lib/clickPolicy/ -type f | wc -l && grep -r '@superset' apps/desktop/src/renderer/lib/ --include='*.ts' --include='*.tsx' | grep -v '.test.' | grep -v node_modules",
+    "definition_of_done": "clickPolicy/（25 files）、githubQueryPolicy/（4 files）、host-service 3 files、preset-icon 2 files、auth-client.ts、api-trpc-client.ts、workspaces/ 均就位，所有 @superset 引用已替换为本地路径或移除"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/lib/clickPolicy/",
+      "action": "create",
+      "target": "点击策略系统",
+      "change": "从 Superset 源复制全部 25 files（含 components/ 子目录），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/githubQueryPolicy/",
+      "action": "create",
+      "target": "GitHub 查询策略",
+      "change": "从 Superset 源复制全部 4 files，替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/host-service-auth.ts",
+      "action": "create",
+      "target": "Host-service 认证",
+      "change": "从 Superset 源复制（DIRECT_COPY）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/host-service-client.ts",
+      "action": "create",
+      "target": "Host-service 客户端",
+      "change": "从 Superset 源复制，替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/host-service-unavailable.ts",
+      "action": "create",
+      "target": "Host-service 不可用处理",
+      "change": "从 Superset 源复制，替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/preset-icon.ts",
+      "action": "create",
+      "target": "Preset 图标工具",
+      "change": "从 Superset 源复制，替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/preset-icon-key.ts",
+      "action": "create",
+      "target": "Preset 图标键",
+      "change": "从 Superset 源复制（含 .test.ts），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/auth-client.ts",
+      "action": "create",
+      "target": "认证客户端",
+      "change": "从 Superset 源复制，替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/api-trpc-client.ts",
+      "action": "create",
+      "target": "API tRPC 客户端",
+      "change": "从 Superset 源复制，替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/workspaces/",
+      "action": "create",
+      "target": "工作区工具",
+      "change": "从 Superset 源复制 showWorkspaceAutoNameWarningToast.ts"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 clickPolicy/ 全部文件（25 files），逐个检查并替换 @superset 引用",
+    "Step 2: 复制 githubQueryPolicy/ 全部文件（4 files），替换 @superset 引用",
+    "Step 3: 复制 host-service-auth.ts（DIRECT_COPY）",
+    "Step 4: 复制 host-service-client.ts + host-service-unavailable.ts，替换 @superset 引用",
+    "Step 5: 复制 preset-icon.ts + preset-icon-key.ts（含 test），替换 @superset 引用",
+    "Step 6: 复制 auth-client.ts + api-trpc-client.ts，替换 @superset 引用",
+    "Step 7: 复制 workspaces/showWorkspaceAutoNameWarningToast.ts"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "clickPolicy/ 25 files 全部就位",
+      "所有 ADAPT 文件 @superset 引用已替换",
+      "host-service 3 files 就位",
+      "preset-icon 2 files 就位"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset lib/ 业务模块适配模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/clickPolicy/",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/lib/host-service-client.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "逐个模块复制并适配 @superset 引用，clickPolicy 和 githubQueryPolicy 作为完整子系统迁移",
+    "decision_factors": [
+      "clickPolicy 是点击行为策略系统（25 files），被多个组件引用",
+      "host-service 是 Electron IPC 与本地 HTTP 服务的桥梁",
+      "auth-client 是认证流程的核心",
+      "api-trpc-client 是 API tRPC 客户端（可能引用 @superset/api-types）"
+    ],
+    "tradeoffs": "preset-icon 模块名称包含 Superset 品牌，保留原样避免破坏引用链"
+  },
+  "risks": [
+    "api-trpc-client.ts 可能依赖 @superset/api-types 外部包，需要确认是否可用或创建 stub",
+    "auth-client.ts 可能依赖 @superset/auth 包"
+  ],
+  "meta": {
+    "estimated_time": "45m",
+    "risk": "medium",
+    "autonomous": false
+  }
+}

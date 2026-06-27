@@ -1,0 +1,110 @@
+{
+  "id": "TASK-049",
+  "title": "Wave 4: react-query/ — presets + projects + workspaces 数据查询层",
+  "description": "迁移 Superset 的 react-query/ 模块：presets/、projects/、workspaces/。这些是 React Query hooks 封装，提供工作区和项目的数据查询/变更操作。排除 GitHub 相关（PR/Issue）。部分 hooks 需要适配 @superset 引用。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "large",
+  "action": "从 Superset 源复制 react-query/ 全部到 apps/desktop/src/renderer/react-query/；排除 GitHub 集成相关文件；替换所有 @superset 引用",
+  "status": "completed",
+  "scope": "apps/desktop/src/renderer/react-query/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/react-query/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/react-query/presets/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/react-query/projects/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/react-query/workspaces/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/react-query/workspaces/useCreateWorkspace.ts"
+  ],
+  "depends_on": [
+    "TASK-048"
+  ],
+  "wave": 4,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/react-query/presets/",
+      "test -d apps/desktop/src/renderer/react-query/projects/",
+      "test -d apps/desktop/src/renderer/react-query/workspaces/",
+      "test -f apps/desktop/src/renderer/react-query/workspaces/useCreateWorkspace.ts",
+      "test -f apps/desktop/src/renderer/react-query/workspaces/useCloseWorkspace.ts",
+      "! grep -r '@superset' apps/desktop/src/renderer/react-query/ --include='*.ts' --include='*.tsx' | grep -v '.test.'",
+      "[UI-observable] React Query hooks 可导入且无编译错误"
+    ],
+    "verification": "find apps/desktop/src/renderer/react-query/ -type f | wc -l && ls apps/desktop/src/renderer/react-query/presets/ apps/desktop/src/renderer/react-query/projects/ apps/desktop/src/renderer/react-query/workspaces/",
+    "definition_of_done": "react-query/ 模块（presets/ + projects/ + workspaces/）均就位，所有 @superset 引用已替换，GitHub 集成相关已排除"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/react-query/presets/",
+      "action": "create",
+      "target": "React Query 预设配置",
+      "change": "从 Superset 源复制（1 file：index.ts）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/react-query/projects/",
+      "action": "create",
+      "target": "项目数据查询 hooks",
+      "change": "从 Superset 源复制全部文件（~8 files），排除 GitHub PR/Issue 相关，替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/react-query/workspaces/",
+      "action": "create",
+      "target": "工作区数据查询 hooks",
+      "change": "从 Superset 源复制全部文件（~22 files），替换 @superset 引用"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 presets/index.ts",
+    "Step 2: 复制 projects/ 全部文件（useCreateV1Project.ts、useOpenProject.tsx、useOpenNew.ts、useOpenFromPath.ts、useUpdateProject.ts、useReorderProjects.ts、useFinalizeProjectSetup/、useHostProjectIds/、processOpenNewResults.ts、InitGitDialog.tsx）",
+    "Step 3: 复制 workspaces/ 全部文件（useCreateWorkspace.ts、useCloseWorkspace.ts、useDeleteWorkspace.ts、useUpdateWorkspace.ts、useCreateSectionFromWorkspaces.ts 等 ~22 files）",
+    "Step 4: 逐个检查并替换 @superset 引用",
+    "Step 5: 排除 GitHub 集成相关：useCreateFromPr.ts（GitHub PR）"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "react-query/ 包含 3 个子目录",
+      "workspaces/ 包含 ~22 个文件",
+      "所有 @superset 引用已替换",
+      "无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset react-query 模块结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/react-query/workspaces/useCreateWorkspace.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/react-query/projects/useOpenProject.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "完整迁移 react-query/ 模块，排除 GitHub 集成，替换 @superset 引用",
+    "decision_factors": [
+      "react-query hooks 是工作区和项目数据操作的核心",
+      "workspaces/ 包含 22 个文件（创建工作区、关闭、删除、排序等）",
+      "projects/ 包含项目 CRUD 操作",
+      "排除 useCreateFromPr.ts（GitHub PR 集成）"
+    ],
+    "tradeoffs": "部分 hooks 可能依赖 Superset 后端 API 的特定响应格式，可能需要调整类型"
+  },
+  "risks": [
+    "react-query hooks 大量使用 electronTrpc 调用，需要确保所有 tRPC 路由已就位",
+    "部分 hooks 可能引用 @superset/api-types 的类型定义"
+  ],
+  "meta": {
+    "estimated_time": "40m",
+    "risk": "medium",
+    "autonomous": false
+  },
+  "status_history": [
+    {
+      "from": "in_progress",
+      "to": "completed",
+      "changed_at": "2026-06-26T13:37:36.311Z"
+    }
+  ]
+}

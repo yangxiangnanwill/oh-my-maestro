@@ -1,0 +1,92 @@
+{
+  "id": "TASK-053",
+  "title": "Wave 5: AgentSelect + NewWorkspaceModal 业务组件迁移",
+  "description": "迁移 Superset 的 AgentSelect（Agent 选择器）和 NewWorkspaceModal（新建工作区模态框，21 files）组件。这两个是业务组件，包含 @superset 引用需要适配。NewWorkspaceModal 是第二大业务组件（21 files），包含 PromptGroup、GitHub 集成等子组件。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "large",
+  "action": "从 Superset 源复制 AgentSelect/（2 files）和 NewWorkspaceModal/（21 files）到 apps/desktop/src/renderer/components/；替换所有 @superset 引用；排除 GitHub PR/Issue 集成子组件",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/components/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/AgentSelect/",
+    "apps/desktop/src/renderer/components/NewWorkspaceModal/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/AgentSelect/AgentSelect.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/NewWorkspaceModal.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/components/PromptGroup/PromptGroup.tsx"
+  ],
+  "depends_on": ["TASK-050"],
+  "wave": 5,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -d apps/desktop/src/renderer/components/AgentSelect/ && test -f apps/desktop/src/renderer/components/AgentSelect/AgentSelect.tsx",
+      "test -d apps/desktop/src/renderer/components/NewWorkspaceModal/ && test -f apps/desktop/src/renderer/components/NewWorkspaceModal/NewWorkspaceModal.tsx",
+      "! grep -r '@superset' apps/desktop/src/renderer/components/AgentSelect/ --include='*.ts' --include='*.tsx'",
+      "! grep -r '@superset' apps/desktop/src/renderer/components/NewWorkspaceModal/ --include='*.ts' --include='*.tsx'",
+      "[UI-observable] AgentSelect 和 NewWorkspaceModal 可导入且无编译错误"
+    ],
+    "verification": "find apps/desktop/src/renderer/components/AgentSelect/ -type f | wc -l && find apps/desktop/src/renderer/components/NewWorkspaceModal/ -type f | wc -l",
+    "definition_of_done": "AgentSelect（2 files）和 NewWorkspaceModal（21 files，已排除 GitHub 集成）完整迁移，所有 @superset 引用已替换"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/AgentSelect/",
+      "action": "create",
+      "target": "Agent 选择器",
+      "change": "从 Superset 源复制（2 files），替换 @superset 引用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/NewWorkspaceModal/",
+      "action": "create",
+      "target": "新建工作区模态框",
+      "change": "从 Superset 源复制（21 files），替换 @superset 引用；排除 GitHub PR/Issue 集成（GitHubIssueLinkCommand、LinkedGitHubIssuePill、LinkedPRPill、PRLinkCommand）"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 AgentSelect/ 全部文件（2 files），替换 @superset 引用",
+    "Step 2: 复制 NewWorkspaceModal/ 全部文件（21 files）",
+    "Step 3: 排除 NewWorkspaceModal 中的 GitHub 集成子组件：GitHubIssueLinkCommand、LinkedGitHubIssuePill、LinkedPRPill、PRLinkCommand",
+    "Step 4: 替换 NewWorkspaceModal 中所有 @superset 引用",
+    "Step 5: 验证所有 import 路径正确"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "AgentSelect 包含 2 个文件",
+      "NewWorkspaceModal 包含 ~17 个文件（排除 GitHub 集成后）",
+      "所有 @superset 引用已替换",
+      "无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset 业务组件结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/AgentSelect/AgentSelect.tsx",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/components/NewWorkspaceModal/NewWorkspaceModal.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "迁移 AgentSelect 和 NewWorkspaceModal，排除 GitHub 集成子组件",
+    "decision_factors": [
+      "AgentSelect 是 Agent 选择的核心 UI 组件",
+      "NewWorkspaceModal 是创建工作区的入口（21 files，第二大业务组件）",
+      "GitHub PR/Issue 集成是 Superset 特有功能，Maestro 不需要"
+    ],
+    "tradeoffs": "排除 GitHub 集成子组件后，PromptGroup 中的相关引用需要清理"
+  },
+  "risks": [
+    "NewWorkspaceModal 可能依赖 react-query hooks（TASK-049 中迁移）",
+    "AgentSelect 可能依赖 useEnabledAgents hook（TASK-046 中迁移）"
+  ],
+  "meta": {
+    "estimated_time": "40m",
+    "risk": "medium",
+    "autonomous": false
+  }
+}

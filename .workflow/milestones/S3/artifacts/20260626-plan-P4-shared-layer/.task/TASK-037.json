@@ -1,0 +1,96 @@
+{
+  "id": "TASK-037",
+  "title": "ADAPT：workspaces 路由适配",
+  "description": "适配 workspaces 路由，这是最大的 ADAPT 模块（~50 个文件）。替换所有 @superset 引用：@superset/local-db、@superset/shared/workspace-launch、@superset/shared/simple-git-options、@superset/chat/server/desktop、@superset/chat/server/shared",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "从 Superset 复制 workspaces/ 全部文件（~50 个），替换所有 @superset 引用为 tsconfig paths 别名。排除 GitHub 子模块（如有），保留核心工作区管理逻辑",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/routers/workspaces/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/workspaces/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/workspaces/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/workspaces/workspaces.ts",
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/main/lib/local-db/index.ts"
+  ],
+  "depends_on": [
+    "TASK-022",
+    "TASK-034"
+  ],
+  "wave": 3,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createWorkspacesRouter' apps/desktop/src/lib/trpc/routers/workspaces/index.ts",
+      "! grep -r '@superset/local-db' apps/desktop/src/lib/trpc/routers/workspaces/",
+      "! grep -r '@superset/shared/workspace-launch' apps/desktop/src/lib/trpc/routers/workspaces/",
+      "! grep -r '@superset/chat/' apps/desktop/src/lib/trpc/routers/workspaces/"
+    ],
+    "verification": "grep -roh '@superset[^\"]*' apps/desktop/src/lib/trpc/routers/workspaces/ 2>/dev/null | sort -u && echo '---ABOVE SHOULD BE EMPTY---'",
+    "definition_of_done": "workspaces 路由完整迁移（~50 个文件），所有 @superset 引用已替换为 tsconfig paths 别名"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/workspaces/index.ts",
+      "action": "modify",
+      "target": "工作区路由入口",
+      "change": "从 Superset 复制并替换所有 @superset import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/workspaces/workspaces.ts",
+      "action": "create",
+      "target": "工作区核心逻辑",
+      "change": "从 Superset 复制并替换 @superset import"
+    }
+  ],
+  "implementation": [
+    "Step 1: 列出 Superset workspaces/ 目录所有子目录和文件（procedures/、utils/、utils/github/）",
+    "Step 2: 创建子目录结构（procedures/、utils/、utils/github/）",
+    "Step 3: 逐个复制所有文件（~50 个），跳过与 GitHub PR 集成强相关的文件",
+    "Step 4: 替换所有 @superset/local-db → tsconfig alias",
+    "Step 5: 替换 @superset/shared/workspace-launch、@superset/shared/simple-git-options → tsconfig alias（如无别名则新增）",
+    "Step 6: 替换 @superset/chat/server/desktop、@superset/chat/server/shared → tsconfig alias（如无别名则 stubbed）",
+    "Step 7: 验证无 @superset 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -i workspace | head -20"
+    ],
+    "success_metrics": [
+      "createWorkspacesRouter 可导出",
+      "所有 @superset 引用已替换",
+      "procedures/ 子目录文件已迁移"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset workspaces 路由模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/workspaces/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制全部文件，系统性地替换所有 @superset 引用，对不存在的包进行 stubbed",
+    "decision_factors": [
+      "workspaces 是最大的路由模块，也是其他路由（changes、terminal、workspace-fs-service）的依赖",
+      "引用 5 个不同的 @superset 子包",
+      "workspaces 是 Phase 4 的核心价值所在"
+    ],
+    "tradeoffs": "部分 @superset/chat/* 和 @superset/shared/* 包在 oh-my-maestro 中不存在，需要创建 stub 或添加 tsconfig alias"
+  },
+  "risks": [
+    "@superset/shared/workspace-launch、@superset/shared/simple-git-options、@superset/chat/server/desktop、@superset/chat/server/shared 在 tsconfig 中无别名",
+    "github/ 子目录包含大量 GitHub PR 相关代码，可能需要选择性排除",
+    "ai-branch-name.ts 和 ai-name.ts 依赖 Superset 的 AI chat 服务"
+  ],
+  "meta": {
+    "estimated_time": "60m",
+    "risk": "high",
+    "autonomous": true
+  }
+}

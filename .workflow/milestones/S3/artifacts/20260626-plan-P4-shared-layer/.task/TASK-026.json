@@ -1,0 +1,176 @@
+{
+  "id": "TASK-026",
+  "title": "DIRECT_COPY 路由组 1：纯复制路由（12 个，无 @superset 引用）",
+  "description": "迁移 12 个无 @superset 引用的 DIRECT_COPY 路由：keyboardLayout、menu、notifications、resource-metrics、system、window、analytics、auto-update、cache、host-service-coordinator、ringtone、ui-state。其中 keyboardLayout/menu/notifications/resource-metrics/system/window 为 Superset 单文件 .ts 转 oh-my-maestro 目录结构",
+  "type": "feature",
+  "priority": "high",
+  "effort": "large",
+  "action": "将 Superset 源中 12 个路由的内容复制到 oh-my-maestro 对应目录的 index.ts，单文件路由（keyboardLayout.ts 等）内容放入目录下的 index.ts",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/routers/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/keyboardLayout/",
+    "apps/desktop/src/lib/trpc/routers/menu/",
+    "apps/desktop/src/lib/trpc/routers/notifications/",
+    "apps/desktop/src/lib/trpc/routers/resource-metrics/",
+    "apps/desktop/src/lib/trpc/routers/system/",
+    "apps/desktop/src/lib/trpc/routers/window/",
+    "apps/desktop/src/lib/trpc/routers/analytics/",
+    "apps/desktop/src/lib/trpc/routers/auto-update/",
+    "apps/desktop/src/lib/trpc/routers/cache/",
+    "apps/desktop/src/lib/trpc/routers/host-service-coordinator/",
+    "apps/desktop/src/lib/trpc/routers/ringtone/",
+    "apps/desktop/src/lib/trpc/routers/ui-state/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/keyboardLayout.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/menu.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/notifications.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/resource-metrics.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/system.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/window.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/analytics/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/auto-update/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/cache/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/ringtone/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/ui-state/index.ts"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 2,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createKeyboardLayoutRouter' apps/desktop/src/lib/trpc/routers/keyboardLayout/index.ts",
+      "grep 'createMenuRouter' apps/desktop/src/lib/trpc/routers/menu/index.ts",
+      "grep 'createNotificationsRouter' apps/desktop/src/lib/trpc/routers/notifications/index.ts",
+      "grep 'createResourceMetricsRouter' apps/desktop/src/lib/trpc/routers/resource-metrics/index.ts",
+      "grep 'createSystemRouter' apps/desktop/src/lib/trpc/routers/system/index.ts",
+      "grep 'createWindowRouter' apps/desktop/src/lib/trpc/routers/window/index.ts",
+      "grep 'createAnalyticsRouter' apps/desktop/src/lib/trpc/routers/analytics/index.ts",
+      "grep 'createAutoUpdateRouter' apps/desktop/src/lib/trpc/routers/auto-update/index.ts",
+      "grep 'createCacheRouter' apps/desktop/src/lib/trpc/routers/cache/index.ts",
+      "grep 'createHostServiceCoordinatorRouter' apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts",
+      "grep 'createRingtoneRouter' apps/desktop/src/lib/trpc/routers/ringtone/index.ts",
+      "grep 'createUiStateRouter' apps/desktop/src/lib/trpc/routers/ui-state/index.ts"
+    ],
+    "verification": "for dir in keyboardLayout menu notifications resource-metrics system window analytics auto-update cache host-service-coordinator ringtone ui-state; do echo \"=== $dir ===\" && grep -c 'createRouter' apps/desktop/src/lib/trpc/routers/$dir/index.ts; done",
+    "definition_of_done": "12 个路由的 index.ts 全部包含 createXxxRouter 函数，无 @superset 引用"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/keyboardLayout/index.ts",
+      "action": "modify",
+      "target": "键盘布局路由",
+      "change": "从 Superset keyboardLayout.ts 复制内容到 index.ts"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/menu/index.ts",
+      "action": "modify",
+      "target": "菜单路由",
+      "change": "从 Superset menu.ts 复制内容到 index.ts"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/notifications/index.ts",
+      "action": "modify",
+      "target": "通知路由",
+      "change": "从 Superset notifications.ts 复制内容到 index.ts"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/resource-metrics/index.ts",
+      "action": "modify",
+      "target": "资源指标路由",
+      "change": "从 Superset resource-metrics.ts 复制内容到 index.ts"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/system/index.ts",
+      "action": "modify",
+      "target": "系统路由",
+      "change": "从 Superset system.ts 复制内容到 index.ts"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/window/index.ts",
+      "action": "modify",
+      "target": "窗口路由",
+      "change": "从 Superset window.ts 复制内容到 index.ts"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/analytics/index.ts",
+      "action": "modify",
+      "target": "分析路由",
+      "change": "从 Superset analytics/index.ts 复制内容"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/auto-update/index.ts",
+      "action": "modify",
+      "target": "自动更新路由",
+      "change": "从 Superset auto-update/index.ts 复制内容"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/cache/index.ts",
+      "action": "modify",
+      "target": "缓存路由",
+      "change": "从 Superset cache/index.ts 复制内容"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts",
+      "action": "modify",
+      "target": "服务协调路由",
+      "change": "从 Superset host-service-coordinator/index.ts 复制内容"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/ringtone/index.ts",
+      "action": "modify",
+      "target": "铃声路由",
+      "change": "从 Superset ringtone/index.ts 复制内容"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/ui-state/index.ts",
+      "action": "modify",
+      "target": "UI 状态路由",
+      "change": "从 Superset ui-state/index.ts 复制内容"
+    }
+  ],
+  "implementation": [
+    "Step 1: 处理 6 个单文件路由（keyboardLayout/menu/notifications/resource-metrics/system/window）：读取 Superset .ts 文件，写入 oh-my-maestro 目录下的 index.ts",
+    "Step 2: 处理 6 个目录路由（analytics/auto-update/cache/host-service-coordinator/ringtone/ui-state）：读取 Superset index.ts，写入 oh-my-maestro 对应 index.ts",
+    "Step 3: 确认所有 12 个文件均无 @superset 引用",
+    "Step 4: 验证每个文件导出 createXxxRouter 函数"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -50"
+    ],
+    "success_metrics": [
+      "12 个路由文件全部包含 createXxxRouter 导出",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset 路由工厂模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "12 个纯复制路由合并为一个任务，因为它们都是无 @superset 引用的简单复制操作",
+    "decision_factors": [
+      "这些路由无 @superset 引用，不需要适配",
+      "合并为一个任务减少 agent spawn 开销",
+      "单文件转目录结构是机械操作"
+    ],
+    "tradeoffs": "任务较大（12 个文件），但操作统一且无依赖冲突"
+  },
+  "risks": [
+    "notifications.ts 有 179 行，可能引用 oh-my-maestro 中不存在的模块"
+  ],
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "low",
+    "autonomous": true
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "id": "TASK-048",
+  "title": "Wave 4: providers/ — ElectronTRPCProvider + AuthProvider 适配",
+  "description": "迁移并适配 Superset 的 providers/：ElectronTRPCProvider（tRPC + React Query persist client）和 AuthProvider（认证状态管理）。排除 PostHogProvider。AuthProvider 需要替换 SupersetLogo 加载动画。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "从 Superset 源复制 ElectronTRPCProvider/（2 files）和 AuthProvider/（2 files）到 apps/desktop/src/renderer/providers/；AuthProvider 中替换 SupersetLogo 为简单的加载占位符；排除 PostHogProvider/",
+  "status": "pending",
+  "scope": "apps/desktop/src/renderer/providers/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/providers/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/providers/ElectronTRPCProvider/ElectronTRPCProvider.tsx",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/providers/AuthProvider/AuthProvider.tsx",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/electron-trpc.ts",
+    "D:/WorkSpace/VsCode/oh-my-maestro/apps/desktop/src/renderer/lib/trpc-client.ts"
+  ],
+  "depends_on": ["TASK-041"],
+  "wave": 4,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -f apps/desktop/src/renderer/providers/ElectronTRPCProvider/ElectronTRPCProvider.tsx",
+      "test -f apps/desktop/src/renderer/providers/AuthProvider/AuthProvider.tsx",
+      "! test -d apps/desktop/src/renderer/providers/PostHogProvider",
+      "grep 'PersistQueryClientProvider' apps/desktop/src/renderer/providers/ElectronTRPCProvider/ElectronTRPCProvider.tsx",
+      "grep 'authClient' apps/desktop/src/renderer/providers/AuthProvider/AuthProvider.tsx",
+      "! grep 'SupersetLogo' apps/desktop/src/renderer/providers/AuthProvider/AuthProvider.tsx",
+      "[UI-observable] ElectronTRPCProvider 和 AuthProvider 可导入且无编译错误"
+    ],
+    "verification": "ls apps/desktop/src/renderer/providers/ && grep -c 'SupersetLogo' apps/desktop/src/renderer/providers/AuthProvider/AuthProvider.tsx",
+    "definition_of_done": "ElectronTRPCProvider（tRPC + React Query persist client）和 AuthProvider（已替换 SupersetLogo）均就位，PostHogProvider 已排除"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/providers/ElectronTRPCProvider/",
+      "action": "create",
+      "target": "tRPC + React Query Provider",
+      "change": "从 Superset 源复制（2 files：ElectronTRPCProvider.tsx + index.ts）；更新 import 路径指向 oh-my-maestro 的 electron-trpc 和 trpc-client"
+    },
+    {
+      "path": "apps/desktop/src/renderer/providers/AuthProvider/",
+      "action": "create",
+      "target": "认证 Provider",
+      "change": "从 Superset 源复制（2 files：AuthProvider.tsx + index.ts）；替换 SupersetLogo 为简单加载占位符（如 spinner 或 Maestro logo）；替换 import 路径"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 ElectronTRPCProvider/ 全部文件（ElectronTRPCProvider.tsx + index.ts）",
+    "Step 2: 更新 ElectronTRPCProvider.tsx 中的 import 路径：renderer/lib/electron-trpc → 本地相对路径或别名",
+    "Step 3: 复制 AuthProvider/ 全部文件（AuthProvider.tsx + index.ts）",
+    "Step 4: 编辑 AuthProvider.tsx：替换 SupersetLogo import 为简单的加载占位符（如 <div className='flex h-screen w-screen items-center justify-center bg-background'><span className='text-muted-foreground'>Loading...</span></div>）",
+    "Step 5: 更新 AuthProvider.tsx 中的 import 路径",
+    "Step 6: 确认 PostHogProvider/ 未被复制"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | head -30"
+    ],
+    "success_metrics": [
+      "ElectronTRPCProvider 导出 queryClient 和 Provider 组件",
+      "AuthProvider 无 SupersetLogo 引用",
+      "PostHogProvider 目录不存在",
+      "两个 Provider 无 TypeScript 错误"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset providers 结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/providers/ElectronTRPCProvider/ElectronTRPCProvider.tsx",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/renderer/providers/AuthProvider/AuthProvider.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制 ElectronTRPCProvider 和 AuthProvider，排除 PostHogProvider，AuthProvider 替换 SupersetLogo",
+    "decision_factors": [
+      "ElectronTRPCProvider 是 tRPC + React Query 数据流的核心",
+      "AuthProvider 管理认证状态（token 持久化、JWT 刷新）",
+      "PostHogProvider 是分析追踪，Maestro 不需要"
+    ],
+    "tradeoffs": "AuthProvider 的加载动画暂时用简单占位符（后续品牌统一时替换为 Maestro logo）"
+  },
+  "risks": [
+    "AuthProvider 依赖 auth-client.ts（TASK-044 中迁移），需确保 auth-client 已就位",
+    "ElectronTRPCProvider 依赖 idb-keyval 包（IndexedDB 持久化），需确认已安装"
+  ],
+  "meta": {
+    "estimated_time": "25m",
+    "risk": "medium",
+    "autonomous": false
+  }
+}

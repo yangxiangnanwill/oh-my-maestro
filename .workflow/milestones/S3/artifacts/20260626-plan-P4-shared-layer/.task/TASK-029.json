@@ -1,0 +1,144 @@
+{
+  "id": "TASK-029",
+  "title": "DIRECT_COPY 路由组 4：文件和迁移（filesystem、migration、utils、workspace-fs-service）",
+  "description": "迁移 filesystem（1 文件）、migration（1 文件）、utils（3 文件）和 workspace-fs-service（新建目录，1 文件）路由。这些路由引用 @superset/workspace-fs/host 和 @superset/local-db，需替换；workspace-fs-service 和 utils 在 oh-my-maestro 中不存在需新建目录",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "复制 filesystem/index.ts、migration/index.ts、utils/ 全部 3 文件、workspace-fs-service.ts 内容到 oh-my-maestro，新建 utils/ 和 workspace-fs-service/ 目录，替换 @superset 引用",
+  "status": "completed",
+  "scope": "apps/desktop/src/lib/trpc/routers/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/filesystem/",
+    "apps/desktop/src/lib/trpc/routers/migration/",
+    "apps/desktop/src/lib/trpc/routers/utils/",
+    "apps/desktop/src/lib/trpc/routers/workspace-fs-service/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/filesystem/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/migration/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/utils/git-hook-tolerance.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/utils/git-hook-tolerance.test.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/utils/path-exists-cache.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/workspace-fs-service.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 2,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createFilesystemRouter' apps/desktop/src/lib/trpc/routers/filesystem/index.ts",
+      "grep 'createMigrationRouter' apps/desktop/src/lib/trpc/routers/migration/index.ts",
+      "test -f apps/desktop/src/lib/trpc/routers/utils/index.ts",
+      "test -f apps/desktop/src/lib/trpc/routers/utils/git-hook-tolerance.ts",
+      "test -f apps/desktop/src/lib/trpc/routers/utils/path-exists-cache.ts",
+      "test -f apps/desktop/src/lib/trpc/routers/workspace-fs-service/index.ts",
+      "! grep -r '@superset' apps/desktop/src/lib/trpc/routers/filesystem/",
+      "! grep -r '@superset' apps/desktop/src/lib/trpc/routers/migration/",
+      "! grep -r '@superset' apps/desktop/src/lib/trpc/routers/utils/",
+      "! grep -r '@superset' apps/desktop/src/lib/trpc/routers/workspace-fs-service/"
+    ],
+    "verification": "for dir in filesystem migration utils workspace-fs-service; do echo \"=== $dir ===\" && grep -rn '@superset' apps/desktop/src/lib/trpc/routers/$dir/ || echo 'CLEAN'; done",
+    "definition_of_done": "filesystem/migration/utils/workspace-fs-service 路由完整迁移，无 @superset 引用残留；utils/ 和 workspace-fs-service/ 目录已创建"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/filesystem/index.ts",
+      "action": "modify",
+      "target": "文件系统路由",
+      "change": "从 Superset 复制并替换 @superset/workspace-fs/host import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/migration/index.ts",
+      "action": "modify",
+      "target": "迁移路由",
+      "change": "从 Superset 复制并替换 @superset/local-db import"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/utils/index.ts",
+      "action": "create",
+      "target": "工具路由入口（新建）",
+      "change": "从 Superset 复制 utils 路由入口并替换 import 路径"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/utils/git-hook-tolerance.ts",
+      "action": "create",
+      "target": "Git hook tolerance 工具",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/utils/path-exists-cache.ts",
+      "action": "create",
+      "target": "路径存在缓存",
+      "change": "从 Superset 复制"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/workspace-fs-service/index.ts",
+      "action": "create",
+      "target": "工作区文件系统服务路由（新建目录）",
+      "change": "从 Superset workspace-fs-service.ts 复制并替换 @superset/workspace-fs/host import"
+    }
+  ],
+  "implementation": [
+    "Step 1: 复制 filesystem/index.ts，替换 @superset/workspace-fs/host → tsconfig alias",
+    "Step 2: 复制 migration/index.ts，替换 @superset/local-db → tsconfig alias",
+    "Step 3: 创建 apps/desktop/src/lib/trpc/routers/utils/ 目录，复制 3 个文件",
+    "Step 4: 创建 apps/desktop/src/lib/trpc/routers/workspace-fs-service/ 目录，复制 Superset workspace-fs-service.ts → index.ts，替换 import",
+    "Step 5: 验证所有目录无 @superset 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -E 'filesystem|migration|utils|workspace-fs' | head -20"
+    ],
+    "success_metrics": [
+      "6 个文件全部创建/更新",
+      "utils/ 和 workspace-fs-service/ 目录已创建",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset filesystem/migration/utils/workspace-fs-service 路由",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/filesystem/index.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/migration/index.ts",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/utils/",
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/workspace-fs-service.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "合并文件系统和迁移相关路由为一个任务",
+    "decision_factors": [
+      "filesystem/migration 都引用 @superset 包",
+      "utils 和 workspace-fs-service 需新建目录",
+      "共 6 个文件，3 个目录操作"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "filesystem 引用 @superset/workspace-fs/host 的 toErrorMessage，oh-my-maestro 中可能不存在",
+    "workspace-fs-service 引用 workspaces/utils/db-helpers 等内部路由，需等 Wave 3 workspaces 迁移后才能编译通过",
+    "migration 引用 projects/workspaces/worktrees 从 @superset/local-db，需确认 tsconfig alias 覆盖"
+  ],
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": true
+  },
+  "status_history": [
+    {
+      "from": "pending",
+      "to": "in_progress",
+      "changed_at": "2026-06-26T06:55:05.480Z"
+    },
+    {
+      "from": "in_progress",
+      "to": "completed",
+      "changed_at": "2026-06-26T07:03:45.199Z"
+    }
+  ]
+}

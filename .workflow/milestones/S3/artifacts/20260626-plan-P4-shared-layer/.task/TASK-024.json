@@ -1,0 +1,90 @@
+{
+  "id": "TASK-024",
+  "title": "创建 trpc/workers/ 目录：WorkerTaskRunner",
+  "description": "从 Superset 复制 trpc/workers/ 目录（3 个文件：WorkerTaskRunner.ts、worker-task-protocol.ts、WorkerTaskRunner.test.ts），替换 import 路径",
+  "type": "feature",
+  "priority": "high",
+  "effort": "small",
+  "action": "复制 D:\\WorkSpace\\Source\\superset\\apps\\desktop\\src\\lib\\trpc\\workers/ 全部 3 个文件到 D:\\WorkSpace\\VsCode\\oh-my-maestro\\apps\\desktop\\src\\lib\\trpc\\workers/",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/workers/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/workers/"
+  ],
+  "read_first": [
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/workers/worker-task-protocol.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/workers/WorkerTaskRunner.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/workers/WorkerTaskRunner.test.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -f apps/desktop/src/lib/trpc/workers/WorkerTaskRunner.ts",
+      "test -f apps/desktop/src/lib/trpc/workers/worker-task-protocol.ts",
+      "test -f apps/desktop/src/lib/trpc/workers/WorkerTaskRunner.test.ts",
+      "! grep '@superset' apps/desktop/src/lib/trpc/workers/*.ts 2>/dev/null || echo 'no superset refs'"
+    ],
+    "verification": "ls -la apps/desktop/src/lib/trpc/workers/ && grep -r '@superset' apps/desktop/src/lib/trpc/workers/ 2>/dev/null || echo 'CLEAN'",
+    "definition_of_done": "workers/ 目录包含 3 个文件，无 @superset 引用残留"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/workers/worker-task-protocol.ts",
+      "action": "create",
+      "target": "Worker 任务协议定义",
+      "change": "从 Superset 复制并替换 import 路径"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/workers/WorkerTaskRunner.ts",
+      "action": "create",
+      "target": "Worker 任务运行器",
+      "change": "从 Superset 复制并替换 import 路径"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/workers/WorkerTaskRunner.test.ts",
+      "action": "create",
+      "target": "WorkerTaskRunner 单元测试",
+      "change": "从 Superset 复制并替换 import 路径"
+    }
+  ],
+  "implementation": [
+    "Step 1: 创建目录 apps/desktop/src/lib/trpc/workers/",
+    "Step 2: 逐个复制 3 个文件",
+    "Step 3: 替换 @superset 引用为 tsconfig paths 别名",
+    "Step 4: 验证无 @superset 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -i workers | head -20"
+    ],
+    "success_metrics": [
+      "3 个文件全部存在",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset trpc/workers 目录结构",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/workers/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "直接复制，WorkerTaskRunner 是通用的后台任务执行器",
+    "decision_factors": [
+      "WorkerTaskRunner 不绑定 Superset 品牌",
+      "3 个文件构成完整的任务执行协议",
+      "协议文件无 @superset 引用"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true
+  }
+}

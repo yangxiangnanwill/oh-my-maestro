@@ -1,0 +1,91 @@
+{
+  "id": "TASK-031",
+  "title": "ADAPT：auth 路由适配",
+  "description": "适配 auth 路由，替换 Superset 认证逻辑。auth/index.ts 引用 @superset/shared/constants 和 @superset/shared/host-info，auth/utils/crypto-storage.ts 引用 @superset/shared/host-info",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "从 Superset 复制 auth/index.ts 和 auth/utils/crypto-storage.ts，将 @superset/shared/constants 和 @superset/shared/host-info 引用替换为 tsconfig paths 别名（已有 '@superset/shared/constants' → './src/shared/constants.ts' 和 '@superset/shared/host-info' → './src/main/lib/host-service-coordinator.ts'）",
+  "status": "pending",
+  "scope": "apps/desktop/src/lib/trpc/routers/auth/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/auth/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/auth/index.ts",
+    "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/auth/utils/crypto-storage.ts",
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/shared/constants.ts"
+  ],
+  "depends_on": [
+    "TASK-022"
+  ],
+  "wave": 3,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'createAuthRouter' apps/desktop/src/lib/trpc/routers/auth/index.ts",
+      "! grep '@superset/shared/constants' apps/desktop/src/lib/trpc/routers/auth/index.ts",
+      "! grep '@superset/shared/host-info' apps/desktop/src/lib/trpc/routers/auth/index.ts",
+      "! grep '@superset/shared/host-info' apps/desktop/src/lib/trpc/routers/auth/utils/crypto-storage.ts"
+    ],
+    "verification": "grep -rn '@superset' apps/desktop/src/lib/trpc/routers/auth/ || echo 'CLEAN'",
+    "definition_of_done": "auth 路由完整迁移，所有 @superset 引用已替换为 tsconfig paths 别名"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/auth/index.ts",
+      "action": "modify",
+      "target": "认证路由入口",
+      "change": "从 Superset 复制并替换 @superset/shared/constants 和 @superset/shared/host-info"
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/auth/utils/crypto-storage.ts",
+      "action": "create",
+      "target": "加密存储工具",
+      "change": "从 Superset 复制并替换 @superset/shared/host-info"
+    }
+  ],
+  "implementation": [
+    "Step 1: 创建 auth/utils/ 目录（如果不存在）",
+    "Step 2: 复制 Superset auth/index.ts，替换 import 中的 @superset/shared/constants 和 @superset/shared/host-info",
+    "Step 3: 复制 Superset auth/utils/crypto-storage.ts，替换 import 中的 @superset/shared/host-info",
+    "Step 4: AUTH_PROVIDERS 如果引用了 oh-my-maestro 不存在的常量，需要 stubbed 或适配",
+    "Step 5: 验证无 @superset 残留"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck 2>&1 | grep -i auth | head -20"
+    ],
+    "success_metrics": [
+      "createAuthRouter 可导出",
+      "无 @superset 引用残留"
+    ]
+  },
+  "reference": {
+    "pattern": "Superset auth 路由模式",
+    "files": [
+      "D:/WorkSpace/Source/superset/apps/desktop/src/lib/trpc/routers/auth/",
+      "apps/desktop/src/shared/constants.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "复制并替换 import 路径，tsconfig paths 已有 @superset/shared/constants 和 @superset/shared/host-info 别名",
+    "decision_factors": [
+      "auth 路由仅 2 个 @superset 引用路径，都在 tsconfig 中已有别名",
+      "AUTH_PROVIDERS 常量需要验证 oh-my-maestro 中是否存在"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "AUTH_PROVIDERS 常量可能在 oh-my-maestro shared/constants.ts 中不存在",
+    "getHostId/getHostName 可能在 oh-my-maestro host-service-coordinator.ts 中不存在"
+  ],
+  "meta": {
+    "estimated_time": "25m",
+    "risk": "medium",
+    "autonomous": true
+  }
+}
