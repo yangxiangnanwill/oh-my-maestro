@@ -1,0 +1,9 @@
+{"id":"ISS-20260627-001","title":"S4: 安装缺失 npm 包","status":"open","priority":1,"severity":"high","source":"analyze","phase_ref":"S4","tags":["dependencies","S4","typecheck"],"estimated_hours":0.5}
+{"id":"ISS-20260627-002","title":"S4: 扩展 shadcn/ui stub props（39 个文件）","status":"open","priority":1,"severity":"high","source":"analyze","phase_ref":"S4","tags":["stub","S4","typecheck","UI"],"estimated_hours":4}
+{"id":"ISS-20260627-003","title":"S4: 创建缺失的 store/stub 模块（12 个）","status":"open","priority":1,"severity":"high","source":"analyze","phase_ref":"S4","tags":["stub","S4","typecheck"],"estimated_hours":3}
+{"id":"ISS-20260627-004","title":"S4: 修复 process-tree-stub.ts 函数签名","status":"open","priority":1,"severity":"high","source":"analyze","phase_ref":"S4","tags":["stub","S4","typecheck","main"],"estimated_hours":1}
+{"id":"ISS-20260627-005","title":"S4: 补充 index.full.ts 缺失的 3 个文件","status":"open","priority":2,"severity":"medium","source":"analyze","phase_ref":"S4","tags":["stub","S4","typecheck","main"],"estimated_hours":2}
+{"id":"ISS-20260627-006","title":"S4: 重新生成 routeTree.gen.ts","status":"open","priority":2,"severity":"medium","source":"analyze","phase_ref":"S4","tags":["router","S4","typecheck"],"estimated_hours":1}
+{"id":"ISS-20260627-007","title":"S4: 修复 143 个隐式 any 错误","status":"open","priority":2,"severity":"medium","source":"analyze","phase_ref":"S4","tags":["typescript","S4","typecheck"],"estimated_hours":6}
+{"id":"ISS-20260627-008","title":"S4: 解除 index.full.ts 和 -layout.tsx 的 tsconfig 排除","status":"open","priority":3,"severity":"low","source":"analyze","phase_ref":"S4","tags":["config","S4","typecheck"],"estimated_hours":1}
+{"id":"ISS-20260627-009","title":"S5: DashboardSidebar 完整迁移（12 个缺失依赖）","status":"deferred","priority":5,"severity":"low","source":"analyze","phase_ref":"S5","tags":["deferred","analyze","S5"]}

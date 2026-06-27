@@ -1,0 +1,170 @@
+{
+  "session_id": "ANL-s4-compile-verify-2026-06-27",
+  "scope": "adhoc",
+  "milestone": "S4",
+  "recommendation": "CONDITIONAL_GO",
+  "overall_confidence": 0.85,
+  "scope_verdict": "medium",
+  "decisions": [
+    {
+      "id": "D01",
+      "title": "S4 范围重新定义",
+      "status": "locked",
+      "choice": "修复现有 532 个类型错误 + 分阶段解除 index.full.ts 和 -layout.tsx 的排除",
+      "rationale": "当前非 excluded 代码已有大量类型错误，仅解除 excluded 文件无法通过编译",
+      "evidence": "tsc --noEmit 实际输出：532 个错误，160 TS2307 + 126 TS2322 + 143 TS7006/TS7031"
+    },
+    {
+      "id": "D02",
+      "title": "DashboardSidebar.tsx 推迟",
+      "status": "locked",
+      "choice": "推迟到 S5 里程碑处理",
+      "rationale": "12 个缺失依赖文件，属于未迁移的完整功能模块，不适合在验证里程碑中处理",
+      "evidence": "exploration-codebase.json: 12 个缺失依赖全部确认不存在"
+    },
+    {
+      "id": "D03",
+      "title": "pty-subprocess.ts 处理策略",
+      "status": "locked",
+      "choice": "先修复 process-tree-stub.ts 的 3 个函数签名不匹配，再解除排除",
+      "rationale": "stub 签名与消费者不兼容导致类型错误，必须先修复 stub",
+      "evidence": "CLI 分析: signalProcessTreeAndGroups 参数数量 2 vs 3，返回类型 Promise<void> vs ProcessSignalTarget[]"
+    },
+    {
+      "id": "D04",
+      "title": "缺失 npm 包安装策略",
+      "status": "locked",
+      "choice": "bun add 安装 35 个缺失包（@tiptap 20+, @xterm/addon-* 7, 其他 5）",
+      "rationale": "这些是 Superset Chat 组件的运行时依赖，S3 迁移时遗漏了 package.json 声明",
+      "evidence": "package.json 中无 @tiptap 声明，node_modules 中无对应目录"
+    },
+    {
+      "id": "D05",
+      "title": "shadcn/ui Stub 修复策略",
+      "status": "locked",
+      "choice": "扩展 stub props（方案 A），不替换为真实 shadcn/ui",
+      "rationale": "S4 目标是编译通过，不是 UI 完善。真实 shadcn/ui 替换留给后续 UI 打磨里程碑",
+      "evidence": "39 个 stub 文件，18 个缺少 asChild prop，8 个缺少定位 props"
+    },
+    {
+      "id": "D06",
+      "title": "隐式 any 修复策略",
+      "status": "free",
+      "choice": "实现者自行决定：逐文件添加类型注解 或 临时放宽 noImplicitAny",
+      "rationale": "143 个隐式 any 错误修复工作量大但技术含量低，可根据时间约束选择策略",
+      "evidence": "104 TS7006 + 39 TS7031"
+    },
+    {
+      "id": "D07",
+      "title": "路由类型修复策略",
+      "status": "locked",
+      "choice": "确保路由文件完整后运行 bunx tanstack-router-cli generate 重新生成 routeTree.gen.ts",
+      "rationale": "当前 routeTree.gen.ts 只有 root route，所有子路由未注册",
+      "evidence": "routeTree.gen.ts: FileRoutesByFullPath = {}"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "high",
+      "action": "bun add 安装 35 个缺失 npm 包",
+      "rationale": "解决 160 个 TS2307 错误中的 ~90 个",
+      "estimated_hours": 0.5
+    },
+    {
+      "priority": "high",
+      "action": "扩展 39 个 shadcn/ui stub 的 props",
+      "rationale": "解决 126 个 TS2322 错误中的 ~50 个",
+      "estimated_hours": 4
+    },
+    {
+      "priority": "high",
+      "action": "创建 12 个缺失的 store/stub 模块",
+      "rationale": "解决剩余的 TS2307 错误",
+      "estimated_hours": 3
+    },
+    {
+      "priority": "high",
+      "action": "修复 process-tree-stub.ts 的 3 个函数签名",
+      "rationale": "解除 pty-subprocess.ts 排除的前置条件",
+      "estimated_hours": 1
+    },
+    {
+      "priority": "medium",
+      "action": "补充 index.full.ts 缺失的 3 个文件（network-logger.ts, extensions.ts, app-state.ts）",
+      "rationale": "解除 index.full.ts 排除的前置条件",
+      "estimated_hours": 2
+    },
+    {
+      "priority": "medium",
+      "action": "重新生成 routeTree.gen.ts",
+      "rationale": "解决 11 个路由类型错误",
+      "estimated_hours": 1
+    },
+    {
+      "priority": "medium",
+      "action": "修复 143 个隐式 any 错误",
+      "rationale": "提升类型安全性",
+      "estimated_hours": 6
+    },
+    {
+      "priority": "low",
+      "action": "解除 -layout.tsx 排除",
+      "rationale": "依赖完整，低风险",
+      "estimated_hours": 0.5
+    },
+    {
+      "priority": "low",
+      "action": "解除 index.full.ts 排除",
+      "rationale": "需先补充 3 个缺失文件",
+      "estimated_hours": 0.5
+    }
+  ],
+  "implementation_scope": [
+    {
+      "objective": "安装缺失 npm 包",
+      "rationale": "解决 TS2307 错误",
+      "priority": "high",
+      "target_files": ["apps/desktop/package.json"],
+      "acceptance_criteria": ["bun install 无错误", "TS2307 错误减少 90+ 个"],
+      "change_summary": "package.json: 添加 @tiptap/*, @xterm/addon-*, tippy.js, streamdown, lowlight, react-syntax-highlighter 等依赖"
+    },
+    {
+      "objective": "扩展 shadcn/ui stub props",
+      "rationale": "解决 TS2322 类型不匹配",
+      "priority": "high",
+      "target_files": ["src/renderer/components/Chat/stubs/ui/*.tsx"],
+      "acceptance_criteria": ["TS2322 错误减少 50+ 个", "所有 stub 接受 asChild, sideOffset, align, open, onOpenChange 等 props"],
+      "change_summary": "39 个 stub 文件: 添加缺失的 props 类型声明"
+    },
+    {
+      "objective": "创建缺失的 store/stub 模块",
+      "rationale": "解决剩余 TS2307 错误",
+      "priority": "high",
+      "target_files": ["src/renderer/stores/", "src/shared/"],
+      "acceptance_criteria": ["TS2307 错误清零（不含 DashboardSidebar 相关）"],
+      "change_summary": "创建 12 个最小 stub 模块"
+    },
+    {
+      "objective": "修复 process-tree-stub.ts 签名",
+      "rationale": "解除 pty-subprocess.ts 排除的前置条件",
+      "priority": "high",
+      "target_files": ["src/main/lib/terminal-host/process-tree-stub.ts"],
+      "acceptance_criteria": ["signalProcessTreeAndGroups 接受 3 参数并返回 ProcessSignalTarget[]", "signalProcessTargets 接受 3 参数"],
+      "change_summary": "process-tree-stub.ts: 扩展 3 个函数签名匹配消费者"
+    }
+  ],
+  "open_questions": [
+    "S5 里程碑的范围和时间安排？",
+    "是否接受临时放宽 noImplicitAny 以加速 S4？",
+    "原生模块（better-sqlite3, node-pty）在 Windows 上的运行时验证何时进行？"
+  ],
+  "decision_trail": [
+    "Round 1: 发现 4 个 excluded 文件状态差异巨大",
+    "Round 2: 精确分类 532 个类型错误（5 种主要错误代码）",
+    "Round 3: 确定缺失模块处理策略（安装 vs stub vs 推迟）",
+    "Round 4: 确定 shadcn/ui stub 扩展方案",
+    "Round 5: 确定路由类型修复方案",
+    "Pressure Pass: bun add 策略通过 4 级压力测试",
+    "Devil's Advocate: @tiptap 兼容性挑战已评估"
+  ]
+}

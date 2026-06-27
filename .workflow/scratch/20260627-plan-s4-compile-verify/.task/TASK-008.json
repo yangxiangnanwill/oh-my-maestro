@@ -1,0 +1,57 @@
+{
+  "task_id": "TASK-008",
+  "title": "解除 excluded 文件并最终验证编译+构建",
+  "type": "fix",
+  "priority": "high",
+  "estimated_minutes": 60,
+  "depends_on": ["TASK-007"],
+  "files": [
+    "apps/desktop/tsconfig.json"
+  ],
+  "read_first": [
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/main/index.full.ts",
+    "apps/desktop/src/renderer/routes/-layout.tsx",
+    "apps/desktop/package.json"
+  ],
+  "action": "从 tsconfig.json exclude 列表中移除 src/main/index.full.ts 和 src/renderer/routes/-layout.tsx，运行 tsc --noEmit 和 electron-vite build 进行最终验证",
+  "implementation": [
+    "Step 1: 编辑 tsconfig.json exclude 列表，移除 \"src/renderer/routes/-layout.tsx\"（低风险，依赖已在 TASK-005 补全）",
+    "Step 2: 运行 tsc --noEmit 验证 -layout.tsx 不引入新的类型错误。如有错误，修复后重复",
+    "Step 3: 编辑 tsconfig.json exclude 列表，移除 \"src/main/index.full.ts\"（463 行，30+ 导入，依赖 TASK-003 和 TASK-005 创建的模块）",
+    "Step 4: 运行 tsc --noEmit 验证 index.full.ts 不引入新的类型错误。如有错误，修复后重复",
+    "Step 5: 运行 bun run typecheck，确认 tsc --noEmit 零错误退出",
+    "Step 6: 运行 bun run build（electron-vite build），确认三个目标 (main, preload, renderer) 构建成功",
+    "Step 7: 检查 dist/ 目录包含 dist/main/index.js, dist/preload/index.mjs, dist/renderer/index.html",
+    "Step 8: 运行 bun test 检查测试通过情况",
+    "Step 9: 每个 excluded 文件的解除使用独立 git commit：'fix: 解除 -layout.tsx 的 tsconfig 排除' 和 'fix: 解除 index.full.ts 的 tsconfig 排除'"
+  ],
+  "convergence": {
+    "criteria": [
+      "tsconfig.json exclude 列表中不包含 src/main/index.full.ts",
+      "tsconfig.json exclude 列表中不包含 src/renderer/routes/-layout.tsx",
+      "bun run typecheck 零错误退出（exit code 0）",
+      "bun run build 成功退出（exit code 0）",
+      "dist/main/index.js 文件存在",
+      "dist/preload/index.mjs 文件存在",
+      "dist/renderer/index.html 文件存在"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck && bun run build && ls dist/main/index.js dist/preload/index.mjs dist/renderer/index.html",
+    "definition_of_done": "tsc --noEmit 零错误退出，electron-vite build 构建成功，dist/ 目录包含所有三个目标的构建产物。DashboardSidebar.tsx 保持 excluded（推迟到 S5）。"
+  },
+  "risks": [
+    "index.full.ts 解除排除后可能暴露出在之前分析中未发现的类型错误（如 network-logger 路径解析、sentry 动态导入等）",
+    "electron-vite build 可能因原生模块 externalization 配置问题失败",
+    "构建成功后，运行时验证（S4.5）可能发现需要额外修复"
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "1h",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 3,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

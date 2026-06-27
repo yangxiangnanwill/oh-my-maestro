@@ -1,0 +1,53 @@
+{
+  "task_id": "TASK-007",
+  "title": "修复隐式 any 和残余类型错误",
+  "type": "fix",
+  "priority": "medium",
+  "estimated_minutes": 360,
+  "depends_on": ["TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006"],
+  "files": [],
+  "read_first": [
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/main/index.full.ts",
+    "apps/desktop/src/renderer/routes/-layout.tsx",
+    "apps/desktop/src/main/terminal-host/pty-subprocess.ts"
+  ],
+  "action": "修复剩余的类型错误，包括：104 个 TS7006 (implicit any parameter)、39 个 TS7031 (implicit any return type)、60 个 TS2339 (property does not exist)、43 个其他类型错误。策略：优先为函数参数和返回值添加显式类型注解；对无法确定类型的场景，使用适当的类型守卫或 unknown 替代 any。如工作量大，可临时将 tsconfig.json 中 strict 下的 noImplicitAny 设为 false，但需在 plan 中记录为技术债务。",
+  "implementation": [
+    "Step 1: 运行 cd apps/desktop && bun run typecheck 2>&1 | grep -E \"error TS\" 获取完整错误列表",
+    "Step 2: 按错误代码分类处理：",
+    "  a) TS7006 (104个): 为函数参数添加类型注解。常见模式：回调参数 (event, data) => {} 需补全类型",
+    "  b) TS7031 (39个): 为函数添加返回类型注解。常见模式：async 函数缺少 Promise<T> 返回类型",
+    "  c) TS2339 (60个): 属性不存在错误。检查对象类型，补充缺失属性到接口/类型定义",
+    "  d) 其他 (43个): TS2345 (参数类型不匹配)、TS2769 (无匹配重载)、TS2554 (参数数量不匹配) 等，逐一修复",
+    "Step 3: 如果 TS7006 + TS7031 数量过多（修复超过 3 小时），考虑临时方案：在 tsconfig.json 中设置 noImplicitAny: false，noImplicitReturns: false",
+    "Step 4: 运行 tsc --noEmit 验证错误数量从剩余的 ~300 降至接近 0",
+    "Step 5: 如果有 < 20 个难以修复的错误，与用户确认是否需要放宽特定规则"
+  ],
+  "convergence": {
+    "criteria": [
+      "tsc --noEmit 2>&1 | grep -c \"error TS\" 输出 < 20（不含 excluded 文件）",
+      "TS7006 错误归零或 noImplicitAny 已临时设为 false",
+      "TS7031 错误归零或 noImplicitReturns 已临时设为 false",
+      "TS2339 错误归零"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck 2>&1 | grep -c 'error TS'",
+    "definition_of_done": "所有能修复的类型错误已修复，剩余错误（如有）已与用户确认策略。tsc --noEmit 错误总数 < 20（不含 excluded 文件）。"
+  },
+  "risks": [
+    "143 个隐式 any 错误修复工作量大（预估 6h），可能超出 S4 时间预算",
+    "某些 TS2339 错误可能是由于依赖的类型定义不完整导致，需要追溯到第三方库的类型声明",
+    "修复一个错误可能暴露其他隐藏的类型错误",
+    "如选择放宽 noImplicitAny，需在 plan 中记录为已知技术债务"
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "6h",
+    "risk": "high",
+    "autonomous": true,
+    "checkpoint": true,
+    "wave": 3,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

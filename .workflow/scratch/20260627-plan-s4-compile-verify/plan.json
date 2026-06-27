@@ -1,0 +1,67 @@
+{
+  "plan_id": "PLN-s4-compile-verify",
+  "phase": "S4",
+  "scope": "standalone",
+  "milestone": "S4",
+  "summary": "修复 532 个 TypeScript 类型错误，安装 35+ 缺失 npm 包，扩展 39 个 shadcn/ui stub props，创建 8 个缺失 store/stub 模块（TASK-003）+ 6 个 index.full.ts/-layout.tsx 依赖文件（TASK-005），修复 process-tree-stub 签名，重生成路由树，解除 2 个 excluded 文件，最终实现 tsc --noEmit 零错误 + electron-vite build 构建成功。",
+  "approach": "分 3 波次执行。Wave 1 安装所有缺失 npm 包（解除 TS2307 阻塞）。Wave 2 并行处理 5 个独立修复线：扩展 stub props、创建缺失 store/stub 模块、修复 process-tree-stub 签名、补充缺失文件、重生成路由树。Wave 3 收敛修复残余类型错误并解除 excluded 文件。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006", "TASK-007", "TASK-008"],
+  "task_count": 8,
+  "complexity": "high",
+  "estimated_hours": 18,
+  "waves": [
+    {
+      "id": 1,
+      "label": "基础设施 — npm 包安装",
+      "task_ids": ["TASK-001"],
+      "description": "安装 35+ 缺失 npm 包（@tiptap/*, @xterm/addon-*, tippy.js, streamdown, lowlight, react-syntax-highlighter, @radix-ui/* 等），解除 90+ 个 TS2307 错误"
+    },
+    {
+      "id": 2,
+      "label": "并行修复 — stub 扩展 + 缺失模块 + 签名修复 + 文件创建 + 路由",
+      "task_ids": ["TASK-002", "TASK-003", "TASK-004", "TASK-005", "TASK-006"],
+      "description": "5 条并行修复线：扩展 39 个 stub props、创建 12 个缺失 store/stub 模块、修复 process-tree-stub 签名、补充 6 个缺失文件、重生成路由树。TASK-006 依赖 TASK-005。"
+    },
+    {
+      "id": 3,
+      "label": "收敛修复 + 排除解除 + 最终验证",
+      "task_ids": ["TASK-007", "TASK-008"],
+      "description": "修复残余隐式 any 和 TS2339 错误，解除 -layout.tsx 和 index.full.ts 的 tsconfig 排除，运行 tsc --noEmit 和 electron-vite build 最终验证"
+    }
+  ],
+  "confidence": {
+    "overall": 0.85,
+    "dimensions": {
+      "scope_clarity": 0.90,
+      "solution_viability": 0.85,
+      "risk_assessment": 0.80,
+      "execution_readiness": 0.85
+    },
+    "pressure_pass": true,
+    "notes": "D06 (隐式 any 策略) 为 free 决策，执行时可选择放宽 noImplicitAny 或逐文件添加注解。@tiptap 包版本兼容性可能引发额外类型错误，需按需调整。"
+  },
+  "data_flow": {
+    "diagram": null,
+    "stages": ["install npm packages", "create stubs/modules", "fix signatures/props", "regenerate routes", "fix type errors", "un-exclude files", "verify compilation"]
+  },
+  "design_decisions": [
+    "D01: S4 范围锁定 — 修复所有 532 类型错误 + 解除 index.full.ts 和 -layout.tsx",
+    "D02: DashboardSidebar.tsx 保持 excluded（推迟到 S5）",
+    "D03: 先修复 process-tree-stub.ts 签名再解除 pty-subprocess.ts",
+    "D04: 使用 bun add 安装缺失 npm 包（不创建 stub 替代）",
+    "D05: 扩展 stub props（不替换为真实 shadcn/ui 组件）",
+    "D06: 隐式 any 修复策略由执行者决定（逐文件注解或临时放宽 noImplicitAny）",
+    "D07: 运行 bunx tanstack-router-cli generate 重生成 routeTree.gen.ts"
+  ],
+  "shared_context": {
+    "patterns": ["tsconfig paths 别名解析 @superset/* -> 本地 stub", "electron-vite 3 目标构建", "zustand store 模式"],
+    "conventions": ["ESM imports", "strict TypeScript", "React 19 + forwardRef", "bun 包管理器"],
+    "dependencies": ["typescript 6.0.3", "electron 40.8.5", "electron-vite 4.0.1", "@tanstack/router-cli 1.166.23"]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-27T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "feature"
+  }
+}

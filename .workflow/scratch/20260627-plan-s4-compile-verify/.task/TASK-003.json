@@ -1,0 +1,69 @@
+{
+  "task_id": "TASK-003",
+  "title": "创建缺失 store/stub 模块",
+  "type": "fix",
+  "priority": "high",
+  "estimated_minutes": 180,
+  "depends_on": ["TASK-001"],
+  "files": [
+    "src/renderer/stores/workspace-init.ts",
+    "src/renderer/stores/tabs/store.ts",
+    "src/renderer/stores/changes.ts",
+    "src/renderer/stores/theme/utils.ts",
+    "src/shared/agent-catalog.ts",
+    "src/shared/agent-settings.ts",
+    "src/shared/billing.ts",
+    "src/shared/host-routing.ts"
+  ],
+  "read_first": [
+    "src/renderer/stores/index.ts",
+    "src/renderer/stores/theme/store.ts",
+    "src/renderer/stores/new-workspace-modal.ts",
+    "src/shared/constants.ts",
+    "src/shared/agent-launch.ts",
+    "src/main/lib/terminal-host/client.ts"
+  ],
+  "action": "创建 8 个缺失的 store/stub 模块文件，每个文件提供最小可用的类型导出：workspace-init.ts (zustand store + PendingTerminalSetup 类型), tabs/store.ts (zustand store + Tab 类型), changes.ts (zustand store), theme/utils.ts (toXtermTheme 函数), agent-catalog.ts (AgentCatalog 类型), agent-settings.ts (AgentSettings 类型), billing.ts (BillingInfo 类型), host-routing.ts (HostRoutingKey 类型)",
+  "implementation": [
+    "Step 1: 分析每个缺失模块的消费者导入，确定所需导出的符号和类型签名",
+    "Step 2: 创建 src/renderer/stores/workspace-init.ts — zustand store，导出 useWorkspaceInitStore hook 和 PendingTerminalSetup 类型",
+    "Step 3: 创建 src/renderer/stores/tabs/store.ts — zustand store，导出 useTabsStore hook 和 Tab 类型",
+    "Step 4: 创建 src/renderer/stores/changes.ts — zustand store，导出 useChangesStore hook",
+    "Step 5: 创建 src/renderer/stores/theme/utils.ts — 导出 toXtermTheme 函数（接收 theme 对象，返回 xterm 主题对象）",
+    "Step 6: 创建 src/shared/agent-catalog.ts — 导出 AgentCatalog 类型和默认 catalog",
+    "Step 7: 创建 src/shared/agent-settings.ts — 导出 AgentSettings 类型",
+    "Step 8: 创建 src/shared/billing.ts — 导出 BillingInfo 类型",
+    "Step 9: 创建 src/shared/host-routing.ts — 导出 HostRoutingKey 类型和 buildHostRoutingKey 函数",
+    "Step 10: 运行 tsc --noEmit 验证 TS2307 错误归零（不含 DashboardSidebar 相关和 TASK-005 负责的 4 个文件）"
+  ],
+  "convergence": {
+    "criteria": [
+      "tsc --noEmit 2>&1 | grep -c TS2307 输出 0（不含 DashboardSidebar 的 12 个依赖）",
+      "所有 12 个文件存在且导出消费者所需的符号",
+      "workspace-init.ts 导出 useWorkspaceInitStore (zustand hook) 和 PendingTerminalSetup (type)",
+      "tabs/store.ts 导出 useTabsStore (zustand hook)",
+      "changes.ts 导出 useChangesStore (zustand hook)",
+      "theme/utils.ts 导出 toXtermTheme 函数",
+      "terminal.ts 导出 prewarmTerminalRuntime 和 reconcileDaemonSessions",
+      "app-state.ts 导出 initAppState",
+      "extensions.ts 导出 loadWebviewBrowserExtension",
+      "ThemedToaster.tsx 导出 ThemedToaster React 组件"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck 2>&1 | grep TS2307",
+    "definition_of_done": "所有 8 个缺失的 store/stub 模块已创建，每个模块导出消费者所需的最小类型集，TS2307 错误清零（DashboardSidebar 相关和 TASK-005 负责的 4 个文件除外）。"
+  },
+  "risks": [
+    "消费者可能使用了未在分析中发现的额外导出符号，需要迭代补充",
+    "zustand store 的类型签名需要与消费者使用的 selector 模式匹配"
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "3h",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

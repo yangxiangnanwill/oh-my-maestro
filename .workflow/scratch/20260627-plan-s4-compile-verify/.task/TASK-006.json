@@ -1,0 +1,51 @@
+{
+  "task_id": "TASK-006",
+  "title": "重新生成 routeTree.gen.ts",
+  "type": "fix",
+  "priority": "medium",
+  "estimated_minutes": 60,
+  "depends_on": ["TASK-005"],
+  "files": [
+    "src/renderer/routeTree.gen.ts"
+  ],
+  "read_first": [
+    "src/renderer/routeTree.gen.ts",
+    "src/renderer/routes/__root.tsx",
+    "src/renderer/routes/-layout.tsx",
+    "src/renderer/routes/not-found.tsx",
+    "apps/desktop/electron.vite.config.ts"
+  ],
+  "action": "运行 bunx @tanstack/router-cli generate 重新生成 routeTree.gen.ts，使其包含所有路由文件（__root.tsx, -layout.tsx, not-found.tsx, _authenticated/* 等），移除 @ts-nocheck 指令，生成完整的 FileRoutesByFullPath 和 FileRoutesByTo 类型",
+  "implementation": [
+    "Step 1: 确认所有路由文件存在且无 TS2307 错误（依赖 TASK-005 完成）",
+    "Step 2: 检查 electron.vite.config.ts 中 tanstackRouter 插件配置是否正确（routeFileIgnorePrefix: '-', routesDirectory: 'src/renderer/routes'）",
+    "Step 3: 运行 cd apps/desktop && npx @tanstack/router-cli generate --config electron.vite.config.ts 重新生成路由树",
+    "Step 4: 验证生成的 routeTree.gen.ts 包含所有路由：__root__, -layout, not-found, _authenticated/*",
+    "Step 5: 验证生成的 routeTree.gen.ts 不再包含 @ts-nocheck",
+    "Step 6: 运行 tsc --noEmit 验证路由相关类型错误已消除"
+  ],
+  "convergence": {
+    "criteria": [
+      "routeTree.gen.ts 中 FileRoutesByFullPath 不为空对象 {}",
+      "routeTree.gen.ts 中不包含 @ts-nocheck 注释",
+      "routeTree.gen.ts 包含 _authenticated 路由分支",
+      "tsc --noEmit 不报告 routeTree.gen.ts 或路由相关的类型错误"
+    ],
+    "verification": "cd apps/desktop && grep -c '@ts-nocheck' src/renderer/routeTree.gen.ts && grep 'FileRoutesByFullPath' src/renderer/routeTree.gen.ts && bun run typecheck 2>&1 | grep -i route",
+    "definition_of_done": "routeTree.gen.ts 已重新生成，包含完整路由树，无 @ts-nocheck，路由类型错误清零。"
+  },
+  "risks": [
+    "@tanstack/router-cli 生成可能因路由文件中的类型错误而失败，需要先确保所有路由文件编译通过",
+    "routeFileIgnorePrefix 配置可能需要调整以正确处理 -layout.tsx"
+  ],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "1h",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

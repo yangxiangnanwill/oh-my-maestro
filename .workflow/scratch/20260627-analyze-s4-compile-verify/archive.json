@@ -1,0 +1,25 @@
+{
+  "$schema": "session-archive/1.0",
+  "session_id": "ANL-s4-compile-verify-2026-06-27",
+  "session_type": "analyze",
+  "session_path": ".workflow/scratch/20260627-analyze-s4-compile-verify/",
+  "lifecycle": {
+    "status": "sealed",
+    "sealed_at": "2026-06-27T10:35:00+08:00",
+    "archived_at": null,
+    "linked_milestone": "S4"
+  },
+  "content_refs": [
+    { "type": "analysis", "path": "analysis.md" },
+    { "type": "conclusions", "path": "conclusions.json" },
+    { "type": "context", "path": "context.md" },
+    { "type": "context-package", "path": "context-package.json" },
+    { "type": "discussion", "path": "discussion.md" },
+    { "type": "exploration", "path": "exploration-codebase.json" },
+    { "type": "perspectives", "path": "perspectives.json" }
+  ],
+  "extraction": {
+    "harvested": false,
+    "reason": "user-skip"
+  }
+}
