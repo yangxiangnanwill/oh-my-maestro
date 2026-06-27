@@ -1,0 +1,41 @@
+{
+  "source": "multi-CLI synthesis",
+  "perspectives": [
+    {
+      "tool": "claude",
+      "role": "technical",
+      "focus": "代码模式、可行性、类型错误",
+      "key_findings": [
+        "4 个 excluded 文件中：index.full.ts 缺 3 个文件，pty-subprocess.ts 有 3 个函数签名不匹配，DashboardSidebar.tsx 缺 12 个依赖（致命），-layout.tsx 依赖完整",
+        "47 个 @superset/* 别名中约 8 个 stub 兼容性未验证，process-tree-stub.ts 签名与消费者不兼容",
+        "TypeScript 6.0.3 + zod 4.3.6 组合有中等风险",
+        "构建链三目标配置正确，native module externalization 完整"
+      ]
+    },
+    {
+      "tool": "codex",
+      "role": "architectural",
+      "focus": "架构合理性、验证策略、回退设计",
+      "key_findings": [
+        "S4 作为纯验证里程碑架构合理，但需显式管理 excluded 文件边界",
+        "当前 tsc --noEmit 已产生 200+ 个类型错误（不含 excluded 文件），主要集中在 Chat 组件、terminal 模块、路由类型",
+        "分阶段解除策略：先 -layout.tsx（低风险），再 index.full.ts（中风险），pty-subprocess.ts 和 DashboardSidebar.tsx 需先补充依赖",
+        "增量策略不适用 — 首次验证必须是全量 tsc --noEmit",
+        "回退策略：每个 excluded 文件解除后单独 commit，失败可独立 revert"
+      ]
+    }
+  ],
+  "convergent_themes": [
+    "DashboardSidebar.tsx 是最大阻塞项 — 12 个缺失依赖，建议推迟到 S5",
+    "index.full.ts 和 -layout.tsx 可在 S4 内解除排除",
+    "pty-subprocess.ts 需要先修复 process-tree-stub.ts 的签名不匹配",
+    "当前非 excluded 代码已有 200+ 类型错误需要修复",
+    "S4 范围应重新定义为：修复现有类型错误 + 解除 index.full.ts 和 -layout.tsx 的排除"
+  ],
+  "conflicting_views": [],
+  "unique_contributions": {
+    "claude": "精确识别了 3 个缺失文件（network-logger.ts, extensions.ts, app-state.ts）和 3 个函数签名不匹配",
+    "codex": "运行了实际 tsc --noEmit 并捕获了 200+ 个类型错误，按模块分类"
+  },
+  "technical_solutions": []
+}

@@ -1,0 +1,1208 @@
+{
+  "relevant_files": [
+    {
+      "path": "apps/desktop/tsconfig.json",
+      "relevance": "high",
+      "rationale": "Single tsconfig for the entire desktop app — controls all compilation settings, path aliases, includes/excludes, and strictness. This is the master config for S4 typecheck verification.",
+      "role": "config",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "compilerOptions.strict",
+          "location": "line 8",
+          "description": "strict: true — enables all strict type-checking options. Critical for S4: any type errors will fail the typecheck."
+        },
+        {
+          "symbol": "compilerOptions.paths",
+          "location": "lines 19-65",
+          "description": "47 path alias mappings. 25+ @superset/* aliases redirect to local stub files. Key for S4: all @superset/* imports must resolve through these paths."
+        },
+        {
+          "symbol": "compilerOptions.moduleResolution",
+          "location": "line 5",
+          "description": "moduleResolution: 'bundler' — allows extensionless imports and path aliases. electron-vite and vite-tsconfig-paths handle resolution at build time."
+        },
+        {
+          "symbol": "compilerOptions.noEmit",
+          "location": "line 9",
+          "description": "noEmit: true — tsc only typechecks, electron-vite handles actual bundling. S4 scope: tsc --noEmit must pass."
+        },
+        {
+          "symbol": "compilerOptions.types",
+          "location": "line 17",
+          "description": "types: ['bun'] — uses Bun type definitions globally. Test files use bun:test."
+        },
+        {
+          "symbol": "include",
+          "location": "lines 67-76",
+          "description": "Includes src/**/*.ts, src/**/*.tsx, src/**/*.d.ts, index.d.ts, electron.vite.config.ts, electron-builder.ts, electron-builder.canary.ts, runtime-dependencies.ts"
+        },
+        {
+          "symbol": "exclude",
+          "location": "lines 78-87",
+          "description": "Excludes node_modules, dist, dist-electron, release, agent-setup/templates, index.full.ts, pty-subprocess.ts, -layout.tsx, DashboardSidebar.tsx"
+        }
+      ],
+      "topic_relation": "Master compilation configuration. S4 verification must ensure all included files typecheck with strict:true and all @superset/* path aliases resolve to existing local files."
+    },
+    {
+      "path": "apps/desktop/package.json",
+      "relevance": "high",
+      "rationale": "Defines all scripts (typecheck, build, dev, test), all dependencies (27 runtime + 19 dev), and the Electron entry point. Central to S4 dependency verification.",
+      "role": "config",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "scripts.typecheck",
+          "location": "line 23",
+          "description": "tsc --noEmit — the S4 verification target. Must exit 0 for milestone completion."
+        },
+        {
+          "symbol": "scripts.build",
+          "location": "line 20",
+          "description": "electron-vite build — the S4 build target. Must produce valid dist/ output."
+        },
+        {
+          "symbol": "scripts.dev",
+          "location": "line 19",
+          "description": "electron-vite dev --watch — development server. Must start without errors."
+        },
+        {
+          "symbol": "scripts.test",
+          "location": "line 24",
+          "description": "bun test — test runner. S4 should verify tests pass or document known failures."
+        },
+        {
+          "symbol": "dependencies",
+          "location": "lines 27-118",
+          "description": "91 runtime dependencies including React 19, Electron IPC (trpc-electron), AI SDK, CodeMirror, DnD kit, terminal (xterm, node-pty), database (better-sqlite3, drizzle-orm)"
+        },
+        {
+          "symbol": "devDependencies",
+          "location": "lines 120-144",
+          "description": "19 dev dependencies: TypeScript 6.0.3, Electron 40.8.5, electron-vite 4.0.1, Vite 7.3.5, TailwindCSS 4.2.2, Biome (not listed — likely global)"
+        },
+        {
+          "symbol": "main",
+          "location": "line 8",
+          "description": "./dist/main/index.js — Electron entry point. Must exist after build."
+        },
+        {
+          "symbol": "type",
+          "location": "line 7",
+          "description": "module — ESM mode. All imports use ESM syntax."
+        }
+      ],
+      "topic_relation": "S4 compile verification entry point. typecheck, build, and test scripts must all pass. Dependency versions must be compatible."
+    },
+    {
+      "path": "apps/desktop/electron.vite.config.ts",
+      "relevance": "high",
+      "rationale": "Defines the three build targets (main, preload, renderer) with separate plugin chains, env var injection, and Rollup options. S4 build verification depends on this config.",
+      "role": "config",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "main build config",
+          "location": "lines 32-76",
+          "description": "Entry: src/main/index.ts, output: dist/main. Uses tsconfigPaths plugin. Externalizes electron + native modules (better-sqlite3, node-pty, etc.)."
+        },
+        {
+          "symbol": "preload build config",
+          "location": "lines 78-106",
+          "description": "Entry: src/preload/index.ts, output: dist/preload. Uses tsconfigPaths + externalizeDepsPlugin (excludes trpc-electron)."
+        },
+        {
+          "symbol": "renderer build config",
+          "location": "lines 108-182",
+          "description": "Entry: src/renderer/index.html, output: dist/renderer. Uses tanstackRouter, tsconfigPaths, tailwindcss, reactPlugin. Dev server on port 5173."
+        },
+        {
+          "symbol": "workspaceDependencies",
+          "location": "lines 21-23",
+          "description": "Filters @oh-my-maestro/* packages from empty object — currently no workspace deps. Placeholder for future monorepo expansion."
+        },
+        {
+          "symbol": "mainExternalizedDependencies",
+          "location": "line 73",
+          "description": "Imported from runtime-dependencies.ts. Lists native modules that must be externalized (not bundled)."
+        }
+      ],
+      "topic_relation": "S4 build chain: electron-vite build must produce dist/main, dist/preload, dist/renderer with correct module externalization."
+    },
+    {
+      "path": "apps/desktop/runtime-dependencies.ts",
+      "relevance": "high",
+      "rationale": "Defines native Node.js modules that must be externalized during bundling (better-sqlite3, node-pty, native-keymap, @ast-grep/napi, @parcel/watcher, libsql). Critical for build correctness.",
+      "role": "config",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "externalizedRuntimeModules",
+          "location": "lines 33-76",
+          "description": "6 native modules with asarUnpackGlobs and materialize configs: better-sqlite3, node-pty, native-keymap, @ast-grep/napi, @parcel/watcher, libsql"
+        },
+        {
+          "symbol": "packagedSupportModules",
+          "location": "lines 78-86",
+          "description": "7 support modules copied as-is: bindings, file-uri-to-path, detect-libc, is-glob, is-extglob, picomatch, node-addon-api"
+        },
+        {
+          "symbol": "mainExternalizedDependencies",
+          "location": "lines 88-90",
+          "description": "Exported array consumed by electron.vite.config.ts main.build.rollupOptions.external"
+        }
+      ],
+      "topic_relation": "S4 build verification: all native modules must be correctly externalized. Missing or incorrect externalization causes runtime crashes."
+    },
+    {
+      "path": "apps/desktop/src/main/index.ts",
+      "relevance": "high",
+      "rationale": "The actual Electron main process entry point used by electron-vite (not index.full.ts which is excluded). Simple stub with window creation, dev mode, and basic lifecycle.",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "createWindow",
+          "location": "lines 6-24",
+          "description": "Creates BrowserWindow with preload script. Dev: loads localhost:5173. Prod: loads dist/renderer/index.html."
+        },
+        {
+          "symbol": "setSkipQuitConfirmation",
+          "location": "line 39",
+          "description": "Phase 3 stub — no-op. Full implementation in index.full.ts (excluded from typecheck)."
+        },
+        {
+          "symbol": "exitImmediately",
+          "location": "lines 42-44",
+          "description": "Phase 4: calls app.exit(0). Mirrors index.full.ts implementation."
+        }
+      ],
+      "topic_relation": "S4 typecheck target. This is the main entry that tsc compiles. Must have no type errors. Currently a stub — index.full.ts is excluded."
+    },
+    {
+      "path": "apps/desktop/src/main/index.full.ts",
+      "relevance": "high",
+      "rationale": "The full main process entry (463 lines) with all features: deep linking, auto-updater, terminal host, MCP provider, tray, etc. Currently EXCLUDED from tsconfig — must be reintegrated for S4.",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "import { settings } from '@superset/local-db'",
+          "location": "line 3",
+          "description": "Direct @superset/local-db import — resolved via tsconfig paths to ./src/main/lib/local-db/index.ts"
+        },
+        {
+          "symbol": "import { makeAppSetup } from 'lib/electron-app/factories/app/setup'",
+          "location": "line 13",
+          "description": "Uses 'lib/*' path alias (resolved to ./src/lib/* or ./src/main/lib/*)"
+        },
+        {
+          "symbol": "import { env as mainEnv } from 'main/env.main'",
+          "location": "line 20",
+          "description": "Uses 'main/*' path alias (resolved to ./src/main/*)"
+        },
+        {
+          "symbol": "import { PLATFORM, PROTOCOL_SCHEME } from 'shared/constants'",
+          "location": "line 25",
+          "description": "Uses 'shared/*' path alias (resolved to ./src/shared/*)"
+        },
+        {
+          "symbol": "registerMaestroMcpProvider",
+          "location": "line 27",
+          "description": "Imports from ./lib/agent-setup/maestro-mcp-provider — contains dynamic import of @superset/mcp-v2/tools/register (try-catch guarded)"
+        }
+      ],
+      "topic_relation": "S4 critical path: index.full.ts must be un-excluded and must typecheck. Contains the most @superset/* imports of any file. Its exclusion is the primary blocker for full typecheck."
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/pty-subprocess.ts",
+      "relevance": "high",
+      "rationale": "Currently EXCLUDED from tsconfig. Imports @superset/pty-daemon/process-tree which is resolved via path alias to local stub. Must be reintegrated for S4.",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "import { signalProcessTargets, signalProcessTreeAndGroups } from '@superset/pty-daemon/process-tree'",
+          "location": "lines 13-17",
+          "description": "Resolved via tsconfig paths to ./src/main/lib/terminal-host/process-tree-stub.ts"
+        },
+        {
+          "symbol": "import * as pty from 'node-pty'",
+          "location": "line 19",
+          "description": "Native module — must be externalized in electron-vite config"
+        },
+        {
+          "symbol": "import treeKill from 'tree-kill'",
+          "location": "line 20",
+          "description": "Native module wrapper"
+        }
+      ],
+      "topic_relation": "S4 critical: excluded file with @superset/* imports. Must be un-excluded and verified. Depends on process-tree-stub.ts providing correct types."
+    },
+    {
+      "path": "apps/desktop/src/renderer/routes/-layout.tsx",
+      "relevance": "high",
+      "rationale": "Currently EXCLUDED from tsconfig. Imports @superset/ui/atoms/Alert (resolved to stub). Root layout component used by TanStack Router.",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "import { Alerter } from '@superset/ui/atoms/Alert'",
+          "location": "line 1",
+          "description": "Resolved via tsconfig paths to ./src/renderer/components/Chat/stubs/ui/atoms/Alert.tsx"
+        },
+        {
+          "symbol": "RootLayout component",
+          "location": "lines 8-18",
+          "description": "Wraps children in ElectronTRPCProvider > AuthProvider > TranslationProvider. Renders ThemedToaster and Alerter."
+        }
+      ],
+      "topic_relation": "S4 critical: excluded file with @superset/* imports. Root layout for the app. Must be un-excluded and verified."
+    },
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx",
+      "relevance": "high",
+      "rationale": "Currently EXCLUDED from tsconfig. Large component (307 lines) with @superset/ui imports and @dnd-kit dependencies. Dashboard sidebar with drag-and-drop.",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "import { Tooltip, TooltipContent, TooltipTrigger } from '@superset/ui/tooltip'",
+          "location": "line 21",
+          "description": "Resolved to ./src/renderer/components/Chat/stubs/ui/tooltip.tsx"
+        },
+        {
+          "symbol": "import { cn } from '@superset/ui/utils'",
+          "location": "line 22",
+          "description": "Resolved to ./src/renderer/components/Chat/stubs/ui/utils.ts"
+        },
+        {
+          "symbol": "@dnd-kit imports",
+          "location": "lines 1-19",
+          "description": "Uses @dnd-kit/core, @dnd-kit/sortable, @dnd-kit/utilities for drag-and-drop project reordering"
+        }
+      ],
+      "topic_relation": "S4 critical: excluded file with @superset/ui imports. Large component with many dependencies. Must be un-excluded and verified."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/agent-setup/superset-registry.d.ts",
+      "relevance": "high",
+      "rationale": "Ambient module declaration for @superset/mcp-v2/tools/register. Provides type safety for the dynamic import in maestro-mcp-provider.ts. Without this, the dynamic import has no types.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "declare module '@superset/mcp-v2/tools/register'",
+          "location": "line 3",
+          "description": "Ambient declaration providing registerExternalTools and registerTools function signatures"
+        }
+      ],
+      "topic_relation": "S4 type safety: provides types for the try-catch guarded dynamic import. Must be included in tsconfig (it is, via src/**/*.d.ts)."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+      "relevance": "high",
+      "rationale": "Bridges Maestro-flow CLI tools into the agent ecosystem via MCP. Contains dynamic import of @superset/mcp-v2/tools/register (try-catch guarded). Large file with complex async initialization.",
+      "role": "integration_point",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "dynamic import of @superset/mcp-v2/tools/register",
+          "location": "lines 569-571",
+          "description": "try-catch guarded dynamic import. Falls back gracefully if package unavailable. Type provided by superset-registry.d.ts."
+        },
+        {
+          "symbol": "checkMaestroCliAvailable",
+          "location": "referenced in index.full.ts line 27",
+          "description": "Checks if maestro CLI is on PATH. Degrades to static tool catalog if unavailable."
+        }
+      ],
+      "topic_relation": "S4 typecheck: the dynamic import uses a module name declared in superset-registry.d.ts. Must verify tsc resolves the types correctly."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/local-db/index.ts",
+      "relevance": "high",
+      "rationale": "Local SQLite database using better-sqlite3 + drizzle-orm. Defines all schema tables. Imported by many files via @superset/local-db alias. Central data layer.",
+      "role": "dependency",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "projects table",
+          "location": "lines 21-40",
+          "description": "SQLite table with 14 columns including Phase 4 additions (color, defaultBranch, branchPrefixMode, etc.)"
+        },
+        {
+          "symbol": "import Database from 'better-sqlite3'",
+          "location": "line 4",
+          "description": "Native module — must be externalized in build"
+        },
+        {
+          "symbol": "import { drizzle } from 'drizzle-orm/better-sqlite3'",
+          "location": "line 5",
+          "description": "ORM adapter for better-sqlite3"
+        }
+      ],
+      "topic_relation": "S4 dependency: imported by index.full.ts and many other files via @superset/local-db alias. Must compile and have correct type exports."
+    },
+    {
+      "path": "apps/desktop/src/shared/constants.ts",
+      "relevance": "medium",
+      "rationale": "Shared constants used by both main and renderer. Defines PLATFORM, PROTOCOL_SCHEME, DEFAULT_CONFIRM_ON_QUIT, and Phase 4 settings defaults. Imported via 'shared/constants' alias.",
+      "role": "dependency",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "PLATFORM",
+          "location": "lines 6-10",
+          "description": "Platform detection: IS_MAC, IS_LINUX, IS_WINDOWS"
+        },
+        {
+          "symbol": "PROTOCOL_SCHEME",
+          "location": "line 12",
+          "description": "'maestro' — used for deep link protocol registration"
+        },
+        {
+          "symbol": "Phase 4 settings defaults",
+          "location": "lines 17-24",
+          "description": "8 DEFAULT_* constants for settings router"
+        }
+      ],
+      "topic_relation": "S4 typecheck: widely imported. Must export all symbols used by consumers."
+    },
+    {
+      "path": "apps/desktop/src/main/env.main.ts",
+      "relevance": "medium",
+      "rationale": "Main process environment validation using @t3-oss/env-core + zod/v4. Imported as 'main/env.main' by 9 files. Critical for runtime config.",
+      "role": "config",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "createEnv",
+          "location": "lines 12-38",
+          "description": "Validates NODE_ENV, DESKTOP_VITE_PORT, NEXT_PUBLIC_API_URL, ANTHROPIC_API_KEY, OPENAI_API_KEY"
+        },
+        {
+          "symbol": "zod/v4 import",
+          "location": "line 10",
+          "description": "Uses zod v4 (zod 4.3.6 in dependencies). Note: zod v4 has different API from v3."
+        }
+      ],
+      "topic_relation": "S4 typecheck: imported by index.full.ts and 8 other files. Must compile. zod/v4 import path must resolve."
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/index.ts",
+      "relevance": "medium",
+      "rationale": "Core tRPC initialization — creates router, procedures, and React client. Imported by all tRPC routers. Uses superjson transformer and Sentry middleware.",
+      "role": "dependency",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "initTRPC.create",
+          "location": "lines 10-13",
+          "description": "Creates tRPC server with superjson transformer"
+        },
+        {
+          "symbol": "sentryMiddleware",
+          "location": "lines 18-54",
+          "description": "Dynamic import of @sentry/electron/main — try-catch guarded. Reports INTERNAL_SERVER_ERROR to Sentry."
+        },
+        {
+          "symbol": "createTRPCReact<AppRouter>",
+          "location": "line 59",
+          "description": "Creates typed tRPC React client"
+        }
+      ],
+      "topic_relation": "S4 typecheck: core infrastructure. Dynamic import of @sentry/electron/main must not cause type errors."
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/index.ts",
+      "relevance": "medium",
+      "rationale": "Aggregates all 30 tRPC routers into a single AppRouter. Central routing hub. Imported by renderer for type inference.",
+      "role": "integration_point",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "createAppRouter",
+          "location": "lines 35-69",
+          "description": "Creates router with 30 sub-routers: chatRuntimeService, chatService, commandChain, maestro, analytics, browser, etc."
+        }
+      ],
+      "topic_relation": "S4 typecheck: all 30 router files must compile. Any type error in a sub-router propagates here."
+    },
+    {
+      "path": "apps/desktop/src/renderer/index.tsx",
+      "relevance": "medium",
+      "rationale": "Renderer entry point. Creates TanStack Router with hash history, handles deep links, renders React app. Imported by electron-vite renderer build.",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "createRouter",
+          "location": "lines 21-29",
+          "description": "Creates TanStack Router with persistentHistory (hash-based), routeTree from generated file, queryClient context"
+        },
+        {
+          "symbol": "import { routeTree } from './routeTree.gen'",
+          "location": "line 14",
+          "description": "Auto-generated by @tanstack/router-plugin. Currently only has __root__ route."
+        }
+      ],
+      "topic_relation": "S4 typecheck: renderer entry. Must compile. Depends on routeTree.gen.ts being generated."
+    },
+    {
+      "path": "apps/desktop/src/renderer/routeTree.gen.ts",
+      "relevance": "medium",
+      "rationale": "Auto-generated TanStack Router route tree. Currently minimal — only __root__ route. Must be regenerated after un-excluding route files.",
+      "role": "dependency",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "routeTree",
+          "location": "lines 33-35",
+          "description": "Exported route tree with only rootRouteImport. Will expand when excluded route files are added back."
+        }
+      ],
+      "topic_relation": "S4 typecheck: auto-generated file. Must be regenerated if route files are un-excluded. Currently has @ts-nocheck."
+    },
+    {
+      "path": "apps/desktop/src/preload/index.ts",
+      "relevance": "medium",
+      "rationale": "Electron preload script. Exposes App, ipcRenderer, webUtils APIs via contextBridge. Uses __APP_VERSION__ global. tRPC electron integration is TODO.",
+      "role": "modify_target",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "contextBridge.exposeInMainWorld",
+          "location": "lines 62-66",
+          "description": "Exposes App, ipcRenderer, webUtils to renderer"
+        },
+        {
+          "symbol": "exposeElectronTRPC",
+          "location": "line 60",
+          "description": "TODO comment — trpc-electron integration not yet enabled"
+        }
+      ],
+      "topic_relation": "S4 typecheck: preload entry. Must compile. Uses __APP_VERSION__ global defined in electron.vite.config.ts."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/agent-setup/desktop-agent-capabilities.ts",
+      "relevance": "medium",
+      "rationale": "Mapped from @superset/shared/agent-command via tsconfig paths. Defines agent preset commands. Imported by agent-setup/index.ts.",
+      "role": "dependency",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Phase 4 agent preset commands",
+          "location": "line 111",
+          "description": "Migrated from Superset @superset/shared/agent-command"
+        }
+      ],
+      "topic_relation": "S4 typecheck: provides types for agent command system. Must export all symbols expected by consumers."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/terminal-host/process-tree-stub.ts",
+      "relevance": "medium",
+      "rationale": "Stub for @superset/pty-daemon/process-tree. Provides signalProcessTargets and signalProcessTreeAndGroups types. Imported by pty-subprocess.ts.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Stub for @superset/pty-daemon/process-tree",
+          "location": "line 2",
+          "description": "Provides ProcessSignalError, ProcessSignalTarget, signalProcessTargets, signalProcessTreeAndGroups"
+        }
+      ],
+      "topic_relation": "S4 typecheck: stub must provide correct types for pty-subprocess.ts imports."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/terminal-host/pty-daemon-stub.ts",
+      "relevance": "medium",
+      "rationale": "Stub for @superset/pty-daemon. Provides PTY daemon types. Imported by src/main/pty-daemon/index.ts.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Stub for @superset/pty-daemon",
+          "location": "line 2",
+          "description": "PTY Daemon Server stub"
+        }
+      ],
+      "topic_relation": "S4 typecheck: stub must provide correct types for pty-daemon/index.ts imports."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/terminal-host/pty-daemon-protocol.ts",
+      "relevance": "medium",
+      "rationale": "Stub for @superset/pty-daemon/protocol. Provides HandoffMessage type. Imported by src/main/pty-daemon/index.ts.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Stub for @superset/pty-daemon/protocol",
+          "location": "line 2",
+          "description": "Handoff protocol types"
+        }
+      ],
+      "topic_relation": "S4 typecheck: stub must provide correct HandoffMessage type."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/terminal-host/shell-ready-scanner.ts",
+      "relevance": "medium",
+      "rationale": "Stub for @superset/shared/shell-ready-scanner. Provides shell readiness detection. Imported by terminal-host/session.ts.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Stub for @superset/shared/shell-ready-scanner",
+          "location": "line 2",
+          "description": "Shell readiness detection stub"
+        }
+      ],
+      "topic_relation": "S4 typecheck: stub must provide correct types for session.ts imports."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/terminal/port-manager.ts",
+      "relevance": "medium",
+      "rationale": "Mapped from @superset/port-scanner via tsconfig paths. Port management for terminal sessions.",
+      "role": "dependency",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "@superset/port-scanner alias",
+          "location": "tsconfig.json line 37",
+          "description": "Resolved to ./src/main/lib/terminal/port-manager.ts"
+        }
+      ],
+      "topic_relation": "S4 typecheck: must export all symbols expected by @superset/port-scanner consumers."
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/atoms/Alert.tsx",
+      "relevance": "medium",
+      "rationale": "Stub for @superset/ui/atoms/Alert. Provides Alerter component (currently no-op). Imported by -layout.tsx.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Alerter component",
+          "location": "lines 7-10",
+          "description": "Stub returning null. Full implementation pending."
+        }
+      ],
+      "topic_relation": "S4 typecheck: stub component must have correct React component type signature."
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/tooltip.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/tooltip. Provides Tooltip, TooltipContent, TooltipTrigger. Imported by DashboardSidebar and OpenInButton.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/utils.ts",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/utils. Provides cn() utility (likely clsx + tailwind-merge). Imported by many renderer components.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/sonner.ts",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/sonner. Provides toast and Toaster. Imported by command palette, RemotePathPicker, ThemedToaster.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/dialog.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/dialog. Provides Dialog components. Imported by RemotePathPicker.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/dropdown-menu.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/dropdown-menu. Provides DropdownMenu components. Imported by OpenInExternalDropdown, OpenInButton, HotkeyMenuShortcut.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/breadcrumb.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/breadcrumb. Provides Breadcrumb components. Imported by RemotePathPicker.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/scroll-area.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/scroll-area. Provides ScrollArea. Imported by RemotePathPicker.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/skeleton.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/skeleton. Provides Skeleton. Imported by RemotePathPicker.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/button.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/button. Provides Button. Imported by RemotePathPicker, PickerTrigger, ConfigFilePreview, OpenInButton.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/button-group.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/button-group. Provides ButtonGroup. Imported by OpenInButton.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/context-menu.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/context-menu. Provides ContextMenuItem. Imported by ColorSelector.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/icons/preset-icons.ts",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/icons/preset-icons. Provides getPresetIcon, PRESET_ICONS. Imported by app-icons/preset-icons.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/stubs/ui/ai-elements/show-code.tsx",
+      "relevance": "low",
+      "rationale": "Stub for @superset/ui/ai-elements/show-code. AI chat UI component.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/shared/agent-launch.ts",
+      "relevance": "medium",
+      "rationale": "Mapped from @superset/shared/agent-launch. Provides AgentLaunchRequest type and normalizeAgentLaunchRequest. Imported by agent-session-orchestrator.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "AgentLaunchRequest, normalizeAgentLaunchRequest",
+          "location": "line 4",
+          "description": "Mapped from @superset/shared/agent-launch for oh-my-maestro"
+        }
+      ],
+      "topic_relation": "S4 typecheck: must export correct types for agent-session-orchestrator consumers."
+    },
+    {
+      "path": "apps/desktop/src/shared/workspace-client.ts",
+      "relevance": "medium",
+      "rationale": "Stub for @superset/workspace-client. Provides workspace client types. Imported by renderer host-service hooks.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Stub for @superset/workspace-client",
+          "location": "line 2",
+          "description": "Workspace client stub"
+        }
+      ],
+      "topic_relation": "S4 typecheck: must export correct types for host-service consumers."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/workspace-fs-host/index.ts",
+      "relevance": "medium",
+      "rationale": "Stub for @superset/workspace-fs/host. Provides workspace filesystem host service. Imported by filesystem tRPC router.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Stub for @superset/workspace-fs/host",
+          "location": "line 1",
+          "description": "Workspace filesystem host stub"
+        }
+      ],
+      "topic_relation": "S4 typecheck: must export correct types for filesystem router."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/chat/server/desktop.ts",
+      "relevance": "low",
+      "rationale": "Stub for @superset/chat/server/desktop. Chat service router type. Imported by chat-service tRPC router.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/chat/server/shared.ts",
+      "relevance": "low",
+      "rationale": "Stub for @superset/chat/server/shared. Shared chat types.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/chat/server/trpc.ts",
+      "relevance": "low",
+      "rationale": "Stub for @superset/chat/server/trpc. Chat tRPC router stub.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/simple-git-options.ts",
+      "relevance": "low",
+      "rationale": "Stub for @superset/shared/simple-git-options. Simple git configuration.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/workspace-launch.ts",
+      "relevance": "low",
+      "rationale": "Stub for @superset/shared/workspace-launch. Workspace launch configuration.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/host-service-coordinator.ts",
+      "relevance": "medium",
+      "rationale": "Mapped from @superset/shared/host-info. Host service coordinator. Imported by index.full.ts and host-service-coordinator tRPC router.",
+      "role": "dependency",
+      "discovery_source": "bash-scan",
+      "key_code": [
+        {
+          "symbol": "Host service coordinator",
+          "location": "line 2",
+          "description": "Originally depends on @superset/local-db, @superset/shared/host-info, shared/env.shared"
+        }
+      ],
+      "topic_relation": "S4 typecheck: must export getHostServiceCoordinator and related types."
+    },
+    {
+      "path": "apps/desktop/src/shared/auto-update.ts",
+      "relevance": "low",
+      "rationale": "Mapped from @superset/shared/auto-update. Auto-update configuration.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/shared/terminal-link-parsing.ts",
+      "relevance": "low",
+      "rationale": "Mapped from @superset/shared/terminal-link-parsing. Terminal link parsing utilities.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/dev-workspace-name.ts",
+      "relevance": "low",
+      "rationale": "Dev workspace name resolution. Originally depends on @superset/local-db. Has TODO for Phase 4 implementation.",
+      "role": "dependency",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/host-service-types.ts",
+      "relevance": "low",
+      "rationale": "Type stubs for @superset/host-service types. Used by renderer host-service hooks.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/workspace-client-stub.ts",
+      "relevance": "low",
+      "rationale": "Type stubs for @superset/workspace-client. Used by renderer host-service hooks.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/toast.ts",
+      "relevance": "low",
+      "rationale": "Lightweight toast utility replacing @superset/ui/sonner.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/host-routing.ts",
+      "relevance": "low",
+      "rationale": "Host routing key builder replacing @superset/shared/host-routing.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useEnabledAgents/useEnabledAgents.ts",
+      "relevance": "low",
+      "rationale": "Hook depending on @superset/shared/agent-settings. Has TODO for migration.",
+      "role": "dependency",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/hooks/useCurrentPlan.ts",
+      "relevance": "low",
+      "rationale": "Hook depending on @superset/shared/billing. Has TODO for migration.",
+      "role": "dependency",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/electron-builder.ts",
+      "relevance": "low",
+      "rationale": "Electron Builder configuration for packaging. Included in tsconfig. Must compile.",
+      "role": "config",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/electron-builder.canary.ts",
+      "relevance": "low",
+      "rationale": "Canary channel Electron Builder config. Included in tsconfig.",
+      "role": "config",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/index.d.ts",
+      "relevance": "low",
+      "rationale": "Global type declarations. Included in tsconfig.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/types/shell-env.d.ts",
+      "relevance": "low",
+      "rationale": "Shell environment type declarations.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/types/friendly-words.d.ts",
+      "relevance": "low",
+      "rationale": "Type declarations for friendly-words package.",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    },
+    {
+      "path": "apps/desktop/src/renderer/env.d.ts",
+      "relevance": "low",
+      "rationale": "Renderer environment type declarations (Vite, import.meta, etc.).",
+      "role": "type_definition",
+      "discovery_source": "bash-scan"
+    }
+  ],
+  "call_chains": [
+    {
+      "name": "TypeScript Compilation Chain",
+      "chain": [
+        "apps/desktop/tsconfig.json (root — strict:true, moduleResolution:bundler, noEmit:true)",
+        "  -> includes: src/**/*.ts, src/**/*.tsx, src/**/*.d.ts, index.d.ts, electron.vite.config.ts, electron-builder.ts, electron-builder.canary.ts, runtime-dependencies.ts",
+        "  -> excludes: node_modules, dist, dist-electron, release, agent-setup/templates, index.full.ts, pty-subprocess.ts, -layout.tsx, DashboardSidebar.tsx",
+        "  -> paths: 47 aliases mapping @superset/*, @/*, @main/*, @renderer/*, @preload/*, @shared/*, main/*, shared/*, lib/*, renderer/*"
+      ],
+      "description": "Single tsconfig for entire desktop app. No project references. tsc --noEmit typechecks all included files. 4 files excluded that must be reintegrated for S4."
+    },
+    {
+      "name": "Electron-Vite Build Chain",
+      "chain": [
+        "apps/desktop/electron.vite.config.ts (defineConfig with 3 targets)",
+        "  -> main: src/main/index.ts -> dist/main/index.js (tsconfigPaths plugin, externalizes native modules)",
+        "  -> preload: src/preload/index.ts -> dist/preload/index.mjs (tsconfigPaths + externalizeDepsPlugin)",
+        "  -> renderer: src/renderer/index.html -> dist/renderer/ (tanstackRouter + tsconfigPaths + tailwindcss + reactPlugin)"
+      ],
+      "description": "Three-target build: main process (Node.js), preload (limited Node.js), renderer (browser). Each has separate plugin chains and Rollup options. Native modules externalized via runtime-dependencies.ts."
+    },
+    {
+      "name": "@superset/* Import Resolution Chain",
+      "chain": [
+        "Source file imports '@superset/xxx'",
+        "  -> tsconfig.json paths: '@superset/xxx' -> './src/.../local-stub.ts'",
+        "  -> electron-vite: vite-tsconfig-paths plugin resolves same aliases at build time",
+        "  -> 25+ @superset/* aliases mapped to local files in src/main/lib/, src/shared/, src/renderer/components/Chat/stubs/"
+      ],
+      "description": "All @superset/* imports are resolved through tsconfig paths to local stub/adapted files. No actual @superset packages are installed. This is the S3 migration pattern."
+    },
+    {
+      "name": "tRPC Router Aggregation Chain",
+      "chain": [
+        "src/lib/trpc/index.ts (initTRPC, router, publicProcedure, trpc React client)",
+        "  -> src/lib/trpc/routers/index.ts (createAppRouter — aggregates 30 sub-routers)",
+        "    -> Individual routers: auth, analytics, auto-update, browser, browser-history, cache, changes, chat-runtime-service, chat-service, command-chain, config, device, external, filesystem, host-service-coordinator, keyboardLayout, maestro, menu, migration, notifications, permissions, ports, projects, resource-metrics, ringtone, settings, system, terminal, ui-state, window, workspaces"
+      ],
+      "description": "30 tRPC sub-routers aggregated into single AppRouter. Each router may import from main/lib/*, shared/*, or main/* path aliases. Any type error in any router propagates."
+    },
+    {
+      "name": "Main Process Initialization Chain (index.full.ts — excluded)",
+      "chain": [
+        "app.whenReady()",
+        "  -> registerWithMacOSNotificationCenter()",
+        "  -> protocol.handle('maestro-icon', ...)",
+        "  -> protocol.handle('maestro-font', ...)",
+        "  -> ensureProjectIconsDir()",
+        "  -> initSentry()",
+        "  -> initAppState()",
+        "  -> initTanstackDbPersistence()",
+        "  -> startNetworkLogger()",
+        "  -> loadWebviewBrowserExtension()",
+        "  -> reconcileDaemonSessions()",
+        "  -> prewarmTerminalRuntime()",
+        "  -> setupAgentHooks()",
+        "  -> checkMaestroCliAvailable() + registerMaestroMcpProvider()",
+        "  -> installBundledCliShim()",
+        "  -> makeAppSetup(() => MainWindow())",
+        "  -> setupAutoUpdater()",
+        "  -> initTray()"
+      ],
+      "description": "Full initialization sequence in index.full.ts (463 lines). Currently excluded from typecheck. Reintegration is the primary S4 task."
+    }
+  ],
+  "data_flows": [
+    {
+      "name": "IPC Communication Flow",
+      "flow": [
+        "Renderer (React) -> tRPC client (@trpc/client + trpc-electron) -> Electron IPC -> Main process tRPC server -> Business logic -> Response",
+        "Fallback: Renderer -> window.ipcRenderer.invoke/send -> Main process ipcMain.handle/on",
+        "Terminal: Renderer -> tRPC terminal router -> Terminal Host Client (Unix socket) -> Terminal Host Daemon -> PTY subprocess"
+      ],
+      "description": "Primary IPC via tRPC over Electron IPC transport (trpc-electron). Fallback to raw ipcRenderer for low-level needs. Terminal uses separate Unix socket protocol."
+    },
+    {
+      "name": "Build Output Flow",
+      "flow": [
+        "Source: apps/desktop/src/",
+        "  -> electron-vite build",
+        "  -> dist/main/index.js (main process bundle, native modules externalized)",
+        "  -> dist/preload/index.mjs (preload bundle)",
+        "  -> dist/renderer/ (renderer bundle: index.html + assets)",
+        "Production: electron-builder -> release/ (packaged .exe/.dmg/.AppImage)"
+      ],
+      "description": "Build produces three output directories. electron-builder packages them into platform-specific installers."
+    },
+    {
+      "name": "Environment Variable Flow",
+      "flow": [
+        ".env file (root) -> dotenv config in electron.vite.config.ts",
+        "  -> electron-vite define: injects into main, preload, renderer bundles at build time",
+        "  -> main process: src/main/env.main.ts (@t3-oss/env-core + zod/v4 validation)",
+        "  -> shared: src/shared/env.shared.ts (@t3-oss/env-core validation)",
+        "  -> renderer: rollup-plugin-inject-process-env for production builds"
+      ],
+      "description": "Environment variables flow from .env through build-time injection to runtime validation. Main and shared layers use t3-env for validation."
+    },
+    {
+      "name": "Database Access Flow",
+      "flow": [
+        "Main process: src/main/lib/local-db/index.ts (better-sqlite3 + drizzle-orm)",
+        "  -> drizzle-orm schema definitions (projects, settings, etc.)",
+        "  -> drizzle-orm migrations",
+        "  -> tRPC routers -> local-db queries",
+        "Renderer: tRPC client -> tRPC routers -> local-db (never direct DB access)"
+      ],
+      "description": "All database access goes through main process. Renderer accesses data via tRPC. better-sqlite3 is a native module externalized during build."
+    }
+  ],
+  "code_anchors": [
+    {
+      "file": "apps/desktop/tsconfig.json",
+      "line": 8,
+      "snippet": "\"strict\": true",
+      "finding": "Full strict mode enabled. All strict type-checking options active. S4 typecheck must pass with strict:true — no implicit any, no unchecked index access, etc.",
+      "severity": "info"
+    },
+    {
+      "file": "apps/desktop/tsconfig.json",
+      "line": 9,
+      "snippet": "\"noEmit\": true",
+      "finding": "tsc only typechecks, does not emit JS. electron-vite handles bundling. S4 verification: tsc --noEmit must exit 0.",
+      "severity": "info"
+    },
+    {
+      "file": "apps/desktop/tsconfig.json",
+      "line": 5,
+      "snippet": "\"moduleResolution\": \"bundler\"",
+      "finding": "Uses 'bundler' module resolution (TypeScript 5.0+). Allows extensionless imports and path aliases without explicit extensions. Compatible with electron-vite.",
+      "severity": "info"
+    },
+    {
+      "file": "apps/desktop/tsconfig.json",
+      "line": 17,
+      "snippet": "\"types\": [\"bun\"]",
+      "finding": "Uses Bun type definitions globally. Test files use bun:test. Must ensure @types/bun is installed (it is: devDependencies @types/bun 1.3.11).",
+      "severity": "info"
+    },
+    {
+      "file": "apps/desktop/tsconfig.json",
+      "line": 83,
+      "snippet": "\"src/main/index.full.ts\"",
+      "finding": "EXCLUDED from typecheck. This is the full main process entry (463 lines) with all features. Must be un-excluded for S4. Contains 30+ imports including @superset/local-db, main/env.main, lib/*, shared/*, main/*.",
+      "severity": "error"
+    },
+    {
+      "file": "apps/desktop/tsconfig.json",
+      "line": 84,
+      "snippet": "\"src/main/terminal-host/pty-subprocess.ts\"",
+      "finding": "EXCLUDED from typecheck. Imports @superset/pty-daemon/process-tree (resolved to process-tree-stub.ts) and node-pty. Must be un-excluded for S4.",
+      "severity": "error"
+    },
+    {
+      "file": "apps/desktop/tsconfig.json",
+      "line": 85,
+      "snippet": "\"src/renderer/routes/-layout.tsx\"",
+      "finding": "EXCLUDED from typecheck. Root layout component importing @superset/ui/atoms/Alert. Must be un-excluded for S4.",
+      "severity": "error"
+    },
+    {
+      "file": "apps/desktop/tsconfig.json",
+      "line": 86,
+      "snippet": "\"src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx\"",
+      "finding": "EXCLUDED from typecheck. Large component (307 lines) with @superset/ui and @dnd-kit imports. Must be un-excluded for S4.",
+      "severity": "error"
+    },
+    {
+      "file": "apps/desktop/tsconfig.json",
+      "lines": "19-65",
+      "snippet": "\"paths\": { \"@/*\": [\"./src/*\"], \"@superset/local-db\": [\"./src/main/lib/local-db/index.ts\"], ... }",
+      "finding": "47 path aliases. 25+ @superset/* aliases map to local files. Critical for S4: every alias target must exist and export the expected symbols. Missing or incorrect alias targets cause type errors.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/package.json",
+      "line": 23,
+      "snippet": "\"typecheck\": \"tsc --noEmit\"",
+      "finding": "S4 verification target. Must exit 0. Currently likely fails due to 4 excluded files and potential type errors in included files.",
+      "severity": "error"
+    },
+    {
+      "file": "apps/desktop/package.json",
+      "line": 20,
+      "snippet": "\"build\": \"electron-vite build\"",
+      "finding": "S4 build target. Must produce valid dist/ output. Depends on electron-vite config and all source files compiling.",
+      "severity": "error"
+    },
+    {
+      "file": "apps/desktop/package.json",
+      "line": 142,
+      "snippet": "\"typescript\": \"6.0.3\"",
+      "finding": "TypeScript 6.0.3 — very recent version. 'ignoreDeprecations': '6.0' in tsconfig suppresses deprecation warnings. Must verify compatibility with all @types/* packages.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/package.json",
+      "line": 117,
+      "snippet": "\"zod\": \"4.3.6\"",
+      "finding": "Zod v4 (not v3). Imported as 'zod/v4' in env.main.ts and env.shared.ts. Breaking changes from v3. Must verify all zod usage is v4-compatible.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/main/index.full.ts",
+      "line": 3,
+      "snippet": "import { settings } from \"@superset/local-db\";",
+      "finding": "Direct @superset/local-db import. Resolved via tsconfig paths to ./src/main/lib/local-db/index.ts. Must verify 'settings' is exported from local-db/index.ts.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/main/index.full.ts",
+      "line": 13,
+      "snippet": "import { makeAppSetup } from \"lib/electron-app/factories/app/setup\";",
+      "finding": "Uses 'lib/*' path alias (resolved to ./src/lib/* or ./src/main/lib/*). Must verify the dual-path resolution works correctly for all lib/* imports.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/main/index.full.ts",
+      "line": 20,
+      "snippet": "import { env as mainEnv } from \"main/env.main\";",
+      "finding": "Uses 'main/*' path alias (resolved to ./src/main/*). Imported by 9 files total. Must verify main/env.main exists and exports 'env'.",
+      "severity": "info"
+    },
+    {
+      "file": "apps/desktop/src/main/index.full.ts",
+      "line": 25,
+      "snippet": "import { DEFAULT_CONFIRM_ON_QUIT, PLATFORM, PROTOCOL_SCHEME } from \"shared/constants\";",
+      "finding": "Uses 'shared/*' path alias (resolved to ./src/shared/*). Must verify all imported symbols are exported from shared/constants.ts.",
+      "severity": "info"
+    },
+    {
+      "file": "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+      "line": 570,
+      "snippet": "const registry = await import(\"@superset/mcp-v2/tools/register\");",
+      "finding": "Dynamic import with try-catch guard. Type provided by superset-registry.d.ts ambient declaration. At build time, electron-vite may warn about unresolved module — verify it does not cause build failure.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/lib/trpc/index.ts",
+      "line": 35,
+      "snippet": "const Sentry = await import(sentryModule) as any;",
+      "finding": "Dynamic import of @sentry/electron/main with 'as any' cast. Uses string variable to avoid TypeScript module resolution. try-catch guarded. Verify no type errors from the surrounding code.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/renderer/routeTree.gen.ts",
+      "line": 3,
+      "snippet": "// @ts-nocheck",
+      "finding": "Auto-generated file with @ts-nocheck — bypasses all type checking. Must be regenerated after un-excluding route files. Currently only has __root__ route.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/main/env.main.ts",
+      "line": 10,
+      "snippet": "import { z } from \"zod/v4\";",
+      "finding": "Uses zod/v4 import path. Must verify this resolves correctly with zod 4.3.6. Some zod v4 exports use different subpaths than v3.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/shared/env.shared.ts",
+      "line": 6,
+      "snippet": "import { z } from \"zod/v4\";",
+      "finding": "Same zod/v4 import pattern. Must verify resolution in shared context (used by both main and lib layers).",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/main/terminal-host/pty-subprocess.ts",
+      "line": 17,
+      "snippet": "import { signalProcessTargets, signalProcessTreeAndGroups } from \"@superset/pty-daemon/process-tree\";",
+      "finding": "Imports from @superset/pty-daemon/process-tree — resolved to process-tree-stub.ts. Must verify the stub exports match the expected interface (ProcessSignalError, ProcessSignalTarget, signalProcessTargets, signalProcessTreeAndGroups).",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/renderer/routes/-layout.tsx",
+      "line": 1,
+      "snippet": "import { Alerter } from \"@superset/ui/atoms/Alert\";",
+      "finding": "Imports Alerter from @superset/ui/atoms/Alert — resolved to Chat/stubs/ui/atoms/Alert.tsx. Must verify the stub exports a valid React component.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx",
+      "line": 21,
+      "snippet": "import { Tooltip, TooltipContent, TooltipTrigger } from \"@superset/ui/tooltip\";",
+      "finding": "Imports from @superset/ui/tooltip — resolved to Chat/stubs/ui/tooltip.tsx. Must verify stub exports all three components with correct React component types.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/components/DashboardSidebar/DashboardSidebar.tsx",
+      "line": 22,
+      "snippet": "import { cn } from \"@superset/ui/utils\";",
+      "finding": "Imports cn utility from @superset/ui/utils — resolved to Chat/stubs/ui/utils.ts. Must verify stub exports cn function with correct signature.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/electron.vite.config.ts",
+      "line": 21,
+      "snippet": "const workspaceDependencies = Object.keys({}).filter((dependency) => dependency.startsWith(\"@oh-my-maestro/\"));",
+      "finding": "Empty object — no workspace dependencies currently. Placeholder for future monorepo expansion. Not a bug but worth noting for S4.",
+      "severity": "info"
+    },
+    {
+      "file": "apps/desktop/electron.vite.config.ts",
+      "line": 73,
+      "snippet": "external: [\"electron\", ...mainExternalizedDependencies]",
+      "finding": "Externalizes electron + native modules from runtime-dependencies.ts. Must verify all native modules are correctly listed. Missing externalization causes build failures.",
+      "severity": "warning"
+    },
+    {
+      "file": "apps/desktop/src/preload/index.ts",
+      "line": 60,
+      "snippet": "// TODO: Re-enable when trpc-electron package is available",
+      "finding": "tRPC electron integration is commented out. Preload currently only exposes basic IPC. May affect renderer functionality but not compilation.",
+      "severity": "info"
+    },
+    {
+      "file": "apps/desktop/src/main/index.ts",
+      "line": 36,
+      "snippet": "// Phase 3 stub — will be replaced by index.full.ts",
+      "finding": "Current main entry is a stub. index.full.ts (excluded) is the real entry. S4 must decide: replace index.ts with index.full.ts content, or keep both and fix type errors.",
+      "severity": "error"
+    }
+  ],
+  "summary": "S4 compile verification exploration complete. The oh-my-maestro desktop app is a single-package Electron + TypeScript + Bun project with no monorepo workspace dependencies. Key findings:\n\n1. TSCONFIG: Single tsconfig.json with strict:true, moduleResolution:'bundler', noEmit:true. 47 path aliases map 25+ @superset/* imports to local stub files. 4 files are currently EXCLUDED from typecheck: index.full.ts (463-line main entry), pty-subprocess.ts, -layout.tsx, and DashboardSidebar.tsx.\n\n2. BUILD CHAIN: electron-vite with 3 targets (main/preload/renderer). Native modules (better-sqlite3, node-pty, etc.) externalized via runtime-dependencies.ts. Build output goes to dist/.\n\n3. CRITICAL S4 BLOCKERS (4 excluded files):\n   - index.full.ts: The real main process entry with 30+ imports. Must be un-excluded.\n   - pty-subprocess.ts: PTY subprocess with @superset/pty-daemon imports.\n   - -layout.tsx: Root layout with @superset/ui/atoms/Alert import.\n   - DashboardSidebar.tsx: Large component with @superset/ui and @dnd-kit imports.\n\n4. DEPENDENCY STATUS: 91 runtime + 19 dev dependencies installed via Bun. TypeScript 6.0.3, zod 4.3.6 (v4 — breaking changes from v3), Electron 40.8.5. No Biome config found at project level (may be global or in IDE).\n\n5. IMPORT PATTERNS: 4 path alias categories — @superset/* (25+ stubs), lib/* (dual-path: src/lib/ or src/main/lib/), main/* (src/main/), shared/* (src/shared/). All @superset/* imports resolved through tsconfig paths, no actual @superset packages installed.\n\n6. TYPE SAFETY CONCERNS: routeTree.gen.ts has @ts-nocheck. Dynamic imports of @superset/mcp-v2 and @sentry/electron use try-catch with 'as any' casts. zod/v4 import path must be verified.\n\n7. S4 VERIFICATION TARGETS: tsc --noEmit (typecheck), electron-vite build (build), bun test (tests). All three must pass for milestone completion."
+}

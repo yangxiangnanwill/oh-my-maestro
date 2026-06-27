@@ -1,0 +1,54 @@
+{
+  "task_id": "TASK-004",
+  "title": "修复 process-tree-stub.ts 签名并解除 pty-subprocess.ts 排除",
+  "type": "fix",
+  "priority": "high",
+  "estimated_minutes": 60,
+  "depends_on": ["TASK-001"],
+  "files": [
+    "src/main/lib/terminal-host/process-tree-stub.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "read_first": [
+    "src/main/lib/terminal-host/process-tree-stub.ts",
+    "src/main/terminal-host/pty-subprocess.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "action": "修改 process-tree-stub.ts 中 signalProcessTreeAndGroups 函数签名从 (pid: number, signal?: string): Promise<void> 改为 (pid: number, signal: string, options: { signalPids: boolean; onSignalError: (error: ProcessSignalError) => void }): ProcessSignalTarget[]，修改 signalProcessTargets 函数签名从 (targets: ProcessSignalTarget[]): Promise<void> 改为 (targets: ProcessSignalTarget[], signal: string, onError: (error: ProcessSignalError) => void): void，然后从 tsconfig.json exclude 列表中移除 pty-subprocess.ts",
+  "implementation": [
+    "Step 1: 读取 pty-subprocess.ts 第 266-273 行，确认 signalProcessTreeAndGroups 的实际调用签名：接收 (rootPid: number, signal: NodeJS.Signals, options: { signalPids: boolean; onSignalError: callback }) 返回 ProcessSignalTarget[]",
+    "Step 2: 读取 pty-subprocess.ts 第 412 行，确认 signalProcessTargets 的实际调用签名：接收 (targets: ProcessSignalTarget[], signal: string, onError: callback) 返回 void",
+    "Step 3: 修改 process-tree-stub.ts 中 signalProcessTreeAndGroups 函数：",
+    "  - 签名改为 (pid: number, signal: string, options: { signalPids: boolean; onSignalError: (error: ProcessSignalError) => void }): ProcessSignalTarget[]",
+    "  - 返回空数组 [] 作为 stub 实现",
+    "Step 4: 修改 process-tree-stub.ts 中 signalProcessTargets 函数：",
+    "  - 签名改为 (targets: ProcessSignalTarget[], signal: string, onError: (error: ProcessSignalError) => void): void",
+    "  - 空函数体作为 stub 实现",
+    "Step 5: 编辑 tsconfig.json exclude 列表，移除 \"src/main/terminal-host/pty-subprocess.ts\"",
+    "Step 6: 运行 tsc --noEmit 验证 pty-subprocess.ts 不再有类型错误"
+  ],
+  "convergence": {
+    "criteria": [
+      "signalProcessTreeAndGroups 接受 3 个参数 (pid, signal, options) 并返回 ProcessSignalTarget[]",
+      "signalProcessTargets 接受 3 个参数 (targets, signal, onError) 并返回 void",
+      "tsconfig.json exclude 列表中不再包含 pty-subprocess.ts",
+      "tsc --noEmit 不报告 pty-subprocess.ts 的类型错误"
+    ],
+    "verification": "cd apps/desktop && grep -c pty-subprocess tsconfig.json && bun run typecheck 2>&1 | grep pty-subprocess",
+    "definition_of_done": "process-tree-stub.ts 的函数签名与 pty-subprocess.ts 的调用模式完全匹配，pty-subprocess.ts 已从 tsconfig exclude 中移除且编译无错误。"
+  },
+  "risks": [
+    "node-pty 和 tree-kill 是原生模块，tsc 可能报告类型声明缺失（可通过 skipLibCheck: true 规避）",
+    "pty-subprocess.ts 可能有其他隐藏的类型错误（如 PtySubprocessFrameDecoder 的导入）"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "1h",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

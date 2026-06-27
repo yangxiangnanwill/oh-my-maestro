@@ -1,0 +1,45 @@
+{
+  "task_id": "TASK-001",
+  "title": "安装缺失 npm 包",
+  "type": "fix",
+  "priority": "high",
+  "estimated_minutes": 45,
+  "depends_on": [],
+  "files": ["apps/desktop/package.json"],
+  "read_first": [
+    "apps/desktop/package.json",
+    "apps/desktop/tsconfig.json"
+  ],
+  "action": "bun add 安装 @tiptap/core, @tiptap/extension-blockquote, @tiptap/extension-bold, @tiptap/extension-bullet-list, @tiptap/extension-code, @tiptap/extension-code-block-lowlight, @tiptap/extension-document, @tiptap/extension-emoji, @tiptap/extension-hard-break, @tiptap/extension-heading, @tiptap/extension-history, @tiptap/extension-horizontal-rule, @tiptap/extension-image, @tiptap/extension-italic, @tiptap/extension-link, @tiptap/extension-list-item, @tiptap/extension-ordered-list, @tiptap/extension-paragraph, @tiptap/extension-placeholder, @tiptap/extension-strike, @tiptap/extension-table, @tiptap/extension-task-item, @tiptap/extension-task-list, @tiptap/extension-text, @tiptap/extension-underline, @tiptap/pm, @tiptap/react, @tiptap/react/menus, @tiptap/suggestion, tippy.js, streamdown, lowlight, react-syntax-highlighter, @xterm/addon-fit, @xterm/addon-serialize, @radix-ui/react-slot, @radix-ui/react-collapsible, @radix-ui/react-hover-card, @radix-ui/react-popover, @radix-ui/react-context-menu, @radix-ui/react-dropdown-menu, @radix-ui/react-select, @radix-ui/react-switch, @radix-ui/react-checkbox, @types/react-syntax-highlighter 到 apps/desktop/package.json 的 dependencies/devDependencies",
+  "implementation": [
+    "Step 1: cd apps/desktop 进入桌面应用目录",
+    "Step 2: 逐一运行 bun add 安装每个缺失的 @tiptap/* 包（约 25 个）：bun add @tiptap/core @tiptap/extension-blockquote @tiptap/extension-bold @tiptap/extension-bullet-list @tiptap/extension-code @tiptap/extension-code-block-lowlight @tiptap/extension-document @tiptap/extension-emoji @tiptap/extension-hard-break @tiptap/extension-heading @tiptap/extension-history @tiptap/extension-horizontal-rule @tiptap/extension-image @tiptap/extension-italic @tiptap/extension-link @tiptap/extension-list-item @tiptap/extension-ordered-list @tiptap/extension-paragraph @tiptap/extension-placeholder @tiptap/extension-strike @tiptap/extension-table @tiptap/extension-task-item @tiptap/extension-task-list @tiptap/extension-text @tiptap/extension-underline @tiptap/pm @tiptap/react @tiptap/suggestion tippy.js streamdown lowlight react-syntax-highlighter",
+    "Step 3: 安装缺失的 @xterm/addon-* 包：bun add @xterm/addon-fit @xterm/addon-serialize",
+    "Step 4: 安装缺失的 @radix-ui/* 包（stub button.tsx 引用了 @radix-ui/react-slot）：bun add @radix-ui/react-slot @radix-ui/react-collapsible @radix-ui/react-hover-card @radix-ui/react-popover @radix-ui/react-context-menu @radix-ui/react-dropdown-menu @radix-ui/react-select @radix-ui/react-switch @radix-ui/react-checkbox",
+    "Step 5: 安装 @types/react-syntax-highlighter 作为 devDependency：bun add -d @types/react-syntax-highlighter",
+    "Step 6: 运行 bun install 确保所有依赖解析正确",
+    "Step 7: 运行 tsc --noEmit 验证 TS2307 错误从 160 显著减少（目标：减少 90+ 个）"
+  ],
+  "convergence": {
+    "criteria": [
+      "bun install 无错误退出（exit code 0）",
+      "tsc --noEmit 2>&1 | grep -c TS2307 输出 < 70（从 160 减少至少 90）",
+      "package.json dependencies 中包含 @tiptap/core, tippy.js, streamdown, lowlight, react-syntax-highlighter, @xterm/addon-fit, @xterm/addon-serialize, @radix-ui/react-slot 等包"
+    ],
+    "verification": "cd apps/desktop && bun install && bun run typecheck 2>&1 | grep -c TS2307",
+    "definition_of_done": "所有依赖源代码引用的 npm 包已安装到 node_modules，package.json 中声明完整，TS2307 错误数量降至 70 以下。"
+  },
+  "risks": [
+    "@tiptap 版本兼容性：部分 @tiptap/* 包之间有严格的版本耦合，需统一版本号避免类型冲突"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "45m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

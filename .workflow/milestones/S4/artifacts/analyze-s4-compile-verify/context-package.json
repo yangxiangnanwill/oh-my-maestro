@@ -1,0 +1,69 @@
+{
+  "$schema": "context-package/1.0",
+  "source": {
+    "type": "analyze",
+    "artifact_id": "ANL-s4-compile-verify-2026-06-27",
+    "session_path": ".workflow/scratch/20260627-analyze-s4-compile-verify/",
+    "generated_at": "2026-06-27T10:30:00+08:00"
+  },
+  "requirements": [
+    {
+      "id": "REQ-S4-001",
+      "title": "安装缺失 npm 包",
+      "acceptance": "bun install 无错误，TS2307 错误减少 90+ 个",
+      "ref": "conclusions.json"
+    },
+    {
+      "id": "REQ-S4-002",
+      "title": "扩展 shadcn/ui stub props",
+      "acceptance": "TS2322 错误减少 50+ 个，所有 stub 接受 asChild, sideOffset, align, open, onOpenChange 等 props",
+      "ref": "conclusions.json"
+    },
+    {
+      "id": "REQ-S4-003",
+      "title": "创建缺失 store/stub 模块",
+      "acceptance": "TS2307 错误清零（不含 DashboardSidebar 相关）",
+      "ref": "conclusions.json"
+    },
+    {
+      "id": "REQ-S4-004",
+      "title": "修复 process-tree-stub.ts 签名",
+      "acceptance": "signalProcessTreeAndGroups 接受 3 参数并返回 ProcessSignalTarget[]",
+      "ref": "conclusions.json"
+    }
+  ],
+  "constraints": [
+    { "status": "locked", "area": "S4 范围", "decision": "修复现有 532 个类型错误 + 解除 index.full.ts 和 -layout.tsx 的排除", "ref": "context.md#Locked" },
+    { "status": "locked", "area": "DashboardSidebar", "decision": "保持 excluded，推迟到 S5", "ref": "context.md#Locked" },
+    { "status": "locked", "area": "pty-subprocess", "decision": "先修复 process-tree-stub.ts 签名，再解除排除", "ref": "context.md#Locked" },
+    { "status": "locked", "area": "缺失 npm 包", "decision": "使用 bun add 安装，不创建替代 stub", "ref": "context.md#Locked" },
+    { "status": "locked", "area": "shadcn/ui stub", "decision": "扩展 props，不替换为真实组件", "ref": "context.md#Locked" },
+    { "status": "locked", "area": "路由类型", "decision": "重新生成 routeTree.gen.ts", "ref": "context.md#Locked" },
+    { "status": "open", "area": "隐式 any", "decision": "逐文件添加类型注解 或 临时放宽 noImplicitAny", "ref": "context.md#Free" },
+    { "status": "open", "area": "修复顺序", "decision": "实现者自行决定各修复类别的执行顺序", "ref": "context.md#Free" }
+  ],
+  "domain": {},
+  "non_goals": [
+    { "title": "DashboardSidebar 完整迁移", "rationale": "12 个缺失依赖，属于未迁移的完整功能模块", "ref": "context.md#Deferred" },
+    { "title": "真实 shadcn/ui 替换", "rationale": "S4 目标是编译通过，UI 完善留给后续里程碑", "ref": "context.md#Deferred" },
+    { "title": "原生模块 Windows 运行时验证", "rationale": "编译通过后进行", "ref": "context.md#Deferred" }
+  ],
+  "insights": [
+    { "role": "analyzer", "area": "错误分类", "summary": "532 个类型错误集中在 5 种错误代码：TS2307(160), TS2322(126), TS7006(104), TS2339(60), TS7031(39)" },
+    { "role": "analyzer", "area": "缺失依赖", "summary": "35 个 npm 包未在 package.json 中声明，是 S3 迁移遗漏" },
+    { "role": "analyzer", "area": "stub 不完整", "summary": "39 个 shadcn/ui stub 缺少 asChild, sideOffset, align 等常用 props" },
+    { "role": "analyzer", "area": "路由未注册", "summary": "routeTree.gen.ts 只有 root route，所有子路由未注册导致 11 个类型错误" }
+  ],
+  "open_questions": [
+    { "area": "S5 范围", "question": "S5 里程碑的范围和时间安排？" },
+    { "area": "noImplicitAny", "question": "是否接受临时放宽 noImplicitAny 以加速 S4？" },
+    { "area": "原生模块", "question": "原生模块在 Windows 上的运行时验证何时进行？" }
+  ],
+  "references": [
+    { "type": "analysis", "path": "analysis.md" },
+    { "type": "conclusions", "path": "conclusions.json" },
+    { "type": "context", "path": "context.md" },
+    { "type": "exploration", "path": "exploration-codebase.json" },
+    { "type": "perspectives", "path": "perspectives.json" }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "task_id": "TASK-005",
+  "title": "补充 index.full.ts 和 -layout.tsx 缺失的依赖文件",
+  "type": "fix",
+  "priority": "high",
+  "estimated_minutes": 120,
+  "depends_on": ["TASK-001"],
+  "files": [
+    "src/main/lib/app-state.ts",
+    "src/main/lib/extensions.ts",
+    "src/main/lib/terminal.ts",
+    "src/renderer/components/ThemedToaster/ThemedToaster.tsx",
+    "src/renderer/providers/AuthProvider.tsx",
+    "src/renderer/providers/ElectronTRPCProvider.tsx"
+  ],
+  "read_first": [
+    "src/main/index.full.ts",
+    "src/renderer/routes/-layout.tsx",
+    "src/main/lib/local-db/index.ts",
+    "src/renderer/providers/TranslationProvider.tsx",
+    "src/renderer/lib/trpc-react.tsx"
+  ],
+  "action": "创建 6 个缺失文件：app-state.ts (导出 initAppState 异步函数), extensions.ts (导出 loadWebviewBrowserExtension 异步函数), terminal.ts (导出 prewarmTerminalRuntime 和 reconcileDaemonSessions 函数), ThemedToaster/ThemedToaster.tsx (React toast 容器组件), AuthProvider.tsx (React auth context provider), ElectronTRPCProvider.tsx (React tRPC provider wrapper)",
+  "implementation": [
+    "Step 1: 创建 src/main/lib/app-state.ts — 导出 initAppState(): Promise<void> 函数（空实现，读取并初始化应用状态）",
+    "Step 2: 创建 src/main/lib/extensions.ts — 导出 loadWebviewBrowserExtension(): Promise<void> 函数（空实现，加载 webview 浏览器扩展）",
+    "Step 3: 创建 src/main/lib/terminal.ts — 导出 prewarmTerminalRuntime() 和 reconcileDaemonSessions() 函数（空实现）",
+    "Step 4: 创建 src/renderer/components/ThemedToaster/ThemedToaster.tsx — React 组件，接受 position, expand, richColors 等 props，渲染空容器",
+    "Step 5: 创建 src/renderer/providers/AuthProvider.tsx — React context provider，接受 children，提供 auth state（stub: 返回 children 包裹在 AuthContext.Provider 中）",
+    "Step 6: 创建 src/renderer/providers/ElectronTRPCProvider.tsx — React component wrapping children with tRPC provider setup（stub: 直接渲染 children）",
+    "Step 7: 运行 tsc --noEmit 验证 index.full.ts 和 -layout.tsx 的导入错误已消除"
+  ],
+  "convergence": {
+    "criteria": [
+      "tsc --noEmit 不报告 app-state.ts, extensions.ts, terminal.ts, ThemedToaster.tsx, AuthProvider.tsx, ElectronTRPCProvider.tsx 的 TS2307 错误",
+      "index.full.ts 中 ./lib/app-state, ./lib/extensions, ./lib/terminal 导入解析成功",
+      "-layout.tsx 中 ThemedToaster, AuthProvider, ElectronTRPCProvider 导入解析成功"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck 2>&1 | grep -E \"(app-state|extensions|terminal\\.ts|ThemedToaster|AuthProvider|ElectronTRPCProvider)\" | grep TS2307 || echo 'No TS2307 errors for these modules — PASS'",
+    "definition_of_done": "所有 6 个缺失文件已创建，index.full.ts 和 -layout.tsx 的导入依赖全部满足。"
+  },
+  "risks": [
+    "AuthProvider 和 ElectronTRPCProvider 可能被路由文件引用时需要特定的 hook 依赖（如 useAuth, useTRPC），需要按需扩展到最小实现",
+    "ThemedToaster 的 props 类型需要与 sonner Toaster 组件兼容"
+  ],
+  "meta": {
+    "status": "completed",
+    "estimated_time": "2h",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}
