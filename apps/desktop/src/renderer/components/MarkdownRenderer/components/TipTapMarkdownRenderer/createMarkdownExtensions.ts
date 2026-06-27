@@ -176,9 +176,11 @@ export function createMarkdownExtensions({
 		}),
 		Markdown.configure({
 			// Keep raw HTML disabled until the TipTap path has an explicit sanitizer.
-			html: ENABLE_RAW_MARKDOWN_HTML,
-			transformPastedText: true,
-			transformCopiedText: true,
+			markdownOptions: {
+				html: ENABLE_RAW_MARKDOWN_HTML,
+				transformPastedText: true,
+				transformCopiedText: true,
+			},
 		}),
 		EditorHotkeys.configure({
 			onSaveRef,

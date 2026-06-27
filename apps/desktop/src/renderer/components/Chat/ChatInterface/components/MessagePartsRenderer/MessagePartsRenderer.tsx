@@ -290,11 +290,14 @@ export function MessagePartsRenderer({
 						}
 						return {
 							icon,
-							title,
-							subtitle,
-							isPending:
-								p.state !== "output-available" && p.state !== "output-error",
-							isError: p.state === "output-error",
+							label: title,
+							description: subtitle || undefined,
+							status:
+								p.state === "output-error"
+									? "error"
+									: p.state !== "output-available"
+										? "pending"
+										: undefined,
 							onClick: filePath ? () => openFileInPane(filePath) : undefined,
 						};
 					});

@@ -8,5 +8,5 @@ export function navigateToWorkspace(
   navigate: (opts: NavigateOptions) => void,
   _opts?: NavigateOptions,
 ): void {
-  navigate({ to: "/workspaces/$workspaceId", params: { workspaceId } });
+  navigate({ to: "/workspaces/$workspaceId" as never, params: { workspaceId } as never });
 }

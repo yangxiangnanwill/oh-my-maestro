@@ -63,7 +63,7 @@ function createTerminal(
 		cursorInactiveStyle: "outline",
 		vtExtensions: { kittyKeyboard: true },
 		scrollbar: { showScrollbar: false },
-	});
+	} as any);
 	terminal.loadAddon(fitAddon);
 	terminal.loadAddon(serializeAddon);
 	return { terminal, fitAddon, serializeAddon };

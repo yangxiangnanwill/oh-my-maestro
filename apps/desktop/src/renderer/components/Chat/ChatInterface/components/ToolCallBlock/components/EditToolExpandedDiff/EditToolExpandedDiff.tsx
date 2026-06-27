@@ -15,7 +15,7 @@ export function EditToolExpandedDiff({
 	newString,
 	hideUnchangedRegions,
 }: EditToolExpandedDiffProps) {
-	const viewMode = useChangesStore((state) => state.viewMode);
+	const viewMode = useChangesStore((state) => state.viewMode) ?? "split";
 	const hideUnchangedRegionsFromStore = useChangesStore(
 		(state) => state.hideUnchangedRegions,
 	);

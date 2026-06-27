@@ -326,9 +326,11 @@ export function MarkdownEditor({
 					"first:before:text-muted-foreground first:before:float-left first:before:h-0 first:before:pointer-events-none first:before:content-[attr(data-placeholder)]",
 			}),
 			Markdown.configure({
-				html: true,
-				transformPastedText: true,
-				transformCopiedText: true,
+				markdownOptions: {
+					html: true,
+					transformPastedText: true,
+					transformCopiedText: true,
+				},
 			}),
 			...(showSlashCommand ? [SlashCommand] : []),
 			...(showEmoji ? [EmojiSuggestion] : []),
@@ -342,7 +344,7 @@ export function MarkdownEditor({
 					]
 				: []),
 			KeyboardHandler,
-		],
+		] as Parameters<typeof useEditor>[0] extends { extensions?: infer E } ? E : never,
 		content,
 		editorProps: {
 			attributes: {

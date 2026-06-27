@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import type { TerminalPreset } from "main/lib/local-db";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { filterMatchingPresetsForProject } from "shared/preset-project-targeting";
 
@@ -103,10 +104,13 @@ function useReorderTerminalPresets(
 }
 
 export function usePresets(projectId?: string | null) {
-	const { data: presets = [], isLoading } =
-		electronTrpc.settings.getTerminalPresets.useQuery();
+	const { data: presets, isLoading } =
+		electronTrpc.settings.getTerminalPresets.useQuery() as {
+			data: TerminalPreset[] | undefined;
+			isLoading: boolean;
+		};
 	const matchedPresets = useMemo(
-		() => filterMatchingPresetsForProject(presets, projectId),
+		() => filterMatchingPresetsForProject(presets ?? [], projectId),
 		[presets, projectId],
 	);
 

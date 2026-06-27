@@ -27,7 +27,11 @@ export function useHandleOpenedWorktree() {
 
 			const bootstrapError = await bootstrapOpenWorktree({
 				data,
-				addTab,
+					addTab: (workspaceId) => {
+						const tabId = addTab(workspaceId);
+						const paneId = tabId;
+						return { tabId, paneId };
+					},
 				setTabAutoTitle,
 				createOrAttach: (input) => createOrAttach.mutateAsync(input),
 				writeToTerminal: (input) => writeToTerminal.mutateAsync(input),

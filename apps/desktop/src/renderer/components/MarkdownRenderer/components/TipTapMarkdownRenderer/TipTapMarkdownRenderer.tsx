@@ -87,7 +87,7 @@ export function TipTapMarkdownRenderer({
 		extensions: createMarkdownExtensions({
 			editable,
 			onSaveRef,
-		}),
+		}) as Parameters<typeof useEditor>[0] extends { extensions?: infer E } ? E : never,
 		content: value,
 		editorProps: {
 			attributes: {
