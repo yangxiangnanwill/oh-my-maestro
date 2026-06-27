@@ -25,8 +25,8 @@ export function validateAuthToken(_token: string): boolean {
   return false;
 }
 
-export function handleAuthCallback(_url: string): Promise<void> {
-  return Promise.resolve();
+export function handleAuthCallback(_params: Record<string, string>): Promise<{ success: boolean; error?: string }> {
+  return Promise.resolve({ success: false, error: "Not implemented" });
 }
 
 // Phase 4: Updated to return object shape for settings router compatibility (migrated from Superset)

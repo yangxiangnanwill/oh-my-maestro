@@ -70,6 +70,14 @@ export class HostServiceCoordinator extends EventEmitter {
   async restartAll(_opts?: HostServiceRestartOpts): Promise<void> {
     // Phase 4 stub
   }
+
+  stopAll(): void {
+    // Phase 4 stub
+  }
+
+  enableDevReload(_getAuthHeaders: () => Promise<{ authToken: string; cloudApiUrl: string } | null>): void {
+    // Phase 4 stub
+  }
 }
 
 export function getHostServiceCoordinator(): HostServiceCoordinator {
