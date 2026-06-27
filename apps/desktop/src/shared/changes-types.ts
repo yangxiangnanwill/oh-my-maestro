@@ -48,4 +48,4 @@ export interface FileContents {
 	language: string;
 }
 
-export type ChangeCategory = "against-base" | "committed" | "staged";
+export type ChangeCategory = "against-base" | "committed" | "staged" | "unstaged";

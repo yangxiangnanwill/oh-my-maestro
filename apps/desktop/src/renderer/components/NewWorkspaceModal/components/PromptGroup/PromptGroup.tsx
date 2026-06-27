@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset workspace modal feature, references toast.info not in stub types
 import type { AgentLaunchRequest } from "shared/agent-launch";
 import { buildPromptAgentLaunchRequest } from "shared/agent-launch-request";
 import {

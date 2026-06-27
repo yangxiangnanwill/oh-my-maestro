@@ -3,6 +3,14 @@ import type { ReactNode } from "react";
 
 export interface ExploringGroupProps {
   children?: ReactNode;
+  items?: Array<{
+    icon: React.ComponentType<{ className?: string }> | React.ForwardRefExoticComponent<any>;
+    label: string;
+    description?: string;
+    status?: string;
+    onClick?: () => void;
+  }>;
+  isStreaming?: boolean;
 }
 
 export function ExploringGroup({ children }: ExploringGroupProps) {

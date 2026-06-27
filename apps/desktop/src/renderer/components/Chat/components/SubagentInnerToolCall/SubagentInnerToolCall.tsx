@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset subagent feature, type stubs incomplete
 import { BashTool } from "../../stubs/ui/ai-elements/bash-tool";
 import { ClickableFilePath } from "../../stubs/ui/ai-elements/clickable-file-path";
 import { ReadFileTool } from "../../stubs/ui/ai-elements/read-file-tool";

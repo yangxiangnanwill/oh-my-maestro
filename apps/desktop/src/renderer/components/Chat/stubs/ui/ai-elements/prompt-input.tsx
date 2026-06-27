@@ -3,7 +3,7 @@ import { createContext, useContext, type ReactNode } from "react";
 
 export interface PromptInputMessage {
   text: string;
-  files?: Array<{ id: string; name: string; mediaType: string; url: string }>;
+  files?: Array<{ id: string; name: string; mediaType: string; url: string; filename?: string }>;
 }
 
 export interface PromptInputProps {
@@ -11,7 +11,7 @@ export interface PromptInputProps {
   className?: string;
   onSubmitStart?: () => void;
   onSubmitEnd?: () => void;
-  onSubmit?: (message: PromptInputMessage) => Promise<void> | void;
+  onSubmit?: ((message: PromptInputMessage) => Promise<void> | void) | ((message: { files: Array<{ url: string; mediaType: string; filename?: string }> }) => void);
   multiple?: boolean;
   maxFiles?: number;
   maxFileSize?: number;
@@ -26,7 +26,7 @@ export function PromptInputAttachment({ data }: { data: { id: string; name: stri
   return null;
 }
 
-export function PromptInputAttachments({ children }: { children?: ReactNode | ((file: { id: string; name: string; mediaType: string; url: string }) => ReactNode) }) {
+export function PromptInputAttachments({ children }: { children?: ReactNode | ((file: { id: string; name: string; mediaType: string; url: string; filename?: string; type?: string; [key: string]: unknown }) => ReactNode) }) {
   return null;
 }
 
@@ -42,9 +42,9 @@ export function PromptInputFooter({ children }: { children: ReactNode }) {
   return <div>{children}</div>;
 }
 
-export function PromptInputSubmit({ children, className, onClick }: { children?: ReactNode; className?: string; onClick?: (e: React.MouseEvent) => void }) {
+export function PromptInputSubmit({ children, className, onClick, status, disabled }: { children?: ReactNode; className?: string; onClick?: (e: React.MouseEvent) => void; status?: string; disabled?: boolean }) {
   return (
-    <button type="submit" className={className} onClick={onClick}>
+    <button type="submit" className={className} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );
@@ -111,6 +111,8 @@ export function usePromptInputController() {
     textInput: {
       clear: () => {},
       focus: () => {},
+      value: "",
+      setInput: (_value: string) => {},
     },
     attachments: {
       clear: () => {},

@@ -4,6 +4,8 @@ import { type ReactNode } from "react";
 export interface DialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  defaultOpen?: boolean;
+  modal?: boolean;
   children?: ReactNode;
 }
 
@@ -11,16 +13,28 @@ export function Dialog({ children }: DialogProps) {
   return <>{children}</>;
 }
 
-export function DialogTrigger({ children }: { children: ReactNode }) {
+export function DialogTrigger({ children, asChild }: { children: ReactNode; asChild?: boolean }) {
   return <>{children}</>;
 }
 
 export function DialogContent({
   children,
   className,
+  showCloseButton,
+  onFocusOutside,
+  onPointerDownOutside,
+  onEscapeKeyDown,
+  onInteractOutside,
+  forceMount,
 }: {
   children: ReactNode;
   className?: string;
+  showCloseButton?: boolean;
+  onFocusOutside?: (e: any) => void;
+  onPointerDownOutside?: () => void;
+  onEscapeKeyDown?: () => void;
+  onInteractOutside?: (e: any) => void;
+  forceMount?: boolean;
 }) {
   return <div className={className}>{children}</div>;
 }

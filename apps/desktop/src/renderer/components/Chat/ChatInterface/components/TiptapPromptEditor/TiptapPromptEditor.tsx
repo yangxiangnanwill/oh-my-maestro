@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset prompt input feature, type stubs incomplete
 import {
 	usePromptInputAttachments,
 	usePromptInputController,

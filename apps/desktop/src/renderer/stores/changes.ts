@@ -5,6 +5,7 @@ import { create } from "zustand";
 
 interface ChangesState {
   hideUnchangedRegions: boolean;
+  viewMode?: string;
   toggleHideUnchangedRegions: () => void;
 }
 

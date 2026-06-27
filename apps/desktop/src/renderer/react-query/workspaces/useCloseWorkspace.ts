@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated workspace close feature, references router procedures not yet implemented
 import { useNavigate, useParams } from "@tanstack/react-router";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";

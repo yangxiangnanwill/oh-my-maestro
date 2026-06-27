@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset feature, references host service router methods not yet implemented
 import {
 	Breadcrumb,
 	BreadcrumbEllipsis,

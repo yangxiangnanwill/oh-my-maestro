@@ -1,13 +1,19 @@
 // Stub: @superset/ui/ai-elements/read-file-tool
 import type { ReactNode } from "react";
 
-export type ToolState = "pending" | "in-progress" | "complete" | "error";
+export type ToolState = "pending" | "in-progress" | "complete" | "error" | "input-streaming" | "input-available" | "output-available" | "output-error";
 
 export interface ReadFileToolProps {
   filePath: string;
   content?: string;
   state?: ToolState;
-  onFilePathClick?: () => void;
+  onFilePathClick?: (filePath?: string) => void;
+  filename?: string;
+  lineRange?: string;
+  language?: string;
+  isError?: boolean;
+  isPending?: boolean;
+  onOpenInPane?: () => void;
 }
 
 export function ReadFileTool({ filePath, content, state, onFilePathClick }: ReadFileToolProps) {

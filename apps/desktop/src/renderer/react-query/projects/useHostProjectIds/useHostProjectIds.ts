@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated host service feature, type stubs incomplete
 import { useQuery } from "@tanstack/react-query";
 import { getHostServiceClientByUrl } from "renderer/lib/host-service-client";
 

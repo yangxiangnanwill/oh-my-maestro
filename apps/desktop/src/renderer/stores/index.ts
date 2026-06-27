@@ -9,9 +9,10 @@ type ThemeType = "light" | "dark";
 
 interface ThemeState {
   type: ThemeType;
+  activeTheme: { type: ThemeType };
 }
 
-let currentTheme: ThemeState = { type: "dark" };
+let currentTheme: ThemeState = { type: "dark", activeTheme: { type: "dark" } };
 const themeListeners = new Set<() => void>();
 
 function subscribeTheme(callback: () => void): () => void {

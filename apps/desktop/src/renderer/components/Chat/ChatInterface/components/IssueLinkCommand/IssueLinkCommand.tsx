@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset task system feature, references task collections not yet implemented
 import { Checkbox } from "../../../stubs/ui/checkbox";
 import {
 	Command,

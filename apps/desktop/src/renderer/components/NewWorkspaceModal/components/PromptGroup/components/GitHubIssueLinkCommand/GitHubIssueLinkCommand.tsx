@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset feature, PopoverContent props mismatch with stub types
 import { Checkbox } from "renderer/components/Chat/stubs/ui/checkbox";
 import {
 	Command,

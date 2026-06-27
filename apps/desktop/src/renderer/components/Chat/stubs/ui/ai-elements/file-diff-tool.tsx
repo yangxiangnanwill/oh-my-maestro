@@ -1,7 +1,7 @@
 // Stub: @superset/ui/ai-elements/file-diff-tool
 import type { ReactNode } from "react";
 
-export type ToolState = "pending" | "in-progress" | "complete" | "error";
+export type ToolState = "pending" | "in-progress" | "complete" | "error" | "input-streaming" | "input-available" | "output-available" | "output-error";
 
 export interface FileDiffToolProps {
   filePath: string;
@@ -10,7 +10,7 @@ export interface FileDiffToolProps {
   content?: string;
   isWriteMode?: boolean;
   structuredPatch?: Array<{ lines: string[] }>;
-  onFilePathClick?: () => void;
+  onFilePathClick?: (filePath?: string) => void;
   renderExpandedContent?: () => ReactNode;
   state?: ToolState;
 }

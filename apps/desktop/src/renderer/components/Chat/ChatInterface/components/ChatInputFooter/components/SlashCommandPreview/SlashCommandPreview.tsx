@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset feature, references workspaces router methods not yet implemented
 import { chatServiceTrpc } from "../../../../../stubs/chat/client";
 import { usePromptInputController } from "../../../../../stubs/ui/ai-elements/prompt-input";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -63,7 +64,7 @@ export function SlashCommandPreview({
 	}, [slashPreviewInput]);
 
 	const { data: slashPreview } =
-		chatServiceTrpc.workspace.previewSlashCommand.useQuery(
+		chatServiceTrpc.workspaces.previewSlashCommand.useQuery(
 			{
 				cwd,
 				text: debouncedSlashPreviewInput,

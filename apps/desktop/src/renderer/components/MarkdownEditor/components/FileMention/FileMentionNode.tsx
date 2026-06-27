@@ -1,5 +1,5 @@
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../Chat/stubs/ui/tooltip";
-import { cn } from "../../../../Chat/stubs/ui/utils";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../../../Chat/stubs/ui/tooltip";
+import { cn } from "../../../Chat/stubs/ui/utils";
 import { mergeAttributes, Node } from "@tiptap/core";
 import {
 	type NodeViewProps,

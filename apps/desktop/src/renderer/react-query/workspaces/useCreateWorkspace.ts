@@ -64,13 +64,14 @@ export function useCreateWorkspace(options?: UseCreateWorkspaceOptions) {
 					step: "pending",
 					message: "Preparing...",
 				};
-				updateProgress(optimisticProgress);
+				updateProgress(optimisticProgress as { workspaceId: string; projectId: string; step: string; message: string });
 			}
 
 			if (!data.isInitializing && data.autoRenameWarning) {
 				showWorkspaceAutoNameWarningToast({
 					description: data.autoRenameWarning,
 					onOpenModelAuthSettings: () => {
+						// @ts-expect-error -- /settings/models route not yet registered in TanStack Router
 						void navigate({ to: "/settings/models" });
 					},
 				});

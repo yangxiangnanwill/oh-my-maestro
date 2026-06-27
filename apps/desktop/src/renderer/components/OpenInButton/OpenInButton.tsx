@@ -16,7 +16,7 @@ import {
 import { useCopyToClipboard } from "renderer/hooks/useCopyToClipboard";
 import { useHotkeyDisplay } from "renderer/hotkeys";
 import { electronTrpc } from "renderer/lib/electron-trpc";
-import { useThemeStore } from "renderer/stores";
+import { useTheme } from "renderer/stores";
 
 export interface OpenInButtonProps {
 	path: string | undefined;
@@ -34,7 +34,7 @@ export function OpenInButton({
 	showShortcuts = false,
 	projectId,
 }: OpenInButtonProps) {
-	const activeTheme = useThemeStore((state) => state.activeTheme);
+	const activeTheme = useTheme().activeTheme;
 	const [isOpen, setIsOpen] = useState(false);
 	const utils = electronTrpc.useUtils();
 	const openInShortcut = useHotkeyDisplay("OPEN_IN_APP").text;

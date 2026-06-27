@@ -1,13 +1,16 @@
 // Stub: @superset/ui/ai-elements/web-search-tool
 import type { ReactNode } from "react";
 
-export type ToolState = "pending" | "in-progress" | "complete" | "error";
+export type ToolState = "pending" | "in-progress" | "complete" | "error" | "input-streaming" | "input-available" | "output-available" | "output-error";
 
 export interface WebSearchResult {
   title: string;
   url: string;
-  snippet: string;
+  snippet?: string;
+  [key: string]: unknown;
 }
+
+export type WebSearchResultItem = WebSearchResult;
 
 export interface WebSearchToolProps {
   query: string;

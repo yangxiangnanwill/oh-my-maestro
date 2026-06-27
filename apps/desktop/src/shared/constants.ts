@@ -78,3 +78,17 @@ export const NOTIFICATION_EVENTS = {
 
 /** Mock organization ID used in dev mode when SKIP_ENV_VALIDATION is enabled. */
 export const MOCK_ORG_ID = "mock-org-id";
+
+// ============================================================
+// Phase 4: External links and config template for ConfigFilePreview
+// ============================================================
+
+export const EXTERNAL_LINKS = {
+  SETUP_TEARDOWN_SCRIPTS: "https://maestro.sh/docs/setup-teardown-scripts",
+} as const;
+
+/** Default config file template shown to new users. */
+export const CONFIG_TEMPLATE = `{
+  "name": "",
+  "version": "1.0.0"
+}`;

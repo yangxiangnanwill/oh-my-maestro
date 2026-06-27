@@ -5,7 +5,7 @@ import {
 	ContextMenuSeparator,
 	ContextMenuShortcut,
 	ContextMenuTrigger,
-} from "../../../../Chat/stubs/ui/context-menu";
+} from "../../../Chat/stubs/ui/context-menu";
 import type {
 	MouseEvent as ReactMouseEvent,
 	ReactNode,

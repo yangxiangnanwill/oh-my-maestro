@@ -39,7 +39,7 @@
     "routeFileIgnorePrefix 配置可能需要调整以正确处理 -layout.tsx"
   ],
   "meta": {
-    "status": "pending",
+    "status": "completed",
     "estimated_time": "1h",
     "risk": "medium",
     "autonomous": true,

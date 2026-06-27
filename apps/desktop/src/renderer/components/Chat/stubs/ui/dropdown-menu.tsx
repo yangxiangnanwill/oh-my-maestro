@@ -4,6 +4,8 @@ import { type ReactNode } from "react";
 export interface DropdownMenuProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  defaultOpen?: boolean;
+  modal?: boolean;
   children?: ReactNode;
 }
 
@@ -15,18 +17,27 @@ export function DropdownMenuTrigger({ children, asChild }: { children: ReactNode
   return <>{children}</>;
 }
 
-export function DropdownMenuContent({ children, className, align }: {
+export function DropdownMenuContent({ children, className, align, side, sideOffset, alignOffset, onPointerDownOutside, onFocusOutside, onWheel, forceMount }: {
   children: ReactNode;
   className?: string;
   align?: "start" | "center" | "end";
+  side?: "top" | "bottom" | "left" | "right";
+  sideOffset?: number;
+  alignOffset?: number;
+  onPointerDownOutside?: () => void;
+  onFocusOutside?: (e: any) => void;
+  onWheel?: (e: any) => void;
+  forceMount?: boolean;
 }) {
   return <div className={className}>{children}</div>;
 }
 
-export function DropdownMenuItem({ children, onSelect, className }: {
+export function DropdownMenuItem({ children, onSelect, className, disabled, onClick }: {
   children: ReactNode;
   onSelect?: (event: Event) => void;
   className?: string;
+  disabled?: boolean;
+  onClick?: () => void;
 }) {
   return <div className={className}>{children}</div>;
 }
@@ -68,14 +79,14 @@ export function DropdownMenuLabel({ children, className }: { children: ReactNode
   return <div className={className}>{children}</div>;
 }
 
-export function DropdownMenuSub({ children }: { children: ReactNode }) {
+export function DropdownMenuSub({ children, open, onOpenChange }: { children: ReactNode; open?: boolean; onOpenChange?: (open: boolean) => void }) {
   return <>{children}</>;
 }
 
-export function DropdownMenuSubTrigger({ children, className }: { children: ReactNode; className?: string }) {
+export function DropdownMenuSubTrigger({ children, className, asChild }: { children: ReactNode; className?: string; asChild?: boolean }) {
   return <div className={className}>{children}</div>;
 }
 
-export function DropdownMenuSubContent({ children, className }: { children: ReactNode; className?: string }) {
+export function DropdownMenuSubContent({ children, className, sideOffset, alignOffset }: { children: ReactNode; className?: string; sideOffset?: number; alignOffset?: number }) {
   return <div className={className}>{children}</div>;
 }

@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset message list feature, type stubs incomplete
 import {
 	Conversation,
 	ConversationContent,

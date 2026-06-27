@@ -6,10 +6,11 @@ export interface TaskItemProps {
   title?: string;
   status?: string;
   description?: string;
+  className?: string;
 }
 
-export function TaskItem({ children, title, status, description }: TaskItemProps) {
-  return <div>{children}</div>;
+export function TaskItem({ children, title, status, description, className }: TaskItemProps) {
+  return <div className={className}>{children}</div>;
 }
 
 export interface TaskItemFileProps {

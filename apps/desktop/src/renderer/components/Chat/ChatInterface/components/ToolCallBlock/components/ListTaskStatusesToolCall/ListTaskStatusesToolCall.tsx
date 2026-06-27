@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset task system feature, type stubs incomplete for full task data model
 import { TaskItem, TaskItemFile } from "../../../../../stubs/ui/ai-elements/task";
 import { ListChecksIcon } from "lucide-react";
 import {

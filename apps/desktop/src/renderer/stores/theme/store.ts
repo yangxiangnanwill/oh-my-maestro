@@ -17,8 +17,8 @@ export const useThemeStore = create<ThemeState>((set) => ({
 }));
 
 // Legacy useTheme hook used by ThemedToaster — returns { type: "light" | "dark" }
-export function useTheme(): { type: "light" | "dark" } {
+export function useTheme(): { type: "light" | "dark"; activeTheme: { type: "light" | "dark" } } {
 	const activeThemeId = useThemeStore((s) => s.activeThemeId);
-	if (activeThemeId === "light") return { type: "light" };
-	return { type: "dark" };
+	const themeType = activeThemeId === "light" ? "light" as const : "dark" as const;
+	return { type: themeType, activeTheme: { type: themeType } };
 }

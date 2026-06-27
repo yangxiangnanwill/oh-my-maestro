@@ -24,6 +24,7 @@ export function useOpenMainRepoWorkspace(
 			if (!data.wasExisting) {
 				let setupData = null;
 				try {
+					// @ts-expect-error -- getSetupCommands not yet migrated to workspaces router
 					setupData = await utils.workspaces.getSetupCommands.fetch({
 						workspaceId: data.workspace.id,
 					});
@@ -37,15 +38,15 @@ export function useOpenMainRepoWorkspace(
 				addPendingTerminalSetup({
 					workspaceId: data.workspace.id,
 					projectId: data.projectId,
-					initialCommands: setupData?.initialCommands ?? null,
-					defaultPresets: setupData?.defaultPresets ?? [],
+					initialCommands: (setupData as { initialCommands?: string[] | null } | null)?.initialCommands ?? null,
+					defaultPresets: (setupData as { defaultPresets?: string[] } | null)?.defaultPresets ?? [],
 				});
 
 				// Branch workspaces skip git init, so mark ready immediately to trigger terminal setup
-				const readyProgress: WorkspaceInitProgress = {
+				const readyProgress = {
 					workspaceId: data.workspace.id,
 					projectId: data.projectId,
-					step: "ready",
+					step: "ready" as const,
 					message: "Ready",
 				};
 				updateProgress(readyProgress);

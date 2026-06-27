@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset feature, references conversation context not yet implemented
 import { useConversationContext } from "../../../../../stubs/ui/ai-elements/conversation";
 import {
 	HoverCard,

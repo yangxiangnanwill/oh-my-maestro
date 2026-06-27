@@ -3,7 +3,7 @@ import { cn } from "@superset/ui/utils";
 import { HiCheck } from "react-icons/hi2";
 import {
 	PROJECT_COLOR_DEFAULT,
-	PROJECT_COLORS,
+	PROJECT_CUSTOM_COLORS as PROJECT_COLORS,
 } from "shared/constants/project-colors";
 
 type ColorSelectorVariant = "inline" | "menu";

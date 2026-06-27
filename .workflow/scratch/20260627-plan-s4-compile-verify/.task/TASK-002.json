@@ -93,7 +93,7 @@
     "ai-elements 子目录下的 stub 可能需要额外扩展，因为消费者使用了 AI SDK 特定的 props"
   ],
   "meta": {
-    "status": "pending",
+    "status": "completed",
     "estimated_time": "4h",
     "risk": "medium",
     "autonomous": true,

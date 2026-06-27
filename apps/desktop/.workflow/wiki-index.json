@@ -1,5 +1,423 @@
 {
   "version": 2,
-  "generatedAt": 1782393406583,
-  "entries": []
+  "generatedAt": 1782539858021,
+  "entries": [
+    {
+      "id": "spec:project:architecture-constraints",
+      "type": "spec",
+      "title": "Architecture Constraints",
+      "summary": "# Architecture Constraints",
+      "tags": [
+        "architecture",
+        "module",
+        "layer",
+        "boundary",
+        "dependency",
+        "structure"
+      ],
+      "status": "active",
+      "created": "2026-06-27T05:57:35.738Z",
+      "updated": "2026-06-27T05:57:35.738Z",
+      "scope": "project",
+      "category": "arch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/architecture-constraints.md"
+      }
+    },
+    {
+      "id": "spec:project:coding-conventions",
+      "type": "spec",
+      "title": "Coding Conventions",
+      "summary": "# Coding Conventions",
+      "tags": [
+        "style",
+        "naming",
+        "import",
+        "pattern",
+        "convention",
+        "formatting"
+      ],
+      "status": "active",
+      "created": "2026-06-27T05:57:35.738Z",
+      "updated": "2026-06-27T05:57:35.738Z",
+      "scope": "project",
+      "category": "coding",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/coding-conventions.md"
+      }
+    },
+    {
+      "id": "spec:project:debug-notes",
+      "type": "spec",
+      "title": "Debug Notes",
+      "summary": "# Debug Notes",
+      "tags": [
+        "debug",
+        "issue",
+        "workaround",
+        "root-cause",
+        "gotcha"
+      ],
+      "status": "active",
+      "created": "2026-06-27T05:57:35.742Z",
+      "updated": "2026-06-27T05:57:35.743Z",
+      "scope": "project",
+      "category": "debug",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/debug-notes.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings",
+      "type": "spec",
+      "title": "Learnings",
+      "summary": "# Learnings",
+      "tags": [
+        "bug",
+        "lesson",
+        "gotcha",
+        "learning"
+      ],
+      "status": "active",
+      "created": "2026-06-27T05:57:35.739Z",
+      "updated": "2026-06-27T05:57:35.739Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:quality-rules",
+      "type": "spec",
+      "title": "Quality Rules",
+      "summary": "# Quality Rules",
+      "tags": [
+        "quality",
+        "lint",
+        "rule",
+        "enforcement"
+      ],
+      "status": "active",
+      "created": "2026-06-27T05:57:35.740Z",
+      "updated": "2026-06-27T05:57:35.740Z",
+      "scope": "project",
+      "category": "review",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/quality-rules.md"
+      }
+    },
+    {
+      "id": "spec:project:review-standards",
+      "type": "spec",
+      "title": "Review Standards",
+      "summary": "# Review Standards",
+      "tags": [
+        "review",
+        "checklist",
+        "gate",
+        "approval",
+        "standard"
+      ],
+      "status": "active",
+      "created": "2026-06-27T05:57:35.746Z",
+      "updated": "2026-06-27T05:57:35.746Z",
+      "scope": "project",
+      "category": "review",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/review-standards.md"
+      }
+    },
+    {
+      "id": "spec:project:test-conventions",
+      "type": "spec",
+      "title": "Test Conventions",
+      "summary": "# Test Conventions",
+      "tags": [
+        "test",
+        "coverage",
+        "mock",
+        "fixture",
+        "assertion",
+        "framework"
+      ],
+      "status": "active",
+      "created": "2026-06-27T05:57:35.743Z",
+      "updated": "2026-06-27T05:57:35.744Z",
+      "scope": "project",
+      "category": "test",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/test-conventions.md"
+      }
+    },
+    {
+      "id": "spec:project:ui-conventions",
+      "type": "spec",
+      "title": "UI Conventions",
+      "summary": "# UI Conventions",
+      "tags": [
+        "ui",
+        "design",
+        "color",
+        "typography",
+        "layout",
+        "animation",
+        "component"
+      ],
+      "status": "active",
+      "created": "2026-06-27T05:57:35.745Z",
+      "updated": "2026-06-27T05:57:35.745Z",
+      "scope": "project",
+      "category": "ui",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/ui-conventions.md"
+      }
+    },
+    {
+      "id": "issue-ISS-20260627-001",
+      "type": "issue",
+      "title": "S4: 安装缺失 npm 包",
+      "summary": "",
+      "tags": [],
+      "status": "draft",
+      "created": "1970-01-01T00:00:00.000Z",
+      "updated": "1970-01-01T00:00:00.000Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260627-001",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 1
+      }
+    },
+    {
+      "id": "issue-ISS-20260627-002",
+      "type": "issue",
+      "title": "S4: 扩展 shadcn/ui stub props（39 个文件）",
+      "summary": "",
+      "tags": [],
+      "status": "draft",
+      "created": "1970-01-01T00:00:00.000Z",
+      "updated": "1970-01-01T00:00:00.000Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260627-002",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 2
+      }
+    },
+    {
+      "id": "issue-ISS-20260627-003",
+      "type": "issue",
+      "title": "S4: 创建缺失的 store/stub 模块（12 个）",
+      "summary": "",
+      "tags": [],
+      "status": "draft",
+      "created": "1970-01-01T00:00:00.000Z",
+      "updated": "1970-01-01T00:00:00.000Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260627-003",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 3
+      }
+    },
+    {
+      "id": "issue-ISS-20260627-004",
+      "type": "issue",
+      "title": "S4: 修复 process-tree-stub.ts 函数签名",
+      "summary": "",
+      "tags": [],
+      "status": "draft",
+      "created": "1970-01-01T00:00:00.000Z",
+      "updated": "1970-01-01T00:00:00.000Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260627-004",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 4
+      }
+    },
+    {
+      "id": "issue-ISS-20260627-005",
+      "type": "issue",
+      "title": "S4: 补充 index.full.ts 缺失的 3 个文件",
+      "summary": "",
+      "tags": [],
+      "status": "draft",
+      "created": "1970-01-01T00:00:00.000Z",
+      "updated": "1970-01-01T00:00:00.000Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260627-005",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 5
+      }
+    },
+    {
+      "id": "issue-ISS-20260627-006",
+      "type": "issue",
+      "title": "S4: 重新生成 routeTree.gen.ts",
+      "summary": "",
+      "tags": [],
+      "status": "draft",
+      "created": "1970-01-01T00:00:00.000Z",
+      "updated": "1970-01-01T00:00:00.000Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260627-006",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 6
+      }
+    },
+    {
+      "id": "issue-ISS-20260627-007",
+      "type": "issue",
+      "title": "S4: 修复 143 个隐式 any 错误",
+      "summary": "",
+      "tags": [],
+      "status": "draft",
+      "created": "1970-01-01T00:00:00.000Z",
+      "updated": "1970-01-01T00:00:00.000Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260627-007",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 7
+      }
+    },
+    {
+      "id": "issue-ISS-20260627-008",
+      "type": "issue",
+      "title": "S4: 解除 index.full.ts 和 -layout.tsx 的 tsconfig 排除",
+      "summary": "",
+      "tags": [],
+      "status": "draft",
+      "created": "1970-01-01T00:00:00.000Z",
+      "updated": "1970-01-01T00:00:00.000Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260627-008",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 8
+      }
+    },
+    {
+      "id": "issue-ISS-20260627-009",
+      "type": "issue",
+      "title": "S5: DashboardSidebar 完整迁移（12 个缺失依赖）",
+      "summary": "",
+      "tags": [],
+      "status": "archived",
+      "created": "1970-01-01T00:00:00.000Z",
+      "updated": "1970-01-01T00:00:00.000Z",
+      "scope": null,
+      "category": null,
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": "ISS-20260627-009",
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "virtual",
+        "path": "issues/issues.jsonl",
+        "line": 9
+      }
+    }
+  ]
 }

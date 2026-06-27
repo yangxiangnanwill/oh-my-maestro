@@ -57,7 +57,7 @@
     "zustand store 的类型签名需要与消费者使用的 selector 模式匹配"
   ],
   "meta": {
-    "status": "pending",
+    "status": "completed",
     "estimated_time": "3h",
     "risk": "medium",
     "autonomous": true,

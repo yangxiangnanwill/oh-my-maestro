@@ -162,6 +162,34 @@
   "current_milestone": "S4",
   "artifacts": [
     {
+      "id": "ANL-013",
+      "type": "analyze",
+      "scope": "adhoc",
+      "phase": null,
+      "milestone": "S4",
+      "path": ".workflow/scratch/20260627-analyze-s4-compile-verify",
+      "context_package": ".workflow/scratch/20260627-analyze-s4-compile-verify/context-package.json",
+      "status": "completed",
+      "harvested": false,
+      "created_at": "2026-06-27T08:04:00+08:00",
+      "completed_at": "2026-06-27T10:30:00+08:00",
+      "verdict": "CONDITIONAL_GO",
+      "scope_verdict": "medium"
+    },
+    {
+      "id": "PLN-019",
+      "type": "plan",
+      "scope": "standalone",
+      "phase": null,
+      "milestone": "S4",
+      "path": ".workflow/scratch/20260627-plan-s4-compile-verify",
+      "status": "completed",
+      "depends_on": ["ANL-013"],
+      "harvested": false,
+      "created_at": "2026-06-27T14:21:00+08:00",
+      "completed_at": "2026-06-27T14:30:00+08:00"
+    },
+    {
       "id": "PLN-015",
       "type": "plan",
       "scope": "phase",

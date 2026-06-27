@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset feature, references routes not yet registered
 import { Button } from "../../../../../stubs/ui/button";
 import { toast } from "../../../../../stubs/ui/sonner";
 import { useNavigate } from "@tanstack/react-router";

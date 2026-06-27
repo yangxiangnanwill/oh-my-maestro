@@ -3,6 +3,7 @@ import { type ReactNode } from "react";
 
 export interface ContextMenuProps {
   onOpenChange?: (open: boolean) => void;
+  open?: boolean;
   children?: ReactNode;
 }
 
@@ -25,9 +26,17 @@ export function ContextMenuTrigger({
 export function ContextMenuContent({
   children,
   className,
+  sideOffset,
+  alignOffset,
+  onPointerDownOutside,
+  onFocusOutside,
 }: {
   children: ReactNode;
   className?: string;
+  sideOffset?: number;
+  alignOffset?: number;
+  onPointerDownOutside?: () => void;
+  onFocusOutside?: (e: any) => void;
 }) {
   return <div className={className}>{children}</div>;
 }

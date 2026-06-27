@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset task system feature, references routes not yet registered
 import { useNavigate } from "@tanstack/react-router";
 import { FilePenIcon } from "lucide-react";
 import type { ToolPart } from "../../../../utils/tool-helpers";

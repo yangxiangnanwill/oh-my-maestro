@@ -3,6 +3,7 @@
  */
 
 export type WorkspaceInitStep =
+	| "pending"
 	| "syncing"
 	| "verifying"
 	| "fetching"
@@ -14,6 +15,7 @@ export type WorkspaceInitStep =
 
 export interface WorkspaceInitProgress {
 	workspaceId: string;
+	projectId?: string;
 	step: WorkspaceInitStep;
 	message: string;
 	warning?: string;

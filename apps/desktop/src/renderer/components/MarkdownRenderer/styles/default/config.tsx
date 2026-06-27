@@ -1,4 +1,4 @@
-import { cn } from "../../../../Chat/stubs/ui/utils";
+import { cn } from "../../../Chat/stubs/ui/utils";
 import { CodeBlock, SafeImage } from "../../components";
 import type { MarkdownStyleConfig } from "../types";
 import "./default.css";

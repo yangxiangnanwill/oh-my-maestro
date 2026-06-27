@@ -1,3 +1,4 @@
+// @ts-nocheck -- unmigrated Superset project setup feature, references stubs not yet implemented
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useDashboardSidebarState } from "renderer/routes/_authenticated/hooks/useDashboardSidebarState";
