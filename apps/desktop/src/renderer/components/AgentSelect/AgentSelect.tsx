@@ -7,6 +7,7 @@ import {
 	SelectValue,
 } from "renderer/components/Chat/stubs/ui/select";
 import { useNavigate } from "@tanstack/react-router";
+import { useMemo } from "react";
 import {
 	getPresetIcon,
 	useIsDarkTheme,
@@ -53,7 +54,10 @@ export function AgentSelect<T extends string>({
 }: AgentSelectProps<T>) {
 	const navigate = useNavigate();
 	const isDark = useIsDarkTheme();
-	const selectableIds = new Set<string>(agents.map((agent) => agent.id));
+	const selectableIds = useMemo(
+		() => new Set<string>(agents.map((agent) => agent.id)),
+		[agents],
+	);
 	const selectedValue =
 		value != null &&
 		((allowNone && value === noneValue) || selectableIds.has(value))
@@ -64,6 +68,7 @@ export function AgentSelect<T extends string>({
 	const handleValueChange = (nextValue: string) => {
 		if (nextValue === CONFIGURE_AGENTS_VALUE) {
 			onBeforeConfigureAgents?.();
+			// TODO Phase 4: 替换 as never 为正确类型化的路由导航
 			void navigate({ to: "/settings/agents" as never });
 			return;
 		}

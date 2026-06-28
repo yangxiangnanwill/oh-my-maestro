@@ -1,7 +1,19 @@
 import { useMemo } from "react";
+// Phase 4: 将 TerminalPreset 类型提取到 shared/ 以避免 renderer→main 跨层导入
 import type { TerminalPreset } from "main/lib/local-db";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { filterMatchingPresetsForProject } from "shared/preset-project-targeting";
+
+/** 所有 preset mutation 共享的缓存失效逻辑 */
+async function invalidatePresetRelatedQueries(
+	utils: ReturnType<typeof electronTrpc.useUtils>,
+): Promise<void> {
+	await utils.settings.getTerminalPresets.invalidate();
+	await utils.settings.getWorkspaceCreationPresets.invalidate();
+	await utils.settings.getNewTabPresets.invalidate();
+	await utils.workspaces.getWorkspaceRunDefinition.invalidate();
+	await utils.workspaces.getResolvedRunCommands.invalidate();
+}
 
 function useCreateTerminalPreset(
 	options?: Parameters<
@@ -13,11 +25,7 @@ function useCreateTerminalPreset(
 	return electronTrpc.settings.createTerminalPreset.useMutation({
 		...options,
 		onSuccess: async (...args) => {
-			await utils.settings.getTerminalPresets.invalidate();
-			await utils.settings.getWorkspaceCreationPresets.invalidate();
-			await utils.settings.getNewTabPresets.invalidate();
-			await utils.workspaces.getWorkspaceRunDefinition.invalidate();
-			await utils.workspaces.getResolvedRunCommands.invalidate();
+			await invalidatePresetRelatedQueries(utils);
 			await options?.onSuccess?.(...args);
 		},
 	});
@@ -33,11 +41,7 @@ function useUpdateTerminalPreset(
 	return electronTrpc.settings.updateTerminalPreset.useMutation({
 		...options,
 		onSuccess: async (...args) => {
-			await utils.settings.getTerminalPresets.invalidate();
-			await utils.settings.getWorkspaceCreationPresets.invalidate();
-			await utils.settings.getNewTabPresets.invalidate();
-			await utils.workspaces.getWorkspaceRunDefinition.invalidate();
-			await utils.workspaces.getResolvedRunCommands.invalidate();
+			await invalidatePresetRelatedQueries(utils);
 			await options?.onSuccess?.(...args);
 		},
 	});
@@ -53,11 +57,7 @@ function useDeleteTerminalPreset(
 	return electronTrpc.settings.deleteTerminalPreset.useMutation({
 		...options,
 		onSuccess: async (...args) => {
-			await utils.settings.getTerminalPresets.invalidate();
-			await utils.settings.getWorkspaceCreationPresets.invalidate();
-			await utils.settings.getNewTabPresets.invalidate();
-			await utils.workspaces.getWorkspaceRunDefinition.invalidate();
-			await utils.workspaces.getResolvedRunCommands.invalidate();
+			await invalidatePresetRelatedQueries(utils);
 			await options?.onSuccess?.(...args);
 		},
 	});
@@ -73,11 +73,7 @@ function useSetPresetAutoApply(
 	return electronTrpc.settings.setPresetAutoApply.useMutation({
 		...options,
 		onSuccess: async (...args) => {
-			await utils.settings.getTerminalPresets.invalidate();
-			await utils.settings.getWorkspaceCreationPresets.invalidate();
-			await utils.settings.getNewTabPresets.invalidate();
-			await utils.workspaces.getWorkspaceRunDefinition.invalidate();
-			await utils.workspaces.getResolvedRunCommands.invalidate();
+			await invalidatePresetRelatedQueries(utils);
 			await options?.onSuccess?.(...args);
 		},
 	});
@@ -93,11 +89,7 @@ function useReorderTerminalPresets(
 	return electronTrpc.settings.reorderTerminalPresets.useMutation({
 		...options,
 		onSuccess: async (...args) => {
-			await utils.settings.getTerminalPresets.invalidate();
-			await utils.settings.getWorkspaceCreationPresets.invalidate();
-			await utils.settings.getNewTabPresets.invalidate();
-			await utils.workspaces.getWorkspaceRunDefinition.invalidate();
-			await utils.workspaces.getResolvedRunCommands.invalidate();
+			await invalidatePresetRelatedQueries(utils);
 			await options?.onSuccess?.(...args);
 		},
 	});

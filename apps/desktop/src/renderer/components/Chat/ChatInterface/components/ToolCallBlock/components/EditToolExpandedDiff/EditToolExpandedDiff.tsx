@@ -1,6 +1,7 @@
 import { LightDiffViewer } from "renderer/screens/main/components/WorkspaceView/ChangesContent/components/LightDiffViewer";
 import { useChangesStore } from "renderer/stores/changes";
 import type { FileContents } from "shared/changes-types";
+import { useMemo } from "react";
 
 interface EditToolExpandedDiffProps {
 	filePath: string;
@@ -22,11 +23,14 @@ export function EditToolExpandedDiff({
 	const effectiveHideUnchangedRegions =
 		hideUnchangedRegions ?? hideUnchangedRegionsFromStore;
 
-	const contents: FileContents = {
-		original: oldString,
-		modified: newString,
-		language: "text",
-	};
+	const contents: FileContents = useMemo(
+		() => ({
+			original: oldString,
+			modified: newString,
+			language: "text" as const,
+		}),
+		[oldString, newString],
+	);
 
 	return (
 		<LightDiffViewer

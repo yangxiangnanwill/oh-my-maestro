@@ -6,6 +6,8 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "jsx": "react-jsx",
     "strict": true,
+    // Phase 4: 恢复 noImplicitAny: true 并修复所有隐式 any
+    // 当前设为 false 是因为 S4 编译验证阶段需要快速收敛错误数
     "noImplicitAny": false,
     "noEmit": true,
     "skipLibCheck": true,
@@ -28,7 +30,7 @@
       "@superset/local-db": ["./src/main/lib/local-db/index.ts"],
       "@superset/shared/agent-command": ["./src/main/lib/agent-setup/desktop-agent-capabilities.ts"],
       "@superset/shared/agent-catalog": ["./src/shared/agent-catalog.ts"],
-      "@superset/shared/host-info": ["./src/main/lib/host-service-coordinator.ts"],
+      "@superset/shared/host-info": ["./src/shared/host-info-types.ts"],
       "@superset/shared/constants": ["./src/shared/constants.ts"],
       "@superset/shared/auto-update": ["./src/shared/auto-update.ts"],
       "@superset/shared/shell-ready-scanner": ["./src/main/lib/terminal-host/shell-ready-scanner.ts"],

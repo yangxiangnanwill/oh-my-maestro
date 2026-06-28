@@ -1,5 +1,9 @@
 // Stub: renderer/stores
 // Provides theme and markdown style hooks used by MarkdownRenderer and related components.
+//
+// Phase 3: 使用 useSyncExternalStore + 模块级可变状态（而非 zustand），
+// 因为主题和 markdown 样式是全局单例，不需要 zustand 的 selector/middleware 能力。
+// Phase 4 评估是否统一迁移到 zustand。
 
 import { useCallback, useSyncExternalStore } from "react";
 
