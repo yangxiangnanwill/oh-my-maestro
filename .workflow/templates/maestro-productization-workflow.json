@@ -1,7 +1,7 @@
 {
   "template_id": "wft-maestro-productization-20260628",
-  "name": "Maestro Productization Workflow",
-  "description": "Turn Maestro-flow into a visual desktop product while delegating repetitive extraction work to lower-cost models.",
+  "name": "Maestro 产品化工作流",
+  "description": "把 Maestro-flow 包装成可视化桌面产品，并把重复提取和搬运工作交给低成本模型处理。",
   "version": "1.0",
   "created_at": "2026-06-28T00:00:00Z",
   "source_session": "manual-20260628",
@@ -10,31 +10,31 @@
     "goal": {
       "type": "string",
       "required": true,
-      "description": "Productization goal to execute"
+      "description": "本次要推进的产品化目标"
     },
     "maestro_flow_path": {
       "type": "string",
       "required": true,
-      "description": "Local path to Maestro-flow source",
+      "description": "本地 Maestro-flow 源码路径",
       "default": "D:\\WorkSpace\\Source\\maestro-flow"
     },
     "target_app_path": {
       "type": "string",
       "required": true,
-      "description": "Local path to Oh My Maestro desktop app",
+      "description": "本地 Oh My Maestro 桌面应用路径",
       "default": "D:\\WorkSpace\\VsCode\\oh-my-maestro-rebuild\\apps\\desktop"
     },
     "low_cost_model": {
       "type": "string",
       "required": false,
-      "description": "Model or tool used for repetitive extraction",
+      "description": "用于重复提取和整理工作的模型或工具",
       "default": "DeepSeek/GLM/iFlytek CodePlan"
     }
   },
   "nodes": [
     {
       "id": "N-001",
-      "name": "Analyze Product Boundary",
+      "name": "分析产品边界",
       "type": "skill",
       "executor": "maestro-analyze",
       "args_template": "{goal}",
@@ -45,18 +45,18 @@
     },
     {
       "id": "CP-01",
-      "name": "Checkpoint: Product Boundary",
+      "name": "检查点：产品边界",
       "type": "checkpoint",
-      "description": "Confirm that Superset is used as a concept reference, not as MVP runtime dependency.",
+      "description": "确认 Superset 只作为概念参考，不作为 MVP runtime 依赖。",
       "auto_continue": false,
       "save_fields": ["session_id", "artifacts", "output_path"]
     },
     {
       "id": "N-002",
-      "name": "Plan Command Registry",
+      "name": "规划命令注册表",
       "type": "skill",
       "executor": "maestro-plan",
-      "args_template": "Design a typed command registry for Oh My Maestro. Context: {prev_output_path}",
+      "args_template": "为 Oh My Maestro 设计 typed command registry。上下文：{prev_output_path}",
       "input_ports": ["analysis"],
       "output_ports": ["plan"],
       "parallel_group": null,
@@ -64,18 +64,18 @@
     },
     {
       "id": "CP-02",
-      "name": "Checkpoint: Registry Plan",
+      "name": "检查点：Registry 方案",
       "type": "checkpoint",
-      "description": "Review the command registry interface and safe IPC command policy before extraction work begins.",
+      "description": "在开始批量提取前，review command registry 接口和安全 IPC 命令策略。",
       "auto_continue": false,
       "save_fields": ["session_id", "artifacts", "output_path"]
     },
     {
       "id": "N-003",
-      "name": "Extract Command Metadata",
+      "name": "提取命令元数据",
       "type": "agent",
       "executor": "general-purpose",
-      "args_template": "Task: Extract Maestro CLI command metadata for {goal}.\n\nUse low-cost model/tool when available: {low_cost_model}.\n\nInputs:\n- {maestro_flow_path}\n- maestro --help\n- maestro ralph --help\n- maestro search --help\n- maestro load --help\n\nDeliver JSON command entries only. Mark write/destructive commands explicitly.",
+      "args_template": "任务：为 {goal} 提取 Maestro CLI 命令元数据。\n\n可用时使用低成本模型或工具：{low_cost_model}。\n\n输入：\n- {maestro_flow_path}\n- maestro --help\n- maestro ralph --help\n- maestro search --help\n- maestro load --help\n\n只交付 JSON 命令条目。明确标记 write / destructive 命令。",
       "input_ports": ["plan"],
       "output_ports": ["command-registry-draft"],
       "parallel_group": null,
@@ -84,10 +84,10 @@
     },
     {
       "id": "N-004",
-      "name": "Map Superset Concepts",
+      "name": "映射 Superset 概念",
       "type": "agent",
       "executor": "general-purpose",
-      "args_template": "Task: Map Superset concepts to Oh My Maestro product concepts.\n\nDo not propose embedding Superset runtime for MVP.\n\nDeliver a table mapping dashboard, chart, dataset, explore, saved query, and filter state to Maestro product equivalents.",
+      "args_template": "任务：把 Superset 概念映射到 Oh My Maestro 产品概念。\n\n不要建议在 MVP 中嵌入 Superset runtime。\n\n交付一张表，把 dashboard、chart、dataset、explore、saved query、filter state 映射到 Maestro 产品等价概念。",
       "input_ports": ["requirement"],
       "output_ports": ["concept-map"],
       "parallel_group": null,
@@ -96,18 +96,18 @@
     },
     {
       "id": "CP-03",
-      "name": "Checkpoint: Generated Drafts Review",
+      "name": "检查点：生成草案 Review",
       "type": "checkpoint",
-      "description": "Codex or Claude Code reviews low-cost generated registry and Superset concept mapping before implementation.",
+      "description": "在实现前，由 Codex 或 Claude Code review 低成本模型生成的 registry 和 Superset 概念映射。",
       "auto_continue": false,
       "save_fields": ["artifacts", "output_path"]
     },
     {
       "id": "N-005",
-      "name": "Implement Registry-Driven UI",
+      "name": "实现 Registry 驱动 UI",
       "type": "skill",
       "executor": "maestro-execute",
-      "args_template": "Implement the reviewed command registry and registry-driven UI in {target_app_path}. Use reviewed artifacts from {prev_output_path}.",
+      "args_template": "在 {target_app_path} 实现已 review 的 command registry 和 registry-driven UI。使用来自 {prev_output_path} 的已 review 产物。",
       "input_ports": ["command-registry-draft", "concept-map"],
       "output_ports": ["code"],
       "parallel_group": null,
@@ -115,10 +115,10 @@
     },
     {
       "id": "N-006",
-      "name": "Validate Product Shell",
+      "name": "验证产品壳",
       "type": "skill",
       "executor": "quality-test",
-      "args_template": "Validate command registry, IPC whitelist, workflow state fallback, and desktop build for {target_app_path}.",
+      "args_template": "验证 {target_app_path} 的 command registry、IPC 白名单、workflow state fallback 和桌面构建。",
       "input_ports": ["code"],
       "output_ports": ["test-passed"],
       "parallel_group": null,
@@ -126,10 +126,10 @@
     },
     {
       "id": "N-007",
-      "name": "Review Integration Risk",
+      "name": "Review 集成风险",
       "type": "skill",
       "executor": "quality-review",
-      "args_template": "Review security, command whitelist, generated metadata quality, and product boundary for {target_app_path}.",
+      "args_template": "Review {target_app_path} 的安全性、命令白名单、生成元数据质量和产品边界。",
       "input_ports": ["code"],
       "output_ports": ["review-findings"],
       "parallel_group": null,

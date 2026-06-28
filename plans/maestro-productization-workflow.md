@@ -1,53 +1,71 @@
-# Maestro Productization Workflow
+# Maestro 产品化工作流
 
-This workflow turns Maestro-flow into a visual product shell while using low-cost models for repetitive extraction and migration work.
+这份文档用于把 Maestro-flow 包装成可视化桌面产品，同时把重复、搬运、整理类任务交给 DeepSeek、GLM 5.1 或讯飞 CodePlan，降低使用 Codex / Claude Code 的成本。
 
-## Goal
+## 目标
 
-Build Oh My Maestro as a desktop product that keeps Maestro-flow as the execution engine and borrows Superset's visualization concepts without embedding Superset runtime first.
+构建 Oh My Maestro：
 
-## Operating Rule
+- Maestro-flow 继续作为执行引擎。
+- Electron + React 作为桌面产品壳。
+- 借鉴 Superset 的 dashboard、chart、dataset、explore 等产品概念。
+- MVP 阶段不嵌入 Superset runtime，避免被 Superset 后端、权限、数据源和前端体系拖住。
 
-Use Codex or Claude Code for architecture, security boundaries, IPC, typed integration, and final review.
+## 分工原则
 
-Use DeepSeek, GLM 5.1, or iFlytek CodePlan for repetitive work:
+Codex / Claude Code 负责高风险工作：
 
-- Extract CLI command metadata from help output.
-- Convert docs and command descriptions into JSON.
-- Draft UI copy and component variants.
-- Summarize Superset dashboard, chart, dataset, and explore concepts.
-- Generate mock data and parser fixtures.
-- Port simple components after a typed target interface already exists.
+- 架构边界。
+- Electron 主进程和 IPC 安全。
+- TypeScript 类型和数据模型。
+- 关键代码实现。
+- 最终 review。
 
-## Source Inputs
+DeepSeek / GLM 5.1 / 讯飞 CodePlan 负责低风险重复工作：
 
-- Maestro-flow source: `D:\WorkSpace\Source\maestro-flow`
-- Desktop shell: `apps/desktop`
-- Current product branch: `rebuild/maestro-visual-shell`
-- Primary UI target: Electron + React desktop app
-- Engine access: local `maestro` CLI through main-process adapter
+- 从 CLI help 中提取命令元数据。
+- 把文档和命令说明整理成 JSON。
+- 生成 UI 文案草案。
+- 总结 Superset 的产品概念。
+- 生成 mock 数据和 parser fixture。
+- 在已有接口约束下搬运简单组件。
 
-## Phase 1: Command Inventory
+## 输入范围
 
-Purpose: create a structured command registry so the UI no longer hardcodes every command.
+- Maestro-flow 源码：`D:\WorkSpace\Source\maestro-flow`
+- 当前桌面壳：`apps/desktop`
+- 当前分支：`rebuild/maestro-visual-shell`
+- 产品形态：Electron + React desktop app
+- 引擎入口：Electron main process 通过本机 `maestro` CLI 调用
 
-Codex / Claude Code owns:
+## Phase 1：命令清单和 Command Registry
 
-- Define `CommandDefinition` TypeScript interface.
-- Define safe args policy for IPC.
-- Wire registry-driven actions into the renderer.
-- Review generated entries before use.
+目标：建立结构化命令注册表，避免 UI 按钮到处硬编码命令。
 
-Low-cost model owns:
+Codex / Claude Code 负责：
 
-- Run or consume outputs from:
+- 定义 `CommandDefinition` TypeScript 接口。
+- 设计 IPC 命令白名单。
+- 审核低成本模型生成的命令条目。
+- 把通过审核的 registry 接到 UI。
+
+低成本模型负责：
+
+- 整理这些命令输出：
   - `maestro --help`
   - `maestro ralph --help`
   - `maestro search --help`
   - `maestro load --help`
-- Produce command entries with `id`, `label`, `category`, `args`, `description`, `outputKind`, and `riskLevel`.
+- 输出命令条目字段：
+  - `id`
+  - `label`
+  - `category`
+  - `args`
+  - `description`
+  - `outputKind`
+  - `riskLevel`
 
-Expected artifact:
+建议接口：
 
 ```ts
 export interface CommandDefinition {
@@ -61,27 +79,31 @@ export interface CommandDefinition {
 }
 ```
 
-Checkpoint:
+停止点：
 
-- No generated command can reach IPC until Codex / Claude Code verifies the args whitelist.
+- 只生成 registry 草案。
+- 不接 UI。
+- 不改 IPC。
+- 不允许 write / destructive 命令进入可执行白名单。
 
-## Phase 2: Workflow State Model
+## Phase 2：Workflow 状态模型
 
-Purpose: normalize Maestro-flow files and CLI output into UI data models.
+目标：把 Maestro-flow 的文件和 CLI 输出规范成 UI 可消费的数据模型。
 
-Codex / Claude Code owns:
+Codex / Claude Code 负责：
 
-- Define typed state models.
-- Build parsers with graceful fallback.
-- Add tests for missing files and malformed output.
+- 定义状态模型。
+- 编写 parser。
+- 处理缺失文件、坏 JSON、空状态等边界情况。
+- 添加必要测试。
 
-Low-cost model owns:
+低成本模型负责：
 
-- Collect sample outputs and status files.
-- Label fields and propose mappings.
-- Generate parser fixtures.
+- 收集样例输出。
+- 标注字段含义。
+- 生成 fixture 草案。
 
-Expected models:
+建议模型：
 
 - `WorkflowProject`
 - `WorkflowRun`
@@ -89,117 +111,127 @@ Expected models:
 - `RalphSession`
 - `KnowledgeSearchResult`
 
-Checkpoint:
+停止点：
 
-- UI must show "not initialized" or "no data" as a product state, not as raw `ENOENT`.
+- `.workflow/state.json`、`status.json`、`chains/singles/status.json` 都有处理策略。
+- 缺失状态显示为“未初始化”或“暂无数据”，不是 raw `ENOENT`。
 
-## Phase 3: Superset Concept Mapping
+## Phase 3：Superset 概念映射
 
-Purpose: borrow Superset's useful product abstractions without inheriting its runtime complexity.
+目标：借 Superset 的产品抽象，不继承 Superset runtime 的复杂度。
 
-Codex / Claude Code owns:
+Codex / Claude Code 负责：
 
-- Decide which concepts become first-class app models.
-- Keep integration independent from Superset backend.
-- Reject concepts that add migration cost without MVP value.
+- 判断哪些概念应该进入 MVP。
+- 保持 Oh My Maestro 独立于 Superset 后端。
+- 拒绝会拖慢 MVP 的 runtime 集成。
 
-Low-cost model owns:
+低成本模型负责：
 
-- Summarize Superset concepts:
+- 总结 Superset 概念：
   - dashboard
   - chart
   - dataset
   - explore
   - saved query
   - filter state
-- Map each concept to Maestro product equivalents.
+- 映射到 Oh My Maestro 产品概念。
 
-Recommended mapping:
+推荐映射：
 
-| Superset concept | Oh My Maestro equivalent |
+| Superset 概念 | Oh My Maestro 等价概念 |
 | --- | --- |
-| Dashboard | Workspace overview |
+| Dashboard | 工作区总览 |
 | Chart | Workflow widget |
-| Dataset | Command output source |
-| Explore | Visual command/output explorer |
-| Saved query | Saved command preset |
-| Filter state | Project/session/time filter |
+| Dataset | 命令输出数据源 |
+| Explore | 命令输出探索器 |
+| Saved query | 保存的命令预设 |
+| Filter state | 项目、session、时间过滤 |
 
-Checkpoint:
+停止点：
 
-- MVP should implement the equivalent model, not import Superset runtime.
+- 只形成概念映射。
+- MVP 不引入 Superset runtime。
 
-## Phase 4: Product Surfaces
+## Phase 4：产品面板 MVP
 
-Purpose: build the first useful desktop experience.
+目标：把当前最小壳打磨成可用的产品工作台。
 
-Initial surfaces:
+初版面板：
 
-- Command center: registry-driven command launcher.
-- Workflow board: project status, chain status, recent runs.
-- Ralph panel: session, check, skills, next task.
-- Knowledge panel: search and load results.
-- Visualization panel: timeline, DAG, cards, and tables.
+- Command Center：基于 registry 的命令入口。
+- Ralph Panel：`session`、`check`、`skills`、`next`。
+- Knowledge Panel：`search`、`load`。
+- Workflow State Panel：项目状态和 chain 状态。
+- Visualization Panel：timeline、DAG、cards、table。
 
-Codex / Claude Code owns:
+Codex / Claude Code 负责：
 
-- Component boundaries.
-- State management.
-- tRPC or IPC shape.
-- Error and loading states.
+- 组件边界。
+- 状态管理。
+- IPC / tRPC 形状。
+- loading、error、empty state。
 
-Low-cost model owns:
+低成本模型负责：
 
-- Draft component copy.
-- Generate mock records.
-- Propose table columns and empty states.
-- Convert repeated UI patterns after one canonical component exists.
+- UI 文案草案。
+- mock 数据。
+- 表格列设计。
+- 空状态文案。
 
-Checkpoint:
+停止点：
 
-- Every panel must work with mocked data and with live CLI output.
+- 面板能用 mock 或 live CLI output 渲染。
+- `bun run typecheck` 和 `bun run build` 通过。
 
-## Phase 5: Review, Test, and Merge
+## Phase 5：Review、测试和合并
 
-Codex / Claude Code owns:
+Codex / Claude Code 负责：
 
-- Run `bun run typecheck`.
-- Run `bun run build`.
-- Add focused tests for parser and registry behavior.
-- Review generated code for unsafe command execution.
-- Merge back from worktree only after the branch stays green.
+- 跑 `bun run typecheck`。
+- 跑 `bun run build`。
+- 给 parser 和 registry 加必要测试。
+- Review 生成代码是否突破安全边界。
+- 决定何时 merge 回主 worktree。
 
-Low-cost model owns:
+低成本模型负责：
 
-- Draft test cases.
-- Generate fixture files.
-- Summarize manual QA steps.
+- 草拟测试用例。
+- 生成 fixture。
+- 汇总手工 QA 步骤。
 
-Checkpoint:
+最终停止条件：
 
-- No direct renderer shell execution.
-- Main process only runs whitelisted commands.
-- Missing local Maestro-flow state is handled as expected UI state.
+- Renderer 不直接执行 shell。
+- Main process 只执行白名单命令。
+- Command Registry 管住所有 UI 命令。
+- Workflow / Ralph / Knowledge 至少有一版可视化面板。
+- 不引入 Superset runtime。
+- `typecheck` 和 `build` 通过。
+- 没有未提交变更。
 
-## Claude Code Prompt For Low-Cost Delegation
+## 给低成本模型的固定 Prompt
 
-Use this prompt when asking CodePlan, DeepSeek, or GLM to do repetitive extraction:
+把下面内容复制给 DeepSeek、GLM 5.1 或讯飞 CodePlan：
 
 ```text
-You are preparing structured data for Oh My Maestro.
+你正在为 Oh My Maestro 整理结构化数据。
 
-Do not design architecture. Do not change IPC or security-sensitive code.
+不要做架构设计。
+不要修改 IPC。
+不要修改 Electron main process。
+不要实现功能代码。
 
-Input:
-- Maestro CLI help output or Maestro-flow documentation.
+输入：
+- Maestro CLI help 输出，或 Maestro-flow 文档。
 
-Task:
-- Extract command or product metadata.
-- Return JSON or TypeScript object literals only.
-- Include uncertain fields as null.
-- Mark destructive or write commands with riskLevel: "write" or "destructive".
+任务：
+- 提取命令或产品元数据。
+- 只返回 JSON 或 TypeScript object literal。
+- 不确定的字段填 null。
+- 对写入类或危险命令标记 riskLevel: "write" 或 "destructive"。
 
-Output shape:
+输出格式：
 {
   "commands": [
     {
@@ -216,9 +248,9 @@ Output shape:
 }
 ```
 
-## Maestro Commands To Use During This Workflow
+## 常用 Maestro 命令
 
-Use these before coding or review work:
+编码或 review 前先跑：
 
 ```powershell
 maestro search "command registry"
@@ -227,7 +259,7 @@ maestro load --type spec --category arch
 maestro load --type spec --category coding
 ```
 
-Use these for current engine validation:
+当前引擎验证命令：
 
 ```powershell
 maestro ralph session
