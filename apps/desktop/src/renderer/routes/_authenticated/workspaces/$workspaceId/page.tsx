@@ -6,7 +6,6 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { electronTrpc } from "renderer/lib/electron-trpc";
 import {
   createRuntime,
   attachToContainer,
@@ -18,9 +17,10 @@ import {
   getDefaultTerminalAppearance,
   type TerminalAppearance,
 } from "renderer/lib/terminal/appearance";
+import { electronTrpc } from "renderer/lib/electron-trpc";
 
 // ---------------------------------------------------------------------------
-// Chat Panel (简化版)
+// Chat Panel
 // ---------------------------------------------------------------------------
 
 function ChatPanel({ workspaceId }: { workspaceId: string }) {
@@ -28,8 +28,20 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
     { id: string; role: "user" | "assistant"; content: string }[]
   >([]);
   const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const sendMutation = electronTrpc.chatService.send.useMutation({
+    onSuccess: (data) => {
+      const assistantMsg = {
+        id: crypto.randomUUID(),
+        role: "assistant" as const,
+        content: data.content,
+      };
+      setMessages((prev) => [...prev, assistantMsg]);
+    },
+  });
+
+  const isLoading = sendMutation.isPending;
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -39,38 +51,16 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  const handleSend = async () => {
+  const handleSend = () => {
     const text = input.trim();
     if (!text || isLoading) return;
 
     const userMsg = { id: crypto.randomUUID(), role: "user" as const, content: text };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput("");
-    setIsLoading(true);
 
-    try {
-      // TODO: Phase 5 — 接入实际 Chat Service
-      const result = await electronTrpc.chatService.send.useMutation().mutateAsync({
-        workspaceId,
-        message: text,
-        sessionId: "default",
-      });
-      const assistantMsg = {
-        id: crypto.randomUUID(),
-        role: "assistant" as const,
-        content: result?.response ?? "已收到消息，但回复不可用",
-      };
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch (err) {
-      const errorMsg = {
-        id: crypto.randomUUID(),
-        role: "assistant" as const,
-        content: `错误: ${err instanceof Error ? err.message : "未知错误"}`,
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    } finally {
-      setIsLoading(false);
-    }
+    sendMutation.mutate({ messages: updatedMessages });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -82,24 +72,20 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* 标题 */}
       <div className="flex-shrink-0 border-b px-4 py-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
           <MessageSquare className="h-4 w-4" />
           Chat
         </h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {workspaceId}
-        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{workspaceId}</p>
       </div>
 
-      {/* 消息列表 */}
       <div className="flex-1 overflow-y-auto px-4 py-3">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-12 text-center text-sm text-muted-foreground">
             <MessageSquare className="h-8 w-8 opacity-30" />
-            <p>开始对话</p>
-            <p className="text-xs">输入消息以与 AI 助手对话</p>
+            <p>Start a conversation</p>
+            <p className="text-xs">Type a message to chat with the AI assistant</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -122,7 +108,7 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="max-w-[80%] rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
-                  <span className="animate-pulse">思考中...</span>
+                  <span className="animate-pulse">Thinking...</span>
                 </div>
               </div>
             )}
@@ -131,7 +117,6 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
         )}
       </div>
 
-      {/* 输入框 */}
       <div className="flex-shrink-0 border-t p-3">
         <div className="flex gap-2">
           <input
@@ -139,7 +124,7 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="输入消息..."
+            placeholder="Type a message..."
             className="flex-1 rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
             disabled={isLoading}
           />
@@ -149,12 +134,9 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
           >
-            发送
+            Send
           </button>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Chat Service 集成中 — 当前使用简化版面板
-        </p>
       </div>
     </div>
   );
@@ -167,21 +149,58 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
 function TerminalPanel({ workspaceId }: { workspaceId: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<TerminalRuntime | null>(null);
+  const paneIdRef = useRef<string>(`workspace-${workspaceId}`);
   const [appearance] = useState<TerminalAppearance>(() =>
     getDefaultTerminalAppearance(),
   );
+
+  const createOrAttach = electronTrpc.terminal.createOrAttach.useMutation();
+  const writeMutation = electronTrpc.terminal.write.useMutation();
+  const resizeMutation = electronTrpc.terminal.resize.useMutation();
+
+  // Subscribe to PTY stream and forward output to xterm
+  electronTrpc.terminal.stream.useSubscription(paneIdRef.current, {
+    onData: (event) => {
+      if (event.type === "data" && runtimeRef.current) {
+        runtimeRef.current.terminal.write(event.data);
+      }
+    },
+  });
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const runtime = createRuntime(`workspace-${workspaceId}`, appearance);
+    const terminalId = `workspace-${workspaceId}`;
+    const runtime = createRuntime(terminalId, appearance);
     runtimeRef.current = runtime;
     attachToContainer(runtime, container as HTMLDivElement, undefined, {
       focus: true,
     });
 
+    const paneId = terminalId;
+    paneIdRef.current = paneId;
+
+    // Create PTY session
+    createOrAttach.mutate({
+      paneId,
+      tabId: `tab-${workspaceId}`,
+      workspaceId,
+    });
+
+    // Connect xterm input to PTY
+    const onDataDispose = runtime.terminal.onData((data) => {
+      writeMutation.mutate({ paneId, data });
+    });
+
+    // Connect xterm resize to PTY
+    const onResizeDispose = runtime.terminal.onResize(({ cols, rows }) => {
+      resizeMutation.mutate({ paneId, cols, rows });
+    });
+
     return () => {
+      onDataDispose.dispose();
+      onResizeDispose.dispose();
       if (runtimeRef.current) {
         detachFromContainer(runtimeRef.current);
         disposeRuntime(runtimeRef.current);
@@ -192,18 +211,13 @@ function TerminalPanel({ workspaceId }: { workspaceId: string }) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* 标题 */}
       <div className="flex-shrink-0 border-b px-4 py-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
           <TerminalIcon className="h-4 w-4" />
           Terminal
         </h3>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {workspaceId}
-        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">{workspaceId}</p>
       </div>
-
-      {/* xterm.js 挂载点 */}
       <div ref={containerRef} className="flex-1 overflow-hidden p-1" />
     </div>
   );
@@ -215,14 +229,9 @@ function TerminalPanel({ workspaceId }: { workspaceId: string }) {
 
 function OverviewPanel({ workspaceId }: { workspaceId: string }) {
   const navigate = useNavigate();
-  const { data: workspace } = electronTrpc.workspaces.get.useQuery(
-    { id: workspaceId },
-    { enabled: !!workspaceId },
-  );
 
   return (
     <div className="flex h-full flex-col">
-      {/* 标题 */}
       <div className="flex-shrink-0 border-b px-4 py-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
           <LayoutGrid className="h-4 w-4" />
@@ -230,50 +239,23 @@ function OverviewPanel({ workspaceId }: { workspaceId: string }) {
         </h3>
       </div>
 
-      {/* 工作区详情 */}
       <div className="flex-1 overflow-y-auto px-4 py-3">
-        {!workspace ? (
-          <p className="text-sm text-muted-foreground">加载中...</p>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs text-muted-foreground">名称</p>
-              <p className="text-sm">{workspace.name || "Unnamed"}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">类型</p>
-              <p className="text-sm capitalize">{workspace.type}</p>
-            </div>
-            {workspace.project && (
-              <div>
-                <p className="text-xs text-muted-foreground">项目</p>
-                <p className="text-sm">{workspace.project.name}</p>
-              </div>
-            )}
-            {workspace.worktreePath && (
-              <div>
-                <p className="text-xs text-muted-foreground">路径</p>
-                <p className="max-w-[400px] truncate text-sm font-mono">
-                  {workspace.worktreePath}
-                </p>
-              </div>
-            )}
-            <div>
-              <p className="text-xs text-muted-foreground">ID</p>
-              <p className="text-sm font-mono text-xs opacity-60">
-                {workspaceId}
-              </p>
-            </div>
-
-            <button
-              type="button"
-              className="mt-4 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/80"
-              onClick={() => navigate({ to: "/" as never })}
-            >
-              返回 Dashboard
-            </button>
+        <div className="space-y-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Workspace ID</p>
+            <p className="text-sm font-mono text-xs opacity-60">{workspaceId}</p>
           </div>
-        )}
+          <p className="text-xs text-muted-foreground">
+            Workspace details
+          </p>
+          <button
+            type="button"
+            className="mt-4 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/80"
+            onClick={() => navigate({ to: "/" as never })}
+          >
+            Back to Dashboard
+          </button>
+        </div>
       </div>
     </div>
   );
