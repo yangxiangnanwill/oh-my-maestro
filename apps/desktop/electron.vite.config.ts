@@ -1,13 +1,10 @@
 import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
-import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import reactPlugin from "@vitejs/plugin-react";
 import { config } from "dotenv";
 import { defineConfig, externalizeDepsPlugin } from "electron-vite";
-import injectProcessEnvPlugin from "rollup-plugin-inject-process-env";
 import tsconfigPathsPlugin from "vite-tsconfig-paths";
 import { version } from "./package.json";
-import { mainExternalizedDependencies } from "./runtime-dependencies";
 
 // override: true ensures .env values take precedence over inherited env vars
 config({ path: resolve(__dirname, "../../.env"), override: true, quiet: true });
@@ -70,7 +67,7 @@ export default defineConfig({
 				output: {
 					dir: resolve(devPath, "main"),
 				},
-				external: ["electron", ...mainExternalizedDependencies],
+				external: ["electron"],
 			},
 		},
 	},
@@ -79,10 +76,7 @@ export default defineConfig({
 		plugins: [
 			tsconfigPaths,
 			externalizeDepsPlugin({
-				exclude: [
-					"trpc-electron",
-					...workspaceDependencies,
-				],
+				exclude: [...workspaceDependencies],
 			}),
 		],
 
@@ -146,16 +140,6 @@ export default defineConfig({
 		},
 
 		plugins: [
-			tanstackRouter({
-				target: "react",
-				routesDirectory: resolve("src/renderer/routes"),
-				generatedRouteTree: resolve("src/renderer/routeTree.gen.ts"),
-				indexToken: "page",
-				routeToken: "layout",
-				autoCodeSplitting: true,
-				routeFileIgnorePattern:
-					"^(?!(__root|page|layout|-layout)\\.tsx$).*\\.(tsx?|jsx?)$",
-			}),
 			tsconfigPaths,
 			tailwindcss(),
 			reactPlugin(),
@@ -170,13 +154,6 @@ export default defineConfig({
 			outDir: resolve(devPath, "renderer"),
 
 			rollupOptions: {
-				plugins: [
-					injectProcessEnvPlugin({
-						NODE_ENV: "production",
-						platform: process.platform,
-					}),
-				],
-
 				input: {
 					index: resolve("src/renderer/index.html"),
 				},
