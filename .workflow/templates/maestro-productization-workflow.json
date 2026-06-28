@@ -1,0 +1,157 @@
+{
+  "template_id": "wft-maestro-productization-20260628",
+  "name": "Maestro Productization Workflow",
+  "description": "Turn Maestro-flow into a visual desktop product while delegating repetitive extraction work to lower-cost models.",
+  "version": "1.0",
+  "created_at": "2026-06-28T00:00:00Z",
+  "source_session": "manual-20260628",
+  "tags": ["maestro", "productization", "workflow", "visualization"],
+  "context_schema": {
+    "goal": {
+      "type": "string",
+      "required": true,
+      "description": "Productization goal to execute"
+    },
+    "maestro_flow_path": {
+      "type": "string",
+      "required": true,
+      "description": "Local path to Maestro-flow source",
+      "default": "D:\\WorkSpace\\Source\\maestro-flow"
+    },
+    "target_app_path": {
+      "type": "string",
+      "required": true,
+      "description": "Local path to Oh My Maestro desktop app",
+      "default": "D:\\WorkSpace\\VsCode\\oh-my-maestro-rebuild\\apps\\desktop"
+    },
+    "low_cost_model": {
+      "type": "string",
+      "required": false,
+      "description": "Model or tool used for repetitive extraction",
+      "default": "DeepSeek/GLM/iFlytek CodePlan"
+    }
+  },
+  "nodes": [
+    {
+      "id": "N-001",
+      "name": "Analyze Product Boundary",
+      "type": "skill",
+      "executor": "maestro-analyze",
+      "args_template": "{goal}",
+      "input_ports": ["requirement"],
+      "output_ports": ["analysis"],
+      "parallel_group": null,
+      "on_fail": "abort"
+    },
+    {
+      "id": "CP-01",
+      "name": "Checkpoint: Product Boundary",
+      "type": "checkpoint",
+      "description": "Confirm that Superset is used as a concept reference, not as MVP runtime dependency.",
+      "auto_continue": false,
+      "save_fields": ["session_id", "artifacts", "output_path"]
+    },
+    {
+      "id": "N-002",
+      "name": "Plan Command Registry",
+      "type": "skill",
+      "executor": "maestro-plan",
+      "args_template": "Design a typed command registry for Oh My Maestro. Context: {prev_output_path}",
+      "input_ports": ["analysis"],
+      "output_ports": ["plan"],
+      "parallel_group": null,
+      "on_fail": "abort"
+    },
+    {
+      "id": "CP-02",
+      "name": "Checkpoint: Registry Plan",
+      "type": "checkpoint",
+      "description": "Review the command registry interface and safe IPC command policy before extraction work begins.",
+      "auto_continue": false,
+      "save_fields": ["session_id", "artifacts", "output_path"]
+    },
+    {
+      "id": "N-003",
+      "name": "Extract Command Metadata",
+      "type": "agent",
+      "executor": "general-purpose",
+      "args_template": "Task: Extract Maestro CLI command metadata for {goal}.\n\nUse low-cost model/tool when available: {low_cost_model}.\n\nInputs:\n- {maestro_flow_path}\n- maestro --help\n- maestro ralph --help\n- maestro search --help\n- maestro load --help\n\nDeliver JSON command entries only. Mark write/destructive commands explicitly.",
+      "input_ports": ["plan"],
+      "output_ports": ["command-registry-draft"],
+      "parallel_group": null,
+      "run_in_background": false,
+      "on_fail": "abort"
+    },
+    {
+      "id": "N-004",
+      "name": "Map Superset Concepts",
+      "type": "agent",
+      "executor": "general-purpose",
+      "args_template": "Task: Map Superset concepts to Oh My Maestro product concepts.\n\nDo not propose embedding Superset runtime for MVP.\n\nDeliver a table mapping dashboard, chart, dataset, explore, saved query, and filter state to Maestro product equivalents.",
+      "input_ports": ["requirement"],
+      "output_ports": ["concept-map"],
+      "parallel_group": null,
+      "run_in_background": false,
+      "on_fail": "abort"
+    },
+    {
+      "id": "CP-03",
+      "name": "Checkpoint: Generated Drafts Review",
+      "type": "checkpoint",
+      "description": "Codex or Claude Code reviews low-cost generated registry and Superset concept mapping before implementation.",
+      "auto_continue": false,
+      "save_fields": ["artifacts", "output_path"]
+    },
+    {
+      "id": "N-005",
+      "name": "Implement Registry-Driven UI",
+      "type": "skill",
+      "executor": "maestro-execute",
+      "args_template": "Implement the reviewed command registry and registry-driven UI in {target_app_path}. Use reviewed artifacts from {prev_output_path}.",
+      "input_ports": ["command-registry-draft", "concept-map"],
+      "output_ports": ["code"],
+      "parallel_group": null,
+      "on_fail": "abort"
+    },
+    {
+      "id": "N-006",
+      "name": "Validate Product Shell",
+      "type": "skill",
+      "executor": "quality-test",
+      "args_template": "Validate command registry, IPC whitelist, workflow state fallback, and desktop build for {target_app_path}.",
+      "input_ports": ["code"],
+      "output_ports": ["test-passed"],
+      "parallel_group": null,
+      "on_fail": "abort"
+    },
+    {
+      "id": "N-007",
+      "name": "Review Integration Risk",
+      "type": "skill",
+      "executor": "quality-review",
+      "args_template": "Review security, command whitelist, generated metadata quality, and product boundary for {target_app_path}.",
+      "input_ports": ["code"],
+      "output_ports": ["review-findings"],
+      "parallel_group": null,
+      "on_fail": "abort"
+    }
+  ],
+  "edges": [
+    { "from": "N-001", "to": "CP-01" },
+    { "from": "CP-01", "to": "N-002" },
+    { "from": "N-002", "to": "CP-02" },
+    { "from": "CP-02", "to": "N-003" },
+    { "from": "CP-02", "to": "N-004" },
+    { "from": "N-003", "to": "CP-03" },
+    { "from": "N-004", "to": "CP-03" },
+    { "from": "CP-03", "to": "N-005" },
+    { "from": "N-005", "to": "N-006" },
+    { "from": "N-006", "to": "N-007" }
+  ],
+  "checkpoints": ["CP-01", "CP-02", "CP-03"],
+  "execution_mode": "serial",
+  "metadata": {
+    "node_count": 10,
+    "checkpoint_count": 3
+  }
+}
