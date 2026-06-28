@@ -75,6 +75,7 @@ export function MessagePartsRenderer({
 		[addFileViewerPane, workspaceCwd, workspaceId],
 	);
 
+	// Phase 4: 将 a 组件提取到 useMemo 外部并用 React.memo 包裹
 	const components = useMemo(() => {
 		if (!openLinksInApp || !workspaceId) return undefined;
 		return {

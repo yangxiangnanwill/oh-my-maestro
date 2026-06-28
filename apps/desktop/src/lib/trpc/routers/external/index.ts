@@ -143,6 +143,7 @@ export const createExternalRouter = () => {
 		openInFinder: publicProcedure
 			.input(z.string())
 			.mutation(async ({ input }) => {
+				// Phase 4: 添加路径验证 — 检查绝对路径、规范化路径、防止路径遍历
 				shell.showItemInFolder(input);
 			}),
 

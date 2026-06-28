@@ -1,6 +1,7 @@
 import "highlight.js/styles/github-dark.css";
 
 import { cn } from "../../../Chat/stubs/ui/utils";
+import type { TipTapExtensions } from "renderer/lib/tiptap-utils";
 import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import { type MutableRefObject, useEffect, useRef } from "react";
@@ -87,7 +88,7 @@ export function TipTapMarkdownRenderer({
 		extensions: createMarkdownExtensions({
 			editable,
 			onSaveRef,
-		}) as Parameters<typeof useEditor>[0] extends { extensions?: infer E } ? E : never,
+		}) as TipTapExtensions,
 		content: value,
 		editorProps: {
 			attributes: {

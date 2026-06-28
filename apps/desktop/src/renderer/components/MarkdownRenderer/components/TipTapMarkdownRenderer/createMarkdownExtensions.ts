@@ -30,6 +30,8 @@ import { ReadOnlyCodeBlockView } from "./components/ReadOnlyCodeBlockView";
 import { ReadOnlySafeImageView } from "./components/ReadOnlySafeImageView";
 
 const lowlight = createLowlight(common);
+// Phase 4: 将此常量改为 true 之前必须集成 DOMPurify 净化器。
+// 当前 false 是正确的安全策略 — 修改此值将引入 XSS 漏洞。
 const ENABLE_RAW_MARKDOWN_HTML = false;
 
 const SafeImage = Image.extend({
