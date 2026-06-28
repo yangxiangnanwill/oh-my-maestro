@@ -5,20 +5,16 @@ import {
   ListChecks,
   Search,
   Plus,
+  Loader2,
 } from "lucide-react";
 import { useState, useCallback } from "react";
+import { electronTrpc } from "renderer/lib/electron-trpc";
 import { CommandChainPanel } from "renderer/components/CommandChainPanel/CommandChainPanel";
 import { KnowledgePanel } from "renderer/components/KnowledgePanel/KnowledgePanel";
 import { CollectionsProvider } from "../providers/CollectionsProvider";
 import { LocalHostServiceProvider } from "../providers/LocalHostServiceProvider";
 import { navigateToWorkspace } from "./utils/workspace-navigation";
 
-// Phase 4: 替换为 tRPC useQuery
-const MOCK_WORKSPACES = [
-  { id: "demo-1", name: "My First Project", isUnread: false },
-  { id: "demo-2", name: "API Server", isUnread: true },
-  { id: "demo-3", name: "Frontend App", isUnread: false },
-];
 
 // ---------------------------------------------------------------------------
 // Sidebar
@@ -26,6 +22,8 @@ const MOCK_WORKSPACES = [
 
 function DashboardSidebar() {
   const navigate = useNavigate();
+  const { data: workspaces, isLoading } =
+    electronTrpc.workspaces.getAll.useQuery();
 
   const handleWorkspaceClick = (workspaceId: string) => {
     navigateToWorkspace(workspaceId, navigate);
@@ -73,65 +71,68 @@ function DashboardSidebar() {
         </button>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-        {MOCK_WORKSPACES.map((ws) => (
-          <button
-            key={ws.id}
-            type="button"
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              width: "100%",
-              padding: "5px 8px",
-              fontSize: "13px",
-              borderRadius: "6px",
-              border: "none",
-              background: "transparent",
-              color: "var(--foreground, #e0e0e0)",
-              cursor: "pointer",
-              textAlign: "left",
-              transition: "background 0.15s",
-            }}
-            className="hover:bg-accent/10"
-            onClick={() => handleWorkspaceClick(ws.id)}
-          >
-            <FolderGit2
+      {isLoading ? (
+        <div className="flex items-center justify-center gap-2 py-8 text-xs text-muted-foreground">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          <span>Loading...</span>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+          {(workspaces ?? []).map((ws) => (
+            <button
+              key={ws.id}
+              type="button"
               style={{
-                width: "14px",
-                height: "14px",
-                opacity: 0.4,
-                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                width: "100%",
+                padding: "5px 8px",
+                fontSize: "13px",
+                borderRadius: "6px",
+                border: "none",
+                background: "transparent",
+                color: "var(--foreground, #e0e0e0)",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "background 0.15s",
               }}
-            />
-            <span
-              style={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+              className="hover:bg-accent/10"
+              onClick={() => handleWorkspaceClick(ws.id)}
             >
-              {ws.name}
-            </span>
-            {ws.isUnread && (
-              <span
+              <FolderGit2
                 style={{
-                  width: "6px",
-                  height: "6px",
-                  borderRadius: "50%",
-                  backgroundColor: "var(--accent, #4a9eff)",
+                  width: "14px",
+                  height: "14px",
+                  opacity: 0.4,
                   flexShrink: 0,
-                  marginLeft: "auto",
                 }}
               />
-            )}
-          </button>
-        ))}
-      </div>
-
-      <p style={{ fontSize: "11px", opacity: 0.25, marginTop: "auto", textAlign: "center" }}>
-        Phase 3 stub
-      </p>
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {ws.name}
+              </span>
+              {ws.isUnread && (
+                <span
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "50%",
+                    backgroundColor: "var(--accent, #4a9eff)",
+                    flexShrink: 0,
+                    marginLeft: "auto",
+                  }}
+                />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
     </aside>
   );
 }
