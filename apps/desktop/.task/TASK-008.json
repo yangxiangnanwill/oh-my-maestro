@@ -1,0 +1,45 @@
+{
+  "id": "TASK-008",
+  "title": "Knowledge Panel + 收尾",
+  "description": "在 Workspace 页面集成 KnowledgePanel，确保全局 UI 可用。",
+  "status": "completed",
+  "scope": "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/-layout.tsx"
+  ],
+  "depends_on": ["TASK-005", "TASK-006", "TASK-007"],
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/-layout.tsx",
+      "action": "modify",
+      "target": "添加 Knowledge 面板切换按钮",
+      "change": "在 Workspace Tab bar 添加 Knowledge 切换按钮 + 右侧面板"
+    }
+  ],
+  "implementation": [
+    "在 Workspace Tab bar 右侧添加 Search 按钮",
+    "点击切换 KnowledgePanel 显示/隐藏",
+    "KnowledgePanel 显示在内容区右侧 320px 面板",
+    "保持 tsc --noEmit 零错误"
+  ],
+  "convergence": {
+    "criteria": [
+      "Workspace 页面 Tab bar 显示 Knowledge 按钮",
+      "点击按钮显示 KnowledgePanel",
+      "再次点击隐藏面板",
+      "Dashboard 和 Workspace 均包含 KnowledgePanel 入口",
+      "tsc --noEmit 零错误"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck"
+  },
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck"]
+  },
+  "reference": {
+    "files": [
+      "apps/desktop/src/renderer/components/KnowledgePanel/KnowledgePanel.tsx",
+      "apps/desktop/src/renderer/components/KnowledgePanel/types.ts"
+    ],
+    "pattern": "Side panel toggle pattern"
+  }
+}

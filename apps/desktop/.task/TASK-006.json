@@ -1,0 +1,44 @@
+{
+  "id": "TASK-006",
+  "title": "Terminal 面板集成",
+  "description": "在 Workspace 页面添加 xterm.js Terminal 面板。",
+  "status": "completed",
+  "scope": "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/page.tsx"
+  ],
+  "depends_on": ["TASK-005"],
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/page.tsx",
+      "action": "modify",
+      "target": "集成 TerminalPanel 组件（xterm.js）",
+      "change": "添加 Terminal 面板到 Workspace 页面"
+    }
+  ],
+  "implementation": [
+    "创建 TerminalPanel 组件，使用 terminal-runtime.ts 的 createRuntime",
+    "使用 useEffect 挂载 xterm.js 到 DOM 容器",
+    "使用 getDefaultTerminalAppearance() 获取主题配置",
+    "组件卸载时 dispose runtime"
+  ],
+  "convergence": {
+    "criteria": [
+      "Workspace 页面显示 Terminal 面板",
+      "Terminal 使用 xterm.js 渲染",
+      "支持 Split View / Chat Only / Terminal Only 切换",
+      "tsc --noEmit 零错误"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck"
+  },
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck"]
+  },
+  "reference": {
+    "files": [
+      "apps/desktop/src/renderer/lib/terminal/terminal-runtime.ts",
+      "apps/desktop/src/renderer/lib/terminal/appearance/index.ts"
+    ],
+    "pattern": "xterm.js React integration pattern"
+  }
+}

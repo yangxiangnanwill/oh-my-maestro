@@ -1,0 +1,44 @@
+{
+  "id": "TASK-003",
+  "title": "Dashboard 可视化",
+  "description": "改进 _dashboard/page.tsx，展示模拟的工作区列表（从 tRPC stores 读取），点击可导航到 workspace。",
+  "status": "completed",
+  "scope": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/routes/_authenticated/_dashboard/page.tsx"
+  ],
+  "depends_on": ["TASK-001", "TASK-002"],
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/page.tsx",
+      "action": "modify",
+      "target": "集成 tRPC workspaces.getAllGrouped 查询，渲染工作区卡片网格",
+      "change": "替换占位内容为实际工作区列表"
+    }
+  ],
+  "implementation": [
+    "使用 electronTrpc.workspaces.getAllGrouped.useQuery() 获取工作区数据",
+    "渲染 LoadingState / EmptyState / ErrorState 三态",
+    "渲染按项目分组的 WorkspaceCard 网格",
+    "点击卡片通过 navigateToWorkspace 导航到 workspace"
+  ],
+  "convergence": {
+    "criteria": [
+      "Dashboard 页面显示从 tRPC 获取的工作区列表",
+      "点击工作区卡片导航到 /workspaces/$workspaceId",
+      "空状态显示引导文案",
+      "tsc --noEmit 零错误"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck"
+  },
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck"]
+  },
+  "reference": {
+    "files": [
+      "apps/desktop/src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts",
+      "apps/desktop/src/lib/trpc/routers/workspaces/procedures/query.ts"
+    ],
+    "pattern": "tRPC query + TanStack Router navigation"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "id": "TASK-007",
+  "title": "CommandChain 集成",
+  "description": "在 Dashboard 侧边栏右侧集成 CommandChainPanel 和 KnowledgePanel。",
+  "status": "completed",
+  "scope": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/routes/_authenticated/_dashboard/-layout.tsx"
+  ],
+  "depends_on": ["TASK-004"],
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/-layout.tsx",
+      "action": "modify",
+      "target": "添加右侧面板（CommandChain + Knowledge）",
+      "change": "在 Dashboard 布局中添加可切换的右侧面板"
+    }
+  ],
+  "implementation": [
+    "创建 RightSidePanel 组件，包含 CommandChain 和 Knowledge 切换按钮",
+    "集成 CommandChainPanel 组件（cwd 传空字符串）",
+    "使用 useState 管理面板切换状态",
+    "CommandChain 和 Knowledge 面板互斥切换"
+  ],
+  "convergence": {
+    "criteria": [
+      "Dashboard 右侧显示面板切换按钮",
+      "点击 CommandChain 按钮显示 CommandChainPanel",
+      "点击 Knowledge 按钮显示 KnowledgePanel",
+      "再次点击关闭面板",
+      "tsc --noEmit 零错误"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck"
+  },
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck"]
+  },
+  "reference": {
+    "files": [
+      "apps/desktop/src/renderer/components/CommandChainPanel/CommandChainPanel.tsx",
+      "apps/desktop/src/renderer/components/KnowledgePanel/KnowledgePanel.tsx"
+    ],
+    "pattern": "Side panel toggle pattern"
+  }
+}

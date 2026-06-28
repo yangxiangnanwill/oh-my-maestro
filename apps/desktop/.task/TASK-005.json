@@ -1,0 +1,44 @@
+{
+  "id": "TASK-005",
+  "title": "Chat 面板集成",
+  "description": "改进 workspaces/$workspaceId/page.tsx，集成简化版 Chat 面板。",
+  "status": "completed",
+  "scope": "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/page.tsx"
+  ],
+  "depends_on": ["TASK-003", "TASK-004"],
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/page.tsx",
+      "action": "modify",
+      "target": "集成 ChatPanel 组件（简化版）",
+      "change": "替换占位内容为 Chat + Terminal + Overview 面板"
+    }
+  ],
+  "implementation": [
+    "创建 ChatPanel 组件（消息列表 + 输入框）",
+    "支持 Enter 发送消息",
+    "显示 user/assistant 消息气泡",
+    "集成 tRPC chatService.send mutation"
+  ],
+  "convergence": {
+    "criteria": [
+      "Workspace 页面显示 Chat 面板",
+      "Chat 面板支持输入和发送消息",
+      "消息以气泡形式展示",
+      "tsc --noEmit 零错误"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck"
+  },
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck"]
+  },
+  "reference": {
+    "files": [
+      "apps/desktop/src/renderer/components/Chat/ChatInterface/types.ts",
+      "apps/desktop/src/renderer/components/Chat/ChatInterface/components/ChatInputFooter/ChatInputFooter.tsx"
+    ],
+    "pattern": "Chat message bubble pattern"
+  }
+}

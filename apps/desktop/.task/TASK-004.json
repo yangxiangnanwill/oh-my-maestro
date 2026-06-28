@@ -1,0 +1,44 @@
+{
+  "id": "TASK-004",
+  "title": "新建工作区入口",
+  "description": "在 Dashboard 页面添加 New Workspace 按钮，点击弹出 NewWorkspaceModal。",
+  "status": "completed",
+  "scope": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/routes/_authenticated/_dashboard/-layout.tsx"
+  ],
+  "depends_on": ["TASK-003"],
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/-layout.tsx",
+      "action": "modify",
+      "target": "侧边栏添加 New Workspace 按钮 + 集成 NewWorkspaceModal",
+      "change": "替换占位侧边栏为实际工作区列表 + 新建按钮"
+    }
+  ],
+  "implementation": [
+    "在侧边栏标题旁添加 Plus 按钮",
+    "按钮点击调用 useNewWorkspaceModalStore.openModal()",
+    "在 DashboardLayout 中渲染 NewWorkspaceModal 组件",
+    "侧边栏集成 tRPC workspaces.getAllGrouped 查询"
+  ],
+  "convergence": {
+    "criteria": [
+      "Dashboard 侧边栏显示 New Workspace 按钮",
+      "点击按钮弹出 NewWorkspaceModal",
+      "侧边栏显示实际工作区列表（分组）",
+      "tsc --noEmit 零错误"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck"
+  },
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck"]
+  },
+  "reference": {
+    "files": [
+      "apps/desktop/src/renderer/components/NewWorkspaceModal/NewWorkspaceModal.tsx",
+      "apps/desktop/src/renderer/stores/new-workspace-modal.ts"
+    ],
+    "pattern": "zustand store + modal pattern"
+  }
+}
