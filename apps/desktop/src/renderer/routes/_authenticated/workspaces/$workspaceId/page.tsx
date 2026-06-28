@@ -17,6 +17,7 @@ import {
   getDefaultTerminalAppearance,
   type TerminalAppearance,
 } from "renderer/lib/terminal/appearance";
+import { useTranslation } from "renderer/contexts/TranslationContext";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 
 // ---------------------------------------------------------------------------
@@ -24,6 +25,7 @@ import { electronTrpc } from "renderer/lib/electron-trpc";
 // ---------------------------------------------------------------------------
 
 function ChatPanel({ workspaceId }: { workspaceId: string }) {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<
     { id: string; role: "user" | "assistant"; content: string }[]
   >([]);
@@ -75,7 +77,7 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
       <div className="flex-shrink-0 border-b px-4 py-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
           <MessageSquare className="h-4 w-4" />
-          Chat
+          {t("ui.workspace.chat")}
         </h3>
         <p className="mt-0.5 text-xs text-muted-foreground">{workspaceId}</p>
       </div>
@@ -84,8 +86,8 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
         {messages.length === 0 ? (
           <div className="flex flex-col items-center gap-2 py-12 text-center text-sm text-muted-foreground">
             <MessageSquare className="h-8 w-8 opacity-30" />
-            <p>Start a conversation</p>
-            <p className="text-xs">Type a message to chat with the AI assistant</p>
+            <p>{t("ui.chat.startConversation")}</p>
+            <p className="text-xs">{t("ui.chat.hint")}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -108,7 +110,7 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
             {isLoading && (
               <div className="flex justify-start">
                 <div className="max-w-[80%] rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
-                  <span className="animate-pulse">Thinking...</span>
+                  <span className="animate-pulse">{t("ui.chat.thinking")}</span>
                 </div>
               </div>
             )}
@@ -124,7 +126,7 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
+            placeholder={t("ui.chat.placeholder")}
             className="flex-1 rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-accent/30"
             disabled={isLoading}
           />
@@ -134,7 +136,7 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
             onClick={handleSend}
             disabled={isLoading || !input.trim()}
           >
-            Send
+            {t("ui.chat.send")}
           </button>
         </div>
       </div>
@@ -147,6 +149,7 @@ function ChatPanel({ workspaceId }: { workspaceId: string }) {
 // ---------------------------------------------------------------------------
 
 function TerminalPanel({ workspaceId }: { workspaceId: string }) {
+  const { t } = useTranslation();
   const containerRef = useRef<HTMLDivElement>(null);
   const runtimeRef = useRef<TerminalRuntime | null>(null);
   const paneIdRef = useRef<string>(`workspace-${workspaceId}`);
@@ -214,7 +217,7 @@ function TerminalPanel({ workspaceId }: { workspaceId: string }) {
       <div className="flex-shrink-0 border-b px-4 py-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
           <TerminalIcon className="h-4 w-4" />
-          Terminal
+          {t("ui.workspace.terminal")}
         </h3>
         <p className="mt-0.5 text-xs text-muted-foreground">{workspaceId}</p>
       </div>
@@ -229,31 +232,32 @@ function TerminalPanel({ workspaceId }: { workspaceId: string }) {
 
 function OverviewPanel({ workspaceId }: { workspaceId: string }) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex-shrink-0 border-b px-4 py-3">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
           <LayoutGrid className="h-4 w-4" />
-          Overview
+          {t("ui.workspace.overview")}
         </h3>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-3">
         <div className="space-y-4">
           <div>
-            <p className="text-xs text-muted-foreground">Workspace ID</p>
+            <p className="text-xs text-muted-foreground">{t("ui.workspace.workspaceId")}</p>
             <p className="text-sm font-mono text-xs opacity-60">{workspaceId}</p>
           </div>
           <p className="text-xs text-muted-foreground">
-            Workspace details
+            {t("ui.workspace.overview")}
           </p>
           <button
             type="button"
             className="mt-4 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/80"
             onClick={() => navigate({ to: "/" as never })}
           >
-            Back to Dashboard
+            {t("ui.workspace.backToDashboard")}
           </button>
         </div>
       </div>
@@ -269,12 +273,13 @@ type ViewLayout = "split" | "chat" | "terminal";
 
 function WorkspacePage() {
   const { workspaceId } = useParams({ strict: false }) as { workspaceId: string };
+  const { t } = useTranslation();
   const [viewLayout, setViewLayout] = useState<ViewLayout>("split");
 
   if (!workspaceId) {
     return (
       <div className="flex h-full items-center justify-center text-muted-foreground">
-        <p>No workspace selected</p>
+        <p>{t("ui.workspace.noWorkspace")}</p>
       </div>
     );
   }
@@ -296,7 +301,7 @@ function WorkspacePage() {
           }`}
           onClick={() => setViewLayout("split")}
         >
-          Split View
+          {t("ui.workspace.splitView")}
         </button>
         <button
           type="button"
@@ -307,7 +312,7 @@ function WorkspacePage() {
           }`}
           onClick={() => setViewLayout("chat")}
         >
-          Chat Only
+          {t("ui.workspace.chatOnly")}
         </button>
         <button
           type="button"
@@ -318,7 +323,7 @@ function WorkspacePage() {
           }`}
           onClick={() => setViewLayout("terminal")}
         >
-          Terminal Only
+          {t("ui.workspace.terminalOnly")}
         </button>
       </div>
 

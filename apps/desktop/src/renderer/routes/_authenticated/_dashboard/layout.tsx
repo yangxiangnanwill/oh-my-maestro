@@ -8,7 +8,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { useState, useCallback } from "react";
+import { useTranslation } from "renderer/contexts/TranslationContext";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { useNewWorkspaceModalStore } from "renderer/stores/new-workspace-modal";
+import { NewWorkspaceModal } from "renderer/components/NewWorkspaceModal";
 import { CommandChainPanel } from "renderer/components/CommandChainPanel/CommandChainPanel";
 import { KnowledgePanel } from "renderer/components/KnowledgePanel/KnowledgePanel";
 import { CollectionsProvider } from "../providers/CollectionsProvider";
@@ -22,6 +25,7 @@ import { navigateToWorkspace } from "./utils/workspace-navigation";
 
 function DashboardSidebar() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: workspaces, isLoading } =
     electronTrpc.workspaces.getAll.useQuery();
 
@@ -59,13 +63,13 @@ function DashboardSidebar() {
             letterSpacing: "0.05em",
           }}
         >
-          Workspaces
+          {t("ui.dashboard.recentWorkspaces")}
         </h2>
         <button
           type="button"
           className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-          onClick={() => alert("New Workspace — Phase 4")}
-          title="New Workspace"
+          onClick={() => useNewWorkspaceModalStore.getState().openModal()}
+          title={t("ui.dashboard.newWorkspace")}
         >
           <Plus className="h-4 w-4" />
         </button>
@@ -74,7 +78,7 @@ function DashboardSidebar() {
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-8 text-xs text-muted-foreground">
           <Loader2 className="h-3 w-3 animate-spin" />
-          <span>Loading...</span>
+          <span>{t("ui.common.loading")}</span>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
@@ -144,6 +148,7 @@ function DashboardSidebar() {
 type RightPanel = "none" | "commandChain" | "knowledge";
 
 function RightSidePanel() {
+  const { t } = useTranslation();
   const [activePanel, setActivePanel] = useState<RightPanel>("none");
 
   const togglePanel = useCallback((panel: RightPanel) => {
@@ -174,7 +179,7 @@ function RightSidePanel() {
               : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
           }`}
           onClick={() => togglePanel("commandChain")}
-          title="Command Chain"
+          title={t("ui.workspace.commandChain")}
         >
           <ListChecks className="h-4 w-4" />
         </button>
@@ -186,7 +191,7 @@ function RightSidePanel() {
               : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
           }`}
           onClick={() => togglePanel("knowledge")}
-          title="Knowledge"
+          title={t("ui.workspace.knowledge")}
         >
           <Search className="h-4 w-4" />
         </button>
@@ -203,7 +208,7 @@ function RightSidePanel() {
           }}
         >
           {isCommandChainOpen && (
-            <CommandChainPanel cwd={""} title="Command Chain" />
+            <CommandChainPanel cwd={""} title={t("ui.workspace.commandChain")} />
           )}
           {isKnowledgeOpen && (
             <KnowledgePanel cwd={""} placeholder="Search knowledge..." />
@@ -243,6 +248,7 @@ function DashboardLayout() {
             <Outlet />
           </main>
           <RightSidePanel />
+          <NewWorkspaceModal />
         </div>
       </LocalHostServiceProvider>
     </CollectionsProvider>

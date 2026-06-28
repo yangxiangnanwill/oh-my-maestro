@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { createFileRoute } from "@tanstack/react-router";
 import { FolderGit2, Loader2, Plus } from "lucide-react";
+import { useTranslation } from "renderer/contexts/TranslationContext";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { useNewWorkspaceModalStore } from "renderer/stores/new-workspace-modal";
 import { navigateToWorkspace } from "./utils/workspace-navigation";
@@ -18,6 +19,7 @@ function WorkspaceCard({
   isUnread: boolean;
   onClick: (id: string) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <button
       type="button"
@@ -29,7 +31,7 @@ function WorkspaceCard({
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-card-foreground">
-          {name || "Unnamed Workspace"}
+          {name || t("ui.common.unnamedWorkspace")}
         </p>
         <p className="text-xs text-muted-foreground capitalize">{type}</p>
       </div>
@@ -42,6 +44,7 @@ function WorkspaceCard({
 
 function DashboardPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: workspaceGroups, isLoading, error } =
     electronTrpc.workspaces.getAllGrouped.useQuery();
   const workspaces = workspaceGroups?.flatMap((g) => g.workspaces) ?? [];
@@ -68,30 +71,30 @@ function DashboardPage() {
               margin: "0 0 4px 0",
             }}
           >
-            Dashboard
+            {t("ui.dashboard.title")}
           </h1>
           <p style={{ fontSize: "14px", opacity: 0.5, margin: 0 }}>
-            Your workspaces and projects
+            {t("ui.dashboard.yourWorkspaces")}
           </p>
         </div>
         <button
           type="button"
           className="flex items-center gap-2 rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/80"
-          onClick={() => alert("New Workspace — Phase 4")}
+          onClick={() => useNewWorkspaceModalStore.getState().openModal()}
         >
           <Plus className="h-4 w-4" />
-          New Workspace
+          {t("ui.dashboard.newWorkspace")}
         </button>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Loading workspaces...</span>
+          <span>{t("ui.dashboard.loading")}</span>
         </div>
       ) : error ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
-          <p className="text-sm text-red-500">Failed to load workspaces</p>
+          <p className="text-sm text-red-500">{t("ui.dashboard.loadError")}</p>
           <p className="max-w-[320px] text-xs text-muted-foreground">
             {error.message}
           </p>
@@ -99,9 +102,9 @@ function DashboardPage() {
       ) : workspaces.length === 0 ? (
         <div className="flex flex-col items-center gap-3 py-16 text-center">
           <FolderGit2 className="h-12 w-12 text-muted-foreground/40" />
-          <p className="text-sm text-muted-foreground">No workspaces yet</p>
+          <p className="text-sm text-muted-foreground">{t("ui.dashboard.noWorkspaces")}</p>
           <p className="max-w-[240px] text-xs text-muted-foreground/60">
-            Click "New Workspace" to create your first workspace
+            {t("ui.dashboard.createFirst")}
           </p>
         </div>
       ) : (
