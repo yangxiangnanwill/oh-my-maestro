@@ -3,39 +3,26 @@
 // lib/trpc/routers/workspaces/utils/shell-env, ./relay-url, ./host-service-manifest, etc.
 
 import { EventEmitter } from "node:events";
+import type {
+  HostServiceStatus,
+  HostServiceStatusEvent,
+  Connection,
+  HostServiceStartOpts,
+  HostServiceRestartOpts,
+  HostServiceResetOpts,
+  HostServiceCoordinatorEvents,
+} from "shared/host-info-types";
 
-export type HostServiceStatus = "starting" | "running" | "stopped";
-
-export interface HostServiceStatusEvent {
-  status: HostServiceStatus;
-  organizationId: string;
-  error?: string;
-}
-
-export interface Connection {
-  port: number;
-  secret: string;
-}
-
-export interface HostServiceStartOpts {
-  authToken: string;
-  cloudApiUrl: string;
-}
-
-export interface HostServiceRestartOpts {
-  authToken: string;
-  cloudApiUrl: string;
-}
-
-export interface HostServiceResetOpts {
-  authToken: string;
-  cloudApiUrl: string;
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface HostServiceCoordinatorEvents {
-  // Phase 4: define events
-}
+// Re-export types for backward compatibility
+export type {
+  HostServiceStatus,
+  HostServiceStatusEvent,
+  Connection,
+  HostServiceStartOpts,
+  HostServiceRestartOpts,
+  HostServiceResetOpts,
+  HostServiceCoordinatorEvents,
+};
 
 export class HostServiceCoordinator extends EventEmitter {
   // Phase 4: implement full coordinator logic

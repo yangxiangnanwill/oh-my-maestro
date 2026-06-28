@@ -29,7 +29,8 @@ export function useHandleOpenedWorktree() {
 				data,
 					addTab: (workspaceId) => {
 						const tabId = addTab(workspaceId);
-						const paneId = tabId;
+						// Phase 4: 使用 addPane(tabId) 生成独立的 paneId
+					const paneId = tabId;
 						return { tabId, paneId };
 					},
 				setTabAutoTitle,

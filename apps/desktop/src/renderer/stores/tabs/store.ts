@@ -53,6 +53,8 @@ interface TabsState {
   setChatLaunchConfig: (paneId: string, config: ChatLaunchConfig) => void;
 }
 
+// Phase 4: 将计数器移入 zustand store 内部或使用 crypto.randomUUID()
+// 模块级可变计数器在 HMR 时不重置，可能导致 ID 碰撞
 let tabCounter = 0;
 let paneCounter = 0;
 
@@ -126,7 +128,8 @@ export const useTabsStore = create<TabsState>((set, get) => ({
     const tabId = tab?.id ?? get().addTab(workspaceId);
     const id = nextPaneId();
     set((state) => ({
-      panes: { ...state.panes, [id]: { id, type: "browser", tabId } },
+      // Phase 4: 将 url 存储到 pane 对象中
+      panes: { ...state.panes, [id]: { id, type: "browser", tabId, url } },
     }));
   },
 

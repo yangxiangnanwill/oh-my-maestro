@@ -4,6 +4,12 @@
  * Phase 3: Minimal stub. Provides placeholder implementations for
  * process signal management. Full implementation will be migrated
  * from Superset in Phase 4.
+ *
+ * Phase 4 注意事项:
+ * - signalProcessTreeAndGroups 当前同步返回空数组，调用方 (pty-subprocess.ts)
+ *   使用同步方式消费返回值。Phase 4 迁移真实实现时需确保签名兼容。
+ * - signalProcessTargets 当前返回 resolved Promise，Phase 4 需实现真实的
+ *   SIGKILL 升级逻辑。
  */
 
 export class ProcessSignalError extends Error {

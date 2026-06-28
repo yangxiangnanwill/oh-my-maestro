@@ -2,6 +2,7 @@ import "highlight.js/styles/github-dark.css";
 import "./markdown-editor.css";
 
 import { cn } from "../Chat/stubs/ui/utils";
+import type { TipTapExtensions } from "renderer/lib/tiptap-utils";
 import { Extension } from "@tiptap/core";
 import { Blockquote } from "@tiptap/extension-blockquote";
 import { Bold } from "@tiptap/extension-bold";
@@ -326,8 +327,10 @@ export function MarkdownEditor({
 					"first:before:text-muted-foreground first:before:float-left first:before:h-0 first:before:pointer-events-none first:before:content-[attr(data-placeholder)]",
 			}),
 			Markdown.configure({
+				// Phase 4: 将 html 恢复为 true 之前必须集成 DOMPurify 净化器
+				// 当前设为 false 以匹配只读渲染器的安全策略 (createMarkdownExtensions.ts)
 				markdownOptions: {
-					html: true,
+					html: false,
 					transformPastedText: true,
 					transformCopiedText: true,
 				},
@@ -344,7 +347,7 @@ export function MarkdownEditor({
 					]
 				: []),
 			KeyboardHandler,
-		] as Parameters<typeof useEditor>[0] extends { extensions?: infer E } ? E : never,
+		] as TipTapExtensions,
 		content,
 		editorProps: {
 			attributes: {
