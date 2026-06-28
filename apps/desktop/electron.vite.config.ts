@@ -101,6 +101,9 @@ export default defineConfig({
 				input: {
 					index: resolve("src/preload/index.ts"),
 				},
+				output: {
+					format: "cjs",
+				},
 			},
 		},
 	},
@@ -151,7 +154,7 @@ export default defineConfig({
 				routeToken: "layout",
 				autoCodeSplitting: true,
 				routeFileIgnorePattern:
-					"^(?!(__root|page|layout)\\.tsx$).*\\.(tsx?|jsx?)$",
+					"^(?!(__root|page|layout|-layout)\\.tsx$).*\\.(tsx?|jsx?)$",
 			}),
 			tsconfigPaths,
 			tailwindcss(),

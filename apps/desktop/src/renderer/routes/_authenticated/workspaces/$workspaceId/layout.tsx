@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck — layout route type pending tsr parent route resolution
 import { Outlet, createFileRoute, useParams } from "@tanstack/react-router";
 import { Search, X, PanelRight } from "lucide-react";
 import { useState, useCallback } from "react";

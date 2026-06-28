@@ -4,7 +4,7 @@
   "generatedRouteTree": "./src/renderer/routeTree.gen.ts",
   "indexToken": "page",
   "routeToken": "layout",
-  "routeFileIgnorePrefix": "-",
+  "routeFileIgnorePrefix": "",
   "autoCodeSplitting": true,
-  "routeFileIgnorePattern": "^(?!(__root|page|layout)\\.tsx$).*\\.(tsx?|jsx?)$"
+  "routeFileIgnorePattern": "^(?!(__root|page|layout|-layout)\\.tsx$).*\\.(tsx?|jsx?)$"
 }
