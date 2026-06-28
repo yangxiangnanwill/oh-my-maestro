@@ -1,0 +1,59 @@
+{
+  "summary": "S4 编译验证后代码审查发现 26 个问题（2 high, 10 medium, 14 low），分布在 correctness、security、architecture、maintainability、performance、best-practices 6 个维度。本计划按 4 个 Wave 分组修复：Wave 1 为低风险直接修复（缩进、useMemo、barrel export 等），Wave 2 为需设计决策的项（noImplicitAny、XSS、架构分层），Wave 3 为 Phase 4 迁移准备（stub 改进、注释、警告），Wave 4 为延后项和剩余 medium 修复。",
+  "approach": "按风险等级和依赖关系分 4 个 Wave 串行执行，每个 Wave 内任务可并行。每个任务修改 1-4 个文件，修改后验证 typecheck 通过。所有修改最小化、向后兼容、不重构。",
+  "task_ids": [
+    "TASK-001", "TASK-002", "TASK-003", "TASK-004",
+    "TASK-005", "TASK-006", "TASK-007",
+    "TASK-008", "TASK-009", "TASK-010",
+    "TASK-011", "TASK-012", "TASK-013"
+  ],
+  "task_count": 13,
+  "complexity": "medium",
+  "estimated_time": "3h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": ["TASK-001", "TASK-002", "TASK-003", "TASK-004"],
+      "description": "Quick Wins — 低风险直接修复：缩进、useMemo、DRY 提取、barrel export"
+    },
+    {
+      "wave": 2,
+      "tasks": ["TASK-005", "TASK-006", "TASK-007"],
+      "description": "设计决策项 — 需确认方案：noImplicitAny、XSS 安全、架构分层"
+    },
+    {
+      "wave": 3,
+      "tasks": ["TASK-008", "TASK-009", "TASK-010"],
+      "description": "Phase 4 迁移准备 — stub 改进、注释、警告"
+    },
+    {
+      "wave": 4,
+      "tasks": ["TASK-011", "TASK-012", "TASK-013"],
+      "description": "延后项 + 剩余 medium — 类型声明、共享类型、性能优化"
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": ["Wave 1: 低风险修复", "Wave 2: 设计决策修复", "Wave 3: Stub 改进", "Wave 4: 延后项修复"]
+  },
+  "design_decisions": [
+    "SEC-001: html:true → false 并添加 DOMPurify TODO，而非引入新依赖",
+    "BP-001: 恢复 noImplicitAny: true，逐个修复隐式 any 而非全局 suppress",
+    "ARCH-001: 提取 host-service-coordinator 纯类型到 shared/，保持运行时不变",
+    "MAINT-001: 提取 TipTapExtensions 共享类型到独立文件，两处导入使用"
+  ],
+  "shared_context": {
+    "patterns": ["zustand store pattern", "tRPC mutation pattern", "React useMemo/useCallback pattern"],
+    "conventions": ["2 空格缩进", "ESM imports", "TypeScript strict mode", "barrel export 模式"],
+    "dependencies": ["@tiptap/react", "zustand", "electron", "@trpc/server"]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-28T00:00:00+08:00",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "tech-debt",
+    "schema_version": "2.0",
+    "git_commit": null
+  }
+}

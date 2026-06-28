@@ -1,0 +1,106 @@
+{
+  "id": "TASK-001",
+  "title": "修复 auth-functions.ts 缩进 + workspace-navigation.ts 未使用参数",
+  "description": "修复 MAINT-005（loadToken 缩进 tab→2空格）和 BP-006（_opts 参数使用 _ 前缀约定但缺少注释说明）",
+  "issue_id": null,
+  "issue_refs": [
+    "MAINT-005",
+    "BP-006"
+  ],
+  "type": "tech-debt",
+  "priority": "low",
+  "effort": "low",
+  "action": "1) auth-functions.ts L33-38: 将 loadToken 函数体的 tab 缩进改为 2 空格缩进；2) workspace-navigation.ts L9: 为 _opts 参数添加 JSDoc @param 注释说明 Phase 4 将使用此参数传递导航选项",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/lib/trpc/routers/auth/utils/ + src/renderer/routes/",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/auth/utils/auth-functions.ts",
+    "apps/desktop/src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/routers/auth/utils/auth-functions.ts",
+    "apps/desktop/src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave1-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "auth-functions.ts L33-38 缩进为 2 空格（grep -P '^\\t' 无匹配）",
+      "workspace-navigation.ts L9 包含 @param _opts JSDoc 注释",
+      "cd apps/desktop && bun run typecheck 退出码 0"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck",
+    "definition_of_done": "auth-functions.ts 缩进一致，workspace-navigation.ts 未使用参数有明确注释说明"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/auth/utils/auth-functions.ts",
+      "action": "modify",
+      "target": "loadToken 函数体 (L33-38)",
+      "change": "将 tab 缩进改为 2 空格缩进"
+    },
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts",
+      "action": "modify",
+      "target": "navigateToWorkspace 函数签名 (L9)",
+      "change": "为 _opts 参数添加 JSDoc @param 注释：@param _opts Phase 4 将使用此参数传递 NavigateOptions（replace/push 等）"
+    }
+  ],
+  "implementation": [
+    "打开 auth-functions.ts，定位 L33-38 loadToken 函数体，将 tab 缩进替换为 2 空格",
+    "打开 workspace-navigation.ts，在 L9 _opts 参数上方添加 JSDoc 注释行",
+    "运行 bun run typecheck 验证"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck 通过",
+      "缩进一致"
+    ]
+  },
+  "reference": {
+    "pattern": "文件中其他函数的 2 空格缩进风格",
+    "files": [
+      "apps/desktop/src/lib/trpc/routers/auth/utils/auth-functions.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "最小化修改：只改缩进和添加注释，不改变任何逻辑",
+    "decision_factors": [
+      "低风险",
+      "纯格式/文档修改"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "auth stubs",
+      "workspace navigation"
+    ],
+    "affected_components": [
+      "auth-functions",
+      "workspace-navigation"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "10m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}

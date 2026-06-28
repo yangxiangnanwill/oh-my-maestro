@@ -1,0 +1,118 @@
+{
+  "id": "TASK-007",
+  "title": "提取 host-service-coordinator 纯类型到 shared/ + 更新 tsconfig paths",
+  "description": "修复 ARCH-001：将 host-service-coordinator.ts 中的纯类型定义（HostServiceStatus, HostServiceStatusEvent, Connection, HostServiceStartOpts, HostServiceRestartOpts, HostServiceResetOpts, HostServiceCoordinatorEvents）提取到 src/shared/host-info-types.ts，更新 tsconfig paths 中 @superset/shared/host-info 指向新文件。运行时实现保留在 main 层。",
+  "issue_id": null,
+  "issue_refs": [
+    "ARCH-001"
+  ],
+  "type": "tech-debt",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "1) 创建 src/shared/host-info-types.ts，包含从 host-service-coordinator.ts 提取的所有 interface/type 定义；2) host-service-coordinator.ts 从 shared/host-info-types 导入类型并 re-export 保持向后兼容；3) tsconfig.json L31: 将 @superset/shared/host-info 路径从 './src/main/lib/host-service-coordinator.ts' 改为 './src/shared/host-info-types.ts'",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/main/lib/ + src/shared/ + tsconfig.json",
+  "focus_paths": [
+    "apps/desktop/src/main/lib/host-service-coordinator.ts",
+    "apps/desktop/src/shared/",
+    "apps/desktop/tsconfig.json"
+  ],
+  "read_first": [
+    "apps/desktop/src/main/lib/host-service-coordinator.ts",
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/shared/"
+  ],
+  "depends_on": [],
+  "wave": 2,
+  "parallel_group": "wave2-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "src/shared/host-info-types.ts 文件存在且包含所有纯类型定义",
+      "host-service-coordinator.ts 从 shared/host-info-types 导入类型",
+      "tsconfig.json L31 路径指向 './src/shared/host-info-types.ts'",
+      "cd apps/desktop && bun run typecheck 退出码 0",
+      "所有现有 import '@superset/shared/host-info' 的编译通过"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck && grep -r '@superset/shared/host-info' src/ --include='*.ts' --include='*.tsx'",
+    "definition_of_done": "host-service-coordinator 的纯类型在 shared 层可用，main 层实现通过 import 引用，不再有跨层混淆风险"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/shared/host-info-types.ts",
+      "action": "create",
+      "target": "新文件",
+      "change": "创建包含 HostServiceStatus, HostServiceStatusEvent, Connection, HostServiceStartOpts, HostServiceRestartOpts, HostServiceResetOpts, HostServiceCoordinatorEvents 类型定义的文件"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/host-service-coordinator.ts",
+      "action": "modify",
+      "target": "类型定义部分 (L7-38)",
+      "change": "删除已提取到 shared 的类型定义，改为从 shared/host-info-types 导入并 re-export"
+    },
+    {
+      "path": "apps/desktop/tsconfig.json",
+      "action": "modify",
+      "target": "L31 paths 中的 @superset/shared/host-info",
+      "change": "路径从 './src/main/lib/host-service-coordinator.ts' 改为 './src/shared/host-info-types.ts'"
+    }
+  ],
+  "implementation": [
+    "创建 src/shared/host-info-types.ts，复制所有 interface/type 定义",
+    "修改 host-service-coordinator.ts：import 类型并 re-export，保留 class 和函数实现",
+    "更新 tsconfig.json L31 路径",
+    "运行 typecheck 确认所有导入正常"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck 通过",
+      "无新增编译错误"
+    ]
+  },
+  "reference": {
+    "pattern": "src/shared/ 中已有的类型文件（如 shared/changes-types.ts）",
+    "files": [
+      "apps/desktop/src/shared/"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "提取纯类型到 shared/，保持运行时在 main/——类型可以在 renderer 安全导入，运行时实现仍在 main 层",
+    "decision_factors": [
+      "分层架构清晰",
+      "类型可跨层安全使用",
+      "向后兼容"
+    ],
+    "tradeoffs": "增加一个文件，但换来清晰的层次边界"
+  },
+  "risks": [
+    "需确认所有 import '@superset/shared/host-info' 的代码在路径变更后仍正常编译"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "host-service-coordinator"
+    ],
+    "affected_components": [
+      "host-service-coordinator.ts",
+      "shared/host-info-types.ts"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "25m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}

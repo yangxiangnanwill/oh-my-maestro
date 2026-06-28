@@ -1,0 +1,100 @@
+{
+  "id": "TASK-013",
+  "title": "MessagePartsRenderer 性能优化：renderParts useCallback + 提取 a 组件",
+  "description": "修复 PERF-001（renderParts 内联函数导致每次渲染重建元素树）和 PERF-002（components useMemo 内联创建 React 组件导致子组件重新挂载）",
+  "issue_id": null,
+  "issue_refs": [
+    "PERF-001",
+    "PERF-002"
+  ],
+  "type": "tech-debt",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "1) PERF-002: 将 components useMemo 中的 a 组件提取为模块级组件或使用 useCallback 稳定引用。由于 a 组件依赖 handleLinkClick（已用 useCallback 包裹），可以提取为独立组件 LinkComponent，通过 props 传递 onClick；2) PERF-001: 将 renderParts 函数用 useCallback 包裹，依赖项为 [mermaidConfig, components, isStreaming, workspaceId, workspaceCwd, openFileInPane, onAnswer, isInterrupted]",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx"
+  ],
+  "depends_on": [],
+  "wave": 4,
+  "parallel_group": "wave4-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "MessagePartsRenderer.tsx 中存在独立定义的 LinkComponent（非 useMemo 内联）",
+      "renderParts 函数使用 useCallback 包裹",
+      "cd apps/desktop && bun run typecheck 退出码 0"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck",
+    "definition_of_done": "renderParts 和 a 组件引用稳定，避免流式输出时不必要的重渲染"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx",
+      "action": "modify",
+      "target": "components useMemo (L78-97) 和 renderParts 函数 (L108-335)",
+      "change": "提取 a 组件为独立 LinkComponent；renderParts 用 useCallback 包裹"
+    }
+  ],
+  "implementation": [
+    "在 MessagePartsRenderer 组件外部定义 LinkComponent，接收 href、children、onClick 等 props",
+    "修改 components useMemo，返回 { a: (props) => <LinkComponent ...props onClick={handleLinkClick} /> }",
+    "将 renderParts 用 useCallback 包裹，添加正确的依赖数组",
+    "运行 typecheck 验证"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck 通过",
+      "React DevTools 中组件重渲染次数减少"
+    ]
+  },
+  "reference": {
+    "pattern": "React useCallback 稳定函数引用模式",
+    "files": [
+      "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "提取组件 + useCallback 稳定引用，避免流式输出时不必要的重渲染",
+    "decision_factors": [
+      "性能优化",
+      "React 最佳实践",
+      "流式输出场景高频渲染"
+    ],
+    "tradeoffs": "增加一个组件定义，但换来稳定的引用和更好的性能"
+  },
+  "risks": [
+    "useCallback 依赖数组需要仔细核对，遗漏依赖可能导致闭包过期"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "MessagePartsRenderer"
+    ],
+    "affected_components": [
+      "MessagePartsRenderer"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "25m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}

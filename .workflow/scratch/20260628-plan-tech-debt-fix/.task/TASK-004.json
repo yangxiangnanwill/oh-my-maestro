@@ -1,0 +1,106 @@
+{
+  "id": "TASK-004",
+  "title": "tsconfig.json 路径别名注释 + stores/index.ts useSyncExternalStore 注释",
+  "description": "修复 ARCH-004（stores/index.ts 添加 useSyncExternalStore 选择原因注释）和 tsconfig paths 中 shared→main 映射的安全注释",
+  "issue_id": null,
+  "issue_refs": [
+    "ARCH-004"
+  ],
+  "type": "tech-debt",
+  "priority": "low",
+  "effort": "low",
+  "action": "1) stores/index.ts L15: 在 currentTheme 声明上方添加注释：'// 使用 useSyncExternalStore 而非 zustand——theme 状态需要在 React 树外部读写（Electron nativeTheme 回调），且不需要 zustand 的中间件/subscription 机制'；2) tsconfig.json L31: 在 @superset/shared/host-info 路径别名上方添加注释说明此映射指向 main 层实现，renderer 层不应直接导入",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/renderer/stores/ + apps/desktop/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/stores/index.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/stores/index.ts",
+    "apps/desktop/tsconfig.json"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave1-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "stores/index.ts L14-15 之间包含 'useSyncExternalStore 而非 zustand' 注释",
+      "tsconfig.json L31 上方包含 '此映射指向 main 层实现' 注释",
+      "cd apps/desktop && bun run typecheck 退出码 0（JSON 文件变化不影响 typecheck）"
+    ],
+    "verification": "grep -n 'useSyncExternalStore 而非 zustand' apps/desktop/src/renderer/stores/index.ts && grep -n '指向 main 层实现' apps/desktop/tsconfig.json",
+    "definition_of_done": "两个架构决策点有明确注释说明选择理由和约束"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/stores/index.ts",
+      "action": "modify",
+      "target": "L15 currentTheme 声明前",
+      "change": "添加注释说明使用 useSyncExternalStore 而非 zustand 的原因"
+    },
+    {
+      "path": "apps/desktop/tsconfig.json",
+      "action": "modify",
+      "target": "L31 @superset/shared/host-info 上方",
+      "change": "添加注释：此映射指向 main 层实现，renderer 层不应直接导入此别名"
+    }
+  ],
+  "implementation": [
+    "在 stores/index.ts L15 前添加注释",
+    "在 tsconfig.json L31 前添加注释（JSON 不支持注释，需在上一行用 // 或放入 _comment 字段；实际上 tsconfig.json 支持 // 注释）",
+    "验证 typecheck"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "注释存在",
+      "typecheck 通过"
+    ]
+  },
+  "reference": {
+    "pattern": "JSDoc 注释风格 + tsconfig 行注释",
+    "files": [
+      "apps/desktop/src/renderer/stores/index.ts",
+      "apps/desktop/tsconfig.json"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "仅添加文档注释，不改变任何代码逻辑",
+    "decision_factors": [
+      "降低认知负担",
+      "帮助未来开发者理解设计决策"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "theme store",
+      "path aliases"
+    ],
+    "affected_components": [
+      "stores/index.ts",
+      "tsconfig.json"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "10m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}

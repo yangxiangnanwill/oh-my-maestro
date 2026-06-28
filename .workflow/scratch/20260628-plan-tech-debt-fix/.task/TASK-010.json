@@ -1,0 +1,120 @@
+{
+  "id": "TASK-010",
+  "title": "Phase 4 TODO 注释：useHandleOpenedWorktree paneId + as never 路由",
+  "description": "修复 COR-004（useHandleOpenedWorktree paneId 添加 TODO）和 BP-002（AgentSelect + workspace-navigation 的 as never 添加 TODO 注释）",
+  "issue_id": null,
+  "issue_refs": [
+    "COR-004",
+    "BP-002"
+  ],
+  "type": "tech-debt",
+  "priority": "medium",
+  "effort": "low",
+  "action": "1) useHandleOpenedWorktree.ts L32: 在 'const paneId = tabId;' 上方添加注释 '// TODO(Phase 4): Replace with addPane(tabId) to generate independent paneId. Currently using tabId as placeholder—limits each tab to one pane'；2) AgentSelect.tsx L67: 'as never' 后添加注释 '// TODO(Phase 4): Replace as never with typed route when routeTree includes this route'；3) workspace-navigation.ts L11: 'as never' 后添加注释 '// TODO(Phase 4): Replace as never with typed route params'",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/renderer/react-query/workspaces/ + src/renderer/components/AgentSelect/ + src/renderer/routes/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/react-query/workspaces/useHandleOpenedWorktree.ts",
+    "apps/desktop/src/renderer/components/AgentSelect/AgentSelect.tsx",
+    "apps/desktop/src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/react-query/workspaces/useHandleOpenedWorktree.ts",
+    "apps/desktop/src/renderer/components/AgentSelect/AgentSelect.tsx",
+    "apps/desktop/src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts"
+  ],
+  "depends_on": [
+    "TASK-001"
+  ],
+  "wave": 3,
+  "parallel_group": "wave3-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "useHandleOpenedWorktree.ts L32 上方包含 'TODO(Phase 4): Replace with addPane(tabId)'",
+      "AgentSelect.tsx L67 包含 'TODO(Phase 4): Replace as never'",
+      "workspace-navigation.ts L11 包含 'TODO(Phase 4): Replace as never'",
+      "cd apps/desktop && bun run typecheck 退出码 0"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck",
+    "definition_of_done": "所有占位符和类型绕过有明确的 Phase 4 迁移计划注释"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/react-query/workspaces/useHandleOpenedWorktree.ts",
+      "action": "modify",
+      "target": "L32 const paneId = tabId",
+      "change": "添加 Phase 4 TODO 注释说明届时使用 addPane 生成独立 paneId"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/AgentSelect/AgentSelect.tsx",
+      "action": "modify",
+      "target": "L67 as never",
+      "change": "添加 TODO 注释说明 routeTree 包含此路由后替换为类型安全导航"
+    },
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts",
+      "action": "modify",
+      "target": "L11 as never",
+      "change": "添加 TODO 注释说明替换为类型安全路由参数"
+    }
+  ],
+  "implementation": [
+    "useHandleOpenedWorktree.ts: 在 paneId = tabId 前添加 TODO",
+    "AgentSelect.tsx: 在 as never 后添加行内 TODO 注释",
+    "workspace-navigation.ts: 在 as never 后添加行内 TODO 注释",
+    "运行 typecheck 验证"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck 通过",
+      "TODO 注释存在"
+    ]
+  },
+  "reference": {
+    "pattern": "TODO(Phase 4) 约定",
+    "files": [
+      "apps/desktop/src/renderer/react-query/workspaces/useHandleOpenedWorktree.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "添加 TODO 注释标记技术债务，Phase 4 统一处理",
+    "decision_factors": [
+      "Phase 3 stub 阶段可接受",
+      "明确的迁移路径"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "workspace opening",
+      "agent selection",
+      "workspace navigation"
+    ],
+    "affected_components": [
+      "useHandleOpenedWorktree",
+      "AgentSelect",
+      "workspace-navigation"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "10m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}

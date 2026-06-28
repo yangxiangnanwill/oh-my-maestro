@@ -1,0 +1,108 @@
+{
+  "id": "TASK-003",
+  "title": "提取 invalidatePresetRelatedQueries 消除 presets/index.ts 重复 + 整理 stores barrel export",
+  "description": "修复 MAINT-003（5 个 mutation hook 中 invalidation 列表重复）和 MAINT-004（stores 缺少统一 barrel export）",
+  "issue_id": null,
+  "issue_refs": [
+    "MAINT-003",
+    "MAINT-004"
+  ],
+  "type": "tech-debt",
+  "priority": "low",
+  "effort": "low",
+  "action": "1) presets/index.ts: 在模块顶层提取 async function invalidatePresetRelatedQueries(utils) { await utils.settings.getTerminalPresets.invalidate(); ... } 并在 5 个 mutation hook 的 onSuccess 中调用；2) stores/index.ts: 添加注释说明 barrel export 的职责——主题/markdown 样式使用 useSyncExternalStore，其他 store 使用 zustand（在各自文件中直接导入）",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/renderer/react-query/presets/ + src/renderer/stores/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/react-query/presets/index.ts",
+    "apps/desktop/src/renderer/stores/index.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/react-query/presets/index.ts",
+    "apps/desktop/src/renderer/stores/index.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave1-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "presets/index.ts 包含 'async function invalidatePresetRelatedQueries'",
+      "presets/index.ts 中 5 个 onSuccess 回调均调用 invalidatePresetRelatedQueries(utils)",
+      "stores/index.ts 顶部包含 barrel export 职责说明注释",
+      "cd apps/desktop && bun run typecheck 退出码 0"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck",
+    "definition_of_done": "invalidation 逻辑不再重复；stores 导入路径有明确文档说明"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/react-query/presets/index.ts",
+      "action": "modify",
+      "target": "5 个 mutation hook (useCreateTerminalPreset, useUpdateTerminalPreset, useDeleteTerminalPreset, useSetPresetAutoApply, useReorderTerminalPresets)",
+      "change": "提取模块级私有函数 invalidatePresetRelatedQueries，在 5 个 onSuccess 中替换重复的 5 行 invalidation 调用"
+    },
+    {
+      "path": "apps/desktop/src/renderer/stores/index.ts",
+      "action": "modify",
+      "target": "文件顶部 JSDoc 注释",
+      "change": "扩展注释：说明此文件只导出 useSyncExternalStore 的 theme/markdownStyle store；zustand store（tabs、changes 等）在各自文件中定义，通过各自文件路径直接导入"
+    }
+  ],
+  "implementation": [
+    "在 presets/index.ts 模块顶层（useCreateTerminalPreset 之前）添加 async function invalidatePresetRelatedQueries(utils) 包含 5 个 await invalidate 调用",
+    "将 5 个 mutation hook 中 onSuccess 的 5 行 invalidation 替换为 await invalidatePresetRelatedQueries(utils)",
+    "更新 stores/index.ts 顶部注释说明 barrel export 策略",
+    "运行 bun run typecheck 验证"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck 通过",
+      "无重复 invalidation 代码"
+    ]
+  },
+  "reference": {
+    "pattern": "DRY 原则：提取公共函数",
+    "files": [
+      "apps/desktop/src/renderer/react-query/presets/index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "提取模块级私有函数消除重复，不改变任何对外接口",
+    "decision_factors": [
+      "消除代码重复",
+      "便于后续统一修改 invalidation 策略"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "preset mutations",
+      "store organization"
+    ],
+    "affected_components": [
+      "presets/index.ts",
+      "stores/index.ts"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}

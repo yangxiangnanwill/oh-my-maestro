@@ -1,0 +1,109 @@
+{
+  "id": "TASK-005",
+  "title": "恢复 noImplicitAny: true 并修复隐式 any 类型错误",
+  "description": "修复 BP-001：将 tsconfig.json 中 noImplicitAny 从 false 恢复为 true（删除覆盖行），然后修复由此暴露的所有隐式 any 类型错误。需要逐个文件添加显式类型注解。",
+  "issue_id": null,
+  "issue_refs": [
+    "BP-001"
+  ],
+  "type": "tech-debt",
+  "priority": "high",
+  "effort": "medium",
+  "action": "1) tsconfig.json L9: 删除 '\"noImplicitAny\": false,' 行；2) 运行 typecheck 收集所有隐式 any 错误；3) 为每个错误添加显式类型注解（不使用 as any 绕过）",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "apps/desktop/",
+  "focus_paths": [
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/renderer/react-query/presets/index.ts",
+    "apps/desktop/src/renderer/lib/terminal/"
+  ],
+  "read_first": [
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/renderer/react-query/presets/index.ts"
+  ],
+  "depends_on": [],
+  "wave": 2,
+  "parallel_group": "wave2-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "tsconfig.json 中不存在 'noImplicitAny' 键（strict: true 已隐含）",
+      "cd apps/desktop && bun run typecheck 退出码 0",
+      "git diff 中无新增 as any 断言"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck",
+    "definition_of_done": "noImplicitAny 恢复为 true，所有隐式 any 通过显式类型注解修复"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/tsconfig.json",
+      "action": "modify",
+      "target": "L9 \"noImplicitAny\": false",
+      "change": "删除此行，strict: true 已隐含 noImplicitAny: true"
+    },
+    {
+      "path": "apps/desktop/src/renderer/react-query/presets/index.ts",
+      "action": "modify",
+      "target": "L108-111 useQuery 的 as 类型断言",
+      "change": "如果 typecheck 报错，添加显式类型注解替代 as 断言"
+    }
+  ],
+  "implementation": [
+    "删除 tsconfig.json L9 的 noImplicitAny: false",
+    "运行 bun run typecheck，收集所有错误",
+    "逐个文件添加显式类型注解修复",
+    "再次运行 typecheck 确认通过"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck 通过",
+      "无隐式 any"
+    ]
+  },
+  "reference": {
+    "pattern": "TypeScript strict 模式类型注解",
+    "files": [
+      "apps/desktop/tsconfig.json"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "恢复 strict 完整性，用显式类型替代隐式 any",
+    "decision_factors": [
+      "类型安全是核心价值",
+      "strict: true 已隐含 noImplicitAny: true",
+      "显式覆盖会误导"
+    ],
+    "tradeoffs": "可能需要添加多处类型注解，但长期收益大于短期成本"
+  },
+  "risks": [
+    "可能暴露较多隐式 any 错误需要逐个修复",
+    "某些第三方库类型不完整可能需要声明补丁"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "TypeScript 配置"
+    ],
+    "affected_components": [
+      "tsconfig.json"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "30m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}

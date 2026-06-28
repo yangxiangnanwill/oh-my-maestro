@@ -1,0 +1,106 @@
+{
+  "id": "TASK-002",
+  "title": "添加 useMemo 优化：AgentSelect.selectableIds + EditToolExpandedDiff.contents",
+  "description": "修复 PERF-003 和 PERF-004：AgentSelect 中 selectableIds 每帧重建 Set，EditToolExpandedDiff 中 contents 每次渲染创建新对象",
+  "issue_id": null,
+  "issue_refs": [
+    "PERF-003",
+    "PERF-004"
+  ],
+  "type": "tech-debt",
+  "priority": "low",
+  "effort": "low",
+  "action": "1) AgentSelect.tsx L56: const selectableIds = useMemo(() => new Set<string>(agents.map((agent) => agent.id)), [agents]); 2) EditToolExpandedDiff.tsx L25: const contents: FileContents = useMemo(() => ({ original: oldString, modified: newString, language: 'text' }), [oldString, newString]); 需要先添加 useMemo import",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/renderer/components/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/AgentSelect/AgentSelect.tsx",
+    "apps/desktop/src/renderer/components/Chat/ChatInterface/components/ToolCallBlock/components/EditToolExpandedDiff/EditToolExpandedDiff.tsx"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/AgentSelect/AgentSelect.tsx",
+    "apps/desktop/src/renderer/components/Chat/ChatInterface/components/ToolCallBlock/components/EditToolExpandedDiff/EditToolExpandedDiff.tsx"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave1-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "AgentSelect.tsx L56 包含 'useMemo(() => new Set<string>'",
+      "EditToolExpandedDiff.tsx L25 包含 'useMemo(() => ({'",
+      "cd apps/desktop && bun run typecheck 退出码 0"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck",
+    "definition_of_done": "两个组件中的派生数据使用 useMemo 缓存，避免不必要的重计算"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/AgentSelect/AgentSelect.tsx",
+      "action": "modify",
+      "target": "selectableIds 变量声明 (L56)",
+      "change": "从 'const selectableIds = new Set<string>(...)' 改为 'const selectableIds = useMemo(() => new Set<string>(...), [agents])'"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/ChatInterface/components/ToolCallBlock/components/EditToolExpandedDiff/EditToolExpandedDiff.tsx",
+      "action": "modify",
+      "target": "contents 变量声明 (L25)",
+      "change": "从 'const contents: FileContents = {...}' 改为 'const contents: FileContents = useMemo(() => ({...}), [oldString, newString])'"
+    }
+  ],
+  "implementation": [
+    "AgentSelect.tsx: 添加 useMemo 到 react import，将 L56 selectableIds 用 useMemo 包裹",
+    "EditToolExpandedDiff.tsx: 添加 useMemo 到 react import，将 L25-29 contents 用 useMemo 包裹",
+    "运行 bun run typecheck 验证"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck 通过"
+    ]
+  },
+  "reference": {
+    "pattern": "React useMemo 标准用法",
+    "files": [
+      "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "使用 useMemo 包裹派生数据，避免不必要的对象重建",
+    "decision_factors": [
+      "性能优化",
+      "低风险",
+      "不影响行为"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "AgentSelect",
+      "EditToolExpandedDiff"
+    ],
+    "affected_components": [
+      "AgentSelect",
+      "EditToolExpandedDiff"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "10m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}

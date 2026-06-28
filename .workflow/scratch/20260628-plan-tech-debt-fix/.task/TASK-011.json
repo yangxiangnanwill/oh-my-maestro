@@ -1,0 +1,122 @@
+{
+  "id": "TASK-011",
+  "title": "修复类型声明和架构：.d.ts export type + tabs store HMR 注释 + 跨层导入注释",
+  "description": "修复 ARCH-002（link-providers-route.d.ts declare module 改为 export type）、ARCH-003（tabs/store.ts 计数器添加 HMR 注释）、BP-005（presets/index.ts 跨层类型导入添加注释）",
+  "issue_id": null,
+  "issue_refs": [
+    "ARCH-002",
+    "ARCH-003",
+    "BP-005"
+  ],
+  "type": "tech-debt",
+  "priority": "low",
+  "effort": "low",
+  "action": "1) link-providers-route.d.ts L7: 将 'export * from' 改为 'export type * from'（仅导出类型，防止运行时代码泄漏到 main 进程）；2) tabs/store.ts L56: 在 'let tabCounter = 0;' 上方添加注释 '// Module-level counters—not reset on HMR. In dev, tab/pane IDs may grow large across hot reloads. Production unaffected. Phase 4: consider moving into zustand store or using crypto.randomUUID()'；3) presets/index.ts L2: 在跨层导入上方添加注释 '// NOTE: Cross-layer type import from main/lib/local-db—safe because it is type-only. Phase 4: consider extracting TerminalPreset to shared/'",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/types/ + src/renderer/stores/tabs/ + src/renderer/react-query/presets/",
+  "focus_paths": [
+    "apps/desktop/src/types/link-providers-route.d.ts",
+    "apps/desktop/src/renderer/stores/tabs/store.ts",
+    "apps/desktop/src/renderer/react-query/presets/index.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/types/link-providers-route.d.ts",
+    "apps/desktop/src/renderer/stores/tabs/store.ts",
+    "apps/desktop/src/renderer/react-query/presets/index.ts"
+  ],
+  "depends_on": [],
+  "wave": 4,
+  "parallel_group": "wave4-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "link-providers-route.d.ts L7 为 'export type * from'（非 'export * from'）",
+      "tabs/store.ts L55-56 之间包含 'not reset on HMR' 注释",
+      "presets/index.ts L2 上方包含 'Cross-layer type import' 注释",
+      "cd apps/desktop && bun run typecheck 退出码 0"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck",
+    "definition_of_done": "类型声明只导出类型，HMR 风险有文档说明，跨层导入有明确注释"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/types/link-providers-route.d.ts",
+      "action": "modify",
+      "target": "L7 declare module 内的 export",
+      "change": "从 'export * from' 改为 'export type * from'（仅导出类型）"
+    },
+    {
+      "path": "apps/desktop/src/renderer/stores/tabs/store.ts",
+      "action": "modify",
+      "target": "L56 tabCounter/paneCounter 声明前",
+      "change": "添加 HMR 风险说明注释"
+    },
+    {
+      "path": "apps/desktop/src/renderer/react-query/presets/index.ts",
+      "action": "modify",
+      "target": "L2 import 语句上方",
+      "change": "添加跨层导入注释说明安全性"
+    }
+  ],
+  "implementation": [
+    "link-providers-route.d.ts: 将 export * from 改为 export type * from",
+    "tabs/store.ts: 在计数器声明前添加注释",
+    "presets/index.ts: 在 L2 导入前添加注释",
+    "运行 typecheck 验证（特别验证 export type * 变更后所有引用处仍正常）"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck 通过",
+      "类型导出正确"
+    ]
+  },
+  "reference": {
+    "pattern": "TypeScript export type * 语法",
+    "files": [
+      "apps/desktop/src/types/link-providers-route.d.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "export type * 确保只有类型被导出，防止运行时代码泄漏",
+    "decision_factors": [
+      "类型安全",
+      "分层边界",
+      "HMR 开发体验"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [
+    "export type * 变更可能影响运行时引用该模块的代码——需确认没有代码依赖运行时的 export"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "type declarations",
+      "tabs store",
+      "presets"
+    ],
+    "affected_components": [
+      "link-providers-route.d.ts",
+      "tabs/store.ts",
+      "presets/index.ts"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}

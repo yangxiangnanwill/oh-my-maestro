@@ -162,9 +162,23 @@
       "roadmap_ref": ".workflow/scratch/20260625-analyze-macro-superset-migration-gap/roadmap.md",
       "created_at": "2026-06-25T01:45:00+08:00",
       "completed_at": "2026-06-27T21:14:00+08:00"
+    },
+    {
+      "id": "M-adhoc-20260628-tech-debt",
+      "type": "adhoc",
+      "name": "技术债务修复 — S4 Review Findings",
+      "status": "active",
+      "phases": [
+        1
+      ],
+      "phase_slugs": {
+        "1": "tech-debt-fix"
+      },
+      "roadmap_ref": null,
+      "created_at": "2026-06-27T21:49:02.683Z"
     }
   ],
-  "current_milestone": null,
+  "current_milestone": "M-adhoc-20260628-tech-debt",
   "artifacts": [
     {
       "id": "ANL-010",
@@ -235,6 +249,36 @@
       "completed_at": "2026-06-22T20:00:00+08:00",
       "verdict": "GO",
       "scope_verdict": "large"
+    },
+    {
+      "id": "PLN-020",
+      "type": "plan",
+      "scope": "standalone",
+      "phase": null,
+      "milestone": "M-adhoc-20260628-tech-debt",
+      "path": ".workflow/scratch/20260628-plan-tech-debt-fix",
+      "status": "completed",
+      "depends_on": [],
+      "harvested": false,
+      "created_at": "2026-06-27T21:59:45.774Z",
+      "completed_at": "2026-06-27T21:59:45.776Z"
+    },
+    {
+      "id": "EXC-018",
+      "type": "execute",
+      "scope": "standalone",
+      "phase": null,
+      "milestone": "M-adhoc-20260628-tech-debt",
+      "path": ".workflow/scratch/20260628-plan-tech-debt-fix",
+      "status": "completed",
+      "depends_on": [
+        "PLN-020"
+      ],
+      "harvested": false,
+      "created_at": "2026-06-27T22:44:55.577Z",
+      "completed_at": "2026-06-27T22:44:55.578Z",
+      "tasks_completed": 13,
+      "tasks_total": 13
     }
   ],
   "milestone_history": [
@@ -1408,5 +1452,5 @@
       "概念翻译层 (UX-03)"
     ]
   },
-  "status": "completed"
+  "status": "active"
 }

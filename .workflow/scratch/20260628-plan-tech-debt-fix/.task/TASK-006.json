@@ -1,0 +1,101 @@
+{
+  "id": "TASK-006",
+  "title": "MarkdownEditor html:true → false + 添加 DOMPurify TODO + API 验证注释",
+  "description": "修复 SEC-001（MarkdownEditor 启用原始 HTML 渲染但缺少净化器）和 BP-004（Markdown.configure 配置结构变更可能影响运行时行为）。将 html:true 改为 false，添加 Phase 4 DOMPurify 集成 TODO，添加 API 验证注释。",
+  "issue_id": null,
+  "issue_refs": [
+    "SEC-001",
+    "BP-004"
+  ],
+  "type": "tech-debt",
+  "priority": "high",
+  "effort": "low",
+  "action": "1) MarkdownEditor.tsx L330: 将 'html: true' 改为 'html: false'；2) L328 Markdown.configure 上方添加注释：'// Markdown.configure 使用 markdownOptions 嵌套配置（tiptap-markdown v0.x API）。html: false 禁用原始 HTML 渲染。Phase 4: 集成 DOMPurify 后恢复 html: true'；3) 验证 tiptap-markdown 实际 API 期望 markdownOptions 嵌套（添加注释说明已验证）",
+  "status": "pending",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "src/renderer/components/MarkdownEditor/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/MarkdownEditor/MarkdownEditor.tsx"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/MarkdownEditor/MarkdownEditor.tsx",
+    "apps/desktop/src/renderer/components/MarkdownRenderer/components/TipTapMarkdownRenderer/createMarkdownExtensions.ts"
+  ],
+  "depends_on": [],
+  "wave": 2,
+  "parallel_group": "wave2-group1",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "MarkdownEditor.tsx L330 为 'html: false'（非 'html: true'）",
+      "MarkdownEditor.tsx L328 上方包含 'Phase 4: 集成 DOMPurify' 注释",
+      "MarkdownEditor.tsx L328 上方包含 'tiptap-markdown v0.x API' 注释",
+      "cd apps/desktop && bun run typecheck 退出码 0"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck",
+    "definition_of_done": "MarkdownEditor 不再渲染原始 HTML，有明确的 Phase 4 安全增强计划注释"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/MarkdownEditor/MarkdownEditor.tsx",
+      "action": "modify",
+      "target": "L328-333 Markdown.configure 调用",
+      "change": "html: true → html: false；添加安全 TODO 注释和 API 版本注释"
+    }
+  ],
+  "implementation": [
+    "在 MarkdownEditor.tsx L328 Markdown.configure 上方添加注释块",
+    "将 L330 html: true 改为 html: false",
+    "运行 bun run typecheck 验证"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck 通过",
+      "html 渲染已禁用"
+    ]
+  },
+  "reference": {
+    "pattern": "createMarkdownExtensions.ts 中 ENABLE_RAW_MARKDOWN_HTML = false 的安全策略",
+    "files": [
+      "apps/desktop/src/renderer/components/MarkdownRenderer/components/TipTapMarkdownRenderer/createMarkdownExtensions.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "禁用 HTML 渲染而非引入 DOMPurify 依赖——最小化变更，Phase 4 再集成净化器",
+    "decision_factors": [
+      "安全优先",
+      "最小化变更",
+      "与只读渲染器策略一致"
+    ],
+    "tradeoffs": "编辑器不再支持粘贴 HTML 内容，但 Markdown 编辑场景下影响极小"
+  },
+  "risks": [
+    "用户粘贴的富文本 HTML 格式可能丢失——但 Markdown 编辑器场景下这是预期行为"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [
+      "MarkdownEditor"
+    ],
+    "affected_components": [
+      "MarkdownEditor"
+    ],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "10m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "status": "completed"
+  }
+}
