@@ -4,12 +4,18 @@ import { Search, X, PanelRight } from "lucide-react";
 import { useState, useCallback } from "react";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { KnowledgePanel } from "renderer/components/KnowledgePanel/KnowledgePanel";
+import { RalphPanel } from "renderer/components/RalphPanel/RalphPanel";
+import { WorkflowStatePanel } from "renderer/components/WorkflowStatePanel/WorkflowStatePanel";
+import { VisualizationPanel } from "renderer/components/VisualizationPanel/VisualizationPanel";
+
+type WorkspaceTab = "overview" | "chat" | "terminal" | "workflow" | "visualization";
 
 function WorkspaceLayout() {
   const { workspaceId } = useParams({ strict: false });
   const tabs = useTabsStore((s) => s.tabs);
   const addChatTab = useTabsStore((s) => s.addChatTab);
   const [showKnowledge, setShowKnowledge] = useState(false);
+  const [activeTab, setActiveTab] = useState<WorkspaceTab>("overview");
 
   const toggleKnowledge = useCallback(() => {
     setShowKnowledge((prev) => !prev);
@@ -23,6 +29,24 @@ function WorkspaceLayout() {
       addChatTab(workspaceId);
     }
   };
+
+  const handleTabClick = (tab: WorkspaceTab) => {
+    if (tab === "chat") {
+      handleAddChatTab();
+    }
+    setActiveTab(tab);
+  };
+
+  const tabStyle = (tab: WorkspaceTab): React.CSSProperties => ({
+    padding: "6px 14px",
+    borderRadius: "6px",
+    fontSize: "13px",
+    background: activeTab === tab ? "var(--accent, #1a1a2e)" : "transparent",
+    border: "none",
+    color: activeTab === tab ? "var(--accent-foreground, #e0e0e0)" : "inherit",
+    cursor: "pointer",
+    opacity: activeTab === tab ? 1 : 0.4,
+  });
 
   return (
     <div
@@ -46,44 +70,21 @@ function WorkspaceLayout() {
           alignItems: "center",
         }}
       >
-        <span
-          style={{
-            padding: "6px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            background: "var(--accent, #1a1a2e)",
-            color: "var(--accent-foreground, #e0e0e0)",
-          }}
-        >
+        <button type="button" style={tabStyle("overview")} onClick={() => handleTabClick("overview")}>
           Overview
-        </span>
-        <button
-          type="button"
-          style={{
-            padding: "6px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            background: "transparent",
-            border: "none",
-            color: "inherit",
-            cursor: "pointer",
-            opacity: 0.4,
-          }}
-          className="hover:opacity-80"
-          onClick={handleAddChatTab}
-        >
+        </button>
+        <button type="button" style={tabStyle("chat")} onClick={() => handleTabClick("chat")}>
           Chat
         </button>
-        <span
-          style={{
-            padding: "6px 14px",
-            borderRadius: "6px",
-            fontSize: "13px",
-            opacity: 0.4,
-          }}
-        >
+        <button type="button" style={tabStyle("terminal")} onClick={() => handleTabClick("terminal")}>
           Terminal
-        </span>
+        </button>
+        <button type="button" style={tabStyle("workflow")} onClick={() => handleTabClick("workflow")}>
+          工作流
+        </button>
+        <button type="button" style={tabStyle("visualization")} onClick={() => handleTabClick("visualization")}>
+          可视化
+        </button>
 
         {/* 右侧工具按钮 */}
         <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
@@ -106,7 +107,20 @@ function WorkspaceLayout() {
       {/* Content + optional knowledge panel */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <div style={{ flex: 1, overflow: "auto", minWidth: 0 }}>
-          <Outlet />
+          {activeTab === "workflow" ? (
+            <div style={{ display: "flex", height: "100%" }}>
+              <div style={{ flex: 1, overflow: "auto", borderRight: "1px solid var(--border, #2a2a2a)" }}>
+                <WorkflowStatePanel cwd={""} />
+              </div>
+              <div style={{ flex: 1, overflow: "auto" }}>
+                <RalphPanel cwd={""} />
+              </div>
+            </div>
+          ) : activeTab === "visualization" ? (
+            <VisualizationPanel cwd={""} />
+          ) : (
+            <Outlet />
+          )}
         </div>
         {showKnowledge && (
           <div

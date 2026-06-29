@@ -6,6 +6,9 @@ import {
   Search,
   Plus,
   Loader2,
+  Activity,
+  FolderTree,
+  BarChart3,
 } from "lucide-react";
 import { useState, useCallback } from "react";
 import { useTranslation } from "renderer/contexts/TranslationContext";
@@ -14,6 +17,9 @@ import { useNewWorkspaceModalStore } from "renderer/stores/new-workspace-modal";
 import { NewWorkspaceModal } from "renderer/components/NewWorkspaceModal";
 import { CommandChainPanel } from "renderer/components/CommandChainPanel/CommandChainPanel";
 import { KnowledgePanel } from "renderer/components/KnowledgePanel/KnowledgePanel";
+import { RalphPanel } from "renderer/components/RalphPanel/RalphPanel";
+import { WorkflowStatePanel } from "renderer/components/WorkflowStatePanel/WorkflowStatePanel";
+import { VisualizationPanel } from "renderer/components/VisualizationPanel/VisualizationPanel";
 import { CollectionsProvider } from "../providers/CollectionsProvider";
 import { LocalHostServiceProvider } from "../providers/LocalHostServiceProvider";
 import { navigateToWorkspace } from "./utils/workspace-navigation";
@@ -145,7 +151,7 @@ function DashboardSidebar() {
 // 右侧面板区域 (CommandChain + Knowledge)
 // ---------------------------------------------------------------------------
 
-type RightPanel = "none" | "commandChain" | "knowledge";
+type RightPanel = "none" | "commandChain" | "knowledge" | "ralph" | "workflow" | "visualization";
 
 function RightSidePanel() {
   const { t } = useTranslation();
@@ -157,6 +163,9 @@ function RightSidePanel() {
 
   const isCommandChainOpen = activePanel === "commandChain";
   const isKnowledgeOpen = activePanel === "knowledge";
+  const isRalphOpen = activePanel === "ralph";
+  const isWorkflowOpen = activePanel === "workflow";
+  const isVisualizationOpen = activePanel === "visualization";
   const isAnyOpen = activePanel !== "none";
 
   return (
@@ -195,6 +204,42 @@ function RightSidePanel() {
         >
           <Search className="h-4 w-4" />
         </button>
+        <button
+          type="button"
+          className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+            isRalphOpen
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+          }`}
+          onClick={() => togglePanel("ralph")}
+          title="Ralph 会话"
+        >
+          <Activity className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+            isWorkflowOpen
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+          }`}
+          onClick={() => togglePanel("workflow")}
+          title="工作流状态"
+        >
+          <FolderTree className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          className={`flex h-8 w-8 items-center justify-center rounded-md transition-colors ${
+            isVisualizationOpen
+              ? "bg-accent text-accent-foreground"
+              : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
+          }`}
+          onClick={() => togglePanel("visualization")}
+          title="可视化"
+        >
+          <BarChart3 className="h-4 w-4" />
+        </button>
       </div>
 
       {isAnyOpen && (
@@ -213,6 +258,9 @@ function RightSidePanel() {
           {isKnowledgeOpen && (
             <KnowledgePanel cwd={""} placeholder="Search knowledge..." />
           )}
+          {isRalphOpen && <RalphPanel cwd={""} />}
+          {isWorkflowOpen && <WorkflowStatePanel cwd={""} />}
+          {isVisualizationOpen && <VisualizationPanel cwd={""} />}
         </div>
       )}
     </div>
