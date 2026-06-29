@@ -2,31 +2,44 @@ import type { CommandItem } from "lib/trpc/routers/maestro";
 
 /** UI 层映射的 Maestro 命令（精简版，用于渲染） */
 export interface MaestroCommand {
-  id?: string;
+  id: string;
   name: string;
+  label: string;
   description: string;
   category: CommandItem["category"];
   cliCommand: string;
   cliArgs: string[];
+  outputKind: CommandItem["outputKind"];
+  riskLevel: CommandItem["riskLevel"];
+  notes?: string;
 }
 
 /** 分类显示名称映射 */
 export const CATEGORY_LABELS: Record<CommandItem["category"], string> = {
+  workflow: "工作流",
+  ralph: "Ralph",
   knowledge: "知识",
-  analysis: "分析",
-  command: "命令",
-  utility: "工具",
+  project: "项目",
+  debug: "调试",
+  config: "配置",
+  system: "系统",
 };
 
 /** 分类 Badge 颜色映射（Tailwind 类名） */
 export const CATEGORY_COLORS: Record<CommandItem["category"], string> = {
+  workflow:
+    "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
+  ralph:
+    "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
   knowledge:
     "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  analysis:
-    "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  command:
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-  utility:
+  project:
+    "bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400",
+  debug:
+    "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
+  config:
+    "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
+  system:
     "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
 };
 

@@ -11,7 +11,7 @@ interface CommandItemProps {
 
 /**
  * 单个命令项组件。
- * 显示命令名（等宽字体）、描述、分类 Badge。
+ * 显示命令标签（label）、描述、分类 Badge。
  * 选中时高亮背景，点击触发 onSelect。
  */
 export function CommandItem({
@@ -40,12 +40,15 @@ export function CommandItem({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm font-semibold truncate">
-            {command.name}
+            {command.label}
           </span>
           <span
             className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none ${badgeColor}`}
           >
             {CATEGORY_LABELS[command.category]}
+          </span>
+          <span className="inline-flex items-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium leading-none text-muted-foreground">
+            {command.id}
           </span>
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">

@@ -34,10 +34,13 @@ function groupCommands(commands: MaestroCommand[]): GroupedCommands[] {
 
   // 按固定顺序排列分组
   const categoryOrder: string[] = [
+    "workflow",
+    "ralph",
     "knowledge",
-    "analysis",
-    "command",
-    "utility",
+    "project",
+    "debug",
+    "config",
+    "system",
   ];
   const result: GroupedCommands[] = [];
   for (const cat of categoryOrder) {
@@ -141,7 +144,8 @@ export function CommandPalette({
 
     return commands.filter(
       (cmd) =>
-        cmd.name.toLowerCase().includes(q) ||
+        cmd.id.toLowerCase().includes(q) ||
+        cmd.label.toLowerCase().includes(q) ||
         cmd.description.toLowerCase().includes(q) ||
         cmd.category.toLowerCase().includes(q),
     );
@@ -202,27 +206,14 @@ export function CommandPalette({
     [flatCommands, safeHighlighted, onClose],
   );
 
-  // 选中命令后执行
+  // 选中命令 — MVP read-only 模式：仅记录选择，不执行
   const handleSelect = useCallback(
     (command: MaestroCommand) => {
-      // 构建完整的 CLI 命令字符串
-      const cliLine = [command.cliCommand, ...command.cliArgs].join(" ");
+      // MVP: 只暴露 riskLevel="read" 命令，选择后仅记录不执行
       console.log(
-        `[CommandPalette] Executing: ${cliLine}`,
+        `[CommandPalette] Selected (read-only): ${command.id}`,
         { command, cwd },
       );
-      // 通过 electronAPI 在终端中执行 CLI 命令
-      const electronAPI = (window as any).electronAPI;
-      if (electronAPI?.terminalWrite) {
-        electronAPI.terminalWrite(`${cliLine}\n`);
-      } else if (electronAPI?.send) {
-        electronAPI.send("terminal:execute", { command: cliLine, cwd });
-      } else {
-        console.warn(
-          "[CommandPalette] electronAPI 不可用，无法执行命令",
-          { cliLine, cwd },
-        );
-      }
       onClose();
     },
     [onClose, cwd],

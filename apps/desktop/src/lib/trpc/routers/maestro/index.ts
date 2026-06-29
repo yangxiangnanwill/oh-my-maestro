@@ -3,10 +3,9 @@ import { resolve, sep } from "node:path";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
 import {
-  getMaestroMcpTools,
-  getMaestroToolCatalog,
-  type MaestroCliTool,
-} from "../../../../main/lib/agent-setup/maestro-mcp-provider";
+  COMMAND_REGISTRY,
+  type CommandDefinition,
+} from "../../commands";
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -52,13 +51,26 @@ const analyzeResultSchema = z.object({
   summary: z.string(),
 });
 
-/** 命令列表项 */
+/** 命令列表项 — 从 typed Command Registry 映射 */
 const commandItemSchema = z.object({
+  id: z.string(),
   name: z.string(),
+  label: z.string(),
   description: z.string(),
-  category: z.enum(["knowledge", "analysis", "command", "utility"]),
+  category: z.enum([
+    "workflow",
+    "ralph",
+    "knowledge",
+    "project",
+    "debug",
+    "config",
+    "system",
+  ]),
   cliCommand: z.string(),
   cliArgs: z.array(z.string()),
+  outputKind: z.enum(["text", "json", "state", "table", "stream"]),
+  riskLevel: z.enum(["read", "write", "destructive"]),
+  notes: z.string().optional(),
 });
 
 // ---------------------------------------------------------------------------
@@ -292,8 +304,9 @@ export const createMaestroRouter = () => {
     /**
      * 命令列表
      *
-     * 返回可用 Maestro command 列表，支持按类别过滤。
-     * 数据来源：静态工具目录（与 MCP provider 共享）。
+     * 返回可用 Maestro command 列表，仅暴露 riskLevel="read" 命令。
+     * 数据来源：typed Command Registry（COMMAND_REGISTRY）。
+     * 支持按分类或关键词过滤。
      */
     commands: router({
       list: publicProcedure
@@ -304,23 +317,29 @@ export const createMaestroRouter = () => {
         )
         .output(z.array(commandItemSchema))
         .query(async ({ input }) => {
-          const catalog = getMaestroToolCatalog();
+          const registry = COMMAND_REGISTRY;
           const filtered = input.filter
-            ? catalog.filter(
-                (t: MaestroCliTool) =>
-                  t.category === input.filter ||
-                  t.name.includes(input.filter!) ||
-                  t.description
+            ? registry.filter(
+                (cmd: CommandDefinition) =>
+                  cmd.category === input.filter ||
+                  cmd.id.includes(input.filter!) ||
+                  cmd.label.includes(input.filter!) ||
+                  cmd.description
                     .toLowerCase()
                     .includes(input.filter!.toLowerCase()),
               )
-            : catalog;
-          return filtered.map((t: MaestroCliTool) => ({
-            name: t.name,
-            description: t.description,
-            category: t.category,
-            cliCommand: t.cliCommand,
-            cliArgs: t.cliArgs,
+            : registry;
+          return filtered.map((cmd: CommandDefinition) => ({
+            id: cmd.id,
+            name: cmd.id,
+            label: cmd.label,
+            description: cmd.description,
+            category: cmd.category,
+            cliCommand: cmd.cliCommand,
+            cliArgs: cmd.cliArgs,
+            outputKind: cmd.outputKind,
+            riskLevel: cmd.riskLevel,
+            notes: cmd.notes,
           }));
         }),
     }),
