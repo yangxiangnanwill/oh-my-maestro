@@ -3,12 +3,17 @@ import { resolve, sep } from "node:path";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
 import {
-  COMMAND_CATEGORIES,
-  COMMAND_REGISTRY,
-  OUTPUT_KINDS,
-  RISK_LEVELS,
-  type CommandDefinition,
+	COMMAND_CATEGORIES,
+	COMMAND_REGISTRY,
+	OUTPUT_KINDS,
+	RISK_LEVELS,
+	type CommandDefinition,
 } from "../../commands";
+import {
+	projectStateSchema,
+	ralphSessionSchema,
+	readProjectState,
+} from "../../workflow-state";
 
 // ---------------------------------------------------------------------------
 // Schemas
@@ -292,6 +297,61 @@ export const createMaestroRouter = () => {
               recommendations: [],
               summary: `Analysis unavailable: ${message}`,
             };
+          }
+        }),
+    }),
+
+    /**
+     * Workflow 状态查询
+     *
+     * 提供项目状态和 Ralph session 的 tRPC 端点。
+     * commandChain.getStatus 保留在 command-chain router 不移动。
+     */
+    workflow: router({
+      /** 读取 .workflow/state.json，返回 ProjectState 或 { uninitialized: true } */
+      state: publicProcedure
+        .input(
+          z.object({
+            cwd: z.string().min(1).refine(validateCwd, {
+              message: "Invalid working directory path",
+            }),
+          }),
+        )
+        .output(
+          z.union([
+            projectStateSchema,
+            z.object({ uninitialized: z.literal(true) }),
+          ]),
+        )
+        .query(async ({ input }) => {
+          return readProjectState(input.cwd);
+        }),
+
+      /** 执行 maestro ralph session --json，返回 RalphSession 或 null */
+      ralphSession: publicProcedure
+        .input(
+          z.object({
+            cwd: z.string().min(1).refine(validateCwd, {
+              message: "Invalid working directory path",
+            }),
+          }),
+        )
+        .output(ralphSessionSchema.nullable())
+        .query(async ({ input }) => {
+          try {
+            const raw = await execMaestroCli(
+              ["ralph", "session", "--json"],
+              input.cwd,
+            );
+            const parsed: unknown = JSON.parse(raw);
+            return ralphSessionSchema.parse(parsed);
+          } catch (err) {
+            const message =
+              err instanceof Error ? err.message : String(err);
+            console.warn(
+              `[maestro:workflow.ralphSession] ${message} — returning null`,
+            );
+            return null;
           }
         }),
     }),

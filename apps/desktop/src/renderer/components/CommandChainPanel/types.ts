@@ -1,32 +1,15 @@
-/** 步骤状态枚举 */
-export type StepStatus = "pending" | "running" | "completed" | "failed" | "skipped";
-
-/** 单个步骤 */
-export interface Step {
-  id: string;
-  label: string;
-  status: StepStatus;
-  startedAt?: string;
-  completedAt?: string;
-  error?: string;
-}
-
-/** 决策节点 */
-export interface DecisionNode {
-  id: string;
-  label: string;
-  question: string;
-  options: string[];
-  selectedOption?: string;
-  resolved: boolean;
-}
-
-/** status.json 完整结构 */
-export interface CommandChainStatus {
-  steps: Step[];
-  decisionNodes: DecisionNode[];
-  completionConfirmed: boolean;
-}
+/**
+ * CommandChainPanel 类型 — 从共享 workflow-state 模块重导出。
+ *
+ * 单一真相源在 src/lib/workflow-state/types.ts，
+ * 此文件保持向后兼容的导出名称。
+ */
+export type {
+  StepStatus,
+  CommandChainStep as Step,
+  CommandChainDecisionNode as DecisionNode,
+  CommandChainStatus,
+} from "../../../lib/workflow-state";
 
 /** CommandChainPanel 组件 props */
 export interface CommandChainPanelProps {
