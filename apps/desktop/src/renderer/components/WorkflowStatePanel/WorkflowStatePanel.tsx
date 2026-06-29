@@ -1,6 +1,7 @@
-import { AlertTriangle, FolderTree, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, Briefcase, FolderTree, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
-import { electronTrpc } from "renderer/lib/electron-trpc";
+import { useTranslation } from "renderer/contexts/TranslationContext";
+import { useWorkflowState } from "renderer/hooks/useWorkflowState";
 import type { Milestone, Artifact, ProjectState } from "../../../lib/workflow-state";
 import type { WorkflowStatePanelProps } from "./types";
 
@@ -8,30 +9,43 @@ import type { WorkflowStatePanelProps } from "./types";
 // 状态组件
 // ---------------------------------------------------------------------------
 
+function NoWorkspaceState() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
+      <Briefcase className="h-8 w-8" />
+      <p>{t("ui.panel.noWorkspaceMessage")}</p>
+    </div>
+  );
+}
+
 function LoadingState() {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" />
-      <span>加载项目状态中...</span>
+      <span>{t("ui.panel.loadingState")}</span>
     </div>
   );
 }
 
 function UninitializedState() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
       <FolderTree className="h-8 w-8" />
-      <p>项目未初始化</p>
-      <p className="text-xs">请先运行 maestro init 初始化项目</p>
+      <p>{t("ui.panel.projectUninitialized")}</p>
+      <p className="text-xs">{t("ui.panel.initHint")}</p>
     </div>
   );
 }
 
 function ErrorState({ message }: { message: string }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm">
       <AlertTriangle className="h-8 w-8 text-amber-500" />
-      <p className="text-muted-foreground">获取项目状态失败</p>
+      <p className="text-muted-foreground">{t("ui.panel.fetchStateFailed")}</p>
       <p className="max-w-[240px] text-xs text-red-500">{message}</p>
     </div>
   );
@@ -136,9 +150,11 @@ function MilestoneList({
 }) {
   const [collapsed, setCollapsed] = useState(true);
 
+  const { t } = useTranslation();
+
   if (!milestones || milestones.length === 0) {
     return (
-      <p className="px-4 text-xs text-muted-foreground">暂无权标信息</p>
+      <p className="px-4 text-xs text-muted-foreground">{t("ui.panel.noMilestones")}</p>
     );
   }
 
@@ -195,6 +211,7 @@ function MilestoneList({
 // ---------------------------------------------------------------------------
 
 function RecentArtifacts({ artifacts }: { artifacts: Artifact[] }) {
+  const { t } = useTranslation();
   const recent = artifacts.slice(-5).reverse();
 
   return (
@@ -203,7 +220,7 @@ function RecentArtifacts({ artifacts }: { artifacts: Artifact[] }) {
         最近制品 ({recent.length})
       </h4>
       {recent.length === 0 ? (
-        <p className="text-xs text-muted-foreground">暂无制品</p>
+        <p className="text-xs text-muted-foreground">{t("ui.panel.noArtifacts")}</p>
       ) : (
         <div className="space-y-1.5">
           {recent.map((a) => (
@@ -285,7 +302,7 @@ function ProjectData({ project }: { project: ProjectState }) {
         </section>
       )}
 
-      {/* 权标列表 */}
+      {/* 里程碑列表 */}
       <MilestoneList
         milestones={milestones}
         currentMilestoneId={project.current_milestone}
@@ -303,16 +320,31 @@ function ProjectData({ project }: { project: ProjectState }) {
 
 export function WorkflowStatePanel({
   cwd,
-  title = "工作流状态",
+  title,
 }: WorkflowStatePanelProps) {
-  const { data: state, isLoading, error } =
-    electronTrpc.maestro.workflow.state.useQuery({ cwd }, {});
+  const { t } = useTranslation();
+
+  // 当 cwd 为空时，显示提示而非发起必然失败的 tRPC 查询
+  if (!cwd || cwd.trim() === "") {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex-shrink-0 border-b px-4 py-3">
+          <h3 className="text-sm font-semibold">{title ?? t("ui.workspace.workflowState")}</h3>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <NoWorkspaceState />
+        </div>
+      </div>
+    );
+  }
+
+  const { data: state, isLoading, error } = useWorkflowState(cwd);
 
   return (
     <div className="flex h-full flex-col">
       {/* 标题栏 */}
       <div className="flex-shrink-0 border-b px-4 py-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
+        <h3 className="text-sm font-semibold">{title ?? t("ui.workspace.workflowState")}</h3>
       </div>
 
       {/* 内容区域 */}
@@ -321,11 +353,14 @@ export function WorkflowStatePanel({
           <LoadingState />
         ) : error ? (
           <ErrorState
-            message={error instanceof Error ? error.message : "未知错误"}
+            message={error instanceof Error ? error.message : t("ui.panel.unknownError")}
           />
         ) : !state ? (
           <UninitializedState />
-        ) : "uninitialized" in state ? (
+        ) : // `"uninitialized" in state` is safe here because the Zod union type guarantees
+          // that the discriminant "uninitialized" property is only present on the uninitialized
+          // variant. TypeScript discriminated union narrowing applies after this check.
+          "uninitialized" in state ? (
           <UninitializedState />
         ) : (
           <ProjectData project={state as ProjectState} />

@@ -1,5 +1,6 @@
-import { AlertTriangle, Activity, Loader2 } from "lucide-react";
+import { AlertTriangle, Activity, Briefcase, Loader2 } from "lucide-react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
+import { useTranslation } from "renderer/contexts/TranslationContext";
 import type { RalphSession } from "../../../lib/workflow-state";
 import type { RalphPanelProps } from "./types";
 
@@ -7,30 +8,43 @@ import type { RalphPanelProps } from "./types";
 // 状态组件
 // ---------------------------------------------------------------------------
 
+function NoWorkspaceState() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
+      <Briefcase className="h-8 w-8" />
+      <p>{t("ui.panel.noWorkspaceMessage")}</p>
+    </div>
+  );
+}
+
 function LoadingState() {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" />
-      <span>加载 Ralph 会话中...</span>
+      <span>{t("ui.panel.loadingRalph")}</span>
     </div>
   );
 }
 
 function EmptyState() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
       <Activity className="h-8 w-8" />
-      <p>暂无 Ralph 会话</p>
-      <p className="text-xs">请运行 maestro ralph session 启动会话</p>
+      <p>{t("ui.panel.noRalphSession")}</p>
+      <p className="text-xs">{t("ui.panel.ralphHint")}</p>
     </div>
   );
 }
 
 function ErrorState({ message }: { message: string }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm">
       <AlertTriangle className="h-8 w-8 text-amber-500" />
-      <p className="text-muted-foreground">获取 Ralph 会话状态失败</p>
+      <p className="text-muted-foreground">{t("ui.panel.fetchRalphFailed")}</p>
       <p className="max-w-[240px] text-xs text-red-500">{message}</p>
     </div>
   );
@@ -155,6 +169,7 @@ function SessionData({ session }: { session: RalphSession }) {
         <h4 className="mb-2 text-xs font-medium text-muted-foreground">
           CLI 操作
         </h4>
+        {/* TODO: Activate CLI buttons when command execution channel is implemented (Round 5+) */}
         <div className="flex flex-col gap-2">
           <button
             type="button"
@@ -187,7 +202,23 @@ function SessionData({ session }: { session: RalphSession }) {
 // 主组件
 // ---------------------------------------------------------------------------
 
-export function RalphPanel({ cwd, title = "Ralph 会话" }: RalphPanelProps) {
+export function RalphPanel({ cwd, title }: RalphPanelProps) {
+  const { t } = useTranslation();
+
+  // 当 cwd 为空时，显示提示而非发起必然失败的 tRPC 查询
+  if (!cwd || cwd.trim() === "") {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex-shrink-0 border-b px-4 py-3">
+          <h3 className="text-sm font-semibold">{title ?? t("ui.workspace.ralphSession")}</h3>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <NoWorkspaceState />
+        </div>
+      </div>
+    );
+  }
+
   const { data: session, isLoading, error } =
     electronTrpc.maestro.workflow.ralphSession.useQuery({ cwd }, {});
 
@@ -195,7 +226,7 @@ export function RalphPanel({ cwd, title = "Ralph 会话" }: RalphPanelProps) {
     <div className="flex h-full flex-col">
       {/* 标题栏 */}
       <div className="flex-shrink-0 border-b px-4 py-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
+        <h3 className="text-sm font-semibold">{title ?? t("ui.workspace.ralphSession")}</h3>
       </div>
 
       {/* 内容区域 */}
@@ -204,7 +235,7 @@ export function RalphPanel({ cwd, title = "Ralph 会话" }: RalphPanelProps) {
           <LoadingState />
         ) : error ? (
           <ErrorState
-            message={error instanceof Error ? error.message : "未知错误"}
+            message={error instanceof Error ? error.message : t("ui.panel.unknownError")}
           />
         ) : !session ? (
           <EmptyState />

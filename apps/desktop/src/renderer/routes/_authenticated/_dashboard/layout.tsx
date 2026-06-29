@@ -17,9 +17,9 @@ import { useNewWorkspaceModalStore } from "renderer/stores/new-workspace-modal";
 import { NewWorkspaceModal } from "renderer/components/NewWorkspaceModal";
 import { CommandChainPanel } from "renderer/components/CommandChainPanel/CommandChainPanel";
 import { KnowledgePanel } from "renderer/components/KnowledgePanel/KnowledgePanel";
-import { RalphPanel } from "renderer/components/RalphPanel/RalphPanel";
-import { WorkflowStatePanel } from "renderer/components/WorkflowStatePanel/WorkflowStatePanel";
-import { VisualizationPanel } from "renderer/components/VisualizationPanel/VisualizationPanel";
+import { RalphPanel } from "renderer/components/RalphPanel";
+import { WorkflowStatePanel } from "renderer/components/WorkflowStatePanel";
+import { VisualizationPanel } from "renderer/components/VisualizationPanel";
 import { CollectionsProvider } from "../providers/CollectionsProvider";
 import { LocalHostServiceProvider } from "../providers/LocalHostServiceProvider";
 import { navigateToWorkspace } from "./utils/workspace-navigation";
@@ -212,7 +212,7 @@ function RightSidePanel() {
               : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
           }`}
           onClick={() => togglePanel("ralph")}
-          title="Ralph 会话"
+          title={t("ui.workspace.ralphSession")}
         >
           <Activity className="h-4 w-4" />
         </button>
@@ -224,7 +224,7 @@ function RightSidePanel() {
               : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
           }`}
           onClick={() => togglePanel("workflow")}
-          title="工作流状态"
+          title={t("ui.workspace.workflowState")}
         >
           <FolderTree className="h-4 w-4" />
         </button>
@@ -236,13 +236,16 @@ function RightSidePanel() {
               : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
           }`}
           onClick={() => togglePanel("visualization")}
-          title="可视化"
+          title={t("ui.workspace.visualization")}
         >
           <BarChart3 className="h-4 w-4" />
         </button>
       </div>
 
       {isAnyOpen && (
+        // MVP: conditional rendering unmounts panels when closed.
+        // This is intentional — keeps memory footprint low and avoids
+        // stale data for panels that aren't visible.
         <div
           style={{
             width: "320px",
@@ -256,7 +259,7 @@ function RightSidePanel() {
             <CommandChainPanel cwd={""} title={t("ui.workspace.commandChain")} />
           )}
           {isKnowledgeOpen && (
-            <KnowledgePanel cwd={""} placeholder="Search knowledge..." />
+            <KnowledgePanel cwd={""} />
           )}
           {isRalphOpen && <RalphPanel cwd={""} />}
           {isWorkflowOpen && <WorkflowStatePanel cwd={""} />}

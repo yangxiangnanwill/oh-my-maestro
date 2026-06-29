@@ -2,15 +2,17 @@
 import { Outlet, createFileRoute, useParams } from "@tanstack/react-router";
 import { Search, X, PanelRight } from "lucide-react";
 import { useState, useCallback } from "react";
+import { useTranslation } from "renderer/contexts/TranslationContext";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { KnowledgePanel } from "renderer/components/KnowledgePanel/KnowledgePanel";
-import { RalphPanel } from "renderer/components/RalphPanel/RalphPanel";
-import { WorkflowStatePanel } from "renderer/components/WorkflowStatePanel/WorkflowStatePanel";
-import { VisualizationPanel } from "renderer/components/VisualizationPanel/VisualizationPanel";
+import { RalphPanel } from "renderer/components/RalphPanel";
+import { WorkflowStatePanel } from "renderer/components/WorkflowStatePanel";
+import { VisualizationPanel } from "renderer/components/VisualizationPanel";
 
 type WorkspaceTab = "overview" | "chat" | "terminal" | "workflow" | "visualization";
 
 function WorkspaceLayout() {
+  const { t } = useTranslation();
   const { workspaceId } = useParams({ strict: false });
   const tabs = useTabsStore((s) => s.tabs);
   const addChatTab = useTabsStore((s) => s.addChatTab);
@@ -31,8 +33,8 @@ function WorkspaceLayout() {
   };
 
   const handleTabClick = (tab: WorkspaceTab) => {
-    if (tab === "chat") {
-      handleAddChatTab();
+    if (tab === "chat" && workspaceId && workspaceTabs.length === 0) {
+      addChatTab(workspaceId);
     }
     setActiveTab(tab);
   };
@@ -96,8 +98,8 @@ function WorkspaceLayout() {
                 : "text-muted-foreground hover:bg-accent/10 hover:text-foreground"
             }`}
             onClick={toggleKnowledge}
-            title="知识图谱"
-            aria-label="知识图谱"
+            title={t("ui.workspace.knowledge")}
+            aria-label={t("ui.workspace.knowledge")}
           >
             <Search className="h-4 w-4" />
           </button>
@@ -105,19 +107,21 @@ function WorkspaceLayout() {
       </div>
 
       {/* Content + optional knowledge panel */}
+      {/* MVP: tab content conditionally renders based on activeTab.
+           This unmounts panels when switching tabs, keeping memory low. */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <div style={{ flex: 1, overflow: "auto", minWidth: 0 }}>
           {activeTab === "workflow" ? (
             <div style={{ display: "flex", height: "100%" }}>
               <div style={{ flex: 1, overflow: "auto", borderRight: "1px solid var(--border, #2a2a2a)" }}>
-                <WorkflowStatePanel cwd={""} />
+                <WorkflowStatePanel cwd={""} title={t("ui.workspace.workflowState")} />
               </div>
               <div style={{ flex: 1, overflow: "auto" }}>
-                <RalphPanel cwd={""} />
+                <RalphPanel cwd={""} title={t("ui.workspace.ralphSession")} />
               </div>
             </div>
           ) : activeTab === "visualization" ? (
-            <VisualizationPanel cwd={""} />
+            <VisualizationPanel cwd={""} title={t("ui.workspace.visualization")} />
           ) : (
             <Outlet />
           )}
@@ -133,7 +137,6 @@ function WorkspaceLayout() {
           >
             <KnowledgePanel
               cwd={""}
-              placeholder="搜索知识图谱..."
             />
           </div>
         )}

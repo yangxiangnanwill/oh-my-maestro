@@ -1,6 +1,7 @@
-import { AlertTriangle, BarChart3, Loader2 } from "lucide-react";
+import { AlertTriangle, BarChart3, Briefcase, Loader2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
-import { electronTrpc } from "renderer/lib/electron-trpc";
+import { useTranslation } from "renderer/contexts/TranslationContext";
+import { useWorkflowState } from "renderer/hooks/useWorkflowState";
 import type { Artifact, ProjectState } from "../../../lib/workflow-state";
 import type {
   VisualizationPanelProps,
@@ -13,30 +14,43 @@ import type {
 // 状态组件
 // ---------------------------------------------------------------------------
 
+function NoWorkspaceState() {
+  const { t } = useTranslation();
+  return (
+    <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
+      <Briefcase className="h-8 w-8" />
+      <p>{t("ui.panel.noWorkspaceMessage")}</p>
+    </div>
+  );
+}
+
 function LoadingState() {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted-foreground">
       <Loader2 className="h-4 w-4 animate-spin" />
-      <span>加载数据中...</span>
+      <span>{t("ui.panel.loadingData")}</span>
     </div>
   );
 }
 
 function EmptyState() {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
       <BarChart3 className="h-8 w-8" />
-      <p>暂无项目数据</p>
-      <p className="text-xs">请先运行 maestro init 初始化项目</p>
+      <p>{t("ui.panel.noData")}</p>
+      <p className="text-xs">{t("ui.panel.initHint")}</p>
     </div>
   );
 }
 
 function ErrorState({ message }: { message: string }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm">
       <AlertTriangle className="h-8 w-8 text-amber-500" />
-      <p className="text-muted-foreground">获取数据失败</p>
+      <p className="text-muted-foreground">{t("ui.panel.fetchDataFailed")}</p>
       <p className="max-w-[240px] text-xs text-red-500">{message}</p>
     </div>
   );
@@ -133,6 +147,7 @@ function ArtifactRow({ artifact }: { artifact: Artifact }) {
 }
 
 function TableView({ artifacts }: { artifacts: Artifact[] }) {
+  const { t } = useTranslation();
   const [sortField, setSortField] = useState<SortField>("id");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
@@ -148,9 +163,15 @@ function TableView({ artifacts }: { artifacts: Artifact[] }) {
     [sortField],
   );
 
+  // useMemo is O(n log n); fine for <100 artifacts in MVP
   const sorted = useMemo(() => {
     const dir = sortDirection === "asc" ? 1 : -1;
     return [...artifacts].sort((a, b) => {
+      if (sortField === "phase") {
+        const aVal = a.phase ?? Number.MAX_SAFE_INTEGER;
+        const bVal = b.phase ?? Number.MAX_SAFE_INTEGER;
+        return (aVal - bVal) * dir;
+      }
       const aVal = String(a[sortField] ?? "");
       const bVal = String(b[sortField] ?? "");
       return aVal.localeCompare(bVal) * dir;
@@ -160,7 +181,7 @@ function TableView({ artifacts }: { artifacts: Artifact[] }) {
   if (artifacts.length === 0) {
     return (
       <div className="px-4 py-8 text-center text-xs text-muted-foreground">
-        暂无制品数据
+        {t("ui.panel.noArtifacts")}
       </div>
     );
   }
@@ -198,14 +219,31 @@ function TableView({ artifacts }: { artifacts: Artifact[] }) {
 
 export function VisualizationPanel({
   cwd,
-  title = "可视化",
+  title,
 }: VisualizationPanelProps) {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<VisualizationTab>("table");
 
-  const { data: state, isLoading, error } =
-    electronTrpc.maestro.workflow.state.useQuery({ cwd }, {});
+  // 当 cwd 为空时，显示提示而非发起必然失败的 tRPC 查询
+  if (!cwd || cwd.trim() === "") {
+    return (
+      <div className="flex h-full flex-col">
+        <div className="flex-shrink-0 border-b px-4 py-3">
+          <h3 className="text-sm font-semibold">{title ?? t("ui.workspace.visualization")}</h3>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <NoWorkspaceState />
+        </div>
+      </div>
+    );
+  }
+
+  const { data: state, isLoading, error } = useWorkflowState(cwd);
 
   const artifacts: Artifact[] = useMemo(() => {
+    // `"uninitialized" in state` is safe here because the Zod union type guarantees
+    // that the discriminant "uninitialized" property is only present on the uninitialized
+    // variant. TypeScript discriminated union narrowing applies after this check.
     if (!state || "uninitialized" in state) return [];
     const project = state as ProjectState;
     return project.artifacts ?? [];
@@ -215,7 +253,7 @@ export function VisualizationPanel({
     <div className="flex h-full flex-col">
       {/* 标题栏 + 标签页 */}
       <div className="flex-shrink-0 border-b px-4 py-3">
-        <h3 className="text-sm font-semibold">{title}</h3>
+        <h3 className="text-sm font-semibold">{title ?? t("ui.workspace.visualization")}</h3>
         <div className="mt-2 flex gap-1">
           {TABS.map((tab) => (
             <button
@@ -240,7 +278,7 @@ export function VisualizationPanel({
           <LoadingState />
         ) : error ? (
           <ErrorState
-            message={error instanceof Error ? error.message : "未知错误"}
+            message={error instanceof Error ? error.message : t("ui.panel.unknownError")}
           />
         ) : !state ? (
           <EmptyState />
@@ -252,7 +290,7 @@ export function VisualizationPanel({
           </div>
         ) : (
           <PlaceholderState
-            tab={TABS.find((t) => t.key === activeTab)?.label ?? activeTab}
+            tab={TABS.find((tab) => tab.key === activeTab)?.label ?? activeTab}
           />
         )}
       </div>
