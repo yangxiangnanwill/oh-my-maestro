@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "generatedAt": 1782543939142,
+  "generatedAt": 1782702732748,
   "entries": [
     {
       "id": "project-project",
@@ -139,8 +139,8 @@
         "learning"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -166,8 +166,8 @@
         "testability"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -192,8 +192,8 @@
         "resilience"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -218,8 +218,8 @@
         "optimization"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -244,8 +244,8 @@
         "server-architecture"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -270,8 +270,8 @@
         "reactive"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -296,8 +296,8 @@
         "ParamDef"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -323,8 +323,8 @@
         "type-mapping"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -349,8 +349,8 @@
         "object-creation"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -375,8 +375,8 @@
         "UnsupportedVersionError"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -402,8 +402,8 @@
         "double-write"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -429,8 +429,8 @@
         "stdout"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -456,8 +456,8 @@
         "exit-race"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -483,8 +483,8 @@
         "markdown"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -510,8 +510,8 @@
         "spawn"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -537,8 +537,8 @@
         "concept-translation"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -564,8 +564,8 @@
         "mount"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -590,8 +590,8 @@
         "flow-control"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -616,8 +616,8 @@
         "optimization"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -643,8 +643,8 @@
         "path-security"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -669,8 +669,8 @@
         "TypeScript"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -695,8 +695,8 @@
         "可测试性"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -721,8 +721,8 @@
         "可逆性"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -747,8 +747,8 @@
         "gap-fix"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -773,8 +773,89 @@
         "收敛标准"
       ],
       "status": "active",
-      "created": "2026-06-24T09:07:13.549Z",
-      "updated": "2026-06-24T09:07:13.555Z",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-025",
+      "type": "spec",
+      "title": "渐进迁移中的类型断言策略",
+      "summary": "### 渐进迁移中的类型断言策略 S4 编译验证阶段将 532 个 TypeScript 错误降至 0，核心策略是分层处理： 1. **npm 包安装**（Wave 1）解除 90+ TS2307 错误 2. **Stub props 扩展**（Wave 2）解除 113 TS2322 错误 3. **缺失模块创建**（Wave 2）解除 TS2307 归零 4. **残余错误修复**（Wave 3）13 个错误逐一修复 关键经验： - `as never` 用于路由类型",
+      "tags": [
+        "stub",
+        "类型修复",
+        "渐进迁移",
+        "as-never",
+        "技术债务"
+      ],
+      "status": "active",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-026",
+      "type": "spec",
+      "title": "编译验证阶段的 UAT 策略",
+      "summary": "### 编译验证阶段的 UAT 策略 编译验证阶段（非功能开发）的 UAT 与传统功能测试不同。测试场景应围绕： 1. **编译门禁**：`tsc --noEmit` 零错误退出 2. **构建门禁**：`electron-vite build` 三目标成功 3. **产物完整性**：dist/ 目录文件存在且非空 4. **配置一致性**：tsconfig exclude 清理、依赖完整性 5. **审查发现确认**：review 中的高危发现是否有跟踪计划 9 个测试",
+      "tags": [
+        "编译验证",
+        "tsc-noEmit",
+        "electron-vite",
+        "构建产物",
+        "门禁"
+      ],
+      "status": "active",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
+      "scope": "project",
+      "category": "learning",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": "spec:project:learnings",
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "specs/learnings.md"
+      }
+    },
+    {
+      "id": "spec:project:learnings-027",
+      "type": "spec",
+      "title": "TipTap Markdown 扩展的类型安全配置",
+      "summary": "### TipTap Markdown 扩展的类型安全配置 `@tiptap/extension-markdown` 的 `Markdown.configure()` 配置结构从顶层属性变为嵌套 `markdownOptions`： ```typescript // 旧（类型不匹配） Markdown.configure({ html: true, transformPastedText: true }) // 新（匹配 MarkdownExtensionOptions ",
+      "tags": [
+        "tiptap",
+        "markdown",
+        "类型断言",
+        "扩展配置",
+        "API兼容性"
+      ],
+      "status": "active",
+      "created": "2026-06-27T21:14:59.390Z",
+      "updated": "2026-06-27T21:14:59.404Z",
       "scope": "project",
       "category": "learning",
       "specCategory": null,
@@ -1409,6 +1490,27 @@
       }
     },
     {
+      "id": "scratch-20260627-plan-s4-compile-verify-uat",
+      "type": "note",
+      "title": "uat",
+      "summary": "## Tests",
+      "tags": [],
+      "status": "draft",
+      "created": "2026-06-27T20:50:08.116Z",
+      "updated": "2026-06-27T20:50:08.125Z",
+      "scope": null,
+      "category": "scratch",
+      "specCategory": null,
+      "createdBy": null,
+      "sourceRef": null,
+      "parent": null,
+      "related": [],
+      "source": {
+        "kind": "file",
+        "path": "scratch/20260627-plan-s4-compile-verify/uat.md"
+      }
+    },
+    {
       "id": "issue-ISS-20260621-001",
       "type": "issue",
       "title": "[correctness] WorkflowCommander response data contract mismatch",
@@ -1514,6 +1616,48 @@
       "source": {
         "kind": "virtual",
         "path": "scratch/20260627-analyze-s4-compile-verify/archive.json"
+      }
+    },
+    {
+      "id": "session-analyze-anl-s4-compile-verify-2026-06-27-2",
+      "type": "knowhow",
+      "title": "analyze ANL-s4-compile-verify-2026-06-27",
+      "summary": "4 insights / 8 constraints / 3 open questions | 532 个类型错误集中在 5 种错误代码：TS2307(160), TS2322(126), TS7006(104), TS2339(60), TS7031(39)",
+      "tags": [
+        "session",
+        "sealed",
+        "analyze",
+        "S4 范围",
+        "DashboardSidebar",
+        "pty-subprocess",
+        "缺失 npm 包",
+        "shadcn/ui stub",
+        "路由类型",
+        "隐式 any",
+        "修复顺序"
+      ],
+      "status": "completed",
+      "created": "2026-06-27T10:35:00+08:00",
+      "updated": "2026-06-27T10:35:00+08:00",
+      "scope": null,
+      "category": "arch",
+      "specCategory": null,
+      "createdBy": "analyze",
+      "sourceRef": "ANL-s4-compile-verify-2026-06-27",
+      "parent": null,
+      "related": [
+        "milestone-S4",
+        "session-ref-analysis-md",
+        "session-ref-conclusions-json",
+        "session-ref-context-md",
+        "session-ref-context-package-json",
+        "session-ref-discussion-md",
+        "session-ref-exploration-codebase-json",
+        "session-ref-perspectives-json"
+      ],
+      "source": {
+        "kind": "virtual",
+        "path": "milestones/S4/artifacts/analyze-s4-compile-verify/archive.json"
       }
     }
   ]
