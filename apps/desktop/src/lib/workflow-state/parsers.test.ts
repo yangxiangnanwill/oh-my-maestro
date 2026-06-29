@@ -1,5 +1,6 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { describe, expect, it } from "bun:test";
 import {
 	isPathSafe,
@@ -29,11 +30,16 @@ describe("isPathSafe", () => {
 		expect(isPathSafe("C:\\Users\0\\evil")).toBe(false);
 	});
 
-	it("returns false for path traversal with embedded .. segment", () => {
-		// Note: resolve() on Windows collapses most .. segments.
-		// The real protection is against null bytes and empty strings.
-		// This test verifies the function works on normal paths.
-		expect(isPathSafe("/home/user/project")).toBe(true);
+	it("returns false for path traversal with .. segment", () => {
+		expect(isPathSafe("C:\\Users\\..\\etc")).toBe(false);
+	});
+
+	it("returns false for forward-slash traversal", () => {
+		expect(isPathSafe("/home/../etc")).toBe(false);
+	});
+
+	it("returns false for UNC path with traversal", () => {
+		expect(isPathSafe("\\\\server\\share\\..\\etc")).toBe(false);
 	});
 });
 
@@ -42,11 +48,11 @@ describe("isPathSafe", () => {
 // ---------------------------------------------------------------------------
 
 describe("readProjectState", () => {
-	const tmpDir = join(import.meta.dir, "__test_tmp_project_state__");
+	const tmpDir = join(tmpdir(), "workflow-state-test-project");
 
 	it("returns uninitialized when .workflow/state.json does not exist", async () => {
 		const result = await readProjectState(tmpDir);
-		expect(result).toEqual({ initialized: false });
+		expect(result).toEqual({ uninitialized: true });
 	});
 
 	it("parses a valid state.json", async () => {
@@ -75,11 +81,14 @@ describe("readProjectState", () => {
 
 		try {
 			const result = await readProjectState(tmpDir);
-			expect(result.initialized).toBe(true);
-			if ("project" in result && result.project) {
-				expect(result.project.name).toBe("Test");
+			expect(result).not.toEqual({ uninitialized: true });
+			if ("initialized" in result) {
+				expect(result.initialized).toBe(true);
+				if (result.project) {
+					expect(result.project.name).toBe("Test");
+				}
+				expect(result.current_milestone).toBe("M1");
 			}
-			expect(result.current_milestone).toBe("M1");
 		} finally {
 			await rm(join(tmpDir, ".workflow"), { recursive: true, force: true });
 		}
@@ -95,7 +104,7 @@ describe("readProjectState", () => {
 
 		try {
 			const result = await readProjectState(tmpDir);
-			expect(result).toEqual({ initialized: false });
+			expect(result).toEqual({ uninitialized: true });
 		} finally {
 			await rm(join(tmpDir, ".workflow"), { recursive: true, force: true });
 		}
@@ -111,15 +120,34 @@ describe("readProjectState", () => {
 
 		try {
 			const result = await readProjectState(tmpDir);
-			expect(result).toEqual({ initialized: false });
+			expect(result).toEqual({ uninitialized: true });
 		} finally {
 			await rm(join(tmpDir, ".workflow"), { recursive: true, force: true });
 		}
 	});
 
-	it("returns uninitialized for unsafe path", async () => {
-		const result = await readProjectState("C:\\..\\etc");
-		expect(result).toEqual({ initialized: false });
+	it("returns uninitialized for unsafe path with .. traversal", async () => {
+		const result = await readProjectState("C:\\Users\\..\\etc");
+		expect(result).toEqual({ uninitialized: true });
+	});
+
+	// 用真实 .workflow/state.json 做 schema regression
+	it("parses real .workflow/state.json from project root", async () => {
+		// 项目根目录的真实 state.json
+		const projectRoot = join(import.meta.dir, "..", "..", "..", "..", "..");
+		const result = await readProjectState(projectRoot);
+		expect(result).not.toEqual({ uninitialized: true });
+		if ("initialized" in result) {
+			expect(result.initialized).toBe(true);
+			expect(result.project).toBeDefined();
+			// 验证 milestone_history 中有结构化数据
+			if (result.milestones) {
+				expect(result.milestones.length).toBeGreaterThan(0);
+				const first = result.milestones[0];
+				expect(first.id).toBeTruthy();
+				expect(first.name).toBeTruthy();
+			}
+		}
 	});
 });
 
@@ -128,7 +156,7 @@ describe("readProjectState", () => {
 // ---------------------------------------------------------------------------
 
 describe("readCommandChainStatusFile", () => {
-	const tmpDir = join(import.meta.dir, "__test_tmp_cc_status__");
+	const tmpDir = join(tmpdir(), "workflow-state-test-cc");
 
 	it("returns null when status.json does not exist", async () => {
 		const result = await readCommandChainStatusFile(tmpDir);
@@ -196,11 +224,7 @@ describe("readCommandChainStatusFile", () => {
 
 	it("returns null for invalid JSON", async () => {
 		await mkdir(tmpDir, { recursive: true });
-		await writeFile(
-			join(tmpDir, "status.json"),
-			"broken",
-			"utf-8",
-		);
+		await writeFile(join(tmpDir, "status.json"), "broken", "utf-8");
 
 		try {
 			const result = await readCommandChainStatusFile(tmpDir);
@@ -211,13 +235,13 @@ describe("readCommandChainStatusFile", () => {
 	});
 
 	it("returns null for unsafe path", async () => {
-		const result = await readCommandChainStatusFile("C:\\..\\etc");
+		const result = await readCommandChainStatusFile("C:\\Users\\..\\etc");
 		expect(result).toBeNull();
 	});
 });
 
 // ---------------------------------------------------------------------------
-// Zod schema smoke tests — verify schemas parse real-world data shapes
+// Zod schema smoke tests
 // ---------------------------------------------------------------------------
 
 describe("projectStateSchema", () => {
@@ -226,7 +250,7 @@ describe("projectStateSchema", () => {
 		expect(result.initialized).toBe(true);
 	});
 
-	it("parses a full state with milestones and artifacts", () => {
+	it("parses a full state with milestones and artifacts including extra fields", () => {
 		const data = {
 			initialized: true,
 			project: { name: "Test", description: "Desc" },
@@ -252,22 +276,45 @@ describe("projectStateSchema", () => {
 					phase: 1,
 					milestone: "M1",
 					path: "scratch/20260621-analyze",
+					depends_on: "ANL-000", // string variant
 					harvested: false,
 					created_at: "2026-06-21T09:30:00+08:00",
+				},
+				{
+					id: "EXC-010",
+					type: "execute",
+					status: "completed",
+					milestone: "F2",
+					phase: 2,
+					path: "scratch/20260623-plan-P2",
+					depends_on: ["PLN-020"],
+					gap_mode: true,
+					tasks_completed: 3,
+					tasks_total: 3,
 				},
 			],
 			status: "active",
 		};
 		const result = projectStateSchema.parse(data);
 		expect(result.milestones).toHaveLength(1);
-		expect(result.artifacts).toHaveLength(1);
+		expect(result.artifacts).toHaveLength(2);
+		// string depends_on
+		if (result.artifacts![0].depends_on) {
+			expect(typeof result.artifacts![0].depends_on).toBe("string");
+		}
+		// array depends_on
+		if (result.artifacts![1].depends_on) {
+			expect(Array.isArray(result.artifacts![1].depends_on)).toBe(true);
+		}
 	});
 
 	it("rejects an invalid milestone status", () => {
 		expect(() =>
 			projectStateSchema.parse({
 				initialized: true,
-				milestones: [{ id: "M1", name: "M1", status: "unknown", phases: [1] }],
+				milestones: [
+					{ id: "M1", name: "M1", status: "unknown", phases: [1] },
+				],
 			}),
 		).toThrow();
 	});

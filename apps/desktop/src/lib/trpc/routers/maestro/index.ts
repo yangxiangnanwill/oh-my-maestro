@@ -13,6 +13,7 @@ import {
 	projectStateSchema,
 	ralphSessionSchema,
 	readProjectState,
+	isPathSafe,
 } from "../../workflow-state";
 
 // ---------------------------------------------------------------------------
@@ -85,14 +86,7 @@ export type CommandItem = z.infer<typeof commandItemSchema>;
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * 路径安全校验：拒绝空字节注入 + 路径遍历（..）
- */
-function validateCwd(cwd: string): boolean {
-  if (cwd.includes("\0")) return false;
-  const segments = resolve(cwd).split(sep);
-  return !segments.includes("..");
-}
+/** isPathSafe 已从 workflow-state 模块导入，这里仅保留 execMaestroCli */
 
 /**
  * 执行 maestro CLI 命令并返回 stdout。
@@ -232,7 +226,7 @@ export const createMaestroRouter = () => {
         .input(
           z.object({
             query: z.string().min(1, "Search query is required"),
-            cwd: z.string().min(1).refine(validateCwd, {
+            cwd: z.string().min(1).refine(isPathSafe, {
               message: "Invalid working directory path",
             }),
           }),
@@ -267,7 +261,7 @@ export const createMaestroRouter = () => {
       result: publicProcedure
         .input(
           z.object({
-            cwd: z.string().min(1).refine(validateCwd, {
+            cwd: z.string().min(1).refine(isPathSafe, {
               message: "Invalid working directory path",
             }),
             topic: z.string().optional(),
@@ -312,7 +306,7 @@ export const createMaestroRouter = () => {
       state: publicProcedure
         .input(
           z.object({
-            cwd: z.string().min(1).refine(validateCwd, {
+            cwd: z.string().min(1).refine(isPathSafe, {
               message: "Invalid working directory path",
             }),
           }),
@@ -331,7 +325,7 @@ export const createMaestroRouter = () => {
       ralphSession: publicProcedure
         .input(
           z.object({
-            cwd: z.string().min(1).refine(validateCwd, {
+            cwd: z.string().min(1).refine(isPathSafe, {
               message: "Invalid working directory path",
             }),
           }),
