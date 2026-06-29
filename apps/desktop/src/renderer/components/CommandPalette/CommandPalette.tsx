@@ -6,6 +6,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "renderer/contexts/TranslationContext";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { CommandItem } from "./CommandItem";
 import {
@@ -113,6 +114,7 @@ export function CommandPalette({
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   // 获取命令列表
   const {
@@ -136,7 +138,7 @@ export function CommandPalette({
     }
   }, [isOpen]);
 
-  // 过滤命令
+  // 过滤命令（使用翻译后的 label/description）
   const filteredCommands = useMemo(() => {
     if (!commands) return [];
     const q = query.toLowerCase().trim();
@@ -145,11 +147,11 @@ export function CommandPalette({
     return commands.filter(
       (cmd) =>
         cmd.id.toLowerCase().includes(q) ||
-        cmd.label.toLowerCase().includes(q) ||
-        cmd.description.toLowerCase().includes(q) ||
+        t(cmd.label).toLowerCase().includes(q) ||
+        t(cmd.description).toLowerCase().includes(q) ||
         cmd.category.toLowerCase().includes(q),
     );
-  }, [commands, query]);
+  }, [commands, query, t]);
 
   // 分组
   const grouped = useMemo(
@@ -172,6 +174,18 @@ export function CommandPalette({
   const safeHighlighted = Math.min(
     highlightedIndex,
     Math.max(0, flatCommands.length - 1),
+  );
+
+  // 选中命令 — MVP read-only 模式：仅记录选择，不执行
+  const handleSelect = useCallback(
+    (command: MaestroCommand) => {
+      // MVP: 只暴露 riskLevel="read" 命令，选择后仅记录不执行
+      console.log(
+        `[CommandPalette] Selected (read-only): ${command.id}`,
+      );
+      onClose();
+    },
+    [onClose],
   );
 
   // 键盘处理
@@ -202,21 +216,7 @@ export function CommandPalette({
           break;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [flatCommands, safeHighlighted, onClose],
-  );
-
-  // 选中命令 — MVP read-only 模式：仅记录选择，不执行
-  const handleSelect = useCallback(
-    (command: MaestroCommand) => {
-      // MVP: 只暴露 riskLevel="read" 命令，选择后仅记录不执行
-      console.log(
-        `[CommandPalette] Selected (read-only): ${command.id}`,
-        { command, cwd },
-      );
-      onClose();
-    },
-    [onClose, cwd],
+    [flatCommands, safeHighlighted, onClose, handleSelect],
   );
 
   // 点击背景关闭
@@ -314,7 +314,11 @@ export function CommandPalette({
                     return (
                       <CommandItem
                         key={cmd.id}
-                        command={cmd}
+                        command={{
+                          ...cmd,
+                          label: t(cmd.label),
+                          description: t(cmd.description),
+                        }}
                         highlighted={currentIdx === safeHighlighted}
                         onSelect={handleSelect}
                       />

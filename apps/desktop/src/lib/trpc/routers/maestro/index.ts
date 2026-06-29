@@ -3,7 +3,10 @@ import { resolve, sep } from "node:path";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
 import {
+  COMMAND_CATEGORIES,
   COMMAND_REGISTRY,
+  OUTPUT_KINDS,
+  RISK_LEVELS,
   type CommandDefinition,
 } from "../../commands";
 
@@ -57,19 +60,11 @@ const commandItemSchema = z.object({
   name: z.string(),
   label: z.string(),
   description: z.string(),
-  category: z.enum([
-    "workflow",
-    "ralph",
-    "knowledge",
-    "project",
-    "debug",
-    "config",
-    "system",
-  ]),
+  category: z.enum(COMMAND_CATEGORIES),
   cliCommand: z.string(),
   cliArgs: z.array(z.string()),
-  outputKind: z.enum(["text", "json", "state", "table", "stream"]),
-  riskLevel: z.enum(["read", "write", "destructive"]),
+  outputKind: z.enum(OUTPUT_KINDS),
+  riskLevel: z.enum(RISK_LEVELS),
   notes: z.string().optional(),
 });
 
@@ -317,7 +312,11 @@ export const createMaestroRouter = () => {
         )
         .output(z.array(commandItemSchema))
         .query(async ({ input }) => {
-          const registry = COMMAND_REGISTRY;
+          // 安全边界：运行时强制只返回 riskLevel="read" 命令，
+          // 即使 registry 意外包含 write/destructive 条目也不会泄露
+          const registry = COMMAND_REGISTRY.filter(
+            (cmd: CommandDefinition) => cmd.riskLevel === "read",
+          );
           const filtered = input.filter
             ? registry.filter(
                 (cmd: CommandDefinition) =>

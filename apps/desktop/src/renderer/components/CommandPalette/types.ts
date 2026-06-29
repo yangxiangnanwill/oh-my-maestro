@@ -1,3 +1,4 @@
+import type { CommandCategory } from "lib/commands";
 import type { CommandItem } from "lib/trpc/routers/maestro";
 
 /** UI 层映射的 Maestro 命令（精简版，用于渲染） */
@@ -6,7 +7,7 @@ export interface MaestroCommand {
   name: string;
   label: string;
   description: string;
-  category: CommandItem["category"];
+  category: CommandCategory;
   cliCommand: string;
   cliArgs: string[];
   outputKind: CommandItem["outputKind"];
@@ -14,8 +15,8 @@ export interface MaestroCommand {
   notes?: string;
 }
 
-/** 分类显示名称映射 */
-export const CATEGORY_LABELS: Record<CommandItem["category"], string> = {
+/** 分类显示名称映射 — satisfies 保证每个 CommandCategory 都有对应条目 */
+export const CATEGORY_LABELS = {
   workflow: "工作流",
   ralph: "Ralph",
   knowledge: "知识",
@@ -23,10 +24,10 @@ export const CATEGORY_LABELS: Record<CommandItem["category"], string> = {
   debug: "调试",
   config: "配置",
   system: "系统",
-};
+} satisfies Record<CommandCategory, string>;
 
-/** 分类 Badge 颜色映射（Tailwind 类名） */
-export const CATEGORY_COLORS: Record<CommandItem["category"], string> = {
+/** 分类 Badge 颜色映射 — satisfies 保证每个 CommandCategory 都有对应条目 */
+export const CATEGORY_COLORS = {
   workflow:
     "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400",
   ralph:
@@ -41,7 +42,7 @@ export const CATEGORY_COLORS: Record<CommandItem["category"], string> = {
     "bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400",
   system:
     "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-};
+} satisfies Record<CommandCategory, string>;
 
 /** CommandPalette 组件 props */
 export interface CommandPaletteProps {

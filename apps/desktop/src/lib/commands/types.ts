@@ -7,21 +7,39 @@
  */
 
 // ---------------------------------------------------------------------------
-// Category & classification types
+// Single source of truth for category / output / risk enums
 // ---------------------------------------------------------------------------
 
-export type CommandCategory =
-  | "workflow"
-  | "ralph"
-  | "knowledge"
-  | "project"
-  | "debug"
-  | "config"
-  | "system";
+/** All valid command categories — single source of truth */
+export const COMMAND_CATEGORIES = [
+  "workflow",
+  "ralph",
+  "knowledge",
+  "project",
+  "debug",
+  "config",
+  "system",
+] as const;
 
-export type OutputKind = "text" | "json" | "state" | "table" | "stream";
+/** All valid output kinds */
+export const OUTPUT_KINDS = [
+  "text",
+  "json",
+  "state",
+  "table",
+  "stream",
+] as const;
 
-export type RiskLevel = "read" | "write" | "destructive";
+/** All valid risk levels */
+export const RISK_LEVELS = ["read", "write", "destructive"] as const;
+
+// ---------------------------------------------------------------------------
+// Derived types (from const arrays — single source of truth)
+// ---------------------------------------------------------------------------
+
+export type CommandCategory = (typeof COMMAND_CATEGORIES)[number];
+export type OutputKind = (typeof OUTPUT_KINDS)[number];
+export type RiskLevel = (typeof RISK_LEVELS)[number];
 
 // ---------------------------------------------------------------------------
 // CommandDefinition
