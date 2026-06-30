@@ -115,6 +115,7 @@ function NoResultsState({ query }: { query: string }) {
 
 export function KnowledgePanel({
   cwd,
+  workspaceId,
   placeholder = "搜索知识图谱...",
 }: KnowledgePanelProps) {
   const [searchText, setSearchText] = useState("");
@@ -129,14 +130,14 @@ export function KnowledgePanel({
   }, [searchText]);
 
   // tRPC query：仅在有查询词时发起请求
-  const enabled = debouncedQuery.length > 0;
+  const enabled = debouncedQuery.length > 0 && Boolean(workspaceId);
   const {
     data: rawResults,
     isLoading,
     error,
     refetch,
   } = electronTrpc.maestro.knowledge.search.useQuery(
-    { query: debouncedQuery, cwd },
+    { query: debouncedQuery, cwd, workspaceId },
     { enabled },
   );
 

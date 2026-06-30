@@ -202,11 +202,17 @@ function SessionData({ session }: { session: RalphSession }) {
 // 主组件
 // ---------------------------------------------------------------------------
 
-export function RalphPanel({ cwd, title }: RalphPanelProps) {
+export function RalphPanel({ cwd, workspaceId, title }: RalphPanelProps) {
   const { t } = useTranslation();
+  const hasWorkspace = Boolean(workspaceId);
+  const { data: session, isLoading, error } =
+    electronTrpc.maestro.workflow.ralphSession.useQuery(
+      { cwd, workspaceId },
+      { enabled: hasWorkspace },
+    );
 
   // 当 cwd 为空时，显示提示而非发起必然失败的 tRPC 查询
-  if (!cwd || cwd.trim() === "") {
+  if (!hasWorkspace) {
     return (
       <div className="flex h-full flex-col">
         <div className="flex-shrink-0 border-b px-4 py-3">
@@ -218,9 +224,6 @@ export function RalphPanel({ cwd, title }: RalphPanelProps) {
       </div>
     );
   }
-
-  const { data: session, isLoading, error } =
-    electronTrpc.maestro.workflow.ralphSession.useQuery({ cwd }, {});
 
   return (
     <div className="flex h-full flex-col">

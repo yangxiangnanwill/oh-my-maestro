@@ -320,12 +320,18 @@ function ProjectData({ project }: { project: ProjectState }) {
 
 export function WorkflowStatePanel({
   cwd,
+  workspaceId,
   title,
 }: WorkflowStatePanelProps) {
   const { t } = useTranslation();
+  const hasWorkspace = Boolean(workspaceId);
+  const { data: state, isLoading, error } = useWorkflowState(cwd, {
+    workspaceId,
+    enabled: hasWorkspace,
+  });
 
   // 当 cwd 为空时，显示提示而非发起必然失败的 tRPC 查询
-  if (!cwd || cwd.trim() === "") {
+  if (!hasWorkspace) {
     return (
       <div className="flex h-full flex-col">
         <div className="flex-shrink-0 border-b px-4 py-3">
@@ -337,8 +343,6 @@ export function WorkflowStatePanel({
       </div>
     );
   }
-
-  const { data: state, isLoading, error } = useWorkflowState(cwd);
 
   return (
     <div className="flex h-full flex-col">

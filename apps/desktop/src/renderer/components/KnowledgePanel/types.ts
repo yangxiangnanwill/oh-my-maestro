@@ -34,6 +34,8 @@ export interface KnowledgeSearchResult {
 export interface KnowledgePanelProps {
   /** 工作目录路径，用于 tRPC query */
   cwd: string;
+  /** Workspace ID，优先由 main process 解析为受信任 cwd */
+  workspaceId?: string;
   /** 搜索输入框占位文本，默认 "搜索知识图谱..." */
   placeholder?: string;
 }

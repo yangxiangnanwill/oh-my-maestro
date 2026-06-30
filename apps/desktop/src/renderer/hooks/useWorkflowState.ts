@@ -1,5 +1,10 @@
 import { electronTrpc } from "renderer/lib/electron-trpc";
 
+interface UseWorkflowStateOptions {
+  workspaceId?: string;
+  enabled?: boolean;
+}
+
 /**
  * 共享的 workflow state 查询 hook。
  *
@@ -7,6 +12,9 @@ import { electronTrpc } from "renderer/lib/electron-trpc";
  * trpc.maestro.workflow.state.useQuery 查询 key，React Query 会
  * 自动去重，避免重复网络请求。
  */
-export function useWorkflowState(cwd: string) {
-  return electronTrpc.maestro.workflow.state.useQuery({ cwd }, {});
+export function useWorkflowState(cwd: string, options: UseWorkflowStateOptions = {}) {
+  return electronTrpc.maestro.workflow.state.useQuery(
+    { cwd, workspaceId: options.workspaceId },
+    { enabled: options.enabled ?? true },
+  );
 }

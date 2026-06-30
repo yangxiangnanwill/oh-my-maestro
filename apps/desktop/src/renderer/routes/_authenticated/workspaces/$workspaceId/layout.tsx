@@ -3,6 +3,7 @@ import { Outlet, createFileRoute, useParams } from "@tanstack/react-router";
 import { Search, X, PanelRight } from "lucide-react";
 import { useState, useCallback } from "react";
 import { useTranslation } from "renderer/contexts/TranslationContext";
+import { electronTrpc } from "renderer/lib/electron-trpc";
 import { useTabsStore } from "renderer/stores/tabs/store";
 import { KnowledgePanel } from "renderer/components/KnowledgePanel/KnowledgePanel";
 import { RalphPanel } from "renderer/components/RalphPanel";
@@ -20,6 +21,11 @@ function WorkspaceLayout() {
   const addChatTab = useTabsStore((s) => s.addChatTab);
   const [showKnowledge, setShowKnowledge] = useState(false);
   const [activeTab, setActiveTab] = useState<WorkspaceTab>("overview");
+  const { data: workspace } = electronTrpc.workspaces.get.useQuery(
+    { id: workspaceId ?? "" },
+    { enabled: Boolean(workspaceId) },
+  );
+  const workspaceCwd = workspace?.worktreePath ?? "";
 
   const toggleKnowledge = useCallback(() => {
     setShowKnowledge((prev) => !prev);
@@ -119,23 +125,43 @@ function WorkspaceLayout() {
           {activeTab === "dashboard" ? (
             <WidgetGrid columns={2} gap={16}>
               <DashboardWidget title={t("ui.widget.projectStatus")}>
-                <WorkflowStatePanel cwd={""} title={t("ui.workspace.workflowState")} />
+                <WorkflowStatePanel
+                  cwd={workspaceCwd}
+                  workspaceId={workspaceId}
+                  title={t("ui.workspace.workflowState")}
+                />
               </DashboardWidget>
               <DashboardWidget title={t("ui.widget.ralphSession")}>
-                <RalphPanel cwd={""} title={t("ui.workspace.ralphSession")} />
+                <RalphPanel
+                  cwd={workspaceCwd}
+                  workspaceId={workspaceId}
+                  title={t("ui.workspace.ralphSession")}
+                />
               </DashboardWidget>
             </WidgetGrid>
           ) : activeTab === "workflow" ? (
             <div style={{ display: "flex", height: "100%" }}>
               <div style={{ flex: 1, overflow: "auto", borderRight: "1px solid var(--border, #2a2a2a)" }}>
-                <WorkflowStatePanel cwd={""} title={t("ui.workspace.workflowState")} />
+                <WorkflowStatePanel
+                  cwd={workspaceCwd}
+                  workspaceId={workspaceId}
+                  title={t("ui.workspace.workflowState")}
+                />
               </div>
               <div style={{ flex: 1, overflow: "auto" }}>
-                <RalphPanel cwd={""} title={t("ui.workspace.ralphSession")} />
+                <RalphPanel
+                  cwd={workspaceCwd}
+                  workspaceId={workspaceId}
+                  title={t("ui.workspace.ralphSession")}
+                />
               </div>
             </div>
           ) : activeTab === "visualization" ? (
-            <VisualizationPanel cwd={""} title={t("ui.workspace.visualization")} />
+            <VisualizationPanel
+              cwd={workspaceCwd}
+              workspaceId={workspaceId}
+              title={t("ui.workspace.visualization")}
+            />
           ) : (
             <Outlet />
           )}
@@ -150,7 +176,8 @@ function WorkspaceLayout() {
             }}
           >
             <KnowledgePanel
-              cwd={""}
+              cwd={workspaceCwd}
+              workspaceId={workspaceId}
             />
           </div>
         )}

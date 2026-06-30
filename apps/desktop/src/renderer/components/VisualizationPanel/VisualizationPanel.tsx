@@ -478,13 +478,19 @@ function TableView({ artifacts }: { artifacts: Artifact[] }) {
 
 export function VisualizationPanel({
   cwd,
+  workspaceId,
   title,
 }: VisualizationPanelProps) {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<VisualizationTab>("table");
+  const hasWorkspace = Boolean(workspaceId);
+  const { data: state, isLoading, error } = useWorkflowState(cwd, {
+    workspaceId,
+    enabled: hasWorkspace,
+  });
 
   // 当 cwd 为空时，显示提示而非发起必然失败的 tRPC 查询
-  if (!cwd || cwd.trim() === "") {
+  if (!hasWorkspace) {
     return (
       <div className="flex h-full flex-col">
         <div className="flex-shrink-0 border-b px-4 py-3">
@@ -496,8 +502,6 @@ export function VisualizationPanel({
       </div>
     );
   }
-
-  const { data: state, isLoading, error } = useWorkflowState(cwd);
 
   const artifacts: Artifact[] = useMemo(() => {
     // `"uninitialized" in state` is safe here because the Zod union type guarantees

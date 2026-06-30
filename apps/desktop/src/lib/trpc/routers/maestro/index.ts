@@ -1,7 +1,9 @@
 import { execFile } from "node:child_process";
-import { resolve, sep } from "node:path";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
+import { getWorkspace } from "../workspaces/utils/db-helpers";
+import { getWorkspacePath } from "../workspaces/utils/worktree";
 import {
 	COMMAND_CATEGORIES,
 	COMMAND_REGISTRY,
@@ -74,6 +76,15 @@ const commandItemSchema = z.object({
   notes: z.string().optional(),
 });
 
+const workspaceCwdInputSchema = z
+  .object({
+    cwd: z.string().optional().default(""),
+    workspaceId: z.string().min(1, "workspaceId is required"),
+  })
+  .refine((input) => !input.cwd.trim() || isPathSafe(input.cwd), {
+    message: "Invalid working directory path",
+  });
+
 // ---------------------------------------------------------------------------
 // Output types
 // ---------------------------------------------------------------------------
@@ -126,6 +137,30 @@ function execMaestroCli(
       reject(new Error(`Failed to spawn maestro: ${err.message}`));
     });
   });
+}
+
+function resolveWorkspaceCwd(input: z.infer<typeof workspaceCwdInputSchema>): string {
+  const workspace = getWorkspace(input.workspaceId);
+  if (!workspace) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: `Workspace ${input.workspaceId} not found`,
+    });
+  }
+  const workspacePath = getWorkspacePath(workspace);
+  if (!workspacePath || !isPathSafe(workspacePath)) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Workspace has no valid working directory",
+    });
+  }
+  if (input.cwd.trim() && input.cwd.trim() !== workspacePath) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Working directory does not match workspace",
+    });
+  }
+  return workspacePath;
 }
 
 /**
@@ -226,17 +261,17 @@ export const createMaestroRouter = () => {
         .input(
           z.object({
             query: z.string().min(1, "Search query is required"),
-            cwd: z.string().min(1).refine(isPathSafe, {
-              message: "Invalid working directory path",
-            }),
+            cwd: z.string().optional().default(""),
+            workspaceId: z.string().min(1, "workspaceId is required"),
           }),
         )
         .output(z.array(kgSearchResultSchema))
         .query(async ({ input }) => {
+          const cwd = resolveWorkspaceCwd(input);
           try {
             const raw = await execMaestroCli(
               ["search", input.query],
-              input.cwd,
+              cwd,
             );
             return parseSearchOutput(raw, input.query);
           } catch (err) {
@@ -261,19 +296,19 @@ export const createMaestroRouter = () => {
       result: publicProcedure
         .input(
           z.object({
-            cwd: z.string().min(1).refine(isPathSafe, {
-              message: "Invalid working directory path",
-            }),
+            cwd: z.string().optional().default(""),
+            workspaceId: z.string().min(1, "workspaceId is required"),
             topic: z.string().optional(),
           }),
         )
         .output(analyzeResultSchema)
         .query(async ({ input }) => {
           const topic = input.topic || "project";
+          const cwd = resolveWorkspaceCwd(input);
           try {
             const raw = await execMaestroCli(
               ["analyze", topic, "--json"],
-              input.cwd,
+              cwd,
             );
             return parseAnalyzeOutput(raw, topic);
           } catch (err) {
@@ -305,11 +340,7 @@ export const createMaestroRouter = () => {
       /** 读取 .workflow/state.json，返回 ProjectState 或 { uninitialized: true } */
       state: publicProcedure
         .input(
-          z.object({
-            cwd: z.string().min(1).refine(isPathSafe, {
-              message: "Invalid working directory path",
-            }),
-          }),
+          workspaceCwdInputSchema,
         )
         .output(
           z.union([
@@ -318,24 +349,21 @@ export const createMaestroRouter = () => {
           ]),
         )
         .query(async ({ input }) => {
-          return readProjectState(input.cwd);
+          return readProjectState(resolveWorkspaceCwd(input));
         }),
 
       /** 执行 maestro ralph session --json，返回 RalphSession 或 null */
       ralphSession: publicProcedure
         .input(
-          z.object({
-            cwd: z.string().min(1).refine(isPathSafe, {
-              message: "Invalid working directory path",
-            }),
-          }),
+          workspaceCwdInputSchema,
         )
         .output(ralphSessionSchema.nullable())
         .query(async ({ input }) => {
+          const cwd = resolveWorkspaceCwd(input);
           try {
             const raw = await execMaestroCli(
               ["ralph", "session", "--json"],
-              input.cwd,
+              cwd,
             );
             const parsed: unknown = JSON.parse(raw);
             return ralphSessionSchema.parse(parsed);
