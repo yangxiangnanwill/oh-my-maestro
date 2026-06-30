@@ -127,58 +127,6 @@ export const TRANSLATIONS: Record<string, string> = {
   "cmd.knowledge_search.desc": "跨 spec、knowhow、wiki、代码的语义搜索",
   "cmd.knowledge_load": "知识加载",
   "cmd.knowledge_load.desc": "按类型和分类加载知识条目",
-  "cmd.spec_load": "Spec 加载",
-  "cmd.spec_load.desc": "按分类加载项目 spec 条目",
-  "cmd.knowhow_search": "Knowhow 搜索",
-  "cmd.knowhow_search.desc": "搜索 knowhow 知识条目",
-  "cmd.wiki_search": "Wiki 搜索",
-  "cmd.wiki_search.desc": "搜索 wiki 文档",
-  "cmd.wiki_health": "Wiki 健康检查",
-  "cmd.wiki_health.desc": "检查 wiki 系统健康状态",
-  "cmd.wiki_graph": "Wiki 图谱",
-  "cmd.wiki_graph.desc": "查看 wiki 知识图谱结构",
-  "cmd.domain_list": "领域列表",
-  "cmd.domain_list.desc": "列出所有领域定义",
-  "cmd.kg_query": "KG 查询",
-  "cmd.kg_query.desc": "直接查询知识图谱符号",
-  "cmd.kg_context": "KG 上下文",
-  "cmd.kg_context.desc": "获取知识图谱节点的上下文信息",
-  "cmd.kg_callers": "KG 调用者",
-  "cmd.kg_callers.desc": "查找函数的所有调用者",
-  "cmd.kg_callees": "KG 被调用者",
-  "cmd.kg_callees.desc": "查找函数调用的所有子函数",
-
-  // project
-  "cmd.milestone_audit": "里程碑审计",
-  "cmd.milestone_audit.desc": "审计项目里程碑完成状态",
-  "cmd.manage_status": "项目状态",
-  "cmd.manage_status.desc": "查看项目当前状态概览",
-  "cmd.manage_issue_discover": "问题发现",
-  "cmd.manage_issue_discover.desc": "从多视角发现潜在问题",
-
-  // debug
-  "cmd.security_audit": "安全审计",
-  "cmd.security_audit.desc": "OWASP Top 10 和 STRIDE 安全审计",
-  "cmd.learn_follow": "学习跟踪",
-  "cmd.learn_follow.desc": "跟踪学习主题进展",
-  "cmd.learn_investigate": "假设调查",
-  "cmd.learn_investigate.desc": "假设驱动的调查和证据记录",
-  "cmd.learn_second_opinion": "第二意见",
-  "cmd.learn_second_opinion.desc": "从不同角度获取第二意见",
-
-  // system
-  "cmd.explore": "代码探索",
-  "cmd.explore.desc": "多角度代码库扫描和发现",
-  "cmd.workspace_list": "工作区列表",
-  "cmd.workspace_list.desc": "列出所有可用工作区",
-
-  // config
-  "cmd.overlay_list": "覆盖层列表",
-  "cmd.overlay_list.desc": "列出配置覆盖层",
-  "cmd.hooks_status": "钩子状态",
-  "cmd.hooks_status.desc": "查看钩子配置状态",
-  "cmd.delegate_show": "委派详情",
-  "cmd.delegate_show.desc": "查看委派任务详情",
 
   // ── PresetList ─────────────────────────────────────────────────
 
