@@ -1,0 +1,127 @@
+{
+  "id": "TASK-003",
+  "title": "Dataset + Command Preset 概念",
+  "description": "定义 CommandOutputDataset 接口和 CommandPreset 接口，实现 3 个 MVP Dataset (SearchResult, SessionInfo, SkillsList)，实现 preset localStorage 存储和 PresetList 组件。Dataset 层封装 CLI 命令输出的标准化访问；Preset 层提供保存/加载命令参数组合的能力。",
+  "type": "feature",
+  "priority": "medium",
+  "effort": "medium",
+  "action": "定义 CommandOutputDataset<T> 接口 (commandId: string; schema: z.ZodSchema<T>; sampleData: T[]; fetch: (cwd: string) => Promise<T[]>)，实现 3 个具体 dataset: createSearchResultDataset, createSessionInfoDataset, createSkillsListDataset。定义 CommandPreset 接口 (id: string; name: string; commandId: string; args: Record<string, string>; savedAt: string)。实现 preset store: savePreset(preset), loadPresets(), deletePreset(id)。创建 PresetList 组件展示已保存 presets。",
+  "scope": "apps/desktop/src/renderer/lib/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/lib/dataset/",
+    "apps/desktop/src/renderer/lib/presets/",
+    "apps/desktop/src/renderer/components/PresetList/"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/routers/maestro/index.ts",
+    "apps/desktop/src/lib/workflow-state/types.ts",
+    "apps/desktop/src/renderer/hooks/useAgentLaunchPreferences/useAgentLaunchPreferences.ts",
+    "apps/desktop/src/renderer/hooks/useWorkflowState.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave1",
+  "convergence": {
+    "criteria": [
+      "grep -r 'CommandOutputDataset' apps/desktop/src/renderer/lib/dataset/types.ts — 接口定义文件存在",
+      "grep -r 'createSearchResultDataset' apps/desktop/src/renderer/lib/dataset/datasets.ts — 3 个 dataset 工厂函数存在",
+      "grep -r 'CommandPreset' apps/desktop/src/renderer/lib/presets/types.ts — 接口定义文件存在",
+      "grep -r 'savePreset\|loadPresets\|deletePreset' apps/desktop/src/renderer/lib/presets/store.ts — preset store 函数存在",
+      "grep -r 'PresetList' apps/desktop/src/renderer/components/PresetList/PresetList.tsx — 组件文件存在",
+      "[UI-observable] PresetList 组件显示已保存的 presets，支持一键加载和删除",
+      "bun run typecheck 通过"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck && grep -rn 'CommandOutputDataset\|CommandPreset\|createSearchResultDataset\|PresetList' src/renderer/ 确认所有接口和实现存在",
+    "definition_of_done": "Dataset 接口 + 3 个实现可被 Widget 层调用，Preset store 可持久化到 localStorage，PresetList 组件可交互"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/lib/dataset/types.ts",
+      "action": "create",
+      "target": "CommandOutputDataset 接口",
+      "change": "定义 CommandOutputDataset<T> 泛型接口和 DatasetSchema 辅助类型"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/dataset/datasets.ts",
+      "action": "create",
+      "target": "3 个 MVP Dataset 实现",
+      "change": "实现 createSearchResultDataset, createSessionInfoDataset, createSkillsListDataset 工厂函数"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/dataset/index.ts",
+      "action": "create",
+      "target": "barrel export",
+      "change": "export 所有 dataset 类型和工厂函数"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/presets/types.ts",
+      "action": "create",
+      "target": "CommandPreset 接口",
+      "change": "定义 CommandPreset 接口: id, name, commandId, args, savedAt"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/presets/store.ts",
+      "action": "create",
+      "target": "Preset localStorage store",
+      "change": "实现 savePreset/loadPresets/deletePreset 函数，key 格式 maestro:preset:{id}"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/presets/index.ts",
+      "action": "create",
+      "target": "barrel export",
+      "change": "export 所有 preset 类型和 store 函数"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/PresetList/PresetList.tsx",
+      "action": "create",
+      "target": "PresetList 组件",
+      "change": "渲染已保存 presets 列表，支持加载和删除操作"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/PresetList/index.ts",
+      "action": "create",
+      "target": "barrel export",
+      "change": "export { PresetList } from './PresetList'"
+    }
+  ],
+  "implementation": [
+    "创建 lib/dataset/types.ts — 定义 CommandOutputDataset<T> = { commandId, schema, sampleData, fetch }",
+    "创建 lib/dataset/datasets.ts — createSearchResultDataset 用 electronTrpc.maestro.knowledge.search; createSessionInfoDataset 用 electronTrpc.maestro.workflow.ralphSession; createSkillsListDataset 用 electronTrpc.maestro.commands.list 过滤 skills 类别",
+    "创建 lib/presets/types.ts — 定义 CommandPreset = { id: string; name: string; commandId: string; args: Record<string, string>; savedAt: string }",
+    "创建 lib/presets/store.ts — savePreset 将 preset JSON.stringify 存入 localStorage key 'maestro:preset:{id}'; loadPresets 遍历 localStorage 读取所有 maestro:preset:* key; deletePreset 移除对应 key",
+    "创建 PresetList 组件 — 使用 useState + useEffect 加载 presets，渲染列表 + 删除按钮"
+  ],
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck", "cd apps/desktop && bun run lint"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["typecheck 通过", "lint 通过", "Dataset 接口和 Preset store 类型正确"]
+  },
+  "reference": {
+    "pattern": "遵循现有 lib 模块模式 (One folder per module, index.ts barrel export), localStorage 使用模式参考 useAgentLaunchPreferences",
+    "files": [
+      "apps/desktop/src/renderer/hooks/useAgentLaunchPreferences/useAgentLaunchPreferences.ts",
+      "apps/desktop/src/lib/trpc/routers/maestro/index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Dataset 作为纯 TypeScript 接口 + 工厂函数，无需运行时 ORM 或后端服务。Preset 使用简单的 localStorage 存储，key 格式化便于管理。",
+    "decision_factors": [
+      "Dataset 层抽象使 Widget 可消费统一的数据接口，不直接依赖 tRPC",
+      "Preset localStorage 存储符合 MVP 范围，无后端依赖",
+      "不新增 npm 依赖"
+    ],
+    "tradeoffs": "localStorage 存储不支持跨设备同步，数据量大时性能受限 — MVP 阶段可接受"
+  },
+  "risks": [],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "60m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

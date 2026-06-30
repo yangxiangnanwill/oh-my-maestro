@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, Briefcase, Loader2 } from "lucide-react";
+import { AlertTriangle, BarChart3, Briefcase, Loader2, ExternalLink } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "renderer/contexts/TranslationContext";
 import { useWorkflowState } from "renderer/hooks/useWorkflowState";
@@ -9,6 +9,28 @@ import type {
   SortField,
   SortDirection,
 } from "./types";
+
+// ---------------------------------------------------------------------------
+// 常量
+// ---------------------------------------------------------------------------
+
+const TYPE_COLORS: Record<string, string> = {
+  analyze: "#3b82f6",
+  plan: "#8b5cf6",
+  execute: "#22c55e",
+  review: "#f97316",
+  test: "#eab308",
+  debug: "#ef4444",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  analyze: "分析",
+  plan: "规划",
+  execute: "执行",
+  review: "审查",
+  test: "测试",
+  debug: "调试",
+};
 
 // ---------------------------------------------------------------------------
 // 状态组件
@@ -57,11 +79,248 @@ function ErrorState({ message }: { message: string }) {
 }
 
 function PlaceholderState({ tab }: { tab: string }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
       <BarChart3 className="h-8 w-8" />
-      <p>{tab} 视图即将推出</p>
-      <p className="text-xs">敬请期待</p>
+      <p>{tab} {t("ui.panel.comingSoon")}</p>
+      <p className="text-xs">{t("ui.panel.stayTuned")}</p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Timeline 视图
+// ---------------------------------------------------------------------------
+
+function getTypeColor(type: string): string {
+  return TYPE_COLORS[type] ?? "#6b7280";
+}
+
+function getTypeLabel(type: string): string {
+  return TYPE_LABELS[type] ?? type;
+}
+
+function formatDate(isoString: string | undefined): string {
+  if (!isoString) return "-";
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return "-";
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function TimelineView({ artifacts }: { artifacts: Artifact[] }) {
+  const { t } = useTranslation();
+
+  const sorted = useMemo(() => {
+    return [...artifacts]
+      .filter((a) => a.created_at)
+      .sort((a, b) => {
+        const aTime = new Date(a.created_at!).getTime();
+        const bTime = new Date(b.created_at!).getTime();
+        return bTime - aTime; // descending
+      })
+      .slice(0, 20);
+  }, [artifacts]);
+
+  if (sorted.length === 0) {
+    return (
+      <div className="px-4 py-8 text-center text-xs text-muted-foreground">
+        {t("ui.panel.noArtifactsTimeline")}
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="flex min-w-max items-end gap-0 px-6 py-6">
+        {/* 水平线容器 */}
+        <div className="relative flex items-center" style={{ height: 180 }}>
+          {/* 水平线 */}
+          <div
+            className="absolute left-0 right-0 border-t-2 border-border"
+            style={{ top: 16 }}
+          />
+
+          {/* 节点列表 */}
+          <div className="relative flex items-end gap-10">
+            {sorted.map((artifact) => {
+              const color = getTypeColor(artifact.type);
+              const label = getTypeLabel(artifact.type);
+              const date = formatDate(artifact.created_at);
+
+              return (
+                <div
+                  key={artifact.id}
+                  className="flex flex-col items-center gap-1.5"
+                  style={{ minWidth: 72 }}
+                >
+                  {/* 圆点 */}
+                  <div
+                    className="relative z-10 rounded-full border-2 border-background"
+                    style={{
+                      width: 14,
+                      height: 14,
+                      backgroundColor: color,
+                    }}
+                  />
+
+                  {/* 垂直连线到水平线 */}
+                  <div
+                    className="w-px"
+                    style={{
+                      height: 8,
+                      backgroundColor: color,
+                    }}
+                  />
+
+                  {/* 信息区 */}
+                  <div className="flex flex-col items-center text-center">
+                    <span className="max-w-[80px] truncate text-[10px] font-mono font-medium">
+                      {artifact.id}
+                    </span>
+                    <span
+                      className="text-[10px]"
+                      style={{ color }}
+                    >
+                      {label}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground">
+                      {date}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Cards 视图
+// ---------------------------------------------------------------------------
+
+function CardsView({ artifacts }: { artifacts: Artifact[] }) {
+  const { t } = useTranslation();
+
+  // 按 type 分组
+  const grouped = useMemo(() => {
+    const map = new Map<string, Artifact[]>();
+    for (const a of artifacts) {
+      const list = map.get(a.type);
+      if (list) {
+        list.push(a);
+      } else {
+        map.set(a.type, [a]);
+      }
+    }
+    return map;
+  }, [artifacts]);
+
+  if (grouped.size === 0) {
+    return (
+      <div className="px-4 py-8 text-center text-xs text-muted-foreground">
+        {t("ui.panel.noArtifactsTimeline")}
+      </div>
+    );
+  }
+
+  // 按 type 排序以保证稳定渲染
+  const typeOrder = Array.from(grouped.keys()).sort();
+
+  return (
+    <div className="space-y-4 px-3 py-4">
+      {typeOrder.map((type) => {
+        const items = grouped.get(type)!;
+        const color = getTypeColor(type);
+        const label = getTypeLabel(type);
+        const displayItems = items.slice(0, 5);
+        const hasMore = items.length > 5;
+
+        return (
+          <div key={type}>
+            {/* 分组标题 */}
+            <div
+              className="mb-2 flex items-center gap-2 rounded-md px-2 py-1"
+              style={{ backgroundColor: `${color}15` }}
+            >
+              <div
+                className="rounded-full"
+                style={{
+                  width: 10,
+                  height: 10,
+                  backgroundColor: color,
+                }}
+              />
+              <span className="text-xs font-medium" style={{ color }}>
+                {label}
+              </span>
+              <span className="text-[10px] text-muted-foreground">
+                ({items.length})
+              </span>
+            </div>
+
+            {/* 卡片网格 */}
+            <div className="grid grid-cols-2 gap-2">
+              {displayItems.map((artifact) => (
+                <div
+                  key={artifact.id}
+                  className="rounded-lg border border-border p-2.5 transition-colors hover:bg-accent/5"
+                >
+                  <div className="mb-1 flex items-center justify-between">
+                    <span className="text-xs font-mono font-medium">
+                      {artifact.id}
+                    </span>
+                    {artifact.status && (
+                      <span
+                        className="rounded-full px-1.5 py-0.5 text-[9px]"
+                        style={{
+                          backgroundColor: `${color}20`,
+                          color,
+                        }}
+                      >
+                        {artifact.status}
+                      </span>
+                    )}
+                  </div>
+                  {artifact.milestone && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {artifact.milestone}
+                    </p>
+                  )}
+                  {artifact.created_at && (
+                    <p className="mt-1 text-[9px] text-muted-foreground">
+                      {formatDate(artifact.created_at)}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* "查看全部" 链接 */}
+            {hasMore && (
+              <div className="mt-1.5 text-right">
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={() => {
+                    // 切换到 table 视图查看全部 — 通过向上传递事件实现
+                    // MVP: 仅展示提示
+                  }}
+                >
+                  {t("ui.panel.viewAll")} ({items.length})
+                  <ExternalLink className="h-2.5 w-2.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -288,6 +547,10 @@ export function VisualizationPanel({
           <div className="py-3">
             <TableView artifacts={artifacts} />
           </div>
+        ) : activeTab === "timeline" ? (
+          <TimelineView artifacts={artifacts} />
+        ) : activeTab === "cards" ? (
+          <CardsView artifacts={artifacts} />
         ) : (
           <PlaceholderState
             tab={TABS.find((tab) => tab.key === activeTab)?.label ?? activeTab}

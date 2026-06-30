@@ -1,0 +1,115 @@
+{
+  "id": "TASK-002",
+  "title": "Chart-like Workflow Widgets",
+  "description": "创建三个可视化 Widget 组件：MilestoneProgressWidget（里程碑进度条）、ArtifactTimelineWidget（最近 artifact 时间线）、CommandStatsWidget（命令类别统计卡片）。数据均来自 useWorkflowState hook 和 electronTrpc.maestro.commands.list。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "创建 MilestoneProgressWidget (props: { milestones: Milestone[] } → 渲染 current/total 进度条 + 状态分布)，ArtifactTimelineWidget (props: { artifacts: Artifact[] } → 渲染最近 5 条垂直时间线列表)，CommandStatsWidget (props: { commands: CommandItem[] } → 渲染按 category 分组的统计卡片)",
+  "scope": "apps/desktop/src/renderer/components/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/MilestoneProgressWidget/",
+    "apps/desktop/src/renderer/components/ArtifactTimelineWidget/",
+    "apps/desktop/src/renderer/components/CommandStatsWidget/"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/DashboardWidget/DashboardWidget.tsx",
+    "apps/desktop/src/renderer/components/WorkflowStatePanel/WorkflowStatePanel.tsx",
+    "apps/desktop/src/renderer/hooks/useWorkflowState.ts",
+    "apps/desktop/src/lib/workflow-state/types.ts",
+    "apps/desktop/src/lib/trpc/routers/maestro/index.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave1",
+  "convergence": {
+    "criteria": [
+      "grep -r 'MilestoneProgressWidget' apps/desktop/src/renderer/components/MilestoneProgressWidget/MilestoneProgressWidget.tsx — 组件文件存在且导出正确",
+      "grep -r 'ArtifactTimelineWidget' apps/desktop/src/renderer/components/ArtifactTimelineWidget/ArtifactTimelineWidget.tsx — 组件文件存在且导出正确",
+      "grep -r 'CommandStatsWidget' apps/desktop/src/renderer/components/CommandStatsWidget/CommandStatsWidget.tsx — 组件文件存在且导出正确",
+      "[UI-observable] MilestoneProgressWidget 显示 completed/total 里程碑数量和百分比进度条",
+      "[UI-observable] ArtifactTimelineWidget 按 created_at 降序显示最近 5 个 artifact",
+      "[UI-observable] CommandStatsWidget 按 category 分组显示命令计数",
+      "bun run typecheck 通过"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck && grep -rn 'MilestoneProgressWidget\|ArtifactTimelineWidget\|CommandStatsWidget' src/renderer/components/ 确认三个组件文件存在",
+    "definition_of_done": "三个 Widget 组件可独立渲染，接收 props 后正确展示数据，可被 TASK-001 的 DashboardWidget 包装使用"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/MilestoneProgressWidget/MilestoneProgressWidget.tsx",
+      "action": "create",
+      "target": "MilestoneProgressWidget 组件",
+      "change": "创建里程碑进度组件：completed/total 计数 + 进度条 (Tailwind bg 宽度百分比) + 状态分布标签"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/MilestoneProgressWidget/index.ts",
+      "action": "create",
+      "target": "barrel export",
+      "change": "export { MilestoneProgressWidget } from './MilestoneProgressWidget'"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/ArtifactTimelineWidget/ArtifactTimelineWidget.tsx",
+      "action": "create",
+      "target": "ArtifactTimelineWidget 组件",
+      "change": "创建 artifact 时间线组件：按 created_at 排序取最近 5 条，垂直列表 + 左侧时间轴线 + 右侧 artifact 卡片"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/ArtifactTimelineWidget/index.ts",
+      "action": "create",
+      "target": "barrel export",
+      "change": "export { ArtifactTimelineWidget } from './ArtifactTimelineWidget'"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/CommandStatsWidget/CommandStatsWidget.tsx",
+      "action": "create",
+      "target": "CommandStatsWidget 组件",
+      "change": "创建命令统计组件：按 category 分组计数，渲染统计卡片网格"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/CommandStatsWidget/index.ts",
+      "action": "create",
+      "target": "barrel export",
+      "change": "export { CommandStatsWidget } from './CommandStatsWidget'"
+    }
+  ],
+  "implementation": [
+    "创建 MilestoneProgressWidget — 接收 milestones: Milestone[]，计算 completed/total，渲染 Tailwind 进度条 (div 宽度 = (completed/total * 100)%)，下方显示 active/archived/completed 状态标签计数",
+    "创建 ArtifactTimelineWidget — 接收 artifacts: Artifact[]，按 created_at 排序取最近 5 条，渲染垂直时间线列表，每项包含时间点 (左侧圆点+连线)、artifact id、type、status 徽章",
+    "创建 CommandStatsWidget — 通过 electronTrpc.maestro.commands.list.useQuery 获取命令列表，按 category 分组计数，渲染卡片网格显示各 category 的命令数量",
+    "每个组件创建对应的 index.ts barrel export"
+  ],
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck", "cd apps/desktop && bun run lint"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["typecheck 通过", "lint 通过", "三个 Widget 组件均可独立渲染"]
+  },
+  "reference": {
+    "pattern": "遵循现有面板组件模式，状态徽章复用 WorkflowStatePanel 中的 badge 样式",
+    "files": [
+      "apps/desktop/src/renderer/components/WorkflowStatePanel/WorkflowStatePanel.tsx",
+      "apps/desktop/src/renderer/components/RalphPanel/RalphPanel.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "三个 Widget 均为纯展示组件，接收数据 props 渲染，不负责数据获取。Widget 本身不引入外部图表库，使用 Tailwind CSS 实现视觉效果（进度条、时间线、卡片）。",
+    "decision_factors": [
+      "纯展示组件模式 — 数据由父组件通过 useWorkflowState/tRPC 获取后传入 props",
+      "复用 WorkflowStatePanel 中已有的 status badge 样式模式",
+      "不新增 npm 依赖（不引入 recharts/chart.js 等图表库）"
+    ],
+    "tradeoffs": "纯 CSS 实现进度条和时间线在视觉上不如专业图表库丰富，但满足 MVP 需求且零依赖"
+  },
+  "risks": [],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "60m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

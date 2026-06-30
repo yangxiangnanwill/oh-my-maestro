@@ -1,0 +1,84 @@
+{
+  "id": "TASK-004",
+  "title": "VisualizationPanel 增强 (Timeline + Cards)",
+  "description": "在已有 VisualizationPanel 组件中实现 Timeline 视图和 Cards 视图，替换现有的 PlaceholderState 占位。Timeline 视图按 artifact created_at 排序渲染水平时间线。Cards 视图按 artifact type 分组渲染卡片网格。DAG 视图保留占位文案。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "在 VisualizationPanel.tsx 中新增 TimelineView 组件 (props: { artifacts: Artifact[] } → 按 created_at 排序渲染水平时间线) 和 CardsView 组件 (props: { artifacts: Artifact[] } → 按 type 分组渲染卡片网格)，替换 activeTab === 'timeline'/'cards' 分支中的 PlaceholderState 为实际视图",
+  "scope": "apps/desktop/src/renderer/components/VisualizationPanel/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx",
+    "apps/desktop/src/renderer/components/VisualizationPanel/types.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx",
+    "apps/desktop/src/renderer/components/VisualizationPanel/types.ts",
+    "apps/desktop/src/renderer/components/WorkflowStatePanel/WorkflowStatePanel.tsx",
+    "apps/desktop/src/lib/workflow-state/types.ts"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave1",
+  "convergence": {
+    "criteria": [
+      "grep -r 'TimelineView' apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx — Timeline 视图组件存在于文件中",
+      "grep -r 'CardsView' apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx — Cards 视图组件存在于文件中",
+      "grep -r 'PlaceholderState' apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx — PlaceholderState 仍存在于 dag 分支",
+      "grep -r 'created_at' apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx — Timeline 视图使用 artifact.created_at 排序",
+      "[UI-observable] 用户切换到 Timeline 标签页时看到按时间排序的 artifact 水平时间线",
+      "[UI-observable] 用户切换到 Cards 标签页时看到按 type 分组的 artifact 卡片网格",
+      "[UI-observable] 用户切换到 DAG 标签页时仍显示占位提示",
+      "bun run typecheck 通过"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck && grep -n 'TimelineView\|CardsView\|PlaceholderState' src/renderer/components/VisualizationPanel/VisualizationPanel.tsx 确认三个分支正确",
+    "definition_of_done": "VisualizationPanel 的 Timeline 和 Cards 视图可渲染真实数据，DAG 保留占位，Table 视图不受影响"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx",
+      "action": "modify",
+      "target": "VisualizationPanel 组件",
+      "change": "新增 TimelineView 和 CardsView 组件，替换 timeline/cards 标签页分支中的 PlaceholderState"
+    }
+  ],
+  "implementation": [
+    "在 VisualizationPanel.tsx 中新增 TimelineView 组件 — 接收 artifacts: Artifact[]，按 created_at 排序（null 值排最后），渲染水平时间线：左侧时间标签 + 连接线 + 右侧 artifact 节点（含 id、type、status 徽章）",
+    "在 VisualizationPanel.tsx 中新增 CardsView 组件 — 接收 artifacts: Artifact[]，按 type 分组，每组渲染标题 + 卡片网格（每张卡片显示 artifact id、status、milestone 信息）",
+    "修改主组件渲染逻辑 — 将 activeTab === 'timeline' 分支替换为 <TimelineView artifacts={artifacts} />，activeTab === 'cards' 替换为 <CardsView artifacts={artifacts} />，dag 分支保留 PlaceholderState",
+    "空数据状态处理 — TimelineView 和 CardsView 在 artifacts 为空时显示与 TableView 一致的空状态提示"
+  ],
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck", "cd apps/desktop && bun run lint"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["typecheck 通过", "lint 通过", "Timeline/Cards/Table 三个视图均可渲染", "DAG 保持占位"]
+  },
+  "reference": {
+    "pattern": "遵循现有 VisualizationPanel 内部组件模式 (TableView, PlaceholderState)，TimelineView 时间线样式参考 ArtifactTimelineWidget",
+    "files": [
+      "apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx",
+      "apps/desktop/src/renderer/components/WorkflowStatePanel/WorkflowStatePanel.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "在 VisualizationPanel.tsx 单文件内新增视图组件，保持文件内聚性。不拆分到独立文件避免过度碎片化。Timeline 使用水平布局 (flex row + 伪元素连线)，Cards 使用 CSS grid。",
+    "decision_factors": [
+      "VisualizationPanel 已有 TableView 在单文件内的模式，保持一致",
+      "不新增 npm 依赖（不引入 timeline/carousel 库）",
+      "DAG 视图复杂性高，MVP 阶段保留占位"
+    ],
+    "tradeoffs": "单文件可能变长 (~400 行)，但避免了过度拆分和跨文件引用复杂度。Timeline 纯 CSS 实现不如专业库美观但零依赖。"
+  },
+  "risks": [],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "60m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

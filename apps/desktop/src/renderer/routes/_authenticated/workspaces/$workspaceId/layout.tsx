@@ -8,8 +8,10 @@ import { KnowledgePanel } from "renderer/components/KnowledgePanel/KnowledgePane
 import { RalphPanel } from "renderer/components/RalphPanel";
 import { WorkflowStatePanel } from "renderer/components/WorkflowStatePanel";
 import { VisualizationPanel } from "renderer/components/VisualizationPanel";
+import { DashboardWidget } from "renderer/components/DashboardWidget";
+import { WidgetGrid } from "renderer/components/WidgetGrid";
 
-type WorkspaceTab = "overview" | "chat" | "terminal" | "workflow" | "visualization";
+type WorkspaceTab = "overview" | "chat" | "terminal" | "workflow" | "visualization" | "dashboard";
 
 function WorkspaceLayout() {
   const { t } = useTranslation();
@@ -87,6 +89,9 @@ function WorkspaceLayout() {
         <button type="button" style={tabStyle("visualization")} onClick={() => handleTabClick("visualization")}>
           可视化
         </button>
+        <button type="button" style={tabStyle("dashboard")} onClick={() => handleTabClick("dashboard")}>
+          仪表盘
+        </button>
 
         {/* 右侧工具按钮 */}
         <div style={{ marginLeft: "auto", display: "flex", gap: "4px" }}>
@@ -111,7 +116,16 @@ function WorkspaceLayout() {
            This unmounts panels when switching tabs, keeping memory low. */}
       <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
         <div style={{ flex: 1, overflow: "auto", minWidth: 0 }}>
-          {activeTab === "workflow" ? (
+          {activeTab === "dashboard" ? (
+            <WidgetGrid columns={2} gap={16}>
+              <DashboardWidget title={t("ui.widget.projectStatus")}>
+                <WorkflowStatePanel cwd={""} title={t("ui.workspace.workflowState")} />
+              </DashboardWidget>
+              <DashboardWidget title={t("ui.widget.ralphSession")}>
+                <RalphPanel cwd={""} title={t("ui.workspace.ralphSession")} />
+              </DashboardWidget>
+            </WidgetGrid>
+          ) : activeTab === "workflow" ? (
             <div style={{ display: "flex", height: "100%" }}>
               <div style={{ flex: 1, overflow: "auto", borderRight: "1px solid var(--border, #2a2a2a)" }}>
                 <WorkflowStatePanel cwd={""} title={t("ui.workspace.workflowState")} />

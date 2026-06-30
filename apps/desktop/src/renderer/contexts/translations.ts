@@ -71,6 +71,18 @@ export const TRANSLATIONS: Record<string, string> = {
   "ui.panel.fetchStateFailed": "获取项目状态失败",
   "ui.panel.fetchDataFailed": "获取数据失败",
   "ui.panel.unknownError": "未知错误",
+  "ui.panel.comingSoon": "即将推出",
+  "ui.panel.stayTuned": "敬请期待",
+  "ui.panel.noArtifactsTimeline": "暂无制品记录",
+  "ui.panel.viewAll": "查看全部",
+
+  // Widget
+  "ui.widget.loading": "加载中...",
+  "ui.widget.empty": "暂无数据",
+  "ui.widget.error": "加载失败",
+  "ui.widget.retry": "重试",
+  "ui.widget.projectStatus": "项目状态",
+  "ui.widget.ralphSession": "Ralph 会话",
 
   // Chat
   "ui.chat.title": "对话",
@@ -167,4 +179,14 @@ export const TRANSLATIONS: Record<string, string> = {
   "cmd.hooks_status.desc": "查看钩子配置状态",
   "cmd.delegate_show": "委派详情",
   "cmd.delegate_show.desc": "查看委派任务详情",
+
+  // ── PresetList ─────────────────────────────────────────────────
+
+  "ui.presetList.title": "命令预设",
+  "ui.presetList.empty": "暂无保存的预设",
+  "ui.presetList.load": "加载",
+  "ui.presetList.delete": "删除",
+  "ui.presetList.confirmDelete": "确认删除预设「{name}」？",
+  "ui.presetList.loading": "加载预设中...",
+  "ui.presetList.error": "加载预设失败",
 };

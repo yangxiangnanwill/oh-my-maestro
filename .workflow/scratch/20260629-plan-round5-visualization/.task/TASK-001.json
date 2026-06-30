@@ -1,0 +1,108 @@
+{
+  "id": "TASK-001",
+  "title": "Dashboard Widget 框架",
+  "description": "创建 DashboardWidget 通用容器组件和 WidgetGrid 布局组件，在 WorkspaceLayout 中新增 dashboard 视图模式。DashboardWidget 提供 title + header actions + content area + empty/loading/error 四个内置状态。WidgetGrid 使用 CSS flex-wrap 实现响应式网格布局。",
+  "type": "feature",
+  "priority": "high",
+  "effort": "medium",
+  "action": "创建 DashboardWidget 组件 (props: { title: string; icon?: React.ReactNode; actions?: React.ReactNode; empty?: React.ReactNode; loading?: boolean; error?: string | null; children: React.ReactNode }) 和 WidgetGrid 组件 (props: { columns?: number; gap?: number; children: React.ReactNode })，在 layout.tsx 中添加 'dashboard' 标签页，渲染 WidgetGrid + 占位 widget",
+  "scope": "apps/desktop/src/renderer/components/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/DashboardWidget/",
+    "apps/desktop/src/renderer/components/WidgetGrid/",
+    "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/layout.tsx"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/WorkflowStatePanel/WorkflowStatePanel.tsx",
+    "apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx",
+    "apps/desktop/src/renderer/components/RalphPanel/RalphPanel.tsx",
+    "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/layout.tsx"
+  ],
+  "depends_on": [],
+  "parallel_group": "wave1",
+  "convergence": {
+    "criteria": [
+      "grep -r 'DashboardWidget' apps/desktop/src/renderer/components/DashboardWidget/DashboardWidget.tsx — 文件存在且导出 DashboardWidget 组件",
+      "grep -r 'WidgetGrid' apps/desktop/src/renderer/components/WidgetGrid/WidgetGrid.tsx — 文件存在且导出 WidgetGrid 组件",
+      "grep -r 'dashboard' apps/desktop/src/renderer/routes/_authenticated/workspaces/\\$workspaceId/layout.tsx — 文件中存在 dashboard 标签页",
+      "grep -r 'DashboardWidget' apps/desktop/src/renderer/routes/_authenticated/workspaces/\\$workspaceId/layout.tsx — layout 中使用 DashboardWidget 组件",
+      "[UI-observable] 用户切换到 Dashboard 标签页时看到包含 placeholder widget 的网格布局",
+      "bun run typecheck 通过 — 无 TypeScript 错误"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck && grep -rn 'DashboardWidget\|WidgetGrid' src/renderer/ 确认组件存在且被 layout 引用",
+    "definition_of_done": "DashboardWidget 和 WidgetGrid 组件可被其他 task 引用，WorkspaceLayout 中 dashboard 视图可渲染"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/DashboardWidget/DashboardWidget.tsx",
+      "action": "create",
+      "target": "DashboardWidget 组件",
+      "change": "创建通用容器组件，包含 title bar + header actions + content area + empty/loading/error 状态"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/DashboardWidget/index.ts",
+      "action": "create",
+      "target": "barrel export",
+      "change": "export { DashboardWidget } from './DashboardWidget'"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/WidgetGrid/WidgetGrid.tsx",
+      "action": "create",
+      "target": "WidgetGrid 组件",
+      "change": "创建 CSS flex-wrap 网格布局组件，支持 columns/gap 配置"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/WidgetGrid/index.ts",
+      "action": "create",
+      "target": "barrel export",
+      "change": "export { WidgetGrid } from './WidgetGrid'"
+    },
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/layout.tsx",
+      "action": "modify",
+      "target": "WorkspaceLayout 组件",
+      "change": "添加 'dashboard' 标签页类型和按钮，在 activeTab === 'dashboard' 时渲染 WidgetGrid + 占位 DashboardWidget"
+    }
+  ],
+  "implementation": [
+    "创建 DashboardWidget/DashboardWidget.tsx — 定义 props 接口，实现 title bar (flex row: 左侧 icon+title，右侧 actions)，content area 根据 loading/error/empty/children 渲染不同内容",
+    "创建 DashboardWidget/index.ts — barrel export",
+    "创建 WidgetGrid/WidgetGrid.tsx — 实现 div 容器，style 使用 display:flex; flex-wrap:wrap; gap 和子元素宽度 calc(100% / columns - gap) 实现网格",
+    "创建 WidgetGrid/index.ts — barrel export",
+    "修改 layout.tsx — 在 WorkspaceTab 类型中添加 'dashboard'，添加 dashboard tab 按钮，在内容区添加 dashboard case 渲染 WidgetGrid + 占位 DashboardWidget"
+  ],
+  "test": {
+    "commands": ["cd apps/desktop && bun run typecheck", "cd apps/desktop && bun run lint"],
+    "unit": [],
+    "integration": [],
+    "success_metrics": ["typecheck 通过", "lint 通过", "dashboard 标签页可渲染"]
+  },
+  "reference": {
+    "pattern": "遵循现有面板组件模式 (WorkflowStatePanel, RalphPanel, VisualizationPanel)",
+    "files": [
+      "apps/desktop/src/renderer/components/WorkflowStatePanel/WorkflowStatePanel.tsx",
+      "apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "DashboardWidget 作为纯容器组件，状态由调用方通过 props 控制，保持组件简单和无副作用。WidgetGrid 使用纯 CSS flex 避免引入大型布局库。",
+    "decision_factors": [
+      "已有面板均使用 组件/文件夹 + index.ts barrel export 模式，保持一致",
+      "TailwindCSS className 作为主要样式手段",
+      "不新增 npm 依赖"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "meta": {
+    "status": "pending",
+    "estimated_time": "45m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

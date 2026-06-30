@@ -1,0 +1,38 @@
+{
+  "summary": "Round 5 实现 Superset 风格可视化，包括 Dashboard Widget 框架、Chart-like 工作流 Widgets、Dataset + Command Preset 概念、VisualizationPanel 增强（Timeline/Cards 视图）。4 个 task，全部独立并行，无依赖关系。不安装 Superset、不新增后端服务、不新增 npm 依赖。",
+  "approach": "基于 Round 4 已有的 WorkflowStatePanel/VisualizationPanel/RalphPanel 和 useWorkflowState hook，在现有架构上叠加 widget 框架和 dataset/preset 抽象层。Widget 框架使用纯 CSS flex + React state 管理布局。Dataset 层复用 useWorkflowState 数据，封装标准化接口。Preset 使用 localStorage 持久化。",
+  "task_ids": ["TASK-001", "TASK-002", "TASK-003", "TASK-004"],
+  "task_count": 4,
+  "complexity": "medium",
+  "estimated_time": "4h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {"wave": 1, "tasks": ["TASK-001", "TASK-002", "TASK-003", "TASK-004"]}
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "tRPC query (useWorkflowState) → Widget data",
+      "localStorage → Command Preset persistence",
+      "DashboardWidget container → Widget children render"
+    ]
+  },
+  "design_decisions": [
+    "DashboardWidget 为通用容器，Widget 子组件通过 children prop 注入内容",
+    "WidgetGrid 使用 CSS flex-wrap 实现响应式网格，不引入 react-grid-layout",
+    "CommandOutputDataset 定义为纯 TypeScript 接口 + 工厂函数，不依赖后端",
+    "CommandPreset 存储在 localStorage，key 格式为 maestro:preset:{id}",
+    "VisualizationPanel Timeline/Cards 视图在已有组件内部扩展，不拆分子组件文件"
+  ],
+  "shared_context": {
+    "patterns": ["组件/文件夹模式 (ComponentName/ComponentName.tsx + index.ts)", "tRPC useQuery hook 模式", "useState + localStorage 持久化模式"],
+    "conventions": ["ESM imports", "strict TypeScript", "TailwindCSS 样式", "lucide-react 图标"],
+    "dependencies": ["@tanstack/react-router", "@trpc/react-query", "zod", "lucide-react"]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-29T00:00:00Z",
+    "source": "workflow-planner",
+    "planning_mode": "full",
+    "plan_type": "feature"
+  }
+}
