@@ -9,6 +9,7 @@ import {
 	Play,
 	RefreshCw,
 	Search,
+	TerminalSquare,
 	XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -52,6 +53,32 @@ type MaestroApi = {
 		cwd: string;
 		task: string;
 	}) => Promise<MaestroCodingSessionResult>;
+	ralphSession: (payload: {
+		cwd: string;
+		sessionId?: string;
+	}) => Promise<MaestroRunResult>;
+	ralphCheck: (payload: {
+		cwd: string;
+		sessionId?: string;
+	}) => Promise<MaestroRunResult>;
+	ralphNext: (payload: {
+		cwd: string;
+		sessionId?: string;
+	}) => Promise<MaestroRunResult>;
+	ralphComplete: (payload: {
+		cwd: string;
+		sessionId?: string;
+		index: number;
+		status: "DONE" | "DONE_WITH_CONCERNS" | "NEEDS_RETRY" | "BLOCKED";
+		evidence?: string;
+		concerns?: string;
+		reason?: string;
+	}) => Promise<MaestroRunResult>;
+	ralphRetry: (payload: {
+		cwd: string;
+		sessionId?: string;
+		index: number;
+	}) => Promise<MaestroRunResult>;
 };
 
 type OutputEntry = {
@@ -171,6 +198,14 @@ function buildRunBody(result: MaestroRunResult): string {
 	);
 }
 
+function parseActiveStepIndex(body: string): number | null {
+	const activeMatch = body.match(/^active_step_index:\s*(\d+)/m);
+	if (activeMatch?.[1]) return Number(activeMatch[1]);
+	const stepMatch = body.match(/step\s+(\d+):/);
+	if (stepMatch?.[1]) return Number(stepMatch[1]);
+	return null;
+}
+
 function statusTone(ok?: boolean) {
 	if (ok === undefined) return "border-[#34414d] bg-[#171b20] text-[#aebbc5]";
 	return ok
@@ -186,6 +221,11 @@ export function App() {
 	const [cliStatus, setCliStatus] = useState<MaestroCliStatus | null>(null);
 	const [lastSession, setLastSession] =
 		useState<MaestroCodingSessionResult | null>(null);
+	const [activeStepIndex, setActiveStepIndex] = useState<number | null>(null);
+	const [evidence, setEvidence] = useState("");
+	const [reason, setReason] = useState(
+		"当前 step 已由外部 agent 或人工完成，继续推进工作流。",
+	);
 	const [outputs, setOutputs] = useState<OutputEntry[]>([]);
 
 	const appVersion =
@@ -263,6 +303,41 @@ export function App() {
 		}
 	}
 
+	async function runRalphAction(
+		title: string,
+		command: string,
+		action: () => Promise<MaestroRunResult>,
+	) {
+		setIsBusy(true);
+		try {
+			const result = await action();
+			const body = buildRunBody(result);
+			const parsedActiveStepIndex = parseActiveStepIndex(body);
+			if (parsedActiveStepIndex !== null) {
+				setActiveStepIndex(parsedActiveStepIndex);
+			}
+			pushOutput({
+				title,
+				command,
+				ok: result.ok,
+				body,
+			});
+		} catch (error) {
+			pushOutput({
+				title,
+				command,
+				ok: false,
+				body: error instanceof Error ? error.message : String(error),
+			});
+		} finally {
+			setIsBusy(false);
+		}
+	}
+
+	function currentSessionId(): string | undefined {
+		return lastSession?.ok ? lastSession.sessionId : undefined;
+	}
+
 	async function createCodingSession() {
 		setIsBusy(true);
 		try {
@@ -271,6 +346,9 @@ export function App() {
 				task,
 			});
 			setLastSession(result.ok ? result : null);
+			if (result.ok) {
+				setActiveStepIndex(null);
+			}
 			pushOutput({
 				title: result.ok ? "Coding session 已创建" : "Coding session 创建失败",
 				command: "create ralph coding session",
@@ -396,7 +474,14 @@ export function App() {
 							className="inline-flex items-center justify-center gap-2 rounded-md bg-[#202832] px-3 py-2 text-sm text-white hover:bg-[#2a3440] disabled:opacity-50"
 							type="button"
 							disabled={!canRun}
-							onClick={() => runCommand("Ralph session", ["ralph", "session"])}
+							onClick={() =>
+								runRalphAction("Ralph session", "maestro ralph session", () =>
+									requireMaestroApi().ralphSession({
+										cwd: projectPath,
+										sessionId: currentSessionId(),
+									}),
+								)
+							}
 						>
 							<Activity size={15} />
 							Session
@@ -405,7 +490,14 @@ export function App() {
 							className="inline-flex items-center justify-center gap-2 rounded-md bg-[#202832] px-3 py-2 text-sm text-white hover:bg-[#2a3440] disabled:opacity-50"
 							type="button"
 							disabled={!canRun}
-							onClick={() => runCommand("Ralph check", ["ralph", "check"])}
+							onClick={() =>
+								runRalphAction("Ralph check", "maestro ralph check", () =>
+									requireMaestroApi().ralphCheck({
+										cwd: projectPath,
+										sessionId: currentSessionId(),
+									}),
+								)
+							}
 						>
 							<CheckCircle2 size={15} />
 							Check
@@ -463,10 +555,117 @@ export function App() {
 									className="inline-flex items-center justify-center gap-2 rounded-md border border-[#34414d] bg-[#202832] px-4 py-2.5 text-white hover:bg-[#2a3440] disabled:opacity-50"
 									type="button"
 									disabled={!canRun}
-									onClick={() => runCommand("Ralph next", ["ralph", "next"])}
+									onClick={() =>
+										runRalphAction("Ralph next", "maestro ralph next", () =>
+											requireMaestroApi().ralphNext({
+												cwd: projectPath,
+												sessionId: currentSessionId(),
+											}),
+										)
+									}
 								>
 									<ArrowRight size={16} />
 									Next
+								</button>
+							</div>
+						</section>
+
+						<section className="rounded-lg border border-[#29313a] bg-[#171b20] p-4">
+							<div className="mb-3 flex items-center justify-between gap-3">
+								<div className="flex items-center gap-2 font-medium text-white">
+									<TerminalSquare size={18} />
+									Step 控制
+								</div>
+								<div className="rounded border border-[#3b4652] bg-[#0f1216] px-2 py-1 font-mono text-[#9fb0bf] text-xs">
+									active: {activeStepIndex ?? "idle"}
+								</div>
+							</div>
+							<div className="grid grid-cols-[92px_1fr] items-center gap-2">
+								<label className="text-[#aebbc5] text-sm">Step</label>
+								<input
+									className="rounded-md border border-[#2d3640] bg-[#0f1216] px-3 py-2 text-sm outline-none ring-[#5aa7ff] focus:ring-2"
+									type="number"
+									min={0}
+									value={activeStepIndex ?? 0}
+									onChange={(event) =>
+										setActiveStepIndex(Number(event.target.value))
+									}
+								/>
+								<label className="text-[#aebbc5] text-sm">Evidence</label>
+								<input
+									className="rounded-md border border-[#2d3640] bg-[#0f1216] px-3 py-2 text-sm outline-none ring-[#5aa7ff] focus:ring-2"
+									value={evidence}
+									onChange={(event) => setEvidence(event.target.value)}
+									placeholder=".workflow/scratch/... 或验证摘要"
+								/>
+								<label className="text-[#aebbc5] text-sm">Reason</label>
+								<input
+									className="rounded-md border border-[#2d3640] bg-[#0f1216] px-3 py-2 text-sm outline-none ring-[#5aa7ff] focus:ring-2"
+									value={reason}
+									onChange={(event) => setReason(event.target.value)}
+								/>
+							</div>
+							<div className="mt-3 grid grid-cols-3 gap-2">
+								<button
+									className="rounded-md bg-[#2f6f48] px-3 py-2 text-sm text-white hover:bg-[#3b8156] disabled:opacity-50"
+									type="button"
+									disabled={!canRun || activeStepIndex === null}
+									onClick={() =>
+										runRalphAction(
+											"Step DONE",
+											`maestro ralph complete ${activeStepIndex} --status DONE`,
+											() =>
+												requireMaestroApi().ralphComplete({
+													cwd: projectPath,
+													sessionId: currentSessionId(),
+													index: activeStepIndex ?? 0,
+													status: "DONE",
+													evidence: evidence.trim() || undefined,
+												}),
+										)
+									}
+								>
+									Mark DONE
+								</button>
+								<button
+									className="rounded-md bg-[#7a4f23] px-3 py-2 text-sm text-white hover:bg-[#8f612d] disabled:opacity-50"
+									type="button"
+									disabled={!canRun || activeStepIndex === null}
+									onClick={() =>
+										runRalphAction(
+											"Step retry",
+											`maestro ralph retry ${activeStepIndex}`,
+											() =>
+												requireMaestroApi().ralphRetry({
+													cwd: projectPath,
+													sessionId: currentSessionId(),
+													index: activeStepIndex ?? 0,
+												}),
+										)
+									}
+								>
+									Retry
+								</button>
+								<button
+									className="rounded-md bg-[#6f3333] px-3 py-2 text-sm text-white hover:bg-[#814040] disabled:opacity-50"
+									type="button"
+									disabled={!canRun || activeStepIndex === null}
+									onClick={() =>
+										runRalphAction(
+											"Step BLOCKED",
+											`maestro ralph complete ${activeStepIndex} --status BLOCKED`,
+											() =>
+												requireMaestroApi().ralphComplete({
+													cwd: projectPath,
+													sessionId: currentSessionId(),
+													index: activeStepIndex ?? 0,
+													status: "BLOCKED",
+													reason,
+												}),
+										)
+									}
+								>
+									Mark BLOCKED
 								</button>
 							</div>
 						</section>

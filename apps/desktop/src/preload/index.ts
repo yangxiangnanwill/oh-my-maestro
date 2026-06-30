@@ -42,6 +42,23 @@ interface MaestroCodingSessionResult {
 	error?: string;
 }
 
+interface RalphCommandPayload {
+	cwd: string;
+	sessionId?: string;
+}
+
+interface RalphCompletePayload extends RalphCommandPayload {
+	index: number;
+	status: "DONE" | "DONE_WITH_CONCERNS" | "NEEDS_RETRY" | "BLOCKED";
+	evidence?: string;
+	concerns?: string;
+	reason?: string;
+}
+
+interface RalphRetryPayload extends RalphCommandPayload {
+	index: number;
+}
+
 declare global {
 	interface Window {
 		App: typeof API;
@@ -67,6 +84,16 @@ const maestroAPI = {
 			"maestro:createCodingSession",
 			payload,
 		) as Promise<MaestroCodingSessionResult>,
+	ralphSession: (payload: RalphCommandPayload) =>
+		ipcRenderer.invoke("maestro:ralphSession", payload) as Promise<MaestroRunResult>,
+	ralphCheck: (payload: RalphCommandPayload) =>
+		ipcRenderer.invoke("maestro:ralphCheck", payload) as Promise<MaestroRunResult>,
+	ralphNext: (payload: RalphCommandPayload) =>
+		ipcRenderer.invoke("maestro:ralphNext", payload) as Promise<MaestroRunResult>,
+	ralphComplete: (payload: RalphCompletePayload) =>
+		ipcRenderer.invoke("maestro:ralphComplete", payload) as Promise<MaestroRunResult>,
+	ralphRetry: (payload: RalphRetryPayload) =>
+		ipcRenderer.invoke("maestro:ralphRetry", payload) as Promise<MaestroRunResult>,
 };
 
 contextBridge.exposeInMainWorld("App", API);

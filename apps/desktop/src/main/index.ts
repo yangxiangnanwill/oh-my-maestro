@@ -33,6 +33,12 @@ interface MaestroCodingSessionResult {
 	error?: string;
 }
 
+type RalphCompletionStatus =
+	| "DONE"
+	| "DONE_WITH_CONCERNS"
+	| "NEEDS_RETRY"
+	| "BLOCKED";
+
 interface RalphStepSeed {
 	skill: string;
 	args: string;
@@ -86,6 +92,58 @@ function validateTask(task: unknown): string {
 		throw new Error("Coding task contains invalid characters");
 	}
 	return task.trim().slice(0, 2000);
+}
+
+function validateSessionId(sessionId: unknown): string | null {
+	if (sessionId === undefined || sessionId === null || sessionId === "") {
+		return null;
+	}
+	if (typeof sessionId !== "string") {
+		throw new Error("Session id must be a string");
+	}
+	const normalized = sessionId.trim();
+	if (!/^(ralph|maestro)-\d{8}-\d{6}$/.test(normalized)) {
+		throw new Error(`Invalid session id: ${normalized}`);
+	}
+	return normalized;
+}
+
+function validateStepIndex(index: unknown): number {
+	const parsed =
+		typeof index === "number"
+			? index
+			: typeof index === "string"
+				? Number(index)
+				: Number.NaN;
+	if (!Number.isInteger(parsed) || parsed < 0 || parsed > 999) {
+		throw new Error("Step index must be an integer from 0 to 999");
+	}
+	return parsed;
+}
+
+function validateCompletionStatus(status: unknown): RalphCompletionStatus {
+	if (
+		status === "DONE" ||
+		status === "DONE_WITH_CONCERNS" ||
+		status === "NEEDS_RETRY" ||
+		status === "BLOCKED"
+	) {
+		return status;
+	}
+	throw new Error("Invalid completion status");
+}
+
+function validateOptionalText(value: unknown, fieldName: string): string | null {
+	if (value === undefined || value === null || value === "") {
+		return null;
+	}
+	if (typeof value !== "string") {
+		throw new Error(`${fieldName} must be a string`);
+	}
+	if (value.includes("\0")) {
+		throw new Error(`${fieldName} contains invalid characters`);
+	}
+	return value.trim().slice(0, 2000);
 }
 
 function formatSessionTimestamp(date: Date): string {
@@ -303,6 +361,13 @@ async function createCodingSession(
 	return { ok: true, sessionId, sessionDir, statusPath };
 }
 
+async function runRalphCommand(
+	cwd: string,
+	args: string[],
+): Promise<MaestroRunResult> {
+	return runExecutable("maestro", ["ralph", ...args], cwd);
+}
+
 async function readFirstWorkflowState(cwd: string): Promise<MaestroStateResult> {
 	const candidates = [
 		join(cwd, ".workflow", "state.json"),
@@ -444,6 +509,89 @@ function registerMaestroIpc() {
 				error: error instanceof Error ? error.message : String(error),
 			};
 		}
+	});
+
+	ipcMain.handle("maestro:ralphSession", async (_event, payload: unknown) => {
+		if (payload === null || typeof payload !== "object") {
+			throw new Error("Invalid Ralph session payload");
+		}
+		const input = payload as { cwd?: unknown; sessionId?: unknown };
+		const cwd = validateCwd(input.cwd);
+		const sessionId = validateSessionId(input.sessionId);
+		return runRalphCommand(
+			cwd,
+			sessionId ? ["session", "--session", sessionId] : ["session"],
+		);
+	});
+
+	ipcMain.handle("maestro:ralphCheck", async (_event, payload: unknown) => {
+		if (payload === null || typeof payload !== "object") {
+			throw new Error("Invalid Ralph check payload");
+		}
+		const input = payload as { cwd?: unknown; sessionId?: unknown };
+		const cwd = validateCwd(input.cwd);
+		const sessionId = validateSessionId(input.sessionId);
+		return runRalphCommand(
+			cwd,
+			sessionId ? ["check", "--session", sessionId] : ["check"],
+		);
+	});
+
+	ipcMain.handle("maestro:ralphNext", async (_event, payload: unknown) => {
+		if (payload === null || typeof payload !== "object") {
+			throw new Error("Invalid Ralph next payload");
+		}
+		const input = payload as { cwd?: unknown; sessionId?: unknown };
+		const cwd = validateCwd(input.cwd);
+		const sessionId = validateSessionId(input.sessionId);
+		return runRalphCommand(
+			cwd,
+			sessionId ? ["next", "--session", sessionId] : ["next"],
+		);
+	});
+
+	ipcMain.handle("maestro:ralphRetry", async (_event, payload: unknown) => {
+		if (payload === null || typeof payload !== "object") {
+			throw new Error("Invalid Ralph retry payload");
+		}
+		const input = payload as { cwd?: unknown; sessionId?: unknown; index?: unknown };
+		const cwd = validateCwd(input.cwd);
+		const sessionId = validateSessionId(input.sessionId);
+		const index = validateStepIndex(input.index);
+		return runRalphCommand(
+			cwd,
+			sessionId
+				? ["retry", String(index), "--session", sessionId]
+				: ["retry", String(index)],
+		);
+	});
+
+	ipcMain.handle("maestro:ralphComplete", async (_event, payload: unknown) => {
+		if (payload === null || typeof payload !== "object") {
+			throw new Error("Invalid Ralph complete payload");
+		}
+		const input = payload as {
+			cwd?: unknown;
+			sessionId?: unknown;
+			index?: unknown;
+			status?: unknown;
+			evidence?: unknown;
+			concerns?: unknown;
+			reason?: unknown;
+		};
+		const cwd = validateCwd(input.cwd);
+		const sessionId = validateSessionId(input.sessionId);
+		const index = validateStepIndex(input.index);
+		const status = validateCompletionStatus(input.status);
+		const evidence = validateOptionalText(input.evidence, "Evidence");
+		const concerns = validateOptionalText(input.concerns, "Concerns");
+		const reason = validateOptionalText(input.reason, "Reason");
+		const args = ["complete", String(index), "--status", status];
+		if (evidence) args.push("--evidence", evidence);
+		if (concerns) args.push("--concerns", concerns);
+		if (reason) args.push("--reason", reason);
+		if (sessionId) args.push("--session", sessionId);
+		return runRalphCommand(cwd, args);
 	});
 }
 
