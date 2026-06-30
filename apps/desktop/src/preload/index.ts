@@ -29,6 +29,19 @@ interface MaestroStateResult {
 	error?: string;
 }
 
+interface MaestroCodingSessionPayload {
+	cwd: string;
+	task: string;
+}
+
+interface MaestroCodingSessionResult {
+	ok: boolean;
+	sessionId: string;
+	sessionDir: string;
+	statusPath: string;
+	error?: string;
+}
+
 declare global {
 	interface Window {
 		App: typeof API;
@@ -49,6 +62,11 @@ const maestroAPI = {
 		ipcRenderer.invoke("maestro:run", payload) as Promise<MaestroRunResult>,
 	readState: (cwd: string) =>
 		ipcRenderer.invoke("maestro:readState", { cwd }) as Promise<MaestroStateResult>,
+	createCodingSession: (payload: MaestroCodingSessionPayload) =>
+		ipcRenderer.invoke(
+			"maestro:createCodingSession",
+			payload,
+		) as Promise<MaestroCodingSessionResult>,
 };
 
 contextBridge.exposeInMainWorld("App", API);

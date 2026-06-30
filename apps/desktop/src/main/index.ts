@@ -1,6 +1,7 @@
 import { execFile } from "node:child_process";
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import { app, BrowserWindow, dialog, ipcMain } from "electron";
 import { join, resolve, sep } from "node:path";
 
@@ -22,6 +23,22 @@ interface MaestroStateResult {
 	path?: string;
 	checkedPaths: string[];
 	error?: string;
+}
+
+interface MaestroCodingSessionResult {
+	ok: boolean;
+	sessionId: string;
+	sessionDir: string;
+	statusPath: string;
+	error?: string;
+}
+
+interface RalphStepSeed {
+	skill: string;
+	args: string;
+	stage: string;
+	scope: string;
+	goalRef: string | null;
 }
 
 function validateCwd(cwd: unknown): string {
@@ -59,6 +76,231 @@ function validateArgs(args: unknown): string[] {
 		throw new Error(`Unsupported Maestro command: ${normalized.join(" ")}`);
 	}
 	return normalized;
+}
+
+function validateTask(task: unknown): string {
+	if (typeof task !== "string" || task.trim().length < 8) {
+		throw new Error("Coding task must be at least 8 characters");
+	}
+	if (task.includes("\0")) {
+		throw new Error("Coding task contains invalid characters");
+	}
+	return task.trim().slice(0, 2000);
+}
+
+function formatSessionTimestamp(date: Date): string {
+	const pad = (value: number) => String(value).padStart(2, "0");
+	return [
+		date.getFullYear(),
+		pad(date.getMonth() + 1),
+		pad(date.getDate()),
+		"-",
+		pad(date.getHours()),
+		pad(date.getMinutes()),
+		pad(date.getSeconds()),
+	].join("");
+}
+
+function resolveAgentSkillPath(skill: string): string {
+	const candidates = [
+		join(homedir(), ".agents", "skills", skill, "SKILL.md"),
+		join(homedir(), ".codex", "skills", skill, "SKILL.md"),
+	];
+	const found = candidates.find((candidate) => existsSync(candidate));
+	if (!found) {
+		throw new Error(`Required skill is not installed: ${skill}`);
+	}
+	return found;
+}
+
+function createExecutionStep(
+	seed: RalphStepSeed,
+	index: number,
+): Record<string, unknown> {
+	return {
+		index,
+		skill: seed.skill,
+		args: seed.args,
+		stage: seed.stage,
+		scope: seed.scope,
+		decision: null,
+		retry_count: 0,
+		max_retries: 0,
+		command_scope: "global",
+		command_path: resolveAgentSkillPath(seed.skill),
+		milestone_id: null,
+		source_artifact_ref: null,
+		status: "pending",
+		goal_ref: seed.goalRef,
+		completion_confirmed: false,
+		completion_status: null,
+		completion_evidence: null,
+		completed_at: null,
+		deferred_reads: [],
+		load: null,
+	};
+}
+
+async function createCodingSession(
+	cwd: string,
+	task: string,
+): Promise<MaestroCodingSessionResult> {
+	const timestamp = formatSessionTimestamp(new Date());
+	const sessionId = `ralph-${timestamp}`;
+	const sessionDir = join(cwd, ".workflow", ".maestro", sessionId);
+	const statusPath = join(sessionDir, "status.json");
+	const quotedTask = JSON.stringify(task);
+
+	const stepSeeds: RalphStepSeed[] = [
+		{
+			skill: "maestro-plan",
+			args: `${quotedTask} --dir apps/desktop`,
+			stage: "plan",
+			scope: "standalone",
+			goalRef: "G1",
+		},
+		{
+			skill: "maestro-execute",
+			args: `${quotedTask} --dir apps/desktop`,
+			stage: "execute",
+			scope: "standalone",
+			goalRef: "G2",
+		},
+		{
+			skill: "quality-review",
+			args: `${quotedTask} --scope apps/desktop`,
+			stage: "review",
+			scope: "standalone",
+			goalRef: "G3",
+		},
+		{
+			skill: "quality-test",
+			args: "apps/desktop",
+			stage: "test",
+			scope: "standalone",
+			goalRef: "G4",
+		},
+		{
+			skill: "maestro-milestone-complete",
+			args: `${quotedTask} --scope apps/desktop`,
+			stage: "milestone-complete",
+			scope: "standalone",
+			goalRef: null,
+		},
+	];
+
+	const status = {
+		session_id: sessionId,
+		source: "ralph",
+		status: "running",
+		ralph_protocol_version: "1",
+		active_step_index: null,
+		intent: task,
+		lifecycle_position: "plan",
+		phase: null,
+		phase_is_new: true,
+		milestone: null,
+		auto_mode: false,
+		decomposition_owner: "ralph",
+		quality_mode: "standard",
+		planning_mode: "independent",
+		scope_verdict: null,
+		wants_roadmap: false,
+		analyze_macro_id: null,
+		blueprint_id: null,
+		cli_tool: "claude",
+		passed_gates: [],
+		context: {
+			issue_id: null,
+			scratch_dir: null,
+			plan_dir: null,
+			analysis_dir: null,
+			brainstorm_dir: null,
+			blueprint_dir: null,
+		},
+		steps: stepSeeds.map((seed, index) => createExecutionStep(seed, index)),
+		waves: [],
+		current_step: 0,
+		boundary_contract: {
+			in_scope: [
+				"apps/desktop/src/renderer",
+				"apps/desktop/src/main",
+				"apps/desktop/src/preload",
+				"apps/desktop/src/lib",
+			],
+			out_of_scope: [
+				"destructive shell execution",
+				"unregistered command execution",
+				"large dependency additions",
+				"full architecture rewrite",
+			],
+			constraints: [
+				"Use Bun",
+				"Keep renderer-to-main boundaries explicit",
+				"Prefer registry-backed Maestro commands",
+				"Run typecheck and build before completion",
+			],
+			definition_of_done:
+				"Desktop exposes a usable coding workflow entry with project cwd, task input, chain preview, Ralph session status, and explicit next-step execution.",
+		},
+		execution_criteria: [
+			"Task input produces a valid Ralph protocol v1 session",
+			"Session can be verified with maestro ralph check",
+			"User explicitly triggers the next step",
+			"bun run typecheck and bun run build pass",
+		],
+		task_decomposition: [
+			{
+				id: "G1",
+				goal: "Plan the desktop coding workflow change",
+				boundary: "apps/desktop only",
+				done_when: "Plan identifies UI state, command boundary, and verification steps",
+				evidence: ".workflow/scratch/*/plan.md",
+				lifecycle: ["plan"],
+				status: "pending",
+				completion_confirmed: false,
+				completed_at: null,
+			},
+			{
+				id: "G2",
+				goal: "Implement the desktop coding workflow",
+				boundary: "Minimal renderer/main/preload changes",
+				done_when: "User can create or continue a Ralph coding workflow from the desktop app",
+				evidence: "apps/desktop source changes",
+				lifecycle: ["execute"],
+				status: "pending",
+				completion_confirmed: false,
+				completed_at: null,
+			},
+			{
+				id: "G3",
+				goal: "Review safety and product fit",
+				boundary: "No unrelated refactor",
+				done_when: "Review finds no blocking command safety or workflow defects",
+				evidence: "review output",
+				lifecycle: ["review"],
+				status: "pending",
+				completion_confirmed: false,
+				completed_at: null,
+			},
+			{
+				id: "G4",
+				goal: "Verify build health",
+				boundary: "apps/desktop checks",
+				done_when: "typecheck and build pass",
+				evidence: "bun run typecheck and bun run build output",
+				lifecycle: ["test"],
+				status: "pending",
+				completion_confirmed: false,
+				completed_at: null,
+			},
+		],
+		task_decomposition_all_done: false,
+	};
+
+	await mkdir(sessionDir, { recursive: true });
+	await writeFile(statusPath, `${JSON.stringify(status, null, 2)}\n`, "utf8");
+	return { ok: true, sessionId, sessionDir, statusPath };
 }
 
 async function readFirstWorkflowState(cwd: string): Promise<MaestroStateResult> {
@@ -182,6 +424,26 @@ function registerMaestroIpc() {
 		}
 		const cwd = validateCwd((payload as { cwd?: unknown }).cwd);
 		return readFirstWorkflowState(cwd);
+	});
+
+	ipcMain.handle("maestro:createCodingSession", async (_event, payload: unknown) => {
+		if (payload === null || typeof payload !== "object") {
+			throw new Error("Invalid coding session payload");
+		}
+		const input = payload as { cwd?: unknown; task?: unknown };
+		const cwd = validateCwd(input.cwd);
+		const task = validateTask(input.task);
+		try {
+			return await createCodingSession(cwd, task);
+		} catch (error) {
+			return {
+				ok: false,
+				sessionId: "",
+				sessionDir: "",
+				statusPath: "",
+				error: error instanceof Error ? error.message : String(error),
+			};
+		}
 	});
 }
 
