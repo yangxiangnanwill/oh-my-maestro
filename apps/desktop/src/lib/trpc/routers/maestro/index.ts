@@ -244,6 +244,35 @@ function parseAnalyzeOutput(
   }
 }
 
+function parseRalphSessionOutput(raw: string) {
+  const session = raw.match(/^session:\s*(.+)$/m)?.[1]?.trim();
+  if (!session) {
+    throw new Error("Unable to parse ralph session output");
+  }
+
+  const status = raw.match(/^status:\s*(.+)$/m)?.[1]?.trim();
+  const lifecycle = raw.match(/^lifecycle:\s*(.+)$/m)?.[1]?.trim();
+  const phaseRaw = raw.match(/^phase:\s*(.+)$/m)?.[1]?.trim();
+  const milestoneRaw = raw.match(/^milestone:\s*(.+)$/m)?.[1]?.trim();
+  const progress = raw.match(/^progress:\s*(.+)$/m)?.[1]?.trim();
+  const activeStepRaw = raw.match(/^active_step_index:\s*(.+)$/m)?.[1]?.trim();
+
+  const phaseMatch = phaseRaw?.match(/^\d+/);
+  const activeStepMatch = activeStepRaw?.match(/^\d+/);
+
+  return ralphSessionSchema.parse({
+    session_id: session,
+    status: status && status !== "(n/a)" ? status : undefined,
+    lifecycle_position:
+      lifecycle && lifecycle !== "(n/a)" ? lifecycle : undefined,
+    phase: phaseMatch ? Number(phaseMatch[0]) : null,
+    milestone:
+      milestoneRaw && milestoneRaw !== "(n/a)" ? milestoneRaw : null,
+    progress,
+    active_step_index: activeStepMatch ? Number(activeStepMatch[0]) : null,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
@@ -352,7 +381,7 @@ export const createMaestroRouter = () => {
           return readProjectState(resolveWorkspaceCwd(input));
         }),
 
-      /** 执行 maestro ralph session --json，返回 RalphSession 或 null */
+      /** 执行 maestro ralph session，解析文本输出为 RalphSession 或 null */
       ralphSession: publicProcedure
         .input(
           workspaceCwdInputSchema,
@@ -362,11 +391,10 @@ export const createMaestroRouter = () => {
           const cwd = resolveWorkspaceCwd(input);
           try {
             const raw = await execMaestroCli(
-              ["ralph", "session", "--json"],
+              ["ralph", "session"],
               cwd,
             );
-            const parsed: unknown = JSON.parse(raw);
-            return ralphSessionSchema.parse(parsed);
+            return parseRalphSessionOutput(raw);
           } catch (err) {
             const message =
               err instanceof Error ? err.message : String(err);

@@ -46,7 +46,7 @@ type OutputEntry = {
 	body: string;
 };
 
-const DEFAULT_PROJECT = "D:\\WorkSpace\\Source\\maestro-flow";
+const DEFAULT_PROJECT = "D:\\WorkSpace\\VsCode\\oh-my-maestro";
 
 function formatState(raw: string): string {
 	try {
@@ -154,7 +154,12 @@ export function App() {
 				command: `maestro ${args.join(" ")}`,
 				ok: result.ok,
 				body:
-					[result.stdout.trim(), result.stderr.trim(), result.error]
+					[
+						result.stdout.trim(),
+						result.stderr.trim(),
+						result.error &&
+							`Process exited with code ${result.exitCode ?? "unknown"}.\n${result.error}`,
+					]
 						.filter(Boolean)
 						.join("\n\n") || "(no output)",
 			});

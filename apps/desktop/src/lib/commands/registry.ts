@@ -43,7 +43,7 @@ export const COMMAND_REGISTRY: readonly CommandDefinition[] = [
     cliCommand: "maestro",
     cliArgs: ["ralph", "session"],
     description: "cmd.ralph_session.desc",
-    outputKind: "json",
+    outputKind: "text",
     riskLevel: "read",
   },
 
