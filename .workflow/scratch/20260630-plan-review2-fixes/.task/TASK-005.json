@@ -1,0 +1,104 @@
+{
+  "id": "TASK-005",
+  "title": "Biome 全量 format + 修 38 lint errors（ISS-015/REV2-007）",
+  "description": "ISS-015/REV2-007：TASK-006 引入 Biome 仅转换 12 文件，bun run lint exit 1（38 errors），bun run format:check exit 1。AGENTS.md rule 6 要求 push 前 lint exit 0。全量 format 约 26 文件（tab 缩进转换），38 lint errors 多数是 unused import/param（biome lint --write 自动修）。须在 TASK-001~004 之后串行执行避免格式化冲突。",
+  "issue_id": "ISS-20260630-015",
+  "issue_refs": ["ISS-20260630-015"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "medium",
+  "action": "1) cd apps/desktop && bun run format（全量 Biome format，约 26 文件 tab 转换）。2) cd apps/desktop && bunx biome lint --write（自动修多数 unused import/param 错误）。3) cd apps/desktop && bun run lint 检查剩余 errors，手动处理（删除剩余 unused import/param 或加 _ 前缀）。4) 重复直到 cd apps/desktop && bun run lint exit 0 && bun run format:check exit 0。5) cd apps/desktop && bun run typecheck 验证。6) 单独 commit。",
+  "status": "completed",
+  "completed_at": "2026-07-01",
+  "actual_duration": null,
+  "scope": "apps/desktop/",
+  "focus_paths": [
+    "apps/desktop/"
+  ],
+  "read_first": [
+    "apps/desktop/package.json",
+    "apps/desktop/biome.json"
+  ],
+  "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004"],
+  "wave": 3,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "cd apps/desktop && bun run lint exits 0",
+      "cd apps/desktop && bun run format:check exits 0",
+      "cd apps/desktop && bun run typecheck exits 0",
+      "git diff --stat 显示约 26 文件被 format 修改（tab 转换）"
+    ],
+    "verification": "cd apps/desktop && bun run lint && bun run format:check && bun run typecheck",
+    "definition_of_done": "bun run lint exit 0 + bun run format:check exit 0，满足 AGENTS.md rule 6 push 前置条件。"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/",
+      "action": "modify",
+      "target": "全量 format + lint --write",
+      "change": "约 26 文件 Biome format（tab 缩进）+ 38 lint errors 自动/手动修复"
+    }
+  ],
+  "implementation": [
+    "cd apps/desktop && bun run format（全量 Biome format，约 26 文件 tab 转换）",
+    "cd apps/desktop && bunx biome lint --write（自动修多数 unused import/param）",
+    "cd apps/desktop && bun run lint 检查剩余 errors",
+    "手动处理剩余 errors：删除 unused import 或对 unused param 加 _ 前缀（参照 TASK-003/004 风格）",
+    "重复 lint --write + 手动处理直到 bun run lint exit 0",
+    "cd apps/desktop && bun run format:check 验证 exit 0",
+    "cd apps/desktop && bun run typecheck 验证 exit 0",
+    "git add -A && git commit -m 'fix: Biome 全量 format + 修 lint errors（ISS-015）'（单独 commit）"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run lint",
+      "cd apps/desktop && bun run format:check",
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "lint exit 0",
+      "format:check exit 0",
+      "typecheck exit 0"
+    ]
+  },
+  "reference": {
+    "pattern": "AGENTS.md rule 6：push 前 lint exit 0",
+    "files": [
+      "apps/desktop/biome.json",
+      "AGENTS.md"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "全量 format + lint --write 自动修 + 手动补刀，最后串行执行避免与前序 task 的格式化冲突。",
+    "decision_factors": [
+      "AGENTS.md rule 6 强制",
+      "Biome 自动修复能力强（unused import/param 多数可 --write）",
+      "必须最后串行（触碰所有前序文件）"
+    ],
+    "tradeoffs": "全量 format 会产生约 26 文件 diff，review 噪音大，但必要。"
+  },
+  "risks": [
+    "lint --write 可能误删看似未使用但实际被 re-export 的 import——需 typecheck 兜底验证",
+    "全量 format 26 文件 diff 可能与未合并的其他分支冲突",
+    "手动处理剩余 errors 时需区分 stub 参数（加 _ 前缀）vs 真实未使用 import（删除）"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["全项目"],
+    "affected_components": [],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "40m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

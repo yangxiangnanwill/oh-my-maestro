@@ -3,42 +3,42 @@
  */
 
 interface ChatState {
-  sessionId?: string | null;
-  launchConfig?: {
-    initialPrompt?: string;
-    metadata?: { model?: string };
-    retryCount?: number;
-  } | null;
+	sessionId?: string | null;
+	launchConfig?: {
+		initialPrompt?: string;
+		metadata?: { model?: string };
+		retryCount?: number;
+	} | null;
 }
 
 interface PaneBase {
-  id: string;
-  tabId: string;
-  type: string;
-  name: string;
-  chat?: ChatState;
-  workspaceRun?: {
-    workspaceId: string;
-    state: string;
-  };
-  [key: string]: unknown;
+	id: string;
+	tabId: string;
+	type: string;
+	name: string;
+	chat?: ChatState;
+	workspaceRun?: {
+		workspaceId: string;
+		state: string;
+	};
+	[key: string]: unknown;
 }
 
 interface TabBase {
-  id: string;
-  name: string;
-  workspaceId: string;
-  userTitle?: string;
-  createdAt: number;
-  layout: unknown;
+	id: string;
+	name: string;
+	workspaceId: string;
+	userTitle?: string;
+	createdAt: number;
+	layout: unknown;
 }
 
 interface BaseTabsState {
-  tabs: TabBase[];
-  panes: Record<string, PaneBase>;
-  activeTabIds: Record<string, string>;
-  focusedPaneIds: Record<string, string>;
-  tabHistoryStacks: Record<string, string[]>;
+	tabs: TabBase[];
+	panes: Record<string, PaneBase>;
+	activeTabIds: Record<string, string>;
+	focusedPaneIds: Record<string, string>;
+	tabHistoryStacks: Record<string, string[]>;
 }
 
 interface Theme {
@@ -48,7 +48,12 @@ interface Theme {
 }
 
 // Re-export for convenience
-export type { BaseTabsState as TabsState, PaneBase as Pane, TabBase as Tab, ChatState };
+export type {
+	BaseTabsState as TabsState,
+	PaneBase as Pane,
+	TabBase as Tab,
+	ChatState,
+};
 
 export interface ThemeState {
 	activeThemeId: string;

@@ -1,0 +1,187 @@
+{
+  "id": "TASK-001",
+  "title": "提取 ExternalApp/TerminalPreset + isSafeExternalUrl 到 src/shared 跨层契约层",
+  "description": "ISS-009/REV2-001 + ISS-010/011 的 shared 层前置：renderer 6 处 @main/lib/local-db 违反 renderer→main 依赖方向。提取 ExternalApp（含 EXTERNAL_APPS const + NON_EDITOR_APPS）、TerminalPreset（含 ExecutionMode 依赖）到 src/shared/external-app-types.ts；提取 isSafeExternalUrl/externalUrlLogLabel 到 src/shared/safe-url/（逻辑从 main/lib/safe-url/scheme.ts 搬移）。renderer 与 main 均从 shared 导入；local-db 从 shared re-export 保持向后兼容；main/lib/safe-url 从 shared re-export 保持向后兼容。",
+  "issue_id": "ISS-20260630-009",
+  "issue_refs": ["ISS-20260630-009", "ISS-20260630-010", "ISS-20260630-011"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "medium",
+  "action": "1) 创建 apps/desktop/src/shared/external-app-types.ts：搬移 EXTERNAL_APPS const (line 145-172) + ExternalApp type (line 174) + NON_EDITOR_APPS (line 176-182) + EXECUTION_MODES/ExecutionMode (line 243-250) + TerminalPreset interface (line 275-287) 从 local-db/index.ts。2) 创建 apps/desktop/src/shared/safe-url/index.ts + scheme.ts：搬移 ALLOWED_SCHEMES + isSafeExternalUrl + externalUrlLogLabel 从 main/lib/safe-url/scheme.ts。3) local-db/index.ts 改为 re-export：`export { EXTERNAL_APPS, NON_EDITOR_APPS } from 'shared/external-app-types'; export type { ExternalApp, ExecutionMode, TerminalPreset } from 'shared/external-app-types';`。4) main/lib/safe-url/scheme.ts 改为 re-export shim（不删除，保持 ./scheme import 链不断裂）：`export { isSafeExternalUrl, externalUrlLogLabel } from 'shared/safe-url';`，使 safe-url.test.ts 的 `from './scheme'` import 仍可用。5) 6 个 renderer 消费者改为 `import type { ExternalApp, TerminalPreset } from 'shared/external-app-types'`：commandPalette/core/types.ts, commandPalette/modules/openIn/commands.ts, components/OpenInButton/OpenInButton.tsx, components/OpenInExternalDropdown/{constants,OpenInExternalDropdownItems}.tsx, lib/agent-session-orchestrator/types.ts。保持 main 侧消费者零改动（仍从 local-db/safe-url 导入）。",
+  "status": "completed",
+  "completed_at": "2026-07-01T00:00:00Z",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/shared/",
+  "focus_paths": [
+    "apps/desktop/src/shared/external-app-types.ts",
+    "apps/desktop/src/shared/safe-url/",
+    "apps/desktop/src/main/lib/local-db/index.ts",
+    "apps/desktop/src/main/lib/safe-url/",
+    "apps/desktop/src/renderer/commandPalette/",
+    "apps/desktop/src/renderer/components/OpenInButton/",
+    "apps/desktop/src/renderer/components/OpenInExternalDropdown/",
+    "apps/desktop/src/renderer/lib/agent-session-orchestrator/"
+  ],
+  "read_first": [
+    "apps/desktop/src/main/lib/local-db/index.ts",
+    "apps/desktop/src/main/lib/safe-url/scheme.ts",
+    "apps/desktop/src/main/lib/safe-url/index.ts",
+    "apps/desktop/src/main/lib/safe-url/safe-url.test.ts",
+    "apps/desktop/src/renderer/commandPalette/core/types.ts",
+    "apps/desktop/src/renderer/commandPalette/modules/openIn/commands.ts",
+    "apps/desktop/src/renderer/components/OpenInButton/OpenInButton.tsx",
+    "apps/desktop/src/renderer/components/OpenInExternalDropdown/OpenInExternalDropdownItems.tsx",
+    "apps/desktop/src/renderer/components/OpenInExternalDropdown/constants.ts",
+    "apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts",
+    "apps/desktop/src/shared/host-info-types.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'from \"shared/external-app-types\"' apps/desktop/src/renderer/commandPalette/core/types.ts 命中",
+      "! grep '@main/lib/local-db' apps/desktop/src/renderer/commandPalette/core/types.ts 无命中",
+      "grep 'from \"shared/external-app-types\"' apps/desktop/src/renderer/commandPalette/modules/openIn/commands.ts 命中",
+      "grep 'from \"shared/external-app-types\"' apps/desktop/src/renderer/components/OpenInButton/OpenInButton.tsx 命中",
+      "grep 'from \"shared/external-app-types\"' apps/desktop/src/renderer/components/OpenInExternalDropdown/OpenInExternalDropdownItems.tsx 命中",
+      "grep 'from \"shared/external-app-types\"' apps/desktop/src/renderer/components/OpenInExternalDropdown/constants.ts 命中",
+      "grep 'from \"shared/external-app-types\"' apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts 命中",
+      "test -f apps/desktop/src/shared/external-app-types.ts 文件存在",
+      "test -f apps/desktop/src/shared/safe-url/index.ts 文件存在",
+      "grep 'export.*EXTERNAL_APPS.*from.*shared/external-app-types' apps/desktop/src/main/lib/local-db/index.ts 命中（re-export 向后兼容）",
+      "grep 'export.*isSafeExternalUrl.*from.*shared/safe-url' apps/desktop/src/main/lib/safe-url/scheme.ts 命中（re-export shim 保持 ./scheme import 链）",
+      "cd apps/desktop && bun run typecheck exits 0"
+    ],
+    "verification": "cd apps/desktop && bun run typecheck && grep -rl 'from \"shared/external-app-types\"' apps/desktop/src/renderer/ | wc -l （应 >= 6：commandPalette/core/types.ts, commandPalette/modules/openIn/commands.ts, components/OpenInButton/OpenInButton.tsx, components/OpenInExternalDropdown/{constants,OpenInExternalDropdownItems}.tsx, lib/agent-session-orchestrator/types.ts）",
+    "definition_of_done": "ExternalApp/TerminalPreset/isSafeExternalUrl 位于 src/shared 跨层契约层，renderer 不再 import main 路径，main 侧消费者零改动，typecheck 通过。"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/shared/external-app-types.ts",
+      "action": "create",
+      "target": "external-app-types module",
+      "change": "新建文件，搬移 EXTERNAL_APPS const + ExternalApp type + NON_EDITOR_APPS + EXECUTION_MODES/ExecutionMode + TerminalPreset interface"
+    },
+    {
+      "path": "apps/desktop/src/shared/safe-url/index.ts",
+      "action": "create",
+      "target": "safe-url barrel",
+      "change": "export { isSafeExternalUrl, externalUrlLogLabel } from './scheme'"
+    },
+    {
+      "path": "apps/desktop/src/shared/safe-url/scheme.ts",
+      "action": "create",
+      "target": "scheme logic",
+      "change": "搬移 ALLOWED_SCHEMES + isSafeExternalUrl + externalUrlLogLabel 从 main/lib/safe-url/scheme.ts"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/local-db/index.ts",
+      "action": "modify",
+      "target": "re-export shared types",
+      "change": "删除 EXTERNAL_APPS/ExternalApp/NON_EDITOR_APPS/EXECUTION_MODES/ExecutionMode/TerminalPreset 定义，改为 `export { EXTERNAL_APPS, NON_EDITOR_APPS } from 'shared/external-app-types'; export type { ExternalApp, ExecutionMode, TerminalPreset } from 'shared/external-app-types';`"
+    },
+    {
+      "path": "apps/desktop/src/main/lib/safe-url/scheme.ts",
+      "action": "modify",
+      "target": "re-export shim from shared",
+      "change": "改为 re-export shim（不删除文件，保持 safe-url.test.ts 的 `from './scheme'` import 链不断裂）：`export { isSafeExternalUrl, externalUrlLogLabel } from 'shared/safe-url';`"
+    },
+    {
+      "path": "apps/desktop/src/renderer/commandPalette/core/types.ts",
+      "action": "modify",
+      "target": "import path",
+      "change": "import type { ExternalApp, TerminalPreset } from 'shared/external-app-types'"
+    },
+    {
+      "path": "apps/desktop/src/renderer/commandPalette/modules/openIn/commands.ts",
+      "action": "modify",
+      "target": "import path",
+      "change": "改 @main/lib/local-db 为 shared/external-app-types"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/OpenInButton/OpenInButton.tsx",
+      "action": "modify",
+      "target": "import path",
+      "change": "改 @main/lib/local-db 为 shared/external-app-types"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/OpenInExternalDropdown/constants.ts",
+      "action": "modify",
+      "target": "import path",
+      "change": "改 @main/lib/local-db 为 shared/external-app-types"
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/OpenInExternalDropdown/OpenInExternalDropdownItems.tsx",
+      "action": "modify",
+      "target": "import path",
+      "change": "改 @main/lib/local-db 为 shared/external-app-types"
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts",
+      "action": "modify",
+      "target": "import path",
+      "change": "改 @main/lib/local-db 为 shared/external-app-types（TerminalPreset）"
+    }
+  ],
+  "implementation": [
+    "创建 apps/desktop/src/shared/external-app-types.ts，从 local-db/index.ts 搬移 EXTERNAL_APPS const (line 145-172 'as const' 数组) + ExternalApp type (line 174 `type ExternalApp = (typeof EXTERNAL_APPS)[number]`) + NON_EDITOR_APPS (line 176-182) + EXECUTION_MODES (line 243-248) + ExecutionMode (line 250) + TerminalPreset interface (line 275-287)",
+    "创建 apps/desktop/src/shared/safe-url/scheme.ts，搬移 ALLOWED_SCHEMES Set(['http:','https:','mailto:']) + isSafeExternalUrl(url:string):boolean + externalUrlLogLabel(url:string):string",
+    "创建 apps/desktop/src/shared/safe-url/index.ts：`export { isSafeExternalUrl, externalUrlLogLabel } from './scheme';`",
+    "修改 local-db/index.ts：删除搬移的定义，加 `export { EXTERNAL_APPS, NON_EDITOR_APPS, EXECUTION_MODES } from 'shared/external-app-types'; export type { ExternalApp, ExecutionMode, TerminalPreset } from 'shared/external-app-types';`",
+    "修改 main/lib/safe-url/scheme.ts：改为 re-export shim（不删除文件）：`export { isSafeExternalUrl, externalUrlLogLabel } from 'shared/safe-url';`，保持 main/lib/safe-url/index.ts 的 `from './scheme'` re-export 链与 safe-url.test.ts 的 `from './scheme'` import 链均不断裂",
+    "修改 6 个 renderer 消费者：将 `import ... from '@main/lib/local-db'` 改为 `from 'shared/external-app-types'`（仅 ExternalApp/TerminalPreset/EXTERNAL_APPS/NON_EDITOR_APPS 的 import）。6 个文件：commandPalette/core/types.ts, commandPalette/modules/openIn/commands.ts, components/OpenInButton/OpenInButton.tsx, components/OpenInExternalDropdown/{constants,OpenInExternalDropdownItems}.tsx, lib/agent-session-orchestrator/types.ts",
+    "运行 cd apps/desktop && bun run typecheck 验证 exit 0",
+    "运行 grep -rl '@main/lib/local-db' apps/desktop/src/renderer/ 确认 6 处已全部改为 shared（应无命中或仅剩非 ExternalApp 类型）",
+    "运行 grep 'from \"./scheme\"' apps/desktop/src/main/lib/safe-url/safe-url.test.ts 确认 ./scheme import 链未断（re-export shim 保持兼容）"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck",
+      "grep -rl 'from \"shared/external-app-types\"' apps/desktop/src/renderer/"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck exit 0",
+      "renderer 无 @main/lib/local-db import（ExternalApp/TerminalPreset 相关）"
+    ]
+  },
+  "reference": {
+    "pattern": "参照 src/shared/host-info-types.ts 的跨层契约类型组织方式",
+    "files": [
+      "apps/desktop/src/shared/host-info-types.ts",
+      "apps/desktop/src/main/lib/local-db/index.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "shared 层提取 + local-db re-export 向后兼容：避免改动 main 侧 7 个消费者（external/helpers.ts, external/index.ts, settings/index.ts 等），最小化改动面。safe-url 同理从 shared re-export 保持 main/lib/safe-url/index.ts 链不变。",
+    "decision_factors": [
+      "renderer 不可 import main 路径（依赖方向）",
+      "向后兼容（main 侧消费者零改动）",
+      "TerminalPreset 依赖 ExecutionMode 必须同处搬移"
+    ],
+    "tradeoffs": "local-db/index.ts 变薄但仍作为 re-export 入口（短期兼容），长期可让 main 消费者直接从 shared 导入。"
+  },
+  "risks": [
+    "EXTERNAL_APPS 是 `as const` 数组，re-export 需保持 const 断言语义（type 导出 vs value 导出），需用 `export { EXTERNAL_APPS } from` 而非 `export type`",
+    "TerminalPreset 依赖 ExecutionMode，若仅搬 TerminalPreset 不搬 ExecutionMode 会断裂，必须一起搬",
+    "safe-url 搬移后 main/lib/safe-url/safe-url.test.ts 测试的 `from './scheme'` import 需保持可用——方案为保证：scheme.ts 改为 re-export shim（不删除），从 shared/safe-url re-export isSafeExternalUrl/externalUrlLogLabel，test 文件零改动"
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["commandPalette", "agent-session-orchestrator", "browser-pane"],
+    "affected_components": ["external-app-types", "safe-url"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "45m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

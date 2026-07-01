@@ -13,8 +13,10 @@ interface DeleteWorkspaceIntentState {
 	request: (req: DeleteWorkspaceRequest) => void;
 }
 
-export const useDeleteWorkspaceIntent = create<DeleteWorkspaceIntentState>(() => ({
-	request: (_req) => {
-		// Stub: no-op until workspace deletion is integrated
-	},
-}));
+export const useDeleteWorkspaceIntent = create<DeleteWorkspaceIntentState>(
+	() => ({
+		request: (_req) => {
+			// Stub: no-op until workspace deletion is integrated
+		},
+	}),
+);

@@ -1,24 +1,5 @@
-/**
- * Schemes safe to hand to Electron's `shell.openExternal`.
- * Anything else (file:, javascript:, custom handlers, etc.) can execute
- * binaries or scripts via the OS URL handler registry.
- */
-const ALLOWED_SCHEMES = new Set(["http:", "https:", "mailto:"]);
-
-export function isSafeExternalUrl(url: string): boolean {
-	if (typeof url !== "string" || url.length === 0) return false;
-	try {
-		return ALLOWED_SCHEMES.has(new URL(url).protocol);
-	} catch {
-		return false;
-	}
-}
-
-export function externalUrlLogLabel(url: string): string {
-	if (typeof url !== "string" || url.length === 0) return "empty";
-	try {
-		return new URL(url).protocol || "unknown:";
-	} catch {
-		return "malformed";
-	}
-}
+// Re-export shim: logic moved to the shared layer so renderer code can import
+// isSafeExternalUrl/externalUrlLogLabel without depending on main. This file
+// is kept (not deleted) to preserve the `from "./scheme"` import chain used by
+// safe-url.ts, safe-url/index.ts, and safe-url.test.ts.
+export { externalUrlLogLabel, isSafeExternalUrl } from "shared/safe-url";

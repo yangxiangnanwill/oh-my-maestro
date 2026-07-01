@@ -7,13 +7,13 @@
 
 export { COMMAND_REGISTRY } from "./registry";
 export {
-  COMMAND_CATEGORIES,
-  OUTPUT_KINDS,
-  RISK_LEVELS,
+	COMMAND_CATEGORIES,
+	OUTPUT_KINDS,
+	RISK_LEVELS,
 } from "./types";
 export type {
-  CommandCategory,
-  CommandDefinition,
-  OutputKind,
-  RiskLevel,
+	CommandCategory,
+	CommandDefinition,
+	OutputKind,
+	RiskLevel,
 } from "./types";

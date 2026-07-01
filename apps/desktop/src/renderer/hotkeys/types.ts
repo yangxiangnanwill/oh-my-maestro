@@ -1,31 +1,31 @@
 export type Platform = "mac" | "windows" | "linux";
 
 export type PlatformKey = {
-  mac: ShortcutBinding | null;
-  windows: ShortcutBinding | null;
-  linux: ShortcutBinding | null;
+	mac: ShortcutBinding | null;
+	windows: ShortcutBinding | null;
+	linux: ShortcutBinding | null;
 };
 
 export type HotkeyCategory =
-  | "Navigation"
-  | "Workspace"
-  | "Layout"
-  | "Terminal"
-  | "Window"
-  | "Help";
+	| "Navigation"
+	| "Workspace"
+	| "Layout"
+	| "Terminal"
+	| "Window"
+	| "Help";
 
 export interface HotkeyDisplay {
-  /** Individual symbols for <Kbd> components: ["@", "@", "N"] */
-  keys: string[];
-  /** Joined string for tooltip text: "@@N" (mac) or "Ctrl+Shift+N" (windows/linux) */
-  text: string;
+	/** Individual symbols for <Kbd> components: ["@", "@", "N"] */
+	keys: string[];
+	/** Joined string for tooltip text: "@@N" (mac) or "Ctrl+Shift+N" (windows/linux) */
+	text: string;
 }
 
 export interface HotkeyDefinition {
-  key: ShortcutBinding | null;
-  label: string;
-  category: HotkeyCategory;
-  description?: string;
+	key: ShortcutBinding | null;
+	label: string;
+	category: HotkeyCategory;
+	description?: string;
 }
 
 /**
@@ -50,16 +50,16 @@ export type BindingMode = "physical" | "logical" | "named";
  * see the `L()` helper in `registry.ts`.
  */
 export type ShortcutBinding =
-  | string
-  | {
-      version: 2;
-      mode: BindingMode;
-      /** Canonical form, e.g. "meta+shift+p", "ctrl+slash". */
-      chord: string;
-    };
+	| string
+	| {
+			version: 2;
+			mode: BindingMode;
+			/** Canonical form, e.g. "meta+shift+p", "ctrl+slash". */
+			chord: string;
+	  };
 
 /** Normalized view of a binding, regardless of stored form. */
 export interface ParsedBinding {
-  mode: BindingMode;
-  chord: string;
+	mode: BindingMode;
+	chord: string;
 }

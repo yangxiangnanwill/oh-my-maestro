@@ -1,0 +1,200 @@
+{
+  "id": "TASK-001",
+  "title": "tsconfig: restore noImplicitAny + redirect @superset/shared/* main-layer aliases to @main/*",
+  "description": "Fix ISS-005 (noImplicitAny:false is stale — codebase typechecks clean with true) and ISS-003 (@superset/shared/* and @superset/pty-daemon/* aliases that actually resolve to src/main/lib/* violate module/physical-layer naming). Restore noImplicitAny:true and update tsconfig paths + import sites so main-layer modules stop masquerading as shared.",
+  "issue_id": "ISS-20260630-005",
+  "issue_refs": ["ISS-20260630-005", "ISS-20260630-003"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "medium",
+  "action": "In apps/desktop/tsconfig.json: change compilerOptions.noImplicitAny from `false` to `true` and delete the two Phase-4 comment lines above it (lines 9-10). For the @superset/shared/* + @superset/pty-daemon/* paths that map into src/main/lib/* (agent-command, shell-ready-scanner, workspace-launch, simple-git-options, pty-daemon/*, port-scanner, local-db, mcp-v2, chat/server/*, workspace-fs-host), replace the `@superset/...` key with a `@main/...` equivalent OR delete the superset entry if an existing @main/* or lib/* path already covers the target. Then update all import sites: change `from \"@superset/shared/agent-command\"` → `from \"@main/lib/agent-setup/desktop-agent-capabilities\"` (or `main/lib/agent-setup/desktop-agent-capabilities`), `@superset/shared/shell-ready-scanner` → `@main/lib/terminal-host/shell-ready-scanner`, `@superset/shared/workspace-launch` → `@main/lib/workspace-launch`, `@superset/shared/simple-git-options` → `@main/lib/simple-git-options`, `@superset/pty-daemon/protocol` → `@main/lib/terminal-host/pty-daemon-protocol`, `@superset/pty-daemon/process-tree` → `@main/lib/terminal-host/process-tree-stub`, `@superset/port-scanner` → `@main/lib/terminal/port-manager`, `@superset/local-db` → `@main/lib/local-db` (preferred — matches existing @main/* alias convention; `main/lib/local-db` already used in src/lib/trpc/routers/external/index.ts also acceptable), `@superset/chat/server/trpc` → `@main/lib/chat/server/trpc`, `@superset/chat/server/desktop` → `@main/lib/chat/server/desktop`, `@superset/chat/server/shared` → `@main/lib/chat/server/shared`, `@superset/workspace-fs/host` → `@main/lib/workspace-fs-host`. KEEP `@superset/mcp-v2/tools/register` UNCHANGED — it is a runtime dynamic `await import(...)` inside a try-catch in src/main/lib/agent-setup/maestro-mcp-provider.ts:570, paired with a pure `declare module` type stub at src/main/lib/agent-setup/superset-registry.d.ts; this is a Phase 3 safety net, NOT main-layer type pollution, and must NOT be migrated or removed (keep its tsconfig paths entry). KEEP these unchanged (they resolve to src/shared/*, correctly shared): @superset/shared/agent-catalog, @superset/shared/host-info, @superset/shared/constants, @superset/shared/auto-update (→ ./src/shared/auto-update.ts), @superset/shared/terminal-link-parsing, @superset/shared/agent-launch (→ ./src/shared/agent-launch.ts, 4 renderer sites correct), @superset/workspace-client (→ ./src/shared/workspace-client.ts). Do NOT touch @superset/ui/* stubs.",
+  "status": "completed",
+  "completed_at": "2026-06-30T17:10:00+08:00",
+  "actual_duration": null,
+  "scope": "apps/desktop/tsconfig.json + import sites across src/",
+  "focus_paths": [
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/main/pty-daemon/",
+    "apps/desktop/src/main/terminal-host/",
+    "apps/desktop/src/lib/trpc/routers/external/"
+  ],
+  "read_first": [
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/main/index.full.ts",
+    "apps/desktop/src/main/pty-daemon/index.ts",
+    "apps/desktop/src/main/terminal-host/session.ts",
+    "apps/desktop/src/main/terminal-host/pty-subprocess.ts",
+    "apps/desktop/src/lib/trpc/routers/external/index.ts",
+    "apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts",
+    "apps/desktop/src/main/lib/agent-setup/superset-registry.d.ts",
+    "apps/desktop/src/renderer/commandPalette/core/types.ts",
+    "apps/desktop/src/renderer/commandPalette/modules/openIn/commands.ts",
+    "apps/desktop/src/renderer/components/OpenInButton/OpenInButton.tsx",
+    "apps/desktop/src/renderer/components/OpenInExternalDropdown/constants.ts",
+    "apps/desktop/src/renderer/components/OpenInExternalDropdown/OpenInExternalDropdownItems.tsx",
+    "apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts",
+    "apps/desktop/src/shared/host-info-types.ts"
+  ],
+  "depends_on": [],
+  "wave": 2,
+  "parallel_group": "wave-2-arch",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep '\"noImplicitAny\": true' apps/desktop/tsconfig.json returns exactly one match",
+      "! grep -n '\"noImplicitAny\": false' apps/desktop/tsconfig.json returns no matches",
+      "No main-layer @superset/* import statements remain in code: `grep -rnE '^import .*from .@superset/(local-db|shared/(agent-command|shell-ready-scanner|workspace-launch|simple-git-options)|pty-daemon/|port-scanner|chat/server/|workspace-fs/)' apps/desktop/src --include='*.ts' --include='*.tsx' | grep -vE '^\\s*//'` returns no matches (excludes comments via grep -vE '^\\\\s*//'; matches import/from lines only)",
+      "cd apps/desktop && bun run typecheck exits 0",
+      "Keep-list grep — correctly-shared + safety-net aliases preserved: `grep -rnE '@superset/(shared/agent-catalog|shared/host-info|shared/constants|shared/auto-update|shared/agent-launch|workspace-client|mcp-v2/)' apps/desktop/src --include='*.ts' --include='*.tsx'` returns matches for each of those 7 alias patterns (true shared layer + mcp-v2 runtime safety net untouched)"
+    ],
+    "verification": "Run `cd apps/desktop && bun run typecheck` and confirm exit code 0. Run the grep commands above to confirm alias migration (no main-layer @superset/* import statements, comments excluded via grep -vE '^\\\\s*//') and keep-list preservation (true shared aliases + @superset/mcp-v2/ safety net still present).",
+    "definition_of_done": "tsconfig enforces noImplicitAny and no @superset/* alias resolves into src/main/lib/* — module names match their physical layer."
+  },
+  "files": [
+    {
+      "path": "apps/desktop/tsconfig.json",
+      "action": "modify",
+      "target": "compilerOptions.noImplicitAny + paths",
+      "change": "Set \"noImplicitAny\": true; delete the 2 Phase-4 comment lines above it; remove/replace the ~14 @superset/shared/*+@superset/pty-daemon/*+@superset/local-db+@superset/port-scanner+@superset/mcp-v2+@superset/chat/server+@superset/workspace-fs path entries that map to src/main/lib/* with @main/* equivalents (or delete if redundant)."
+    },
+    {
+      "path": "apps/desktop/src/main/pty-daemon/index.ts",
+      "action": "modify",
+      "target": "import HandoffMessage",
+      "change": "Change `import type { HandoffMessage } from \"@superset/pty-daemon/protocol\"` → `from \"@main/lib/terminal-host/pty-daemon-protocol\"`."
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/session.ts",
+      "action": "modify",
+      "target": "import from shell-ready-scanner",
+      "change": "Change `from \"@superset/shared/shell-ready-scanner\"` → `from \"@main/lib/terminal-host/shell-ready-scanner\"`."
+    },
+    {
+      "path": "apps/desktop/src/main/terminal-host/pty-subprocess.ts",
+      "action": "modify",
+      "target": "import from process-tree",
+      "change": "Change `from \"@superset/pty-daemon/process-tree\"` → `from \"@main/lib/terminal-host/process-tree-stub\"`."
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/external/index.ts",
+      "action": "modify",
+      "target": "imports from local-db",
+      "change": "Change `from \"main/lib/local-db\"` already correct (uses main/* not @superset/local-db) — verify no @superset/local-db import exists; if found, redirect to main/lib/local-db."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/host-service-coordinator.ts",
+      "action": "modify",
+      "target": "import from local-db comment",
+      "change": "Update the line-2 comment referencing @superset/local-db/@superset/shared/host-info to reflect new alias names if applicable; functional imports already use shared/host-info-types (correct)."
+    },
+    {
+      "path": "apps/desktop/src/main/index.full.ts",
+      "action": "modify",
+      "target": "line 3 runtime value import { settings } from @superset/local-db",
+      "change": "Change `import { settings } from \"@superset/local-db\"` → `import { settings } from \"@main/lib/local-db\"`. This is a RUNTIME value import (not type-only) — must resolve to the actual module at ./src/main/lib/local-db."
+    },
+    {
+      "path": "apps/desktop/src/renderer/commandPalette/core/types.ts",
+      "action": "modify",
+      "target": "line 1 import type { ExternalApp } from @superset/local-db",
+      "change": "Change `import type { ExternalApp } from \"@superset/local-db\"` → `import type { ExternalApp } from \"@main/lib/local-db\"`. Type-only import."
+    },
+    {
+      "path": "apps/desktop/src/renderer/commandPalette/modules/openIn/commands.ts",
+      "action": "modify",
+      "target": "line 1 import type { ExternalApp } from @superset/local-db",
+      "change": "Change `import type { ExternalApp } from \"@superset/local-db\"` → `import type { ExternalApp } from \"@main/lib/local-db\"`. Type-only import."
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/OpenInButton/OpenInButton.tsx",
+      "action": "modify",
+      "target": "line 1 import type { ExternalApp } from @superset/local-db",
+      "change": "Change `import type { ExternalApp } from \"@superset/local-db\"` → `import type { ExternalApp } from \"@main/lib/local-db\"`. Type-only import."
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/OpenInExternalDropdown/constants.ts",
+      "action": "modify",
+      "target": "line 1 import type { ExternalApp } from @superset/local-db",
+      "change": "Change `import type { ExternalApp } from \"@superset/local-db\"` → `import type { ExternalApp } from \"@main/lib/local-db\"`. Type-only import."
+    },
+    {
+      "path": "apps/desktop/src/renderer/components/OpenInExternalDropdown/OpenInExternalDropdownItems.tsx",
+      "action": "modify",
+      "target": "line 1 import type { ExternalApp } from @superset/local-db",
+      "change": "Change `import type { ExternalApp } from \"@superset/local-db\"` → `import type { ExternalApp } from \"@main/lib/local-db\"`. Type-only import."
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts",
+      "action": "modify",
+      "target": "line 1 import type { TerminalPreset } from @superset/local-db",
+      "change": "Change `import type { TerminalPreset } from \"@superset/local-db\"` → `import type { TerminalPreset } from \"@main/lib/local-db\"`. Type-only import."
+    }
+  ],
+  "implementation": [
+    "Step 1: Read apps/desktop/tsconfig.json and the 5 import-site files listed in read_first to map every @superset/* import to its replacement.",
+    "Step 2: Edit tsconfig.json — set noImplicitAny:true, delete the 2 Phase-4 comment lines, and rewrite the paths block: remove @superset/local-db, @superset/shared/agent-command, @superset/shared/shell-ready-scanner, @superset/shared/workspace-launch, @superset/shared/simple-git-options, @superset/pty-daemon/*, @superset/port-scanner, @superset/chat/server/*, @superset/workspace-fs/host. KEEP @superset/mcp-v2/tools/register (runtime dynamic import safety net in maestro-mcp-provider.ts:570 + declare-module stub in superset-registry.d.ts — NOT main-layer pollution). Keep @superset/shared/agent-catalog, host-info, constants, auto-update, terminal-link-parsing, agent-launch and @superset/workspace-client and all @superset/ui/*.",
+    "Step 3: For each removed alias, find its import sites with `grep -rn '<old-alias>' apps/desktop/src` and replace with the @main/* equivalent listed in `action`.",
+    "Step 4: Run `cd apps/desktop && bun run typecheck` and fix any remaining import resolution errors (expected: a few stragglers in router files importing @superset/local-db).",
+    "Step 5: Re-run typecheck until exit 0, then run the convergence grep checks to confirm alias migration and keep-list preservation."
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck",
+      "grep -rnE '^import .*from .@superset/(local-db|shared/(agent-command|shell-ready-scanner|workspace-launch|simple-git-options)|pty-daemon/|port-scanner|chat/server/|workspace-fs/)' apps/desktop/src --include='*.ts' --include='*.tsx' | grep -vE '^\\s*//'"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck exits 0",
+      "no @superset/* main-layer alias imports remain in code (comments excluded)",
+      "correctly-shared @superset/shared/* aliases still present"
+    ]
+  },
+  "reference": {
+    "pattern": "tsconfig paths alias remapping — same pattern used when @main/* was introduced alongside main/* in the existing paths block.",
+    "files": [
+      "apps/desktop/tsconfig.json",
+      "apps/desktop/src/shared/host-info-types.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Migrate per-target rather than blanket-removing all @superset/* aliases: only ~14 aliases resolve into src/main/lib/* (the violation), while ~7 genuinely point at src/shared/* (correct) and @superset/mcp-v2/tools/register is a runtime dynamic-import safety net that must stay. A blanket change would break the shared layer and the mcp-v2 fallback.",
+    "decision_factors": [
+      "Verified import sites by alias: @superset/local-db has 7 import sites (1 runtime value import in src/main/index.full.ts:3 + 6 type-only imports across renderer commandPalette/components/lib); @superset/shared/* main-layer violations (agent-command, shell-ready-scanner, workspace-launch, simple-git-options) have ~7 imports; @superset/pty-daemon/* has 2; @superset/chat/server/*, @superset/workspace-fs/host, @superset/port-scanner each have a small number. All main-layer targets identifiable by tsconfig paths values.",
+      "@superset/mcp-v2/tools/register is NOT migratable — it is a runtime dynamic import inside try-catch (maestro-mcp-provider.ts:570) paired with a pure declare-module type stub (superset-registry.d.ts); kept on the keep-list.",
+      "noImplicitAny:true already typechecks clean (ISS-005 verified) — zero code fixes needed for that part.",
+      "Existing @main/* alias (line 24, → ./src/main/*) is the canonical main-layer prefix."
+    ],
+    "tradeoffs": "Touches ~16 import sites across files (7 @superset/local-db sites + ~7 @superset/shared/* + 2 @superset/pty-daemon/*) — moderate blast radius, but each change is a 1-line import swap. Risk mitigated by typecheck gate. @superset/mcp-v2/tools/register is intentionally left in place (runtime safety net)."
+  },
+  "risks": [
+    {
+      "risk": "Missing an import site causes typecheck failure",
+      "mitigation": "typecheck gate in convergence criteria; grep sweep in implementation step 3. The 7 @superset/local-db sites (main/index.full.ts + 6 renderer files) are now all enumerated in files[].",
+      "severity": "low"
+    },
+    {
+      "risk": "Accidentally removing a correctly-shared @superset/shared/* alias OR the @superset/mcp-v2/tools/register safety net",
+      "mitigation": "Keep-list grep in convergence criteria verifies agent-catalog/host-info/constants/auto-update/agent-launch + @superset/mcp-v2/ still resolve"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": [],
+    "affected_components": ["tsconfig", "module resolution"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "status": "completed",
+    "estimated_time": "50m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": "wave-2-arch",
+    "executor": "agent"
+  }
+}

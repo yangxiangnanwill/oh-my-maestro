@@ -164,7 +164,7 @@ function upsertProject(mainRepoPath: string, defaultBranch: string): Project {
 			mainRepoPath,
 			name,
 			tabOrder: 0,
-				color: getDefaultProjectColor(),
+			color: getDefaultProjectColor(),
 			defaultBranch,
 		})
 		.returning()
@@ -1312,7 +1312,7 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 							mainRepoPath: clonePath,
 							name,
 							tabOrder: 0,
-				color: getDefaultProjectColor(),
+							color: getDefaultProjectColor(),
 							defaultBranch,
 						})
 						.returning()
@@ -1412,7 +1412,8 @@ export const createProjectsRouter = (getWindow: () => BrowserWindow | null) => {
 						color: z
 							.string()
 							.refine(
-								(value) => (PROJECT_COLOR_VALUES as readonly string[]).includes(value),
+								(value) =>
+									(PROJECT_COLOR_VALUES as readonly string[]).includes(value),
 								"Invalid project color",
 							)
 							.optional(),

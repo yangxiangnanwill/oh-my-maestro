@@ -7,5 +7,5 @@
  */
 
 declare module "renderer/screens/main/components/WorkspaceView/ContentView/TabsContent/Terminal/link-providers" {
-  export * from "renderer/lib/terminal/link-providers-stub";
+	export * from "renderer/lib/terminal/link-providers-stub";
 }

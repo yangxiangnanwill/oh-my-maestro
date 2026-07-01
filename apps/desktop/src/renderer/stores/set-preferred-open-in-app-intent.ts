@@ -13,8 +13,9 @@ interface SetPreferredOpenInAppIntentState {
 	request: (req: SetPreferredOpenInAppRequest) => void;
 }
 
-export const useSetPreferredOpenInAppIntent = create<SetPreferredOpenInAppIntentState>(() => ({
-	request: (_req) => {
-		// Stub: no-op until preferred app integration is complete
-	},
-}));
+export const useSetPreferredOpenInAppIntent =
+	create<SetPreferredOpenInAppIntentState>(() => ({
+		request: (_req) => {
+			// Stub: no-op until preferred app integration is complete
+		},
+	}));

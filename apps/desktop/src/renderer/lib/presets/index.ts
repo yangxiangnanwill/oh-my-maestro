@@ -4,8 +4,8 @@
 
 export type { CommandPreset } from "./types";
 export {
-  loadPresets,
-  savePreset,
-  deletePreset,
-  getPresetsByCommand,
+	loadPresets,
+	savePreset,
+	deletePreset,
+	getPresetsByCommand,
 } from "./store";

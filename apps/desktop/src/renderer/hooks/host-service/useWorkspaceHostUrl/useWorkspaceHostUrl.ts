@@ -1,13 +1,12 @@
-import { buildHostRoutingKey } from "renderer/lib/host-routing";
 import { useMemo } from "react";
 import { useRelayUrl } from "renderer/hooks/useRelayUrl";
 import { useLocalHostService } from "renderer/routes/_authenticated/providers/LocalHostServiceProvider";
 
 export type WorkspaceHostTarget =
-  | { status: "loading" }
-  | { status: "not-found" }
-  | { status: "local-starting"; hostId: string }
-  | { status: "ready"; kind: "local" | "remote"; hostId: string; url: string };
+	| { status: "loading" }
+	| { status: "not-found" }
+	| { status: "local-starting"; hostId: string }
+	| { status: "ready"; kind: "local" | "remote"; hostId: string; url: string };
 
 /**
  * Resolves a workspace ID to its owning host-service target.
@@ -23,29 +22,29 @@ export type WorkspaceHostTarget =
  * fully integrated.
  */
 export function useWorkspaceHostTarget(
-  workspaceId: string | null,
+	workspaceId: string | null,
 ): WorkspaceHostTarget {
-  const { machineId, activeHostUrl } = useLocalHostService();
-  const relayUrl = useRelayUrl();
+	const { machineId, activeHostUrl } = useLocalHostService();
+	const _relayUrl = useRelayUrl();
 
-  return useMemo(() => {
-    if (!workspaceId) return { status: "loading" };
+	return useMemo(() => {
+		if (!workspaceId) return { status: "loading" };
 
-    // Phase 5 stub: resolve all workspaces through the local host-service.
-    // The actual implementation queries the v2Workspaces collection to find
-    // the workspace's hostId and organizationId, then constructs the
-    // appropriate URL (local or relay).
-    if (activeHostUrl) {
-      return {
-        status: "ready",
-        kind: "local",
-        hostId: machineId ?? "local",
-        url: activeHostUrl,
-      };
-    }
+		// Phase 5 stub: resolve all workspaces through the local host-service.
+		// The actual implementation queries the v2Workspaces collection to find
+		// the workspace's hostId and organizationId, then constructs the
+		// appropriate URL (local or relay).
+		if (activeHostUrl) {
+			return {
+				status: "ready",
+				kind: "local",
+				hostId: machineId ?? "local",
+				url: activeHostUrl,
+			};
+		}
 
-    return { status: "local-starting", hostId: machineId ?? "local" };
-  }, [workspaceId, machineId, activeHostUrl, relayUrl]);
+		return { status: "local-starting", hostId: machineId ?? "local" };
+	}, [workspaceId, machineId, activeHostUrl]);
 }
 
 /**
@@ -53,6 +52,6 @@ export function useWorkspaceHostTarget(
  * for any non-`ready` status (loading, local-starting, not-found).
  */
 export function useWorkspaceHostUrl(workspaceId: string | null): string | null {
-  const target = useWorkspaceHostTarget(workspaceId);
-  return target.status === "ready" ? target.url : null;
+	const target = useWorkspaceHostTarget(workspaceId);
+	return target.status === "ready" ? target.url : null;
 }

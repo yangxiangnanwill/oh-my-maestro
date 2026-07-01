@@ -1,4 +1,7 @@
-import { ToolInput, ToolOutput } from "../../../../../stubs/ui/ai-elements/tool";
+import {
+	ToolInput,
+	ToolOutput,
+} from "../../../../../stubs/ui/ai-elements/tool";
 import { ToolCallRow } from "../../../../../stubs/ui/ai-elements/tool-call-row";
 import { WrenchIcon } from "lucide-react";
 import type { ComponentType } from "react";

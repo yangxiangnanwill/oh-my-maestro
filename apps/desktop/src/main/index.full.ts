@@ -1,6 +1,6 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { settings } from "@superset/local-db";
+import { settings } from "@main/lib/local-db";
 import {
 	app,
 	BrowserWindow,
@@ -24,7 +24,10 @@ import {
 	PROTOCOL_SCHEME,
 } from "shared/constants";
 import { setupAgentHooks } from "./lib/agent-setup";
-import { registerMaestroMcpProvider, checkMaestroCliAvailable } from "./lib/agent-setup/maestro-mcp-provider";
+import {
+	registerMaestroMcpProvider,
+	checkMaestroCliAvailable,
+} from "./lib/agent-setup/maestro-mcp-provider";
 import { initAppState } from "./lib/app-state";
 import { requestAppleEventsAccess } from "./lib/apple-events-permission";
 import { isUpdateReadyToInstall, setupAutoUpdater } from "./lib/auto-updater";

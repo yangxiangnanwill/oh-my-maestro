@@ -8,11 +8,11 @@ import {
 	FolderTreeIcon,
 	SearchIcon,
 } from "lucide-react";
-import type React from "react";
-import { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { useTheme } from "renderer/stores";
 import { useTabsStore } from "renderer/stores/tabs/store";
+import { isSafeExternalUrl } from "shared/safe-url";
 import { READ_ONLY_TOOLS } from "../../constants";
 import {
 	getWorkspaceToolFilePath,
@@ -24,6 +24,38 @@ import { ReadOnlyToolCall } from "../ReadOnlyToolCall";
 import { ReasoningBlock } from "../ReasoningBlock";
 import { ToolCallBlock } from "../ToolCallBlock";
 import { StreamingMessageText } from "./components/StreamingMessageText";
+
+type LinkAnchorProps = React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+	onClick?: (e: React.MouseEvent<HTMLAnchorElement>, href?: string) => void;
+};
+
+const LinkAnchor = React.memo(function LinkAnchor({
+	href,
+	children,
+	onClick,
+	...props
+}: LinkAnchorProps) {
+	// XSS hardening: drop non-allowlisted schemes (javascript:/data:) so the
+	// renderer never renders an actionable dangerous anchor.
+	const safeHref = href && isSafeExternalUrl(href) ? href : undefined;
+	return (
+		<a
+			{...props}
+			href={safeHref}
+			onClick={(e) => {
+				// Even when openLinksInApp=false, block navigation for unsafe
+				// schemes so javascript:/data: hrefs can never fire.
+				if (href && !isSafeExternalUrl(href)) {
+					e.preventDefault();
+					return;
+				}
+				if (href) onClick?.(e, href);
+			}}
+		>
+			{children}
+		</a>
+	);
+});
 
 interface MessagePartsRendererProps {
 	parts: UIMessage["parts"];
@@ -57,6 +89,10 @@ export function MessagePartsRenderer({
 		(e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
 			if (openLinksInApp && workspaceId) {
 				e.preventDefault();
+				// Defense in depth: LinkAnchor already sanitized href, but gate
+				// openInBrowserPane as well so an unsafe URL never reaches the
+				// browser pane / webContents.loadURL.
+				if (!isSafeExternalUrl(href)) return;
 				openInBrowserPane(workspaceId, href);
 			}
 		},
@@ -75,25 +111,11 @@ export function MessagePartsRenderer({
 		[addFileViewerPane, workspaceCwd, workspaceId],
 	);
 
-	// Phase 4: 将 a 组件提取到 useMemo 外部并用 React.memo 包裹
 	const components = useMemo(() => {
 		if (!openLinksInApp || !workspaceId) return undefined;
 		return {
-			a: ({
-				href,
-				children,
-				...props
-			}: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
-				<a
-					{...props}
-					href={href}
-					onClick={(e) => {
-						if (href) handleLinkClick(e, href);
-					}}
-				>
-					{children}
-				</a>
-			),
+			a: LinkAnchor,
+			aProps: { onClick: handleLinkClick },
 		};
 	}, [openLinksInApp, workspaceId, handleLinkClick]);
 	const mermaidConfig = useMemo(
@@ -106,13 +128,7 @@ export function MessagePartsRenderer({
 		[theme?.type],
 	);
 
-	const renderParts = ({
-		parts,
-		isLastAssistant,
-	}: {
-		parts: UIMessage["parts"];
-		isLastAssistant: boolean;
-	}): React.ReactNode[] => {
+	const renderParts = useCallback((): React.ReactNode[] => {
 		const nodes: React.ReactNode[] = [];
 		let i = 0;
 
@@ -333,7 +349,18 @@ export function MessagePartsRenderer({
 		}
 
 		return nodes;
-	};
+	}, [
+		parts,
+		isLastAssistant,
+		isStreaming,
+		isInterrupted,
+		workspaceId,
+		workspaceCwd,
+		components,
+		mermaidConfig,
+		openFileInPane,
+		onAnswer,
+	]);
 
-	return renderParts({ parts, isLastAssistant });
+	return renderParts();
 }

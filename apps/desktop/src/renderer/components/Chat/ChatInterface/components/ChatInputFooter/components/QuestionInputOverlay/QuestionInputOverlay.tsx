@@ -1,5 +1,9 @@
 import { cn } from "../../../../../stubs/ui/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../../stubs/ui/tooltip";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "../../../../../stubs/ui/tooltip";
 import { ArrowUpIcon, Loader2Icon, PencilIcon, XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 

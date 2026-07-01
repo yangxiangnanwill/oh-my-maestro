@@ -1,5 +1,9 @@
 import { Button } from "../../../../../../../stubs/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../../../../../../stubs/ui/tooltip";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "../../../../../../../stubs/ui/tooltip";
 import { KeyRoundIcon, Loader2Icon } from "lucide-react";
 
 interface OpenAIProviderHeadingProps {

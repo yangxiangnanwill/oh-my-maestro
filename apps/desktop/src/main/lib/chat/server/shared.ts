@@ -5,6 +5,6 @@
  */
 
 export async function getSmallModel(): Promise<unknown | null> {
-  // Phase 4 stub: no small model available
-  return null;
+	// Phase 4 stub: no small model available
+	return null;
 }

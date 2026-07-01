@@ -75,7 +75,7 @@ export class TerminalLinkResolver {
 	 * Resolve a single link string, checking if it exists via the stat callback.
 	 */
 	async resolveLink(link: string): Promise<ResolvedLink | null> {
-		if (!link || !link.trim()) {
+		if (!link?.trim()) {
 			return null;
 		}
 

@@ -8,11 +8,11 @@
 import type { BrowserWindow } from "electron";
 
 export function setupApp(): void {
-  // Stub
+	// Stub
 }
 
 export function makeAppSetup(_opts?: {
-  getWindow?: () => BrowserWindow | null;
+	getWindow?: () => BrowserWindow | null;
 }): void {
-  // Stub
+	// Stub
 }

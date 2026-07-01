@@ -9,32 +9,30 @@
 export type HostServiceStatus = "starting" | "running" | "stopped";
 
 export interface HostServiceStatusEvent {
-  status: HostServiceStatus;
-  organizationId: string;
-  error?: string;
+	status: HostServiceStatus;
+	organizationId: string;
+	error?: string;
 }
 
 export interface Connection {
-  port: number;
-  secret: string;
+	port: number;
+	secret: string;
 }
 
 export interface HostServiceStartOpts {
-  authToken: string;
-  cloudApiUrl: string;
+	authToken: string;
+	cloudApiUrl: string;
 }
 
 export interface HostServiceRestartOpts {
-  authToken: string;
-  cloudApiUrl: string;
+	authToken: string;
+	cloudApiUrl: string;
 }
 
 export interface HostServiceResetOpts {
-  authToken: string;
-  cloudApiUrl: string;
+	authToken: string;
+	cloudApiUrl: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface HostServiceCoordinatorEvents {
-  // Phase 4: define events
-}
+// Phase 4: define events on this type
+export type HostServiceCoordinatorEvents = Record<string, never>;

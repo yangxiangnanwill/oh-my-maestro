@@ -186,8 +186,8 @@ describe("readCommandChainStatusFile", () => {
 		try {
 			const result = await readCommandChainStatusFile(tmpDir);
 			expect(result).not.toBeNull();
-			expect(result!.steps).toHaveLength(1);
-			expect(result!.steps[0].id).toBe("step-1");
+			expect(result?.steps).toHaveLength(1);
+			expect(result?.steps[0].id).toBe("step-1");
 		} finally {
 			await rm(join(tmpDir, "status.json"), { force: true });
 		}
@@ -216,7 +216,7 @@ describe("readCommandChainStatusFile", () => {
 		try {
 			const result = await readCommandChainStatusFile(tmpDir);
 			expect(result).not.toBeNull();
-			expect(result!.steps[0].status).toBe("pending");
+			expect(result?.steps[0].status).toBe("pending");
 		} finally {
 			await rm(join(tmpDir, "chains"), { recursive: true, force: true });
 		}
@@ -299,12 +299,12 @@ describe("projectStateSchema", () => {
 		expect(result.milestones).toHaveLength(1);
 		expect(result.artifacts).toHaveLength(2);
 		// string depends_on
-		if (result.artifacts![0].depends_on) {
-			expect(typeof result.artifacts![0].depends_on).toBe("string");
+		if (result.artifacts?.[0].depends_on) {
+			expect(typeof result.artifacts?.[0].depends_on).toBe("string");
 		}
 		// array depends_on
-		if (result.artifacts![1].depends_on) {
-			expect(Array.isArray(result.artifacts![1].depends_on)).toBe(true);
+		if (result.artifacts?.[1].depends_on) {
+			expect(Array.isArray(result.artifacts?.[1].depends_on)).toBe(true);
 		}
 	});
 
@@ -312,9 +312,7 @@ describe("projectStateSchema", () => {
 		expect(() =>
 			projectStateSchema.parse({
 				initialized: true,
-				milestones: [
-					{ id: "M1", name: "M1", status: "unknown", phases: [1] },
-				],
+				milestones: [{ id: "M1", name: "M1", status: "unknown", phases: [1] }],
 			}),
 		).toThrow();
 	});

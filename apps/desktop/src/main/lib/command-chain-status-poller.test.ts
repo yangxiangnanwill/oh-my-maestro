@@ -49,13 +49,13 @@ describe("readCommandChainStatus", () => {
 		const result = await readCommandChainStatus(tempDir);
 
 		expect(result).not.toBeNull();
-		expect(result!.steps).toHaveLength(2);
-		expect(result!.steps[0].id).toBe("step-1");
-		expect(result!.steps[0].status).toBe("completed");
-		expect(result!.steps[1].status).toBe("running");
-		expect(result!.decisionNodes).toHaveLength(1);
-		expect(result!.decisionNodes[0].resolved).toBe(true);
-		expect(result!.completionConfirmed).toBe(false);
+		expect(result?.steps).toHaveLength(2);
+		expect(result?.steps[0].id).toBe("step-1");
+		expect(result?.steps[0].status).toBe("completed");
+		expect(result?.steps[1].status).toBe("running");
+		expect(result?.decisionNodes).toHaveLength(1);
+		expect(result?.decisionNodes[0].resolved).toBe(true);
+		expect(result?.completionConfirmed).toBe(false);
 	});
 
 	it("rejects invalid step status values (falls back to pending)", async () => {
@@ -77,8 +77,8 @@ describe("readCommandChainStatus", () => {
 
 		expect(result).not.toBeNull();
 		// Invalid status should fall back to "pending"
-		expect(result!.steps[0].status).toBe("pending");
-		expect(result!.steps[1].status).toBe("completed");
+		expect(result?.steps[0].status).toBe("pending");
+		expect(result?.steps[1].status).toBe("completed");
 	});
 
 	it("returns null for non-object data", async () => {
@@ -95,7 +95,11 @@ describe("readCommandChainStatus", () => {
 	it("returns null when steps is not an array", async () => {
 		writeFileSync(
 			path.join(tempDir, "status.json"),
-			JSON.stringify({ steps: "not-an-array", decisionNodes: [], completionConfirmed: false }),
+			JSON.stringify({
+				steps: "not-an-array",
+				decisionNodes: [],
+				completionConfirmed: false,
+			}),
 			"utf-8",
 		);
 
@@ -117,8 +121,8 @@ describe("readCommandChainStatus", () => {
 		const result = await readCommandChainStatus(tempDir);
 
 		expect(result).not.toBeNull();
-		expect(result!.decisionNodes).toEqual([]);
-		expect(result!.completionConfirmed).toBe(true);
+		expect(result?.decisionNodes).toEqual([]);
+		expect(result?.completionConfirmed).toBe(true);
 	});
 
 	it("handles malformed JSON gracefully", async () => {

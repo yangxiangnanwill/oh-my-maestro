@@ -10,5 +10,5 @@ import type { SimpleGitOptions } from "simple-git";
  * In Superset, this enables local Git client behavior by default.
  */
 export const USER_GIT_ENV_SIMPLE_GIT_OPTIONS: Partial<SimpleGitOptions> = {
-  config: [],
+	config: [],
 };

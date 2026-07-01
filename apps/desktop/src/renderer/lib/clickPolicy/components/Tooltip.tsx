@@ -26,7 +26,13 @@ let activeContext: TooltipContextValue | null = null;
 
 function useTooltipContext(): TooltipContextValue {
 	// biome-ignore lint/correctness/useJsxKeyInIterable: not in a loop
-	return activeContext ?? { open: false, setOpen: () => {}, triggerRef: { current: null } };
+	return (
+		activeContext ?? {
+			open: false,
+			setOpen: () => {},
+			triggerRef: { current: null },
+		}
+	);
 }
 
 interface TooltipProps {
@@ -86,7 +92,9 @@ export function TooltipTrigger({ children, asChild }: TooltipTriggerProps) {
 
 	return (
 		<span
-			ref={(el) => { ctx.triggerRef.current = el; }}
+			ref={(el) => {
+				ctx.triggerRef.current = el;
+			}}
 			{...handlers}
 		>
 			{children}
@@ -121,8 +129,7 @@ export function TooltipContent({
 						: side === "top"
 							? rect.top - 4
 							: rect.top,
-				transform:
-					side === "top" ? "translateY(-100%)" : undefined,
+				transform: side === "top" ? "translateY(-100%)" : undefined,
 				zIndex: 50,
 			}
 		: { position: "fixed", zIndex: 50 };

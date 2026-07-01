@@ -15,8 +15,6 @@ export function applyLegacyPermissionsOverrides(
 /**
  * Checks whether the stored terminal presets match the pre-3.5.46 seed data.
  */
-export function terminalPresetsMatchPre3546Seed(
-	presets: unknown,
-): boolean {
+export function terminalPresetsMatchPre3546Seed(_presets: unknown): boolean {
 	return false;
 }

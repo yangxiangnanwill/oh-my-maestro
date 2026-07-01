@@ -32,7 +32,7 @@ const sentryMiddleware = t.middleware(async ({ next, path, type }) => {
 				// Use string variable to avoid TypeScript module resolution
 				// when @sentry/electron is not installed
 				const sentryModule = "@sentry/electron/main";
-				const Sentry = await import(sentryModule) as any;
+				const Sentry = (await import(sentryModule)) as any;
 
 				Sentry.captureException(originalError, {
 					tags: {

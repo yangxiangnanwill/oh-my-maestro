@@ -1,14 +1,15 @@
-// Stub: @superset/ui/ai-elements/thinking-toggle
-import type { ReactNode } from "react";
-
 export type ThinkingLevel = "low" | "medium" | "high";
 
 export interface ThinkingToggleProps {
-  level: ThinkingLevel;
-  onLevelChange: (level: ThinkingLevel) => void;
-  className?: string;
+	level: ThinkingLevel;
+	onLevelChange: (level: ThinkingLevel) => void;
+	className?: string;
 }
 
-export function ThinkingToggle({ level, onLevelChange, className }: ThinkingToggleProps) {
-  return null;
+export function ThinkingToggle({
+	level,
+	onLevelChange,
+	className,
+}: ThinkingToggleProps) {
+	return null;
 }

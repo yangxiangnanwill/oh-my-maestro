@@ -240,12 +240,15 @@ export function App() {
 		return cliStatus.available ? "可用" : "不可用";
 	}, [cliStatus]);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: run CLI check once on mount
 	useEffect(() => {
 		void checkCli();
 	}, []);
 
 	function pushOutput(entry: Omit<OutputEntry, "id">) {
-		setOutputs((current) => [{ ...entry, id: Date.now() }, ...current].slice(0, 8));
+		setOutputs((current) =>
+			[{ ...entry, id: Date.now() }, ...current].slice(0, 8),
+		);
 	}
 
 	async function checkCli() {
@@ -255,11 +258,12 @@ export function App() {
 			setCliStatus(status);
 			pushOutput({
 				title: "CLI 检测",
-				command: process.platform === "win32" ? "where maestro" : "which maestro",
+				command:
+					process.platform === "win32" ? "where maestro" : "which maestro",
 				ok: status.available,
 				body: status.available
 					? `maestro found: ${status.path}`
-					: status.error ?? "maestro CLI not found",
+					: (status.error ?? "maestro CLI not found"),
 			});
 		} catch (error) {
 			pushOutput({
@@ -361,7 +365,7 @@ export function App() {
 							"",
 							"下一步：点击 Ralph check 验证协议，或点击 Ralph next 加载第一个 plan step。",
 						].join("\n")
-					: result.error ?? "Unknown error",
+					: (result.error ?? "Unknown error"),
 			});
 		} catch (error) {
 			pushOutput({
@@ -410,9 +414,7 @@ export function App() {
 						<Code2 size={15} />
 						Oh My Maestro
 					</div>
-					<h1 className="mt-3 font-semibold text-2xl text-white">
-						编码工作流
-					</h1>
+					<h1 className="mt-3 font-semibold text-2xl text-white">编码工作流</h1>
 					<p className="mt-3 text-[#aebbc5] text-sm leading-6">
 						把自然语言任务转成 Ralph session，再由你显式推进每一步。
 					</p>
@@ -466,7 +468,9 @@ export function App() {
 
 				<section className="space-y-3 border-[#29313a] border-t p-5">
 					<div className="text-[#c8d2dc] text-sm">当前 session</div>
-					<div className={`rounded-md border px-3 py-2 text-sm ${statusTone(lastSession?.ok)}`}>
+					<div
+						className={`rounded-md border px-3 py-2 text-sm ${statusTone(lastSession?.ok)}`}
+					>
 						{lastSession?.ok ? lastSession.sessionId : "尚未从页面创建"}
 					</div>
 					<div className="grid grid-cols-2 gap-2">
@@ -686,12 +690,16 @@ export function App() {
 										</div>
 										<div className="min-w-0">
 											<div className="flex items-center justify-between gap-2">
-												<div className="font-medium text-white">{step.title}</div>
+												<div className="font-medium text-white">
+													{step.title}
+												</div>
 												<div className="shrink-0 rounded border border-[#3b4652] bg-[#0f1216] px-2 py-0.5 font-mono text-[#9fb0bf] text-xs">
 													{step.command}
 												</div>
 											</div>
-											<p className="mt-1 text-[#aebbc5] text-sm">{step.detail}</p>
+											<p className="mt-1 text-[#aebbc5] text-sm">
+												{step.detail}
+											</p>
 										</div>
 									</div>
 								))}
@@ -742,7 +750,9 @@ export function App() {
 									className="rounded-md border border-[#34414d] bg-[#171b20] px-3 py-1.5 text-[#dbe6ef] text-xs hover:bg-[#202832] disabled:opacity-50"
 									type="button"
 									disabled={!canRun}
-									onClick={() => runCommand("Ralph skills", ["ralph", "skills"])}
+									onClick={() =>
+										runCommand("Ralph skills", ["ralph", "skills"])
+									}
 								>
 									Skills
 								</button>
@@ -772,7 +782,8 @@ export function App() {
 								</div>
 							) : (
 								<div className="flex h-full items-center justify-center px-8 text-center text-[#8796a3]">
-									创建 coding session 后，这里会显示 session 路径、check 结果和 next 输出。
+									创建 coding session 后，这里会显示 session 路径、check 结果和
+									next 输出。
 								</div>
 							)}
 						</div>

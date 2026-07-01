@@ -1,14 +1,11 @@
-import type { ExternalApp } from "@superset/local-db";
+import type { ExternalApp } from "shared/external-app-types";
 import { toast } from "@superset/ui/sonner";
 import { ArrowUpRightIcon } from "lucide-react";
 import {
 	APP_OPTIONS,
 	type OpenInExternalAppOption,
 } from "renderer/components/OpenInExternalDropdown/constants";
-import {
-	getHostServiceClientByUrl,
-	getHostServiceProcedures,
-} from "renderer/lib/host-service-client";
+import { getHostServiceProcedures } from "renderer/lib/host-service-client";
 import { showHostServiceUnavailableToast } from "renderer/lib/host-service-unavailable";
 import { electronTrpcClient } from "renderer/lib/trpc-client";
 import { useSetPreferredOpenInAppIntent } from "renderer/stores/set-preferred-open-in-app-intent";

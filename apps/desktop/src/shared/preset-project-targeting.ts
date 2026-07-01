@@ -38,11 +38,7 @@ export function normalizePresetProjectIds(
 		return null;
 	}
 	const normalized = [
-		...new Set(
-			projectIds
-				.map((id) => id.trim())
-				.filter((id) => id.length > 0),
-		),
+		...new Set(projectIds.map((id) => id.trim()).filter((id) => id.length > 0)),
 	];
 	return normalized.length > 0 ? normalized : null;
 }

@@ -4,156 +4,149 @@
 import { create } from "zustand";
 
 export interface Tab {
-  id: string;
-  workspaceId: string;
-  autoTitle?: string;
+	id: string;
+	workspaceId: string;
+	autoTitle?: string;
 }
 
 export interface Pane {
-  id: string;
-  type: string;
-  tabId: string;
-  fileViewer?: {
-    filePath?: string;
-    diffCategory?: string;
-    commitHash?: string;
-    oldPath?: string;
-    viewMode?: string;
-  };
+	id: string;
+	type: string;
+	tabId: string;
+	fileViewer?: {
+		filePath?: string;
+		diffCategory?: string;
+		commitHash?: string;
+		oldPath?: string;
+		viewMode?: string;
+	};
 }
 
 interface ChatLaunchConfig {
-  thinkingLevel?: string;
+	thinkingLevel?: string;
 }
 
 interface TabsState {
-  tabs: Tab[];
-  panes: Record<string, Pane | undefined>;
-  addTab: (workspaceId: string) => string;
-  setTabAutoTitle: (tabId: string, title: string) => void;
-  addPane: (tabId: string) => string;
-  removePane: (paneId: string) => void;
-  addFileViewerPane: (
-    workspaceId: string,
-    options: {
-      filePath: string;
-      diffCategory?: string;
-      commitHash?: string;
-      oldPath?: string;
-      viewMode?: string;
-    },
-  ) => void;
-  openInBrowserPane: (workspaceId: string, url: string) => void;
-  addChatTab: (workspaceId: string, options?: { sessionId?: string }) => string;
-  addChatPane: (
-    tabId: string,
-    options?: { sessionId?: string },
-  ) => string;
-  switchChatSession: (paneId: string, sessionId: string) => void;
-  setChatLaunchConfig: (paneId: string, config: ChatLaunchConfig) => void;
+	tabs: Tab[];
+	panes: Record<string, Pane | undefined>;
+	addTab: (workspaceId: string) => string;
+	setTabAutoTitle: (tabId: string, title: string) => void;
+	addPane: (tabId: string) => string;
+	removePane: (paneId: string) => void;
+	addFileViewerPane: (
+		workspaceId: string,
+		options: {
+			filePath: string;
+			diffCategory?: string;
+			commitHash?: string;
+			oldPath?: string;
+			viewMode?: string;
+		},
+	) => void;
+	openInBrowserPane: (workspaceId: string, url: string) => void;
+	addChatTab: (workspaceId: string, options?: { sessionId?: string }) => string;
+	addChatPane: (tabId: string, options?: { sessionId?: string }) => string;
+	switchChatSession: (paneId: string, sessionId: string) => void;
+	setChatLaunchConfig: (paneId: string, config: ChatLaunchConfig) => void;
 }
 
-// Phase 4: 将计数器移入 zustand store 内部或使用 crypto.randomUUID()
-// 模块级可变计数器在 HMR 时不重置，可能导致 ID 碰撞
-let tabCounter = 0;
-let paneCounter = 0;
-
+// IDs generated via crypto.randomUUID() — no module-level mutable counters (HMR-safe).
 function nextTabId(): string {
-  return `tab-${++tabCounter}-${Date.now()}`;
+	return crypto.randomUUID();
 }
 
 function nextPaneId(): string {
-  return `pane-${++paneCounter}-${Date.now()}`;
+	return crypto.randomUUID();
 }
 
 export const useTabsStore = create<TabsState>((set, get) => ({
-  tabs: [],
-  panes: {},
+	tabs: [],
+	panes: {},
 
-  addTab: (workspaceId) => {
-    const id = nextTabId();
-    set((state) => ({
-      tabs: [...state.tabs, { id, workspaceId }],
-    }));
-    return id;
-  },
+	addTab: (workspaceId) => {
+		const id = nextTabId();
+		set((state) => ({
+			tabs: [...state.tabs, { id, workspaceId }],
+		}));
+		return id;
+	},
 
-  setTabAutoTitle: (tabId, title) =>
-    set((state) => ({
-      tabs: state.tabs.map((t) =>
-        t.id === tabId ? { ...t, autoTitle: title } : t,
-      ),
-    })),
+	setTabAutoTitle: (tabId, title) =>
+		set((state) => ({
+			tabs: state.tabs.map((t) =>
+				t.id === tabId ? { ...t, autoTitle: title } : t,
+			),
+		})),
 
-  addPane: (tabId) => {
-    const id = nextPaneId();
-    set((state) => ({
-      panes: { ...state.panes, [id]: { id, type: "terminal", tabId } },
-    }));
-    return id;
-  },
+	addPane: (tabId) => {
+		const id = nextPaneId();
+		set((state) => ({
+			panes: { ...state.panes, [id]: { id, type: "terminal", tabId } },
+		}));
+		return id;
+	},
 
-  removePane: (paneId) =>
-    set((state) => {
-      const next = { ...state.panes };
-      delete next[paneId];
-      return { panes: next };
-    }),
+	removePane: (paneId) =>
+		set((state) => {
+			const next = { ...state.panes };
+			delete next[paneId];
+			return { panes: next };
+		}),
 
-  addFileViewerPane: (workspaceId, options) => {
-    const tab = get().tabs.find((t) => t.workspaceId === workspaceId);
-    const tabId = tab?.id ?? get().addTab(workspaceId);
-    const id = nextPaneId();
-    set((state) => ({
-      panes: {
-        ...state.panes,
-        [id]: {
-          id,
-          type: "file-viewer",
-          tabId,
-          fileViewer: {
-            filePath: options.filePath,
-            diffCategory: options.diffCategory,
-            commitHash: options.commitHash,
-            oldPath: options.oldPath,
-            viewMode: options.viewMode ?? "view",
-          },
-        },
-      },
-    }));
-  },
+	addFileViewerPane: (workspaceId, options) => {
+		const tab = get().tabs.find((t) => t.workspaceId === workspaceId);
+		const tabId = tab?.id ?? get().addTab(workspaceId);
+		const id = nextPaneId();
+		set((state) => ({
+			panes: {
+				...state.panes,
+				[id]: {
+					id,
+					type: "file-viewer",
+					tabId,
+					fileViewer: {
+						filePath: options.filePath,
+						diffCategory: options.diffCategory,
+						commitHash: options.commitHash,
+						oldPath: options.oldPath,
+						viewMode: options.viewMode ?? "view",
+					},
+				},
+			},
+		}));
+	},
 
-  openInBrowserPane: (workspaceId, url) => {
-    const tab = get().tabs.find((t) => t.workspaceId === workspaceId);
-    const tabId = tab?.id ?? get().addTab(workspaceId);
-    const id = nextPaneId();
-    set((state) => ({
-      // Phase 4: 将 url 存储到 pane 对象中
-      panes: { ...state.panes, [id]: { id, type: "browser", tabId, url } },
-    }));
-  },
+	openInBrowserPane: (workspaceId, url) => {
+		const tab = get().tabs.find((t) => t.workspaceId === workspaceId);
+		const tabId = tab?.id ?? get().addTab(workspaceId);
+		const id = nextPaneId();
+		set((state) => ({
+			// Phase 4: 将 url 存储到 pane 对象中
+			panes: { ...state.panes, [id]: { id, type: "browser", tabId, url } },
+		}));
+	},
 
-  addChatTab: (workspaceId, options) => {
-    const id = nextTabId();
-    set((state) => ({
-      tabs: [...state.tabs, { id, workspaceId }],
-    }));
-    return id;
-  },
+	addChatTab: (workspaceId, _options) => {
+		const id = nextTabId();
+		set((state) => ({
+			tabs: [...state.tabs, { id, workspaceId }],
+		}));
+		return id;
+	},
 
-  addChatPane: (tabId, options) => {
-    const id = nextPaneId();
-    set((state) => ({
-      panes: { ...state.panes, [id]: { id, type: "chat", tabId } },
-    }));
-    return id;
-  },
+	addChatPane: (tabId, _options) => {
+		const id = nextPaneId();
+		set((state) => ({
+			panes: { ...state.panes, [id]: { id, type: "chat", tabId } },
+		}));
+		return id;
+	},
 
-  switchChatSession: (paneId, sessionId) => {
-    // Stub: session switching handled by chat adapter
-  },
+	switchChatSession: (_paneId, _sessionId) => {
+		// Stub: session switching handled by chat adapter
+	},
 
-  setChatLaunchConfig: (paneId, config) => {
-    // Stub: launch config stored externally by chat adapter
-  },
+	setChatLaunchConfig: (_paneId, _config) => {
+		// Stub: launch config stored externally by chat adapter
+	},
 }));

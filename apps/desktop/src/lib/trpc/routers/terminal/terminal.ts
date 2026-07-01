@@ -317,7 +317,9 @@ export const createTerminalRouter = () => {
 		killAllDaemonSessions: publicProcedure.mutation(async () => {
 			const client = getTerminalHostClient();
 			const before = await terminal.management.listSessions();
-			const beforeIds = before.sessions.map((s: { sessionId: string }) => s.sessionId);
+			const beforeIds = before.sessions.map(
+				(s: { sessionId: string }) => s.sessionId,
+			);
 			console.log(
 				"[killAllDaemonSessions] Before kill:",
 				beforeIds.length,
@@ -387,7 +389,9 @@ export const createTerminalRouter = () => {
 				);
 
 				if (toKill.length > 0) {
-					const paneIds = toKill.map((session: { sessionId: string }) => session.sessionId);
+					const paneIds = toKill.map(
+						(session: { sessionId: string }) => session.sessionId,
+					);
 					const results = await Promise.allSettled(
 						paneIds.map((paneId: string) => terminal.kill({ paneId })),
 					);

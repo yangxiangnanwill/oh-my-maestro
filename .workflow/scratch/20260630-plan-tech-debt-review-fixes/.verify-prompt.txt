@@ -1,0 +1,77 @@
+PURPOSE: Verify execution output meets all 36 convergence criteria and structural integrity. success = all criteria verified with file:line evidence
+TASK:
+1. CONVERGENCE: For each criterion below, check if the actual code satisfies it. Read files, verify behavior exists, report status with evidence.
+2. STRUCTURE Layer 1 (Existence): Verify expected output files exist on disk.
+3. STRUCTURE Layer 2 (Substance): Verify files have real implementation. Flag stubs/placeholders/TODO-only/empty returns.
+4. STRUCTURE Layer 3 (Wiring): Verify files are imported and used. Flag orphaned files.
+5. ANTI-PATTERNS: Scan modified files for NEW TODO/FIXME/HACK introduced by this execution, console.log debug, disabled tests.
+MODE: analysis
+CONTEXT: @apps/desktop/src/**/*,apps/desktop/tsconfig.json,apps/desktop/biome.json
+EXPECTED: JSON { convergence: [{criterion, status: verified|failed|uncertain, evidence}], structure: {existence:[{path,status}], substance:[{path,status,evidence}], wiring:[{path,status,importers[]}]}, anti_patterns: [{type,file,line,severity}], gaps: [{id,type,severity,description,fix_direction}], overall: passed|gaps_found }
+CONSTRAINTS: Read-only | Check ALL 36 criteria exhaustively | Evidence must be file:line | Do NOT assume — verify by reading code | Focus on the 8 review-fix tasks (ISS-001..008) not pre-existing tech debt
+
+## Convergence Criteria (verify each of 36)
+1. [TASK-001] grep '"noImplicitAny": true' apps/desktop/tsconfig.json returns exactly one match
+2. [TASK-001] ! grep -n '"noImplicitAny": false' apps/desktop/tsconfig.json returns no matches
+3. [TASK-001] No main-layer @superset/* import statements remain in code: `grep -rnE '^import .*from .@superset/(local-db|shared/(agent-command|shell-ready-scanner|workspace-launch|simple-git-options)|pty-daemon/|port-scanner|chat/server/|workspace-fs/)' apps/desktop/src --include='*.ts' --include='*.tsx' | grep -vE '^\s*//'` returns no matches (excludes comments via grep -vE '^\\s*//'; matches import/from lines only)
+4. [TASK-001] cd apps/desktop && bun run typecheck exits 0
+5. [TASK-001] Keep-list grep — correctly-shared + safety-net aliases preserved: `grep -rnE '@superset/(shared/agent-catalog|shared/host-info|shared/constants|shared/auto-update|shared/agent-launch|workspace-client|mcp-v2/)' apps/desktop/src --include='*.ts' --include='*.tsx'` returns matches for each of those 7 alias patterns (true shared layer + mcp-v2 runtime safety net untouched)
+6. [TASK-002] grep 'let instance: HostServiceCoordinator | null = null' apps/desktop/src/main/lib/host-service-coordinator.ts returns one match
+7. [TASK-002] grep 'instance ??= new HostServiceCoordinator' apps/desktop/src/main/lib/host-service-coordinator.ts returns one match
+8. [TASK-002] ! grep -n 'return new HostServiceCoordinator' apps/desktop/src/main/lib/host-service-coordinator.ts returns no matches
+9. [TASK-002] ! grep -n 'export type {' apps/desktop/src/main/lib/host-service-coordinator.ts returns no matches
+10. [TASK-002] grep -n 'import type { HostServiceStatusEvent } from "shared/host-info-types"' apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts returns one match
+11. [TASK-002] ! grep -n 'type HostServiceStatusEvent' apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts | grep 'main/lib/host-service-coordinator' returns no matches (type no longer imported from coordinator)
+12. [TASK-002] cd apps/desktop && bun run typecheck exits 0
+13. [TASK-003] grep -n 'isAbsolute' apps/desktop/src/lib/trpc/routers/external/index.ts returns at least 2 matches (openInApp line 163 + new openInFinder guard)
+14. [TASK-003] ! grep -n 'Phase 4: 添加路径验证' apps/desktop/src/lib/trpc/routers/external/index.ts returns no matches (TODO comment deleted)
+15. [TASK-003] grep -n 'openInFinder requires an absolute path' apps/desktop/src/lib/trpc/routers/external/index.ts returns one match
+16. [TASK-003] grep -n 'code: "BAD_REQUEST"' apps/desktop/src/lib/trpc/routers/external/index.ts returns at least 4 matches (existing 3: withResolveGuard line 37 + openUrl line 122 + openInApp line 165, plus the new openInFinder guard = 4 total)
+17. [TASK-003] cd apps/desktop && bun run typecheck exits 0
+18. [TASK-004] grep -n 'const LinkAnchor = React.memo' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns one match (module-level memo component extracted)
+19. [TASK-004] grep -n 'useCallback' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns at least 3 matches (existing handleLinkClick + openFileInPane + new renderParts wrapper)
+20. [TASK-004] ! grep -n 'Phase 4: 将 a 组件提取到 useMemo 外部并用 React.memo 包裹' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns no matches (stale comment removed)
+21. [TASK-004] grep -n 'a: LinkAnchor\|a: LinkAnchor,' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns one match (components useMemo returns stable ref)
+22. [TASK-004] ! grep -nP 'renderParts = \(\{' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns no matches matching the old unwrapped arrow assignment (now wrapped in useCallback)
+23. [TASK-004] cd apps/desktop && bun run typecheck exits 0
+24. [TASK-004] [UI-observable] Stream a chat message with tool calls in the running desktop app and confirm: (a) text streams character-by-character without regression, (b) read-only tool groups render with correct pending/available status, (c) clicking a file link in a streamed message opens the file viewer pane — render output is visually identical to pre-refactor.
+25. [TASK-005] grep -n 'crypto.randomUUID' apps/desktop/src/renderer/stores/tabs/store.ts returns at least 2 matches (nextTabId + nextPaneId)
+26. [TASK-005] ! grep -n 'tabCounter' apps/desktop/src/renderer/stores/tabs/store.ts returns no matches
+27. [TASK-005] ! grep -n 'paneCounter' apps/desktop/src/renderer/stores/tabs/store.ts returns no matches
+28. [TASK-005] ! grep -n 'let tabCounter = 0\|let paneCounter = 0' apps/desktop/src/renderer/stores/tabs/store.ts returns no matches
+29. [TASK-005] cd apps/desktop && bun run typecheck exits 0
+30. [TASK-006] test -f apps/desktop/biome.json returns 0 (config created)
+31. [TASK-006] grep -n 'indentStyle' apps/desktop/biome.json returns one match and grep -n '"tab"' apps/desktop/biome.json returns one match (useTabs enforced)
+32. [TASK-006] grep -n '"lint":' apps/desktop/package.json returns one match AND grep -n '"lint:fix":' apps/desktop/package.json returns one match AND grep -n '"format":' apps/desktop/package.json returns one match
+33. [TASK-006] grep -c '@biomejs/biome' apps/desktop/package.json returns >= 1 (dependency added)
+34. [TASK-006] For each of the 12 target files: `cd apps/desktop && bunx biome format --check <file>` exits 0 (authoritative — Biome is the configured formatter with indentStyle:tab; this verifies tab indentation without fragile awk/head heuristics). Run for all 12 files. As a fallback for files not covered by biome.json includes (e.g. tsconfig.json if JSON is excluded), use `grep -Pn '^(  )+[^ ]' <file>` which must return no matches (no 2-space-indented lines).
+35. [TASK-006] cd apps/desktop && bun run typecheck exits 0 (formatting change does not break types)
+36. [TASK-006] cd apps/desktop && bun run lint exits 0 (no lint errors on the 12 reformatted files)
+
+
+## Modified Files (this execution)
+apps/desktop/src/lib/trpc/routers/auth/utils/auth-functions.ts
+apps/desktop/src/lib/trpc/routers/external/index.ts
+apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts
+apps/desktop/src/main/index.full.ts
+apps/desktop/src/main/lib/host-service-coordinator.ts
+apps/desktop/src/main/lib/terminal-host/process-tree-stub.ts
+apps/desktop/src/main/pty-daemon/index.ts
+apps/desktop/src/main/terminal-host/pty-subprocess.ts
+apps/desktop/src/main/terminal-host/session.ts
+apps/desktop/src/renderer/commandPalette/core/types.ts
+apps/desktop/src/renderer/commandPalette/modules/openIn/commands.ts
+apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx
+apps/desktop/src/renderer/components/OpenInButton/OpenInButton.tsx
+apps/desktop/src/renderer/components/OpenInExternalDropdown/OpenInExternalDropdownItems.tsx
+apps/desktop/src/renderer/components/OpenInExternalDropdown/constants.ts
+apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts
+apps/desktop/src/renderer/lib/presets/index.ts
+apps/desktop/src/renderer/lib/terminal/link-providers-stub.ts
+apps/desktop/src/renderer/lib/tiptap-utils.ts
+apps/desktop/src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts
+apps/desktop/src/renderer/stores/index.ts
+apps/desktop/src/renderer/stores/tabs/store.ts
+apps/desktop/src/shared/host-info-types.ts
+apps/desktop/src/types/link-providers-route.d.ts
+apps/desktop/tsconfig.json

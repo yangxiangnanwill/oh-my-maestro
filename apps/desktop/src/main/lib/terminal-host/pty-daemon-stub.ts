@@ -23,11 +23,11 @@ export interface DaemonSnapshot {
 
 export const DAEMON_PACKAGE_VERSION = "0.1.0";
 
-export function readSnapshot(snapshotPath: string): DaemonSnapshot {
+export function readSnapshot(_snapshotPath: string): DaemonSnapshot {
 	throw new Error("readSnapshot not implemented in stub");
 }
 
-export function clearSnapshot(snapshotPath: string): void {
+export function clearSnapshot(_snapshotPath: string): void {
 	throw new Error("clearSnapshot not implemented in stub");
 }
 
@@ -35,7 +35,11 @@ export class Server {
 	private socketPath: string;
 	private daemonVersion: string;
 
-	constructor(opts: { socketPath: string; daemonVersion: string; bufferCap?: number }) {
+	constructor(opts: {
+		socketPath: string;
+		daemonVersion: string;
+		bufferCap?: number;
+	}) {
 		this.socketPath = opts.socketPath;
 		this.daemonVersion = opts.daemonVersion;
 	}
@@ -52,7 +56,7 @@ export class Server {
 		throw new Error("Server.close not implemented in stub");
 	}
 
-	adoptSnapshot(snapshot: DaemonSnapshot): void {
+	adoptSnapshot(_snapshot: DaemonSnapshot): void {
 		throw new Error("Server.adoptSnapshot not implemented in stub");
 	}
 }

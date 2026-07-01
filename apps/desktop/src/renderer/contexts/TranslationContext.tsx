@@ -1,10 +1,10 @@
 import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
+	createContext,
+	type ReactNode,
+	useCallback,
+	useContext,
+	useEffect,
+	useState,
 } from "react";
 import { TRANSLATIONS } from "./translations";
 
@@ -17,20 +17,20 @@ export type DisplayMode = "simple" | "advanced";
  * TranslationContext 暴露的值类型。
  */
 export interface TranslationContextValue {
-  /** 当前显示模式 */
-  displayMode: DisplayMode;
-  /** 切换显示模式 */
-  setDisplayMode: (mode: DisplayMode) => void;
-  /**
-   * 翻译 Maestro 术语。
-   * - simple 模式：查 TRANSLATIONS 表返回中文，无匹配时返回原始 key
-   * - advanced 模式：始终返回原始 key
-   * @param key 术语键名（snake_case）
-   * @param mode 可选的覆写模式，不传则使用当前 displayMode
-   */
-  translate: (key: string, mode?: DisplayMode) => string;
-  /** translate() 的别名 */
-  t: (key: string, mode?: DisplayMode) => string;
+	/** 当前显示模式 */
+	displayMode: DisplayMode;
+	/** 切换显示模式 */
+	setDisplayMode: (mode: DisplayMode) => void;
+	/**
+	 * 翻译 Maestro 术语。
+	 * - simple 模式：查 TRANSLATIONS 表返回中文，无匹配时返回原始 key
+	 * - advanced 模式：始终返回原始 key
+	 * @param key 术语键名（snake_case）
+	 * @param mode 可选的覆写模式，不传则使用当前 displayMode
+	 */
+	translate: (key: string, mode?: DisplayMode) => string;
+	/** translate() 的别名 */
+	t: (key: string, mode?: DisplayMode) => string;
 }
 
 const STORAGE_KEY = "maestro-display-mode";
@@ -40,22 +40,22 @@ const STORAGE_KEY = "maestro-display-mode";
  * SSR/预渲染环境或浏览器禁用 localStorage 时返回 null。
  */
 function safeGetItem(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
+	try {
+		return localStorage.getItem(key);
+	} catch {
+		return null;
+	}
 }
 
 /**
  * 安全地向 localStorage 写入值。
  */
 function safeSetItem(key: string, value: string): void {
-  try {
-    localStorage.setItem(key, value);
-  } catch {
-    // 静默失败 — 写入不是关键路径
-  }
+	try {
+		localStorage.setItem(key, value);
+	} catch {
+		// 静默失败 — 写入不是关键路径
+	}
 }
 
 const TranslationContext = createContext<TranslationContextValue | null>(null);
@@ -67,40 +67,42 @@ const TranslationContext = createContext<TranslationContextValue | null>(null);
  * 若无则初始化为 'simple'。模式变更时自动持久化。
  */
 export function TranslationProvider({ children }: { children: ReactNode }) {
-  const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => {
-    const stored = safeGetItem(STORAGE_KEY);
-    if (stored === "simple" || stored === "advanced") {
-      return stored;
-    }
-    return "simple";
-  });
+	const [displayMode, setDisplayModeState] = useState<DisplayMode>(() => {
+		const stored = safeGetItem(STORAGE_KEY);
+		if (stored === "simple" || stored === "advanced") {
+			return stored;
+		}
+		return "simple";
+	});
 
-  useEffect(() => {
-    safeSetItem(STORAGE_KEY, displayMode);
-  }, [displayMode]);
+	useEffect(() => {
+		safeSetItem(STORAGE_KEY, displayMode);
+	}, [displayMode]);
 
-  const setDisplayMode = useCallback((mode: DisplayMode) => {
-    setDisplayModeState(mode);
-  }, []);
+	const setDisplayMode = useCallback((mode: DisplayMode) => {
+		setDisplayModeState(mode);
+	}, []);
 
-  const translate = useCallback(
-    (key: string, mode?: DisplayMode): string => {
-      const effectiveMode = mode ?? displayMode;
-      if (effectiveMode === "advanced") {
-        return key;
-      }
-      return TRANSLATIONS[key] ?? key;
-    },
-    [displayMode],
-  );
+	const translate = useCallback(
+		(key: string, mode?: DisplayMode): string => {
+			const effectiveMode = mode ?? displayMode;
+			if (effectiveMode === "advanced") {
+				return key;
+			}
+			return TRANSLATIONS[key] ?? key;
+		},
+		[displayMode],
+	);
 
-  const t = translate;
+	const t = translate;
 
-  return (
-    <TranslationContext.Provider value={{ displayMode, setDisplayMode, translate, t }}>
-      {children}
-    </TranslationContext.Provider>
-  );
+	return (
+		<TranslationContext.Provider
+			value={{ displayMode, setDisplayMode, translate, t }}
+		>
+			{children}
+		</TranslationContext.Provider>
+	);
 }
 
 /**
@@ -110,17 +112,17 @@ export function TranslationProvider({ children }: { children: ReactNode }) {
  * 避免组件树未包裹时崩溃（RSK-T003-1 缓解）。
  */
 export function useTranslation(): TranslationContextValue {
-  const ctx = useContext(TranslationContext);
+	const ctx = useContext(TranslationContext);
 
-  if (!ctx) {
-    // Provider 未挂载时的安全 fallback
-    return {
-      displayMode: "simple",
-      setDisplayMode: () => {},
-      translate: (key: string) => key,
-      t: (key: string) => key,
-    };
-  }
+	if (!ctx) {
+		// Provider 未挂载时的安全 fallback
+		return {
+			displayMode: "simple",
+			setDisplayMode: () => {},
+			translate: (key: string) => key,
+			t: (key: string) => key,
+		};
+	}
 
-  return ctx;
+	return ctx;
 }

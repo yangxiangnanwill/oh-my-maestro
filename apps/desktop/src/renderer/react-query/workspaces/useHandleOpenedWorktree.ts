@@ -27,12 +27,12 @@ export function useHandleOpenedWorktree() {
 
 			const bootstrapError = await bootstrapOpenWorktree({
 				data,
-					addTab: (workspaceId) => {
-						const tabId = addTab(workspaceId);
-						// Phase 4: 使用 addPane(tabId) 生成独立的 paneId
+				addTab: (workspaceId) => {
+					const tabId = addTab(workspaceId);
+					// Phase 4: 使用 addPane(tabId) 生成独立的 paneId
 					const paneId = tabId;
-						return { tabId, paneId };
-					},
+					return { tabId, paneId };
+				},
 				setTabAutoTitle,
 				createOrAttach: (input) => createOrAttach.mutateAsync(input),
 				writeToTerminal: (input) => writeToTerminal.mutateAsync(input),

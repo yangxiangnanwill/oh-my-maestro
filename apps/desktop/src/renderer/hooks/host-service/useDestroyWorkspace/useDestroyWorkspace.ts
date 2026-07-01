@@ -1,27 +1,27 @@
 import type {
-  DeleteInProgressCause,
-  TeardownFailureCause,
+	DeleteInProgressCause,
+	TeardownFailureCause,
 } from "renderer/lib/host-service-types";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback } from "react";
 import { getHostServiceProcedures } from "renderer/lib/host-service-client";
 import { useLocalHostService } from "renderer/routes/_authenticated/providers/LocalHostServiceProvider";
 import {
-  useWorkspaceHostTarget,
-  type WorkspaceHostTarget,
+	useWorkspaceHostTarget,
+	type WorkspaceHostTarget,
 } from "../useWorkspaceHostUrl";
 
 export interface DestroyWorkspaceInput {
-  deleteBranch?: boolean;
-  force?: boolean;
+	deleteBranch?: boolean;
+	force?: boolean;
 }
 
 export interface DestroyWorkspaceSuccess {
-  success: boolean;
-  worktreeRemoved: boolean;
-  branchDeleted: boolean;
-  cloudDeleted: boolean;
-  warnings: string[];
+	success: boolean;
+	worktreeRemoved: boolean;
+	branchDeleted: boolean;
+	cloudDeleted: boolean;
+	warnings: string[];
 }
 
 /**
@@ -30,30 +30,30 @@ export interface DestroyWorkspaceSuccess {
  * — that combination is unrepresentable.
  */
 export type DestroyWorkspacePreview =
-  | {
-      canDelete: true;
-      reason: null;
-      hasChanges: boolean;
-      hasUnpushedCommits: boolean;
-    }
-  | {
-      canDelete: false;
-      reason: string;
-      hasChanges: false;
-      hasUnpushedCommits: false;
-    };
+	| {
+			canDelete: true;
+			reason: null;
+			hasChanges: boolean;
+			hasUnpushedCommits: boolean;
+	  }
+	| {
+			canDelete: false;
+			reason: string;
+			hasChanges: false;
+			hasUnpushedCommits: false;
+	  };
 
 export type DestroyWorkspaceError =
-  | { kind: "conflict"; message: string }
-  | { kind: "in-progress"; message: string }
-  | { kind: "teardown-failed"; cause: TeardownFailureCause }
-  | { kind: "host-unavailable"; reason: WorkspaceHostTarget["status"] }
-  | { kind: "unknown"; message: string };
+	| { kind: "conflict"; message: string }
+	| { kind: "in-progress"; message: string }
+	| { kind: "teardown-failed"; cause: TeardownFailureCause }
+	| { kind: "host-unavailable"; reason: WorkspaceHostTarget["status"] }
+	| { kind: "unknown"; message: string };
 
 export interface UseDestroyWorkspace {
-  hostTarget: WorkspaceHostTarget;
-  destroy: (input?: DestroyWorkspaceInput) => Promise<DestroyWorkspaceSuccess>;
-  inspect: () => Promise<DestroyWorkspacePreview>;
+	hostTarget: WorkspaceHostTarget;
+	destroy: (input?: DestroyWorkspaceInput) => Promise<DestroyWorkspaceSuccess>;
+	inspect: () => Promise<DestroyWorkspacePreview>;
 }
 
 /**
@@ -66,101 +66,101 @@ export interface UseDestroyWorkspace {
  *   - render `host-unavailable` as a checking-status spinner, not an error
  */
 export function useDestroyWorkspace(workspaceId: string): UseDestroyWorkspace {
-  const hostTarget = useWorkspaceHostTarget(workspaceId);
-  const { activeHostUrl } = useLocalHostService();
+	const hostTarget = useWorkspaceHostTarget(workspaceId);
+	const { activeHostUrl } = useLocalHostService();
 
-  // Reduce the (object-identity-unstable) hostTarget down to two scalars so
-  // memoized callbacks below don't churn on every collection notification.
-  // useLiveQuery returns a new array each tick, which would otherwise rebuild
-  // `inspect`/`destroy` and re-fire effects that depend on them.
-  const shouldTryLocalCleanup =
-    hostTarget.status === "not-found" && activeHostUrl !== null;
-  const hostUrl =
-    hostTarget.status === "ready"
-      ? hostTarget.url
-      : shouldTryLocalCleanup
-        ? activeHostUrl
-        : null;
-  const hostStatus: WorkspaceHostTarget["status"] = shouldTryLocalCleanup
-    ? "ready"
-    : hostTarget.status;
+	// Reduce the (object-identity-unstable) hostTarget down to two scalars so
+	// memoized callbacks below don't churn on every collection notification.
+	// useLiveQuery returns a new array each tick, which would otherwise rebuild
+	// `inspect`/`destroy` and re-fire effects that depend on them.
+	const shouldTryLocalCleanup =
+		hostTarget.status === "not-found" && activeHostUrl !== null;
+	const hostUrl =
+		hostTarget.status === "ready"
+			? hostTarget.url
+			: shouldTryLocalCleanup
+				? activeHostUrl
+				: null;
+	const hostStatus: WorkspaceHostTarget["status"] = shouldTryLocalCleanup
+		? "ready"
+		: hostTarget.status;
 
-  const destroy = useCallback(
-    async (
-      input: DestroyWorkspaceInput = {},
-    ): Promise<DestroyWorkspaceSuccess> => {
-      const client = getReadyClient(hostUrl, hostStatus);
-      try {
-        return await client.workspaceCleanup.destroy.mutate({
-          workspaceId,
-          deleteBranch: input.deleteBranch ?? false,
-          force: input.force ?? false,
-        });
-      } catch (err) {
-        throw normalizeError(err);
-      }
-    },
-    [hostUrl, hostStatus, workspaceId],
-  );
+	const destroy = useCallback(
+		async (
+			input: DestroyWorkspaceInput = {},
+		): Promise<DestroyWorkspaceSuccess> => {
+			const client = getReadyClient(hostUrl, hostStatus);
+			try {
+				return await client.workspaceCleanup.destroy.mutate({
+					workspaceId,
+					deleteBranch: input.deleteBranch ?? false,
+					force: input.force ?? false,
+				});
+			} catch (err) {
+				throw normalizeError(err);
+			}
+		},
+		[hostUrl, hostStatus, workspaceId],
+	);
 
-  const inspect = useCallback(async (): Promise<DestroyWorkspacePreview> => {
-    const client = getReadyClient(hostUrl, hostStatus);
-    try {
-      return await client.workspaceCleanup.inspect.query({ workspaceId });
-    } catch (err) {
-      throw normalizeError(err);
-    }
-  }, [hostUrl, hostStatus, workspaceId]);
+	const inspect = useCallback(async (): Promise<DestroyWorkspacePreview> => {
+		const client = getReadyClient(hostUrl, hostStatus);
+		try {
+			return await client.workspaceCleanup.inspect.query({ workspaceId });
+		} catch (err) {
+			throw normalizeError(err);
+		}
+	}, [hostUrl, hostStatus, workspaceId]);
 
-  return { hostTarget, destroy, inspect };
+	return { hostTarget, destroy, inspect };
 }
 
 function getReadyClient(
-  hostUrl: string | null,
-  hostStatus: WorkspaceHostTarget["status"],
+	hostUrl: string | null,
+	hostStatus: WorkspaceHostTarget["status"],
 ) {
-  if (hostUrl == null) {
-    throw {
-      kind: "host-unavailable",
-      reason: hostStatus,
-    } satisfies DestroyWorkspaceError;
-  }
-  return getHostServiceProcedures(hostUrl);
+	if (hostUrl == null) {
+		throw {
+			kind: "host-unavailable",
+			reason: hostStatus,
+		} satisfies DestroyWorkspaceError;
+	}
+	return getHostServiceProcedures(hostUrl);
 }
 
 function normalizeError(err: unknown): DestroyWorkspaceError {
-  if (isDestroyWorkspaceError(err)) return err;
-  if (err instanceof TRPCClientError) {
-    const data = err.data as
-      | {
-          code?: string;
-          teardownFailure?: TeardownFailureCause;
-          deleteInProgress?: DeleteInProgressCause;
-        }
-      | undefined;
+	if (isDestroyWorkspaceError(err)) return err;
+	if (err instanceof TRPCClientError) {
+		const data = err.data as
+			| {
+					code?: string;
+					teardownFailure?: TeardownFailureCause;
+					deleteInProgress?: DeleteInProgressCause;
+			  }
+			| undefined;
 
-    if (data?.teardownFailure) {
-      return { kind: "teardown-failed", cause: data.teardownFailure };
-    }
-    if (data?.deleteInProgress) {
-      return { kind: "in-progress", message: err.message };
-    }
-    if (data?.code === "CONFLICT") {
-      return { kind: "conflict", message: err.message };
-    }
-    return { kind: "unknown", message: err.message };
-  }
-  return {
-    kind: "unknown",
-    message: err instanceof Error ? err.message : String(err),
-  };
+		if (data?.teardownFailure) {
+			return { kind: "teardown-failed", cause: data.teardownFailure };
+		}
+		if (data?.deleteInProgress) {
+			return { kind: "in-progress", message: err.message };
+		}
+		if (data?.code === "CONFLICT") {
+			return { kind: "conflict", message: err.message };
+		}
+		return { kind: "unknown", message: err.message };
+	}
+	return {
+		kind: "unknown",
+		message: err instanceof Error ? err.message : String(err),
+	};
 }
 
 function isDestroyWorkspaceError(err: unknown): err is DestroyWorkspaceError {
-  return (
-    !!err &&
-    typeof err === "object" &&
-    "kind" in err &&
-    typeof (err as { kind: unknown }).kind === "string"
-  );
+	return (
+		!!err &&
+		typeof err === "object" &&
+		"kind" in err &&
+		typeof (err as { kind: unknown }).kind === "string"
+	);
 }

@@ -1,0 +1,103 @@
+{
+  "id": "TASK-003",
+  "title": "openInFinder: add absolute-path validation mirroring openInApp",
+  "description": "Fix ISS-001: the openInFinder tRPC endpoint is a publicProcedure with input z.string() and no path validation — it passes input directly to shell.showItemInFolder. The sibling openInApp endpoint (line 163) already validates nodePath.isAbsolute. Add the same guard to openInFinder and delete the bare TODO comment.",
+  "issue_id": "ISS-20260630-001",
+  "issue_refs": ["ISS-20260630-001"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "small",
+  "action": "In apps/desktop/src/lib/trpc/routers/external/index.ts openInFinder mutation (lines 143-148): replace the `// Phase 4: 添加路径验证 — 检查绝对路径、规范化路径、防止路径遍历` comment + `shell.showItemInFolder(input)` with a guard that throws TRPCError code BAD_REQUEST when `!nodePath.isAbsolute(input)`, then calls `shell.showItemInFolder(input)`. Mirror openInApp's exact error message shape: `openInFinder requires an absolute path (got ${JSON.stringify(input)}).` Reuse the existing `nodePath` import (line 2) and `TRPCError` import (line 9) — no new imports needed.",
+  "status": "completed",
+  "completed_at": "2026-06-30T00:00:00Z",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/lib/trpc/routers/external/index.ts",
+  "focus_paths": [
+    "apps/desktop/src/lib/trpc/routers/external/index.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/lib/trpc/routers/external/index.ts",
+    "apps/desktop/src/lib/trpc/routers/external/helpers.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave-1-independent",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n 'isAbsolute' apps/desktop/src/lib/trpc/routers/external/index.ts returns at least 2 matches (openInApp line 163 + new openInFinder guard)",
+      "! grep -n 'Phase 4: 添加路径验证' apps/desktop/src/lib/trpc/routers/external/index.ts returns no matches (TODO comment deleted)",
+      "grep -n 'openInFinder requires an absolute path' apps/desktop/src/lib/trpc/routers/external/index.ts returns one match",
+      "grep -n 'code: \"BAD_REQUEST\"' apps/desktop/src/lib/trpc/routers/external/index.ts returns at least 4 matches (existing 3: withResolveGuard line 37 + openUrl line 122 + openInApp line 165, plus the new openInFinder guard = 4 total)",
+      "cd apps/desktop && bun run typecheck exits 0"
+    ],
+    "verification": "Run grep checks to confirm the isAbsolute guard + error message + TODO removal, then `cd apps/desktop && bun run typecheck` exits 0. Optional manual: call openInFinder with a relative path and confirm a BAD_REQUEST error.",
+    "definition_of_done": "openInFinder rejects relative paths with a clear BAD_REQUEST error, matching openInApp's validation contract — no unvalidated input reaches shell.showItemInFolder."
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/external/index.ts",
+      "action": "modify",
+      "target": "openInFinder mutation (lines 143-148)",
+      "change": "Replace the comment + `shell.showItemInFolder(input)` with: `if (!nodePath.isAbsolute(input)) { throw new TRPCError({ code: \"BAD_REQUEST\", message: \\`openInFinder requires an absolute path (got ${JSON.stringify(input)}).\\` }); } shell.showItemInFolder(input);`"
+    }
+  ],
+  "implementation": [
+    "Step 1: Read external/index.ts to confirm openInFinder is at lines 143-148 and openInApp's guard pattern at lines 163-168.",
+    "Step 2: Edit the openInFinder mutation — delete the `// Phase 4: 添加路径验证 — 检查绝对路径、规范化路径、防止路径遍历` comment line, insert the isAbsolute guard before `shell.showItemInFolder(input)`, mirroring openInApp's TRPCError shape with message prefix `openInFinder requires an absolute path`.",
+    "Step 3: Confirm `nodePath` (line 2) and `TRPCError` (line 9) imports already exist — no import changes needed.",
+    "Step 4: Run `cd apps/desktop && bun run typecheck` and the convergence grep checks."
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck exits 0",
+      "openInFinder has isAbsolute guard",
+      "TODO comment removed"
+    ]
+  },
+  "reference": {
+    "pattern": "Mirror openInApp's absolute-path guard (lines 163-168 of the same file) — identical TRPCError BAD_REQUEST + JSON.stringify(input) message shape.",
+    "files": [
+      "apps/desktop/src/lib/trpc/routers/external/index.ts"
+    ],
+    "examples": "openInApp guard: `if (!nodePath.isAbsolute(input.path)) { throw new TRPCError({ code: \"BAD_REQUEST\", message: \\`openInApp requires an absolute path (got ${JSON.stringify(input.path)}).\\` }); }`"
+  },
+  "rationale": {
+    "chosen_approach": "Inline guard mirroring openInApp rather than extracting a shared helper — only 2 call sites and the inputs differ (openInApp validates input.path, openInFinder validates input directly). A shared assertAbsolutePath helper would add indirection for negligible DRY benefit; the review finding explicitly recommends reusing the isAbsolute check pattern, which this does.",
+    "decision_factors": [
+      "openInFinder input is a bare z.string(); openInApp input is z.object({path, ...}) — different shapes.",
+      "nodePath.isAbsolute + TRPCError already imported in-file.",
+      "shell.showItemInFolder reveals a path in the OS file manager — relative input would resolve against Electron's cwd, surfacing wrong files."
+    ],
+    "tradeoffs": "Slight duplication of the isAbsolute guard (2 sites) vs. a helper; duplication is safer here given different input shapes and only 2 sites."
+  },
+  "risks": [
+    {
+      "risk": "Frontend callers passing relative paths to openInFinder break",
+      "mitigation": "Behavior change is intentional (security fix); callers should pass absolute paths. Verify no renderer call site passes a relative path via grep before/after."
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["Finder integration"],
+    "affected_components": ["external router"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "status": "completed",
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": "wave-1-independent",
+    "executor": "agent"
+  }
+}

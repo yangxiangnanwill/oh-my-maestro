@@ -35,8 +35,8 @@ import {
 	DAEMON_PACKAGE_VERSION,
 	readSnapshot,
 	Server,
-} from "@superset/pty-daemon";
-import type { HandoffMessage } from "@superset/pty-daemon/protocol";
+} from "@main/lib/terminal-host/pty-daemon-stub";
+import type { HandoffMessage } from "@main/lib/terminal-host/pty-daemon-protocol";
 
 interface CliArgs {
 	socket: string;

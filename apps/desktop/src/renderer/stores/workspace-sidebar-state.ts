@@ -9,7 +9,9 @@ interface WorkspaceSidebarState {
 	toggleOpen: () => void;
 }
 
-export const useWorkspaceSidebarStore = create<WorkspaceSidebarState>((set) => ({
-	open: true,
-	toggleOpen: () => set((s) => ({ open: !s.open })),
-}));
+export const useWorkspaceSidebarStore = create<WorkspaceSidebarState>(
+	(set) => ({
+		open: true,
+		toggleOpen: () => set((s) => ({ open: !s.open })),
+	}),
+);

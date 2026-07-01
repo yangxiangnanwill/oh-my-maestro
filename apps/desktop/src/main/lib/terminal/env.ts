@@ -4,8 +4,9 @@ import os from "node:os";
 import defaultShell from "default-shell";
 // Phase 3 stub — replace with shared/env.shared in Phase 4
 const env = {
-  DESKTOP_NOTIFICATIONS_PORT: Number(process.env.DESKTOP_NOTIFICATIONS_PORT) || 11434,
-  NODE_ENV: process.env.NODE_ENV || "production",
+	DESKTOP_NOTIFICATIONS_PORT:
+		Number(process.env.DESKTOP_NOTIFICATIONS_PORT) || 11434,
+	NODE_ENV: process.env.NODE_ENV || "production",
 };
 import { getShellEnv } from "../agent-setup/shell-wrappers";
 

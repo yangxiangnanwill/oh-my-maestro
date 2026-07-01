@@ -2,16 +2,16 @@
 // Provides keyboard utility functions.
 
 interface IsEnterSubmitOptions {
-  requireMod?: boolean;
+	requireMod?: boolean;
 }
 
 export function isEnterSubmit(
-  e: KeyboardEvent,
-  options?: IsEnterSubmitOptions,
+	e: KeyboardEvent,
+	options?: IsEnterSubmitOptions,
 ): boolean {
-  if (e.key !== "Enter") return false;
-  if (options?.requireMod) {
-    return e.metaKey || e.ctrlKey;
-  }
-  return !e.shiftKey;
+	if (e.key !== "Enter") return false;
+	if (options?.requireMod) {
+		return e.metaKey || e.ctrlKey;
+	}
+	return !e.shiftKey;
 }

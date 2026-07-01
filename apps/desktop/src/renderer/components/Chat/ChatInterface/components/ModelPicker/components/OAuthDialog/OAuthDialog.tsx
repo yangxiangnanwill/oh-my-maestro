@@ -6,7 +6,10 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "../../../../../stubs/ui/dialog";
-import { InputGroup, InputGroupInput } from "../../../../../stubs/ui/input-group";
+import {
+	InputGroup,
+	InputGroupInput,
+} from "../../../../../stubs/ui/input-group";
 import { Label } from "../../../../../stubs/ui/label";
 import { useCallback, useState } from "react";
 

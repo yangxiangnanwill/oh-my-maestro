@@ -1,0 +1,152 @@
+{
+  "summary": "Fix 8 high-severity tech-debt review findings (ISS-20260630-001~008) in apps/desktop: openInFinder path validation, MessagePartsRenderer memoization, tsconfig @superset/shared alias misuse, host-service-coordinator re-export + singleton, noImplicitAny restoration, Biome introduction for tab-indent files, and crypto.randomUUID for tab/pane IDs. Scope is defensive hardening + correctness + architectural boundary cleanup; no new user-facing features.",
+  "approach": "Decompose into 6 feature-level tasks grouped by cohesion: (1) tsconfig fix bundles ISS-005 noImplicitAny:true + ISS-003 @superset/shared→@main alias adjustment since both touch tsconfig.json and need the same typecheck gate; ISS-003 import edits are co-located because the alias decision is per-target. Verified alias inventory: @superset/local-db has 7 import sites (1 runtime value import in main/index.full.ts:3 + 6 type-only imports across renderer commandPalette/components/lib); @superset/shared/* main-layer violations (agent-command, shell-ready-scanner, workspace-launch, simple-git-options) ~7 imports; @superset/pty-daemon/* 2 imports; @superset/chat/server/*, @superset/workspace-fs/host, @superset/port-scanner each a small number. @superset/mcp-v2/tools/register is NOT migratable (runtime dynamic import in maestro-mcp-provider.ts:570 + declare-module stub in superset-registry.d.ts — Phase 3 safety net, kept on keep-list). (2) host-service-coordinator bundles ISS-007 singleton + ISS-004 re-export removal — same file. (3) openInFinder path validation (ISS-001). (4) MessagePartsRenderer memo refactor (ISS-002), isolated due to streaming-render sensitivity. (5) tabs/store crypto.randomUUID (ISS-008). (6) Biome introduction + tab-indent conversion (ISS-006). Waves order low-risk independent fixes first (Wave 1), then architecture-sensitive tsconfig + UI refactor (Wave 2), finally Biome tooling last (Wave 3) so its file reformatting does not collide with other tasks' edits. ISS-006 file paths corrected after verification: auth-functions.ts at src/lib/trpc/routers/auth/utils/, workspace-navigation.ts at src/renderer/routes/_authenticated/_dashboard/utils/, link-providers-stub.ts at src/renderer/lib/terminal/, link-providers-route.d.ts at src/types/. Verified ISS-004 consumer: src/lib/trpc/routers/host-service-coordinator/index.ts:5 imports type HostServiceStatusEvent from the coordinator re-export — must be redirected to shared/host-info-types. Verified ISS-005: codebase already typechecks clean with noImplicitAny:true. Verified no existing Biome config or lint script in apps/desktop (AGENTS.md references bun run lint:fix but the script is absent — Biome task will add it).",
+  "task_ids": [
+    "TASK-001",
+    "TASK-002",
+    "TASK-003",
+    "TASK-004",
+    "TASK-005",
+    "TASK-006"
+  ],
+  "task_count": 6,
+  "complexity": "medium",
+  "estimated_time": "5h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": [
+        "TASK-002",
+        "TASK-003",
+        "TASK-005"
+      ],
+      "description": "Low-risk independent single-file fixes: host-service-coordinator singleton+re-export (ISS-004/007), openInFinder path validation (ISS-001), tabs/store crypto.randomUUID (ISS-008). No cross-task dependencies, safe to parallelize."
+    },
+    {
+      "wave": 2,
+      "tasks": [
+        "TASK-001",
+        "TASK-004"
+      ],
+      "description": "Architecture-sensitive changes requiring focused verification: tsconfig noImplicitAny:true + @superset/shared→@main alias adjustment (ISS-005/003, needs typecheck gate), and MessagePartsRenderer useCallback/memo refactor (ISS-002, needs streaming-render UI verification). Independent of each other but both touch stability-sensitive surfaces."
+    },
+    {
+      "wave": 3,
+      "tasks": [
+        "TASK-006"
+      ],
+      "description": "Biome tooling introduction last: install @biomejs/biome, create biome.json (useTabs:true), convert 12 space-indented files to tabs, add lint:fix script. Run after other tasks complete so reformatting does not conflict with concurrent edits. [UI-observable] not applicable — pure formatting/tooling, no behavior change."
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "Wave 1: surgical single-file fixes (path validation, singleton, UUID IDs)",
+      "Wave 2: tsconfig + alias migration gated by typecheck; UI memo refactor gated by streaming render check",
+      "Wave 3: Biome tooling install + indent normalization on 12 files",
+      "Convergence: all tasks gated by bun run typecheck exits 0 and grep-verified criteria"
+    ]
+  },
+  "design_decisions": [
+    "Bundle ISS-005 + ISS-003 into one tsconfig task: both edit tsconfig.json and share the typecheck verification gate; splitting would duplicate the read_first/verification overhead and risk conflicting tsconfig edits in parallel.",
+    "ISS-003 alias strategy: keep @superset/shared/* ONLY for targets resolving to src/shared/* (true shared types). Redirect main-layer targets (@superset/shared/agent-command, shell-ready-scanner, workspace-launch, simple-git-options, pty-daemon/*, port-scanner, local-db [7 import sites: main/index.full.ts:3 runtime value import + 6 renderer type-only imports across commandPalette/components/lib], chat, workspace-fs-host) to @main/* or lib/* paths. KEEP @superset/mcp-v2/tools/register unchanged — runtime dynamic import safety net (maestro-mcp-provider.ts:570) + declare-module stub (superset-registry.d.ts), NOT main-layer pollution. Renderer-side @superset/shared/agent-launch imports resolve to src/shared/agent-launch.ts (correctly shared) — keep those. Do NOT touch @superset/ui/* stubs (separate concern, not in scope).",
+    "ISS-004 fix: remove the `export type { ... }` re-export block (lines 16-25 of host-service-coordinator.ts); redirect the single type consumer (host-service-coordinator router) to `import type { HostServiceStatusEvent } from 'shared/host-info-types'`. Runtime-function consumers (getHostId, getHostServiceCoordinator) are unaffected since they import values, not types.",
+    "ISS-006 file paths verified-correct: auth-functions.ts→src/lib/trpc/routers/auth/utils/, workspace-navigation.ts→src/renderer/routes/_authenticated/_dashboard/utils/, link-providers-stub.ts→src/renderer/lib/terminal/, link-providers-route.d.ts→src/types/. The remaining 8 files (host-info-types.ts, host-service-coordinator.ts, process-tree-stub.ts, tabs/store.ts, tiptap-utils.ts, presets/index.ts, stores/index.ts, tsconfig.json) match the original list.",
+    "Biome config: useTabs:true to match the dominant codebase convention (existing files use tabs); scope formatter with an explicit `files.includes` allowlist or rely on default then run `biome format --write` only on the 12 targets to avoid reformatting the whole codebase in one PR.",
+    "Wave ordering puts Biome (TASK-006) last because it rewrites whitespace in files other tasks may edit; running it earlier would cause merge conflicts or mask intended edits with formatter changes.",
+    "ISS-002 keeps the existing `components` useMemo but extracts the inline `a` component to a module-level `React.memo` component and wraps `renderParts` in `useCallback` — minimal change to stabilize React node identity during streaming without altering render output.",
+    "Recommended_execution: Agent — each task is well-scoped with grep-verifiable criteria and concrete file paths; no task requires human judgment checkpoints."
+  ],
+  "shared_context": {
+    "patterns": [
+      "tRPC publicProcedure with z.input validation (external router)",
+      "tsconfig path alias mapping (bundler moduleResolution)",
+      "zustand store factory pattern (create<TabsState>)",
+      "EventEmitter-based service coordinator singleton",
+      "React.useCallback + React.memo for streaming render stabilization"
+    ],
+    "conventions": [
+      "Tab indentation (project standard; 12 legacy files use 2-space)",
+      "TypeScript strict mode + paths aliases (@main/*, @shared/*, shared/*)",
+      "Bun monorepo: apps/desktop is the only package; commands run via cd apps/desktop && bun run <script>",
+      "No existing Biome config or lint script — TASK-006 introduces both"
+    ],
+    "dependencies": [
+      "@biomejs/biome (to be added in TASK-006)",
+      "electron (shell.showItemInFolder, shell.openPath)",
+      "zod (input validation)",
+      "zustand (tabs store)",
+      "react (useCallback, useMemo, memo)"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-30T00:00:00+08:00",
+    "source": "workflow-planner",
+    "planning_mode": "gap-fix",
+    "plan_type": "tech-debt-fix",
+    "schema_version": "2.0",
+    "git_commit": null,
+    "milestone": "M-adhoc-20260628-tech-debt",
+    "issue_ids": [
+      "ISS-20260630-001",
+      "ISS-20260630-002",
+      "ISS-20260630-003",
+      "ISS-20260630-004",
+      "ISS-20260630-005",
+      "ISS-20260630-006",
+      "ISS-20260630-007",
+      "ISS-20260630-008"
+    ]
+  },
+  "confidence": {
+    "overall": 0.88,
+    "dimensions": {
+      "requirements_coverage": 1,
+      "task_quality": 0.88,
+      "dependency_correctness": 0.9,
+      "estimation_accuracy": 0.85,
+      "collision_safety": 0.85
+    },
+    "factors": {
+      "completeness": 0.92,
+      "specificity": 0.88,
+      "structural_validity": 0.88,
+      "user_validation": 0.85,
+      "consistency": 0.88
+    },
+    "pressure_pass": {
+      "target_task": "TASK-001",
+      "read_first_ok": true,
+      "convergence_ok": true,
+      "action_ok": true,
+      "notes": "P4 round 1 修订后：files[] 补全 13 文件（含 7 处 local-db 消费者）、mcp-v2 保留策略正确、keep-list 完整、注释排除 grep 加固。TASK-004 read_first 路径已修正。"
+    },
+    "boundary_warning": {
+      "file": "apps/desktop/src/main/lib/host-service-coordinator.ts",
+      "conflict": "TASK-001(wave2,改注释) 与 TASK-002(wave1,改代码) 同文件",
+      "resolution": "wave 隔离保证顺序执行，修改性质不同(注释 vs 代码逻辑)，non-blocking。建议 TASK-001 depends_on TASK-002 以显式化。",
+      "residual_risk": "low"
+    },
+    "check_rounds": 1,
+    "checker_verdict": "WARN->revised->PASS"
+  },
+  "boundary_grill": {
+    "executed": true,
+    "conflicts": [
+      {
+        "type": "file_overlap",
+        "severity": "low",
+        "files": [
+          "apps/desktop/src/main/lib/host-service-coordinator.ts"
+        ],
+        "tasks": [
+          "TASK-001",
+          "TASK-002"
+        ],
+        "resolution": "wave 隔离 (wave1 TASK-002 → wave2 TASK-001) + 修改性质不同 (代码 vs 注释)",
+        "blocking": false
+      }
+    ]
+  }
+}

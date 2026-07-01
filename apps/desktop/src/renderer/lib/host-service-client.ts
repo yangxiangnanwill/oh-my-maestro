@@ -1,11 +1,14 @@
-import type { AppRouter, HostServiceProcedures } from "./host-service/host-service-router";
+import type {
+	AppRouter,
+	HostServiceProcedures,
+} from "./host-service/host-service-router";
 import { createTRPCClient, httpLink } from "@trpc/client";
 import superjson from "superjson";
 import { getHostServiceHeaders } from "./host-service-auth";
 
 const clientCache = new Map<
-  string,
-  ReturnType<typeof createTRPCClient<AppRouter>>
+	string,
+	ReturnType<typeof createTRPCClient<AppRouter>>
 >();
 
 export type HostServiceClient = ReturnType<typeof createTRPCClient<AppRouter>>;
@@ -20,29 +23,29 @@ export type HostServiceClient = ReturnType<typeof createTRPCClient<AppRouter>>;
  * is integrated from the host-service package.
  */
 export function getHostServiceProcedures(
-  hostUrl: string,
+	hostUrl: string,
 ): HostServiceProcedures {
-  return getHostServiceClientByUrl(hostUrl) as unknown as HostServiceProcedures;
+	return getHostServiceClientByUrl(hostUrl) as unknown as HostServiceProcedures;
 }
 
 export function getHostServiceClient(port: number): HostServiceClient {
-  return getHostServiceClientByUrl(`http://127.0.0.1:${port}`);
+	return getHostServiceClientByUrl(`http://127.0.0.1:${port}`);
 }
 
 export function getHostServiceClientByUrl(hostUrl: string): HostServiceClient {
-  const cached = clientCache.get(hostUrl);
-  if (cached) return cached;
+	const cached = clientCache.get(hostUrl);
+	if (cached) return cached;
 
-  const client = createTRPCClient<AppRouter>({
-    links: [
-      httpLink({
-        url: `${hostUrl}/trpc`,
-        transformer: superjson,
-        headers: () => getHostServiceHeaders(hostUrl),
-      }),
-    ],
-  });
+	const client = createTRPCClient<AppRouter>({
+		links: [
+			httpLink({
+				url: `${hostUrl}/trpc`,
+				transformer: superjson,
+				headers: () => getHostServiceHeaders(hostUrl),
+			}),
+		],
+	});
 
-  clientCache.set(hostUrl, client);
-  return client;
+	clientCache.set(hostUrl, client);
+	return client;
 }

@@ -140,8 +140,8 @@ export function useSlashCommandExecutor({
 							try {
 								const overview = loadMcpOverview
 									? await loadMcpOverview(cwd)
-									// @ts-expect-error -- getMcpOverview not yet migrated to workspaces router
-									: await chatServiceTrpcUtils.workspaces.getMcpOverview.fetch({
+									: // @ts-expect-error -- getMcpOverview not yet migrated to workspaces router
+										await chatServiceTrpcUtils.workspaces.getMcpOverview.fetch({
 											cwd,
 										});
 								onClearError();

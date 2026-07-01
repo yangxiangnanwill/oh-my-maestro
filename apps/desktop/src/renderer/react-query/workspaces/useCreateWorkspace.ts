@@ -64,7 +64,14 @@ export function useCreateWorkspace(options?: UseCreateWorkspaceOptions) {
 					step: "pending",
 					message: "Preparing...",
 				};
-				updateProgress(optimisticProgress as { workspaceId: string; projectId: string; step: string; message: string });
+				updateProgress(
+					optimisticProgress as {
+						workspaceId: string;
+						projectId: string;
+						step: string;
+						message: string;
+					},
+				);
 			}
 
 			if (!data.isInitializing && data.autoRenameWarning) {

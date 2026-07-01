@@ -5,52 +5,52 @@
 // 因为主题和 markdown 样式是全局单例，不需要 zustand 的 selector/middleware 能力。
 // Phase 4 评估是否统一迁移到 zustand。
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
 // --- Theme store ---
 
 type ThemeType = "light" | "dark";
 
 interface ThemeState {
-  type: ThemeType;
-  activeTheme: { type: ThemeType };
+	type: ThemeType;
+	activeTheme: { type: ThemeType };
 }
 
-let currentTheme: ThemeState = { type: "dark", activeTheme: { type: "dark" } };
+const currentTheme: ThemeState = {
+	type: "dark",
+	activeTheme: { type: "dark" },
+};
 const themeListeners = new Set<() => void>();
 
 function subscribeTheme(callback: () => void): () => void {
-  themeListeners.add(callback);
-  return () => themeListeners.delete(callback);
+	themeListeners.add(callback);
+	return () => themeListeners.delete(callback);
 }
 
 function getThemeSnapshot(): ThemeState {
-  return currentTheme;
+	return currentTheme;
 }
 
 export function useTheme(): ThemeState {
-  return useSyncExternalStore(subscribeTheme, getThemeSnapshot);
+	return useSyncExternalStore(subscribeTheme, getThemeSnapshot);
 }
 
 // --- Markdown style store ---
 
 type MarkdownStyle = "default" | "tufte";
 
-let currentMarkdownStyle: MarkdownStyle = "default";
+const currentMarkdownStyle: MarkdownStyle = "default";
 const markdownStyleListeners = new Set<() => void>();
 
 function subscribeMarkdownStyle(callback: () => void): () => void {
-  markdownStyleListeners.add(callback);
-  return () => markdownStyleListeners.delete(callback);
+	markdownStyleListeners.add(callback);
+	return () => markdownStyleListeners.delete(callback);
 }
 
 function getMarkdownStyleSnapshot(): MarkdownStyle {
-  return currentMarkdownStyle;
+	return currentMarkdownStyle;
 }
 
 export function useMarkdownStyle(): MarkdownStyle {
-  return useSyncExternalStore(
-    subscribeMarkdownStyle,
-    getMarkdownStyleSnapshot,
-  );
+	return useSyncExternalStore(subscribeMarkdownStyle, getMarkdownStyleSnapshot);
 }

@@ -4,20 +4,23 @@ import { copyFile, writeFile } from "node:fs/promises";
 import { extname, join } from "node:path";
 // Phase 3 stubs — replace with shared/file-types in Phase 4
 function getImageExtensionFromMimeType(mimeType: string): string | null {
-  const map: Record<string, string> = {
-    "image/png": "png",
-    "image/jpeg": "jpg",
-    "image/svg+xml": "svg",
-    "image/x-icon": "ico",
-    "image/vnd.microsoft.icon": "ico",
-  };
-  return map[mimeType] ?? null;
+	const map: Record<string, string> = {
+		"image/png": "png",
+		"image/jpeg": "jpg",
+		"image/svg+xml": "svg",
+		"image/x-icon": "ico",
+		"image/vnd.microsoft.icon": "ico",
+	};
+	return map[mimeType] ?? null;
 }
 
-function parseBase64DataUrl(dataUrl: string): { base64Data: string; mimeType: string } {
-  const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
-  if (!match) throw new Error("Invalid data URL");
-  return { mimeType: match[1], base64Data: match[2] };
+function parseBase64DataUrl(dataUrl: string): {
+	base64Data: string;
+	mimeType: string;
+} {
+	const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
+	if (!match) throw new Error("Invalid data URL");
+	return { mimeType: match[1], base64Data: match[2] };
 }
 import { MAESTRO_HOME_DIR } from "./app-environment";
 

@@ -7,11 +7,7 @@ import { electronTrpc } from "renderer/lib/electron-trpc";
 
 export function useCreateOrAttachWithTheme() {
 	const mutation = electronTrpc.terminal.createOrAttach.useMutation();
-	const {
-		mutate,
-		mutateAsync,
-		...mutationState
-	} = mutation;
+	const { mutate, mutateAsync, ...mutationState } = mutation;
 
 	return {
 		...mutationState,

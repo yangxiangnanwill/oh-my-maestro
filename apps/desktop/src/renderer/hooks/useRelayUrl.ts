@@ -8,7 +8,7 @@
  * infrastructure is integrated.
  */
 export function useRelayUrl(): string {
-  // Phase 5 stub: return a placeholder. The actual implementation reads
-  // from the environment config with PostHog override support.
-  return "http://localhost:9999";
+	// Phase 5 stub: return a placeholder. The actual implementation reads
+	// from the environment config with PostHog override support.
+	return "http://localhost:9999";
 }

@@ -42,11 +42,20 @@ export function loadStaticPorts(worktreePath: string): StaticPortsResult {
 	try {
 		const parsed = JSON.parse(content);
 		if (!Array.isArray(parsed)) {
-			return { exists: true, ports: null, error: "ports.json must be an array" };
+			return {
+				exists: true,
+				ports: null,
+				error: "ports.json must be an array",
+			};
 		}
 		const ports: StaticPort[] = [];
 		for (const entry of parsed) {
-			if (entry && typeof entry === "object" && typeof entry.port === "number" && typeof entry.label === "string") {
+			if (
+				entry &&
+				typeof entry === "object" &&
+				typeof entry.port === "number" &&
+				typeof entry.label === "string"
+			) {
 				ports.push({ port: entry.port, label: entry.label });
 			}
 		}

@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import { clipboard, Menu, webContents } from "electron";
-import { safeOpenExternal } from "../safe-url";
+import { safeOpenExternal, isSafeExternalUrl } from "../safe-url";
 
 interface ConsoleEntry {
 	level: "log" | "warn" | "error" | "info" | "debug";
@@ -9,19 +9,6 @@ interface ConsoleEntry {
 }
 
 const MAX_CONSOLE_ENTRIES = 500;
-
-function sanitizeUrl(url: string): string {
-	if (/^https?:\/\//i.test(url) || url.startsWith("about:")) {
-		return url;
-	}
-	if (url.startsWith("localhost") || url.startsWith("127.0.0.1")) {
-		return `http://${url}`;
-	}
-	if (url.includes(".")) {
-		return `https://${url}`;
-	}
-	return `https://www.google.com/search?q=${encodeURIComponent(url)}`;
-}
 
 class BrowserManager extends EventEmitter {
 	private paneWebContentsIds = new Map<string, number>();
@@ -98,7 +85,17 @@ class BrowserManager extends EventEmitter {
 	navigate(paneId: string, url: string): void {
 		const wc = this.getWebContents(paneId);
 		if (!wc) throw new Error(`No webContents for pane ${paneId}`);
-		wc.loadURL(sanitizeUrl(url));
+		// Scheme allowlist gate (replaces the previous heuristic URL builder). Preserve the
+		// existing localhost support: bare `localhost:8080` / `127.0.0.1` URLs
+		// have no scheme, so prepend `http://` before validating. Unsafe URLs
+		// (javascript:/data:/etc.) are dropped via `return` rather than throwing
+		// so the tRPC mutation caller doesn't break.
+		let safeUrl = url;
+		if (url.startsWith("localhost") || url.startsWith("127.0.0.1")) {
+			safeUrl = `http://${url}`;
+		}
+		if (!isSafeExternalUrl(safeUrl)) return;
+		wc.loadURL(safeUrl);
 	}
 
 	async screenshot(paneId: string): Promise<string> {

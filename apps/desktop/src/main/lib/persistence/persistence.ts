@@ -3,9 +3,9 @@
 // These packages require better-sqlite3 native compilation
 
 export function initTanstackDbPersistence(): void {
-  // Phase 4: implement with @tanstack persistence packages
+	// Phase 4: implement with @tanstack persistence packages
 }
 
 export function shutdownTanstackDbPersistence(): void {
-  // Phase 4: implement cleanup
+	// Phase 4: implement cleanup
 }

@@ -1,13 +1,13 @@
 export {
-  bindingsEqual,
-  bindingToDispatchChord,
-  defaultModeForChord,
-  parseBinding,
-  serializeBinding,
-  translateLogicalChord,
+	bindingsEqual,
+	bindingToDispatchChord,
+	defaultModeForChord,
+	parseBinding,
+	serializeBinding,
+	translateLogicalChord,
 } from "./binding";
 export {
-  isTerminalReservedEvent,
-  matchesChord,
-  resolveHotkeyFromEvent,
+	isTerminalReservedEvent,
+	matchesChord,
+	resolveHotkeyFromEvent,
 } from "./resolveHotkeyFromEvent";

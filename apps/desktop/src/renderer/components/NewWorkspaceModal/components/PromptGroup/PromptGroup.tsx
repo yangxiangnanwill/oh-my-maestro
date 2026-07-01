@@ -31,9 +31,17 @@ import {
 } from "renderer/components/Chat/stubs/ui/command";
 import { Input } from "renderer/components/Chat/stubs/ui/input";
 import { isEnterSubmit } from "renderer/components/Chat/stubs/ui/lib/keyboard";
-import { Popover, PopoverContent, PopoverTrigger } from "renderer/components/Chat/stubs/ui/popover";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "renderer/components/Chat/stubs/ui/popover";
 import { toast } from "renderer/components/Chat/stubs/ui/sonner";
-import { Tooltip, TooltipContent, TooltipTrigger } from "renderer/components/Chat/stubs/ui/tooltip";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "renderer/components/Chat/stubs/ui/tooltip";
 import { cn } from "renderer/components/Chat/stubs/ui/utils";
 import { useNavigate } from "@tanstack/react-router";
 import { AnimatePresence, motion } from "framer-motion";
@@ -479,7 +487,9 @@ function CompareBaseBranchPickerInline({
 												>
 													<GoArrowUpRight className="size-3.5 mr-1" />
 													Open
-													<span className="ml-1 text-[10px] opacity-60">&#8629;</span>
+													<span className="ml-1 text-[10px] opacity-60">
+														&#8629;
+													</span>
 												</Button>
 											)}
 											<Button

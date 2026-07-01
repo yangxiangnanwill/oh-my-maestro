@@ -1,0 +1,205 @@
+{
+  "id": "TASK-006",
+  "title": "Introduce Biome + convert 12 space-indented files to tab indentation",
+  "description": "Fix ISS-006: 12 files use 2-space indentation inconsistent with the project's tab convention, and there is no Biome config or lint script in apps/desktop (AGENTS.md references `bun run lint:fix` but the script is absent). Install @biomejs/biome, create biome.json enforcing useTabs:true, add lint/format scripts to package.json, and normalize the 12 files to tabs. Run LAST so reformatting does not collide with other tasks' edits.",
+  "issue_id": "ISS-20260630-006",
+  "issue_refs": ["ISS-20260630-006"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "medium",
+  "action": "In apps/desktop: (1) Add `@biomejs/biome` to devDependencies (latest stable, e.g. `^2.x`) via `cd apps/desktop && bun add -d @biomejs/biome`. (2) Create `apps/desktop/biome.json` with schema, formatter config `{ indentStyle: \"tab\", indentWidth: 2, lineEnding: \"lf\" }`, linter config `recommended: true`, and an `files.includes` set to `[\"src/**/*.ts\", \"src/**/*.tsx\", \"src/**/*.d.ts\"]`. (3) Add scripts to apps/desktop/package.json: `\"lint\": \"biome lint .\"`, `\"lint:fix\": \"biome lint --write .\"`, `\"format\": \"biome format --write .\"`, `\"format:check\": \"biome format .\"`. (4) Run `bun run format` (or `bunx biome format --write`) scoped to the 12 target files to convert 2-space → tab indentation. (5) Run `bun run lint` and address any new lint errors the formatter surfaces on those 12 files (fix, not suppress). The 12 files (paths verified during planning): src/lib/trpc/routers/auth/utils/auth-functions.ts, src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts, src/renderer/lib/presets/index.ts, src/renderer/stores/index.ts, tsconfig.json, src/shared/host-info-types.ts, src/main/lib/host-service-coordinator.ts, src/main/lib/terminal-host/process-tree-stub.ts, src/renderer/lib/terminal/link-providers-stub.ts, src/renderer/stores/tabs/store.ts, src/types/link-providers-route.d.ts, src/renderer/lib/tiptap-utils.ts.",
+  "status": "completed",
+  "completed_at": "2026-06-30T00:00:00Z",
+  "actual_duration": null,
+  "scope": "apps/desktop (biome.json + package.json + 12 files)",
+  "focus_paths": [
+    "apps/desktop/biome.json",
+    "apps/desktop/package.json",
+    "apps/desktop/src/shared/host-info-types.ts",
+    "apps/desktop/src/main/lib/host-service-coordinator.ts",
+    "apps/desktop/src/renderer/stores/tabs/store.ts"
+  ],
+  "read_first": [
+    "apps/desktop/package.json",
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/src/shared/host-info-types.ts",
+    "apps/desktop/src/main/lib/host-service-coordinator.ts",
+    "AGENTS.md"
+  ],
+  "depends_on": ["TASK-001", "TASK-002", "TASK-003", "TASK-004", "TASK-005"],
+  "wave": 3,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "test -f apps/desktop/biome.json returns 0 (config created)",
+      "grep -n 'indentStyle' apps/desktop/biome.json returns one match and grep -n '\"tab\"' apps/desktop/biome.json returns one match (useTabs enforced)",
+      "grep -n '\"lint\":' apps/desktop/package.json returns one match AND grep -n '\"lint:fix\":' apps/desktop/package.json returns one match AND grep -n '\"format\":' apps/desktop/package.json returns one match",
+      "grep -c '@biomejs/biome' apps/desktop/package.json returns >= 1 (dependency added)",
+      "For each of the 12 target files: `cd apps/desktop && bunx biome format --check <file>` exits 0 (authoritative — Biome is the configured formatter with indentStyle:tab; this verifies tab indentation without fragile awk/head heuristics). Run for all 12 files. As a fallback for files not covered by biome.json includes (e.g. tsconfig.json if JSON is excluded), use `grep -Pn '^(  )+[^ ]' <file>` which must return no matches (no 2-space-indented lines).",
+      "cd apps/desktop && bun run typecheck exits 0 (formatting change does not break types)",
+      "cd apps/desktop && bun run lint exits 0 (no lint errors on the 12 reformatted files)"
+    ],
+    "verification": "Run `test -f apps/desktop/biome.json`, grep the config + package.json for the required keys, then `cd apps/desktop && bun run typecheck && bun run lint` both exit 0. For the indent check, run `cd apps/desktop && bunx biome format --check <file>` for each of the 12 target files (authoritative — exits 0 when formatting matches config). For tsconfig.json (JSON file, may be outside biome includes), fall back to `grep -Pn '^(  )+[^ ]' tsconfig.json` returning no matches.",
+    "definition_of_done": "Biome is installed and configured with tab indentation, lint/format scripts exist in package.json, and all 12 legacy space-indented files use tabs — matching the project convention without behavior change."
+  },
+  "files": [
+    {
+      "path": "apps/desktop/biome.json",
+      "action": "create",
+      "target": "Biome configuration",
+      "change": "Create with: `{ \"$schema\": \"https://biomejs.dev/schemas/2.x/schema.json\", \"files\": { \"includes\": [\"src/**/*.ts\", \"src/**/*.tsx\", \"src/**/*.d.ts\", \"tsconfig.json\"] }, \"formatter\": { \"enabled\": true, \"indentStyle\": \"tab\", \"indentWidth\": 2, \"lineEnding\": \"lf\" }, \"linter\": { \"enabled\": true, \"rules\": { \"recommended\": true } } }` (use the installed version's schema URL). NOTE: tsconfig.json is explicitly added to files.includes so Biome formats it (tab + LF). If Biome 2.x JSON formatter behaves unexpectedly on tsconfig.json (e.g. reorders keys), add a JSON-specific override or run `bunx biome format --write tsconfig.json` and verify the diff is whitespace-only before committing."
+    },
+    {
+      "path": "apps/desktop/package.json",
+      "action": "modify",
+      "target": "scripts + devDependencies",
+      "change": "Add to scripts: `\"lint\": \"biome lint .\"`, `\"lint:fix\": \"biome lint --write .\"`, `\"format\": \"biome format --write .\"`, `\"format:check\": \"biome format .\"`. Add `\"@biomejs/biome\": \"^2.x\"` to devDependencies (resolved by `bun add -d @biomejs/biome`)."
+    },
+    {
+      "path": "apps/desktop/src/shared/host-info-types.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/shared/host-info-types.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/host-service-coordinator.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/main/lib/host-service-coordinator.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/src/renderer/stores/tabs/store.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/renderer/stores/tabs/store.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/auth/utils/auth-functions.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/lib/trpc/routers/auth/utils/auth-functions.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/renderer/routes/_authenticated/_dashboard/utils/workspace-navigation.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/presets/index.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/renderer/lib/presets/index.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/src/renderer/stores/index.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/renderer/stores/index.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/tsconfig.json",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write tsconfig.json` to convert 2-space → tab indentation (and CRLF→LF per lineEnding config). tsconfig.json is explicitly listed in biome.json files.includes so Biome handles it. If Biome's JSON formatter reorders keys or errors, fall back to manual tab replacement and verify the diff is whitespace-only before committing."
+    },
+    {
+      "path": "apps/desktop/src/main/lib/terminal-host/process-tree-stub.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/main/lib/terminal-host/process-tree-stub.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/terminal/link-providers-stub.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/renderer/lib/terminal/link-providers-stub.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/src/types/link-providers-route.d.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/types/link-providers-route.d.ts` to convert 2-space → tab indentation."
+    },
+    {
+      "path": "apps/desktop/src/renderer/lib/tiptap-utils.ts",
+      "action": "modify",
+      "target": "indentation",
+      "change": "Run `bunx biome format --write src/renderer/lib/tiptap-utils.ts` to convert 2-space → tab indentation."
+    }
+  ],
+  "implementation": [
+    "Step 1: Read apps/desktop/package.json and tsconfig.json; confirm no existing biome.json (verified during planning).",
+    "Step 2: `cd apps/desktop && bun add -d @biomejs/biome` — installs latest stable Biome and pins the version in devDependencies.",
+    "Step 3: Create apps/desktop/biome.json with the formatter config (indentStyle: tab, indentWidth: 2, lineEnding: lf), linter recommended, and files.includes scoped to [\"src/**/*.ts\", \"src/**/*.tsx\", \"src/**/*.d.ts\", \"tsconfig.json\"] — tsconfig.json explicitly included so its 2-space→tab + CRLF→LF conversion is handled by Biome. Use the schema URL matching the installed version. After creating, run `bunx biome format --check tsconfig.json` to confirm Biome accepts JSON; if Biome errors on .json or reorders keys, remove tsconfig.json from includes and handle it manually with a `grep -Pn '^(  )+' tsconfig.json`-guided tab replacement (verify diff is whitespace-only).",
+    "Step 4: Add the 4 scripts (lint, lint:fix, format, format:check) to apps/desktop/package.json scripts block.",
+    "Step 5: Run `cd apps/desktop && bunx biome format --write <file>` for each of the 12 target files (paths in files[]). Alternatively run `bun run format` once if the includes glob already covers them — but explicit per-file is safer to avoid reformatting unrelated files.",
+    "Step 6: Run `cd apps/desktop && bun run typecheck` — formatting must not change types; expect exit 0.",
+    "Step 7: Run `cd apps/desktop && bun run lint` — fix any new lint errors on the 12 files (do NOT use biome-ignore; fix the root cause). Re-run until exit 0.",
+    "Step 8: Run the convergence checks: `bunx biome format --check <file>` for each of the 12 target files exits 0 (authoritative tab-indentation verification). For tsconfig.json, if not covered by Biome, fall back to `grep -Pn '^(  )+[^ ]' tsconfig.json` returning no matches."
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck",
+      "cd apps/desktop && bun run lint",
+      "cd apps/desktop && bunx biome format --check src/shared/host-info-types.ts src/main/lib/host-service-coordinator.ts src/renderer/stores/tabs/store.ts tsconfig.json"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "biome.json exists with useTabs",
+      "lint + format scripts present in package.json",
+      "typecheck + lint exit 0",
+      "12 target files use tab indentation"
+    ]
+  },
+  "reference": {
+    "pattern": "Biome formatter config with indentStyle: tab — standard for codebases using tab indentation; biome.json colocated with package.json.",
+    "files": [
+      "AGENTS.md"
+    ],
+    "examples": "AGENTS.md rule 6: 'Always fix lint warnings before pushing — CI fails on Biome warnings'. This task makes that rule enforceable by installing Biome."
+  },
+  "rationale": {
+    "chosen_approach": "Install Biome with useTabs:true (matching the dominant codebase convention verified via od -c on existing files) rather than converting the whole project to spaces. Scope the formatter with files.includes and run --write on the 12 targets to avoid a repo-wide reformat in this PR.",
+    "decision_factors": [
+      "Verified apps/desktop has NO biome.json and NO lint/format scripts — AGENTS.md references bun run lint:fix that does not exist.",
+      "Existing files (e.g. external/index.ts, helpers.ts) use tabs; the 12 listed files are the legacy outliers using 2-space.",
+      "Biome is a single fast tool for both format + lint, matching the AGENTS.md stated convention."
+    ],
+    "tradeoffs": "Adds a dev dependency + config; the initial `bun run lint` may surface pre-existing lint issues beyond the 12 files — if so, scope the first lint pass to the 12 files only (`bunx biome lint <files>`) to keep this task focused, and file a follow-up for repo-wide lint cleanup."
+  },
+  "risks": [
+    {
+      "risk": "Biome formatter reformats more than intended (e.g. quote style, semicolons) causing large diffs",
+      "mitigation": "Run `--write` per-file on the 12 targets only; review the diff before committing; if Biome applies non-indent changes, add overrides in biome.json to disable those rules for this pass."
+    },
+    {
+      "risk": "biome lint surfaces many pre-existing errors unrelated to indentation",
+      "mitigation": "Scope first lint to the 12 files; suppress with biome-ignore ONLY if a rule is project-wide policy mismatch (document why); otherwise fix root cause per coding-philosophy 'Fix, Don't Hide'."
+    },
+    {
+      "risk": "tsconfig.json CRLF→LF conversion may confuse git on Windows",
+      "mitigation": "Ensure .gitattributes enforces LF for .json if needed; the lineEnding:lf config is intentional per project convention."
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["tooling"],
+    "affected_components": ["biome config", "package.json scripts"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "status": "completed",
+    "estimated_time": "50m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 3,
+    "execution_group": null,
+    "executor": "agent"
+  }
+}

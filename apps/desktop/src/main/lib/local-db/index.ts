@@ -19,14 +19,20 @@ import {
 // ============================================================
 
 export const projects = sqliteTable("projects", {
-	id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => randomUUID()),
 	name: text("name").notNull(),
 	mainRepoPath: text("main_repo_path").notNull(),
 	worktreeBaseDir: text("worktree_base_dir"),
-	configToastDismissed: integer("config_toast_dismissed", { mode: "boolean" }).default(false),
+	configToastDismissed: integer("config_toast_dismissed", {
+		mode: "boolean",
+	}).default(false),
 	defaultApp: text("default_app"),
 	tabOrder: integer("tab_order").notNull(),
-	lastOpenedAt: integer("last_opened_at").notNull().$defaultFn(() => Date.now()),
+	lastOpenedAt: integer("last_opened_at")
+		.notNull()
+		.$defaultFn(() => Date.now()),
 	// Phase 4: columns migrated from Superset for projects router
 	color: text("color").notNull(),
 	defaultBranch: text("default_branch"),
@@ -41,11 +47,7 @@ export const projects = sqliteTable("projects", {
 
 export type SelectProject = typeof projects.$inferSelect;
 
-export const BRANCH_PREFIX_MODES = [
-	"author",
-	"custom",
-	"none",
-] as const;
+export const BRANCH_PREFIX_MODES = ["author", "custom", "none"] as const;
 
 export type BranchPrefixMode = (typeof BRANCH_PREFIX_MODES)[number];
 
@@ -59,23 +61,35 @@ export const settings = sqliteTable("settings", {
 	branchPrefixCustom: text("branch_prefix_custom"),
 	worktreeBaseDir: text("worktree_base_dir"),
 	terminalPresets: text("terminal_presets", { mode: "json" }),
-	terminalPresetsInitialized: integer("terminal_presets_initialized", { mode: "boolean" }),
+	terminalPresetsInitialized: integer("terminal_presets_initialized", {
+		mode: "boolean",
+	}),
 	agentPresetOverrides: text("agent_preset_overrides", { mode: "json" }),
-	agentPresetPermissionsMigratedAt: integer("agent_preset_permissions_migrated_at"),
+	agentPresetPermissionsMigratedAt: integer(
+		"agent_preset_permissions_migrated_at",
+	),
 	agentCustomDefinitions: text("agent_custom_definitions", { mode: "json" }),
 	selectedRingtoneId: text("selected_ringtone_id"),
 	confirmOnQuit: integer("confirm_on_quit", { mode: "boolean" }),
-	exposeHostServiceViaRelay: integer("expose_host_service_via_relay", { mode: "boolean" }),
+	exposeHostServiceViaRelay: integer("expose_host_service_via_relay", {
+		mode: "boolean",
+	}),
 	// Phase 4: columns migrated from Superset for settings router
 	showPresetsBar: integer("show_presets_bar", { mode: "boolean" }),
-	useCompactTerminalAddButton: integer("use_compact_terminal_add_button", { mode: "boolean" }),
+	useCompactTerminalAddButton: integer("use_compact_terminal_add_button", {
+		mode: "boolean",
+	}),
 	terminalLinkBehavior: text("terminal_link_behavior"),
 	fileOpenMode: text("file_open_mode"),
-	autoApplyDefaultPreset: integer("auto_apply_default_preset", { mode: "boolean" }),
+	autoApplyDefaultPreset: integer("auto_apply_default_preset", {
+		mode: "boolean",
+	}),
 	deleteLocalBranch: integer("delete_local_branch", { mode: "boolean" }),
 	showResourceMonitor: integer("show_resource_monitor", { mode: "boolean" }),
 	openLinksInApp: integer("open_links_in_app", { mode: "boolean" }),
-	notificationSoundsMuted: integer("notification_sounds_muted", { mode: "boolean" }),
+	notificationSoundsMuted: integer("notification_sounds_muted", {
+		mode: "boolean",
+	}),
 	notificationVolume: integer("notification_volume"),
 	terminalFontFamily: text("terminal_font_family"),
 	terminalFontSize: integer("terminal_font_size"),
@@ -84,7 +98,9 @@ export const settings = sqliteTable("settings", {
 });
 
 export const workspaces = sqliteTable("workspaces", {
-	id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => randomUUID()),
 	projectId: text("project_id").notNull(),
 	worktreeId: text("worktree_id"),
 	deletingAt: integer("deleting_at"),
@@ -93,20 +109,28 @@ export const workspaces = sqliteTable("workspaces", {
 	branch: text("branch").notNull(),
 	name: text("name").notNull(),
 	tabOrder: integer("tab_order").notNull(),
-	lastOpenedAt: integer("last_opened_at").notNull().$defaultFn(() => Date.now()),
-	updatedAt: integer("updated_at").notNull().$defaultFn(() => Date.now()),
+	lastOpenedAt: integer("last_opened_at")
+		.notNull()
+		.$defaultFn(() => Date.now()),
+	updatedAt: integer("updated_at")
+		.notNull()
+		.$defaultFn(() => Date.now()),
 	isUnread: integer("is_unread", { mode: "boolean" }),
 	isUnnamed: integer("is_unnamed", { mode: "boolean" }),
 	// Phase 4: additional columns for sections support
 	sectionId: text("section_id"),
-	createdAt: integer("created_at").notNull().$defaultFn(() => Date.now()),
+	createdAt: integer("created_at")
+		.notNull()
+		.$defaultFn(() => Date.now()),
 });
 
 export type SelectWorkspace = typeof workspaces.$inferSelect;
 
 // Phase 4: table migrated from Superset
 export const workspaceSections = sqliteTable("workspace_sections", {
-	id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => randomUUID()),
 	projectId: text("project_id").notNull(),
 	name: text("name").notNull(),
 	tabOrder: integer("tab_order").notNull(),
@@ -119,14 +143,18 @@ export type SelectWorkspaceSection = typeof workspaceSections.$inferSelect;
 
 // Phase 4: table migrated from Superset
 export const worktrees = sqliteTable("worktrees", {
-	id: text("id").primaryKey().$defaultFn(() => randomUUID()),
+	id: text("id")
+		.primaryKey()
+		.$defaultFn(() => randomUUID()),
 	projectId: text("project_id").notNull(),
 	branch: text("branch").notNull(),
 	path: text("path").notNull(),
 	baseBranch: text("base_branch"),
 	gitStatus: text("git_status", { mode: "json" }).$type<GitStatus | null>(),
 	// Phase 4: additional columns for GitHub integration
-	githubStatus: text("github_status", { mode: "json" }).$type<GitHubStatus | null>(),
+	githubStatus: text("github_status", {
+		mode: "json",
+	}).$type<GitHubStatus | null>(),
 	createdAt: integer("created_at").$defaultFn(() => Date.now()),
 	createdBySuperset: integer("created_by_superset", { mode: "boolean" }),
 });
@@ -142,44 +170,19 @@ export const browserHistory = sqliteTable("browser_history", {
 	visitCount: integer("visit_count").notNull().default(1),
 });
 
-export const EXTERNAL_APPS = [
-	"finder",
-	"vscode",
-	"vscode-insiders",
-	"cursor",
-	"antigravity",
-	"devin",
-	"zed",
-	"xcode",
-	"iterm",
-	"warp",
-	"terminal",
-	"ghostty",
-	"sublime",
-	"intellij",
-	"webstorm",
-	"pycharm",
-	"phpstorm",
-	"rubymine",
-	"goland",
-	"clion",
-	"rider",
-	"datagrip",
-	"appcode",
-	"fleet",
-	"rustrover",
-	"android-studio",
-] as const;
-
-export type ExternalApp = (typeof EXTERNAL_APPS)[number];
-
-export const NON_EDITOR_APPS: ExternalApp[] = [
-	"finder",
-	"iterm",
-	"warp",
-	"terminal",
-	"ghostty",
-];
+// ExternalApp/TerminalPreset/ExecutionMode live in the shared layer so the
+// renderer can import them without depending on main. Re-exported here for
+// backward compatibility with main-side consumers.
+export {
+	EXTERNAL_APPS,
+	NON_EDITOR_APPS,
+	EXECUTION_MODES,
+} from "shared/external-app-types";
+export type {
+	ExternalApp,
+	ExecutionMode,
+	TerminalPreset,
+} from "shared/external-app-types";
 
 // ============================================================
 // Phase 4: GitHubStatus type (migrated from Superset @superset/local-db)
@@ -240,20 +243,7 @@ export interface GitStatus {
 // Phase 4: Settings router types (migrated from Superset @superset/local-db)
 // ============================================================
 
-export const EXECUTION_MODES = [
-	"new-tab",
-	"new-tab-split-pane",
-	"split-pane",
-	"sequential",
-] as const;
-
-export type ExecutionMode = (typeof EXECUTION_MODES)[number];
-
-export const FILE_OPEN_MODES = [
-	"tab",
-	"window",
-	"browser",
-] as const;
+export const FILE_OPEN_MODES = ["tab", "window", "browser"] as const;
 
 export type FileOpenMode = (typeof FILE_OPEN_MODES)[number];
 
@@ -264,27 +254,9 @@ export const TERMINAL_LINK_BEHAVIORS = [
 
 export type TerminalLinkBehavior = (typeof TERMINAL_LINK_BEHAVIORS)[number];
 
-export const PROMPT_TRANSPORTS = [
-	"argv",
-	"stdin",
-	"file",
-] as const;
+export const PROMPT_TRANSPORTS = ["argv", "stdin", "file"] as const;
 
 export type PromptTransport = (typeof PROMPT_TRANSPORTS)[number];
-
-export interface TerminalPreset {
-	id: string;
-	name: string;
-	description?: string;
-	cwd: string;
-	commands: string[];
-	projectIds: string[] | null;
-	pinnedToBar?: boolean;
-	useAsWorkspaceRun?: boolean;
-	executionMode: ExecutionMode;
-	applyOnWorkspaceCreated?: boolean;
-	applyOnNewTab?: boolean;
-}
 
 export interface AgentCustomDefinition {
 	id: `custom:${string}`;
@@ -399,7 +371,10 @@ export const localDb: ReturnType<typeof drizzle> = drizzle(sqlite, {
 try {
 	migrate(localDb, { migrationsFolder });
 } catch (error) {
-	console.warn("[local-db] Migration skipped (no migration files found):", error instanceof Error ? error.message : error);
+	console.warn(
+		"[local-db] Migration skipped (no migration files found):",
+		error instanceof Error ? error.message : error,
+	);
 }
 
 console.log("[local-db] Migrations complete");

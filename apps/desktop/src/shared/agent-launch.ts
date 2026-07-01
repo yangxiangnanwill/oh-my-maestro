@@ -77,9 +77,7 @@ export function normalizeAgentLaunchRequest(
 	const req = input as Record<string, unknown>;
 
 	if (req.kind !== "terminal" && req.kind !== "chat") {
-		throw new Error(
-			`Invalid agent launch request kind: ${String(req.kind)}`,
-		);
+		throw new Error(`Invalid agent launch request kind: ${String(req.kind)}`);
 	}
 
 	if (typeof req.workspaceId !== "string" || !req.workspaceId) {
@@ -95,35 +93,28 @@ export function normalizeAgentLaunchRequest(
 			kind: "terminal",
 			workspaceId: req.workspaceId as string,
 			idempotencyKey:
-				typeof req.idempotencyKey === "string"
-					? req.idempotencyKey
-					: undefined,
+				typeof req.idempotencyKey === "string" ? req.idempotencyKey : undefined,
 			source:
 				typeof req.source === "string"
 					? (req.source as AgentLaunchSource)
 					: undefined,
-			agentType:
-				typeof req.agentType === "string" ? req.agentType : undefined,
+			agentType: typeof req.agentType === "string" ? req.agentType : undefined,
 			terminal,
 		} satisfies TerminalLaunchRequest;
 	}
 
 	if (kind === "chat") {
-		const chat: ChatLaunchPayload =
-			(req.chat as ChatLaunchPayload) ?? {};
+		const chat: ChatLaunchPayload = (req.chat as ChatLaunchPayload) ?? {};
 		return {
 			kind: "chat",
 			workspaceId: req.workspaceId as string,
 			idempotencyKey:
-				typeof req.idempotencyKey === "string"
-					? req.idempotencyKey
-					: undefined,
+				typeof req.idempotencyKey === "string" ? req.idempotencyKey : undefined,
 			source:
 				typeof req.source === "string"
 					? (req.source as AgentLaunchSource)
 					: undefined,
-			agentType:
-				typeof req.agentType === "string" ? req.agentType : undefined,
+			agentType: typeof req.agentType === "string" ? req.agentType : undefined,
 			chat,
 		} satisfies ChatLaunchRequest;
 	}

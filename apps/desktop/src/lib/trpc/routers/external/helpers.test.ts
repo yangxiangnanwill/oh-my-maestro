@@ -220,9 +220,7 @@ describe("resolvePath", () => {
 	describe("combined expansion", () => {
 		test("expands ~ then resolves (already absolute after expansion)", () => {
 			const result = resolvePath("~/file.ts", "/ignored/cwd");
-			expect(result).toBe(
-				path.join(homedir, "file.ts").replace(/\\/g, "/"),
-			);
+			expect(result).toBe(path.join(homedir, "file.ts").replace(/\\/g, "/"));
 		});
 	});
 

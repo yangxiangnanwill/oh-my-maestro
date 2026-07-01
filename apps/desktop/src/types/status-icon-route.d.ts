@@ -4,5 +4,5 @@
  */
 
 declare module "renderer/routes/_authenticated/_dashboard/tasks/components/TasksView/components/shared/StatusIcon" {
-  export * from "renderer/components/Chat/stubs/StatusIcon";
+	export * from "renderer/components/Chat/stubs/StatusIcon";
 }

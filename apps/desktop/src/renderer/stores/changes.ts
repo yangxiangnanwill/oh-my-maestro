@@ -4,13 +4,13 @@
 import { create } from "zustand";
 
 interface ChangesState {
-  hideUnchangedRegions: boolean;
-  viewMode?: string;
-  toggleHideUnchangedRegions: () => void;
+	hideUnchangedRegions: boolean;
+	viewMode?: string;
+	toggleHideUnchangedRegions: () => void;
 }
 
 export const useChangesStore = create<ChangesState>((set) => ({
-  hideUnchangedRegions: true,
-  toggleHideUnchangedRegions: () =>
-    set((state) => ({ hideUnchangedRegions: !state.hideUnchangedRegions })),
+	hideUnchangedRegions: true,
+	toggleHideUnchangedRegions: () =>
+		set((state) => ({ hideUnchangedRegions: !state.hideUnchangedRegions })),
 }));

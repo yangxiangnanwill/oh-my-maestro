@@ -4,7 +4,11 @@ import { app, nativeTheme } from "electron";
 import log from "electron-log/main";
 import { createWindow } from "lib/electron-app/factories/windows/create";
 import { productName } from "../../../package.json";
-import { loadWindowState, saveWindowState, getInitialWindowBounds } from "../lib/window-state";
+import {
+	loadWindowState,
+	saveWindowState,
+	getInitialWindowBounds,
+} from "../lib/window-state";
 
 // Singleton IPC handler to prevent duplicate handlers on window reopen
 // TODO: Enable when trpc-electron package is available
@@ -29,13 +33,16 @@ const forceRepaint = (win: BrowserWindow) => {
 };
 
 // GPU process restarts don't repaint existing compositor layers automatically.
-app.on("child-process-gone", (_event: Electron.Event, details: Electron.Details) => {
-	if (details.type === "GPU") {
-		console.warn("[main-window] GPU process gone:", details.reason);
-		const win = getWindow();
-		if (win) forceRepaint(win);
-	}
-});
+app.on(
+	"child-process-gone",
+	(_event: Electron.Event, details: Electron.Details) => {
+		if (details.type === "GPU") {
+			console.warn("[main-window] GPU process gone:", details.reason);
+			const win = getWindow();
+			if (win) forceRepaint(win);
+		}
+	},
+);
 
 export async function MainWindow() {
 	const savedWindowState = loadWindowState();
@@ -80,7 +87,13 @@ export async function MainWindow() {
 	if (isDev) {
 		window.webContents.on(
 			"console-message",
-			(_event: Electron.Event, level: number, message: string, line: number, sourceId: string) => {
+			(
+				_event: Electron.Event,
+				level: number,
+				message: string,
+				line: number,
+				sourceId: string,
+			) => {
 				const shouldForward =
 					level >= 2 ||
 					message.includes("[stress]") ||
@@ -175,7 +188,12 @@ export async function MainWindow() {
 
 	window.webContents.on(
 		"did-fail-load",
-		(_event: Electron.Event, errorCode: number, errorDescription: string, validatedURL: string) => {
+		(
+			_event: Electron.Event,
+			errorCode: number,
+			errorDescription: string,
+			validatedURL: string,
+		) => {
 			console.error("[main-window] Failed to load renderer:");
 			console.error(`  Error code: ${errorCode}`);
 			console.error(`  Description: ${errorDescription}`);
@@ -184,16 +202,22 @@ export async function MainWindow() {
 		},
 	);
 
-	window.webContents.on("render-process-gone", (_event: Electron.Event, details: Electron.RenderProcessGoneDetails) => {
-		console.error("[main-window] Renderer process gone:", details);
-		log.error("[main-window] Renderer process gone", details);
-	});
+	window.webContents.on(
+		"render-process-gone",
+		(_event: Electron.Event, details: Electron.RenderProcessGoneDetails) => {
+			console.error("[main-window] Renderer process gone:", details);
+			log.error("[main-window] Renderer process gone", details);
+		},
+	);
 
-	window.webContents.on("preload-error", (_event: Electron.Event, preloadPath: string, error: Error) => {
-		console.error("[main-window] Preload script error:");
-		console.error(`  Path: ${preloadPath}`);
-		console.error(`  Error:`, error);
-	});
+	window.webContents.on(
+		"preload-error",
+		(_event: Electron.Event, preloadPath: string, error: Error) => {
+			console.error("[main-window] Preload script error:");
+			console.error(`  Path: ${preloadPath}`);
+			console.error(`  Error:`, error);
+		},
+	);
 
 	window.on("close", () => {
 		// Save window state first, before any cleanup

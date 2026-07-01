@@ -11,7 +11,11 @@ import {
 	CommandItem,
 	CommandList,
 } from "../../../stubs/ui/command";
-import { Popover, PopoverAnchor, PopoverContent } from "../../../stubs/ui/popover";
+import {
+	Popover,
+	PopoverAnchor,
+	PopoverContent,
+} from "../../../stubs/ui/popover";
 import { cn } from "../../../stubs/ui/utils";
 import { type Editor, Extension } from "@tiptap/core";
 import { Document } from "@tiptap/extension-document";

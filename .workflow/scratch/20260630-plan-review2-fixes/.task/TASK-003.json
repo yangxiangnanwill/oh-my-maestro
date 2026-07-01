@@ -1,0 +1,90 @@
+{
+  "id": "TASK-003",
+  "title": "删除 host-service-coordinator 未使用 import（ISS-012/REV2-004）",
+  "description": "ISS-012/REV2-004：TASK-002 遗留，host-service-coordinator.ts 移除 re-export 时未清理 import，HostServiceStatusEvent(line 8) 与 HostServiceCoordinatorEvents(line 13) 未使用。Biome noUnusedImports error。",
+  "issue_id": "ISS-20260630-012",
+  "issue_refs": ["ISS-20260630-012"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "low",
+  "action": "删除 apps/desktop/src/main/lib/host-service-coordinator.ts line 8 的 `HostServiceStatusEvent,` 与 line 13 的 `HostServiceCoordinatorEvents,` 两个未使用 import（保留 HostServiceStatus, Connection, HostServiceStartOpts, HostServiceRestartOpts, HostServiceResetOpts 这些被使用的）。",
+  "status": "completed",
+  "completed_at": "2026-07-01",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/lib/",
+  "focus_paths": [
+    "apps/desktop/src/main/lib/host-service-coordinator.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/main/lib/host-service-coordinator.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "! grep 'HostServiceStatusEvent' apps/desktop/src/main/lib/host-service-coordinator.ts 无命中（import 行已删）",
+      "! grep 'HostServiceCoordinatorEvents' apps/desktop/src/main/lib/host-service-coordinator.ts 无命中",
+      "cd apps/desktop && bunx biome lint src/main/lib/host-service-coordinator.ts exits 0",
+      "cd apps/desktop && bun run typecheck exits 0"
+    ],
+    "verification": "cd apps/desktop && bunx biome lint src/main/lib/host-service-coordinator.ts && bun run typecheck",
+    "definition_of_done": "host-service-coordinator.ts 无未使用 import，Biome lint 通过。"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/lib/host-service-coordinator.ts",
+      "action": "modify",
+      "target": "import block (line 6-14)",
+      "change": "删除 line 8 `HostServiceStatusEvent,` 与 line 13 `HostServiceCoordinatorEvents,`"
+    }
+  ],
+  "implementation": [
+    "读 apps/desktop/src/main/lib/host-service-coordinator.ts line 6-14 的 import block",
+    "删除 `HostServiceStatusEvent,`（line 8）",
+    "删除 `HostServiceCoordinatorEvents,`（line 13）",
+    "运行 cd apps/desktop && bunx biome lint src/main/lib/host-service-coordinator.ts 验证 exit 0",
+    "运行 cd apps/desktop && bun run typecheck 验证 exit 0"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bunx biome lint src/main/lib/host-service-coordinator.ts",
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "biome lint exit 0",
+      "typecheck exit 0"
+    ]
+  },
+  "reference": {
+    "pattern": "Biome noUnusedImports 规则",
+    "files": [],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "直接删除未使用 import，最小改动。",
+    "decision_factors": [
+      "Biome noUnusedImports 强制",
+      "两个类型确未在文件内使用（HostServiceStatus/Connection/StartOpts/RestartOpts/ResetOpts 仍被使用）"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["host-service"],
+    "affected_components": ["HostServiceCoordinator"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "10m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

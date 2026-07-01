@@ -40,7 +40,10 @@ export function setupAgentHooks(): void {
 		createRalphDecisionBridge();
 		console.log("[agent-setup] Ralph decision bridge registered");
 	} catch (error) {
-		console.error("[agent-setup] Failed to register Ralph decision bridge:", error);
+		console.error(
+			"[agent-setup] Failed to register Ralph decision bridge:",
+			error,
+		);
 	}
 
 	console.log("[agent-setup] Agent hooks initialized");

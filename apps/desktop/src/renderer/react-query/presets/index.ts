@@ -1,6 +1,5 @@
 import { useMemo } from "react";
-// Phase 4: 将 TerminalPreset 类型提取到 shared/ 以避免 renderer→main 跨层导入
-import type { TerminalPreset } from "main/lib/local-db";
+import type { TerminalPreset } from "shared/external-app-types";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { filterMatchingPresetsForProject } from "shared/preset-project-targeting";
 

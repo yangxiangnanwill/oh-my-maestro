@@ -1,5 +1,9 @@
 import { usePromptInputController } from "../../../stubs/ui/ai-elements/prompt-input";
-import { Popover, PopoverAnchor, PopoverContent } from "../../../stubs/ui/popover";
+import {
+	Popover,
+	PopoverAnchor,
+	PopoverContent,
+} from "../../../stubs/ui/popover";
 import type { Editor } from "@tiptap/core";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useDebouncedValue } from "renderer/hooks/useDebouncedValue";

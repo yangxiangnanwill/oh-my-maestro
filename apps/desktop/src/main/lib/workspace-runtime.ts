@@ -19,7 +19,9 @@ interface TerminalManagement {
 }
 
 interface TerminalSessionOperations {
-	createOrAttach(params: Record<string, unknown>): Promise<Record<string, unknown>>;
+	createOrAttach(
+		params: Record<string, unknown>,
+	): Promise<Record<string, unknown>>;
 	cancelCreateOrAttach(params: { paneId: string; requestId: string }): void;
 	write(params: { paneId: string; data: string }): void;
 	resize(params: { paneId: string; cols: number; rows: number }): void;
@@ -28,7 +30,9 @@ interface TerminalSessionOperations {
 	detach(params: { paneId: string }): void;
 	clearScrollback(params: { paneId: string }): void | Promise<void>;
 	ackColdRestore(paneId: string): void;
-	getSession(paneId: string): { isAlive: boolean; cwd: string; lastActive: number } | null;
+	getSession(
+		paneId: string,
+	): { isAlive: boolean; cwd: string; lastActive: number } | null;
 	killByWorkspaceId(workspaceId: string): Promise<{ failed: number }>;
 	getSessionCountByWorkspaceId(workspaceId: string): number;
 }
@@ -84,7 +88,11 @@ class WorkspaceRuntimeRegistry {
 		const terminal = {
 			capabilities,
 			management,
-			createOrAttach: async () => ({ isNew: true, scrollback: "", wasRecovered: false }),
+			createOrAttach: async () => ({
+				isNew: true,
+				scrollback: "",
+				wasRecovered: false,
+			}),
 			cancelCreateOrAttach: () => {},
 			write: () => {},
 			resize: () => {},

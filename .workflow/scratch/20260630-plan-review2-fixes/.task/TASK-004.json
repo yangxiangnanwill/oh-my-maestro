@@ -1,0 +1,93 @@
+{
+  "id": "TASK-004",
+  "title": "store.ts 6 个未使用函数参数加 _ 前缀（ISS-014/REV2-006）",
+  "description": "ISS-014/REV2-006：apps/desktop/src/renderer/stores/tabs/store.ts stub 函数 addChatTab/addChatPane/switchChatSession/setChatLaunchConfig 的未使用参数（options/paneId/sessionId/config）被 Biome noUnusedFunctionParameters 标记 6 个 error。与文件内已有 _organizationId/_opts 风格一致，加下划线前缀。",
+  "issue_id": "ISS-20260630-014",
+  "issue_refs": ["ISS-20260630-014"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "low",
+  "action": "对 store.ts 4 个 stub 函数中不使用的参数加下划线前缀：addChatTab(workspaceId, options) → (workspaceId, _options)；addChatPane(tabId, options) → (tabId, _options)；switchChatSession(paneId, sessionId) → (_paneId, _sessionId)；setChatLaunchConfig(paneId, config) → (_paneId, _config)。注意 addChatTab/addChatPane 的 workspaceId/tabId 被使用（在 set 内），不加前缀。",
+  "status": "completed",
+  "completed_at": "2026-07-01T00:00:00Z",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/renderer/stores/tabs/",
+  "focus_paths": [
+    "apps/desktop/src/renderer/stores/tabs/store.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/stores/tabs/store.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": null,
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep '_options\\|_paneId\\|_sessionId\\|_config' apps/desktop/src/renderer/stores/tabs/store.ts 命中（>= 4 处）",
+      "cd apps/desktop && bunx biome lint src/renderer/stores/tabs/store.ts exits 0",
+      "cd apps/desktop && bun run typecheck exits 0"
+    ],
+    "verification": "cd apps/desktop && bunx biome lint src/renderer/stores/tabs/store.ts && bun run typecheck",
+    "definition_of_done": "store.ts 无 noUnusedFunctionParameters 错误，Biome lint 通过。"
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/stores/tabs/store.ts",
+      "action": "modify",
+      "target": "addChatTab/addChatPane/switchChatSession/setChatLaunchConfig (line 129-151)",
+      "change": "addChatTab(workspaceId, _options)；addChatPane(tabId, _options)；switchChatSession(_paneId, _sessionId)；setChatLaunchConfig(_paneId, _config)"
+    }
+  ],
+  "implementation": [
+    "读 store.ts line 129-151 的 4 个 stub 函数",
+    "addChatTab: (workspaceId, options) → (workspaceId, _options)（workspaceId 在 set 内使用，保留）",
+    "addChatPane: (tabId, options) → (tabId, _options)（tabId 在 set 内使用，保留）",
+    "switchChatSession: (paneId, sessionId) → (_paneId, _sessionId)（两者均未使用）",
+    "setChatLaunchConfig: (paneId, config) → (_paneId, _config)（两者均未使用）",
+    "运行 cd apps/desktop && bunx biome lint src/renderer/stores/tabs/store.ts 验证 exit 0",
+    "运行 cd apps/desktop && bun run typecheck 验证 exit 0"
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bunx biome lint src/renderer/stores/tabs/store.ts",
+      "cd apps/desktop && bun run typecheck"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "biome lint exit 0",
+      "typecheck exit 0"
+    ]
+  },
+  "reference": {
+    "pattern": "Biome noUnusedFunctionParameters 规则 + 文件内已有 _organizationId/_opts 前缀风格",
+    "files": [
+      "apps/desktop/src/main/lib/host-service-coordinator.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "下划线前缀是 Biome 认可的未使用参数标记，与文件内已有 _organizationId/_opts 风格一致。",
+    "decision_factors": [
+      "stub 函数参数保留签名（接口契约）但不使用",
+      "加前缀比删除参数更安全（保持 store 接口形状）"
+    ],
+    "tradeoffs": null
+  },
+  "risks": [],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["tabs-store"],
+    "affected_components": ["tabsStore"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false
+  }
+}

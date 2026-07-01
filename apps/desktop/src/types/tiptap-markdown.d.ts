@@ -4,29 +4,29 @@
  */
 
 declare module "tiptap-markdown" {
-  import type { Extensions } from "@tiptap/core";
+	import type { Extensions } from "@tiptap/core";
 
-  export interface MarkdownOptions {
-    html?: boolean;
-    tightLists?: boolean;
-    tightListClass?: string;
-    bulletListMarker?: string;
-    linkify?: boolean;
-    breaks?: boolean;
-    transformPastedText?: boolean;
-    transformCopiedText?: boolean;
-  }
+	export interface MarkdownOptions {
+		html?: boolean;
+		tightLists?: boolean;
+		tightListClass?: string;
+		bulletListMarker?: string;
+		linkify?: boolean;
+		breaks?: boolean;
+		transformPastedText?: boolean;
+		transformCopiedText?: boolean;
+	}
 
-  export class Markdown {
-    constructor(options?: MarkdownOptions);
-    static configure(options: MarkdownExtensionOptions): Extensions;
-  }
+	export class Markdown {
+		constructor(options?: MarkdownOptions);
+		static configure(options: MarkdownExtensionOptions): Extensions;
+	}
 
-  export interface MarkdownExtensionOptions {
-    markdownOptions?: MarkdownOptions;
-  }
+	export interface MarkdownExtensionOptions {
+		markdownOptions?: MarkdownOptions;
+	}
 
-  export const MarkdownExtension: {
-    configure(options: MarkdownExtensionOptions): Extensions;
-  };
+	export const MarkdownExtension: {
+		configure(options: MarkdownExtensionOptions): Extensions;
+	};
 }

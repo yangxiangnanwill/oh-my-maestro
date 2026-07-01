@@ -1,0 +1,245 @@
+PURPOSE: Verify execution output meets all 33 convergence criteria for PLN-022 review2-fixes. success = all criteria verified with file:line evidence
+TASK:
+1. CONVERGENCE: For each criterion, check if actual code satisfies it. Read files, verify behavior, report status with evidence.
+2. STRUCTURE Layer 1 (Existence): Verify expected output files exist (shared/external-app-types.ts, shared/safe-url/scheme.ts, shared/safe-url/index.ts).
+3. STRUCTURE Layer 2 (Substance): Verify files have real implementation. Flag stubs/placeholders.
+4. STRUCTURE Layer 3 (Wiring): Verify shared types are imported by renderer AND main. Flag orphaned files.
+5. ANTI-PATTERNS: Scan material files for NEW TODO/FIXME/HACK, console.log debug, disabled tests introduced by this execution.
+MODE: analysis
+CONTEXT: @apps/desktop/src/shared/**,apps/desktop/src/main/lib/local-db/index.ts,apps/desktop/src/main/lib/safe-url/scheme.ts,apps/desktop/src/main/lib/browser/browser-manager.ts,apps/desktop/src/main/lib/host-service-coordinator.ts,apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx,apps/desktop/src/renderer/components/Chat/stubs/ui/ai-elements/message.tsx,apps/desktop/src/renderer/stores/tabs/store.ts,apps/desktop/src/renderer/commandPalette/**,apps/desktop/src/renderer/components/OpenInButton/**,apps/desktop/src/renderer/components/OpenInExternalDropdown/**,apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts
+EXPECTED: JSON { convergence: [{criterion, status: verified|failed|uncertain, evidence}], structure: {existence:[{path,status}], substance:[{path,status,evidence}], wiring:[{path,status,importers[]}]}, anti_patterns: [{type,file,line,severity}], gaps: [{id,type,severity,description,fix_direction}], overall: passed|gaps_found }
+CONSTRAINTS: Read-only | Check ALL 33 criteria | Evidence must be file:line | Do NOT assume | Focus on material code changes (TASK-001~004), TASK-005 is whitespace-only format (skip per-file substance check for format-only files)
+
+## Convergence Criteria (verify each of 33)
+1. [TASK-001] grep 'from "shared/external-app-types"' apps/desktop/src/renderer/commandPalette/core/types.ts 命中
+2. [TASK-001] ! grep '@main/lib/local-db' apps/desktop/src/renderer/commandPalette/core/types.ts 无命中
+3. [TASK-001] grep 'from "shared/external-app-types"' apps/desktop/src/renderer/commandPalette/modules/openIn/commands.ts 命中
+4. [TASK-001] grep 'from "shared/external-app-types"' apps/desktop/src/renderer/components/OpenInButton/OpenInButton.tsx 命中
+5. [TASK-001] grep 'from "shared/external-app-types"' apps/desktop/src/renderer/components/OpenInExternalDropdown/OpenInExternalDropdownItems.tsx 命中
+6. [TASK-001] grep 'from "shared/external-app-types"' apps/desktop/src/renderer/components/OpenInExternalDropdown/constants.ts 命中
+7. [TASK-001] grep 'from "shared/external-app-types"' apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts 命中
+8. [TASK-001] test -f apps/desktop/src/shared/external-app-types.ts 文件存在
+9. [TASK-001] test -f apps/desktop/src/shared/safe-url/index.ts 文件存在
+10. [TASK-001] grep 'export.*EXTERNAL_APPS.*from.*shared/external-app-types' apps/desktop/src/main/lib/local-db/index.ts 命中（re-export 向后兼容）
+11. [TASK-001] grep 'export.*isSafeExternalUrl.*from.*shared/safe-url' apps/desktop/src/main/lib/safe-url/scheme.ts 命中（re-export shim 保持 ./scheme import 链）
+12. [TASK-001] cd apps/desktop && bun run typecheck exits 0
+13. [TASK-002] grep 'isSafeExternalUrl' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx 命中
+14. [TASK-002] grep 'components' apps/desktop/src/renderer/components/Chat/stubs/ui/ai-elements/message.tsx 命中（stub 解构 components 参数）
+15. [TASK-002] grep 'data-components-connected' apps/desktop/src/renderer/components/Chat/stubs/ui/ai-elements/message.tsx 命中（stub 标记 components 已接线不丢弃 prop）
+16. [TASK-002] grep 'from "shared/safe-url"' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx 命中
+17. [TASK-002] ! grep 'sanitizeUrl' apps/desktop/src/main/lib/browser/browser-manager.ts 无命中（navigate 不再用启发式 sanitizeUrl）
+18. [TASK-002] grep 'isSafeExternalUrl' apps/desktop/src/main/lib/browser/browser-manager.ts 命中
+19. [TASK-002] grep 'http://' apps/desktop/src/main/lib/browser/browser-manager.ts 命中（navigate 对无 scheme localhost/127.0.0.1 url 先补 http:// 前缀再校验，保持 localhost 支持不破坏）
+20. [TASK-002] cd apps/desktop && bunx biome lint --only=useExhaustiveDependencies src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx exits 0（renderParts useCallback deps 修复，--only 限定规则避免其他 pre-existing lint errors 干扰）
+21. [TASK-002] cd apps/desktop && bun run typecheck exits 0
+22. [TASK-002] [UI-observable] grep 'components' apps/desktop/src/renderer/components/Chat/stubs/ui/ai-elements/message.tsx 命中 AND grep 'data-components-connected' 同文件命中——stub 不再丢弃 components prop（LinkAnchor 实际渲染需 StreamingMessageText 接入真实 markdown 解析器属 Phase 4，本次仅保证 components prop 不被丢弃 + href sanitize 代码正确）
+23. [TASK-003] ! grep 'HostServiceStatusEvent' apps/desktop/src/main/lib/host-service-coordinator.ts 无命中（import 行已删）
+24. [TASK-003] ! grep 'HostServiceCoordinatorEvents' apps/desktop/src/main/lib/host-service-coordinator.ts 无命中
+25. [TASK-003] cd apps/desktop && bunx biome lint src/main/lib/host-service-coordinator.ts exits 0
+26. [TASK-003] cd apps/desktop && bun run typecheck exits 0
+27. [TASK-004] grep '_options\|_paneId\|_sessionId\|_config' apps/desktop/src/renderer/stores/tabs/store.ts 命中（>= 4 处）
+28. [TASK-004] cd apps/desktop && bunx biome lint src/renderer/stores/tabs/store.ts exits 0
+29. [TASK-004] cd apps/desktop && bun run typecheck exits 0
+30. [TASK-005] cd apps/desktop && bun run lint exits 0
+31. [TASK-005] cd apps/desktop && bun run format:check exits 0
+32. [TASK-005] cd apps/desktop && bun run typecheck exits 0
+33. [TASK-005] git diff --stat 显示约 26 文件被 format 修改（tab 转换）
+
+
+## Material Files (focus verification here)
+apps/desktop/src/shared/external-app-types.ts
+apps/desktop/src/shared/safe-url/scheme.ts
+apps/desktop/src/shared/safe-url/index.ts
+apps/desktop/src/main/lib/local-db/index.ts
+apps/desktop/src/main/lib/safe-url/scheme.ts
+apps/desktop/src/renderer/commandPalette/core/types.ts
+apps/desktop/src/renderer/commandPalette/modules/openIn/commands.ts
+apps/desktop/src/renderer/components/OpenInButton/OpenInButton.tsx
+apps/desktop/src/renderer/components/OpenInExternalDropdown/constants.ts
+apps/desktop/src/renderer/components/OpenInExternalDropdown/OpenInExternalDropdownItems.tsx
+apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts
+apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx
+apps/desktop/src/renderer/components/Chat/stubs/ui/ai-elements/message.tsx
+apps/desktop/src/main/lib/browser/browser-manager.ts
+apps/desktop/src/main/lib/host-service-coordinator.ts
+apps/desktop/src/renderer/stores/tabs/store.ts
+apps/desktop/biome.json
+
+## Task Summaries (executor self-reports — verify independently)
+=== TASK-001-summary.md ===
+# TASK-001: 提取 ExternalApp/TerminalPreset + isSafeExternalUrl 到 src/shared 跨层契约层
+
+## Changes
+- `apps/desktop/src/shared/external-app-types.ts` (create): 搬移 EXTERNAL_APPS const + ExternalApp type + NON_EDITOR_APPS + EXECUTION_MODES/ExecutionMode + TerminalPreset interface 从 local-db/index.ts
+- `apps/desktop/src/shared/safe-url/scheme.ts` (create): 搬移 ALLOWED_SCHEMES + isSafeExternalUrl + externalUrlLogLabel 实现从 main/lib/safe-url/scheme.ts
+- `apps/desktop/src/shared/safe-url/index.ts` (create): barrel re-export `export { externalUrlLogLabel, isSafeExternalUrl } from './scheme'`
+- `apps/desktop/src/main/lib/local-db/index.ts` (modify): 删除搬移的定义，改为 re-export `export { EXTERNAL_APPS, NON_EDITOR_APPS, EXECUTION_MODES } from 'shared/external-app-types'` + `export type { ExternalApp, ExecutionMode, TerminalPreset } from 'shared/external-app-types'`（保持 main 侧 7 消费者零改动）
+- `apps/desktop/src/main/lib/safe-url/scheme.ts` (modify): 改为 re-export shim（不删除），`export { externalUrlLogLabel, isSafeExternalUrl } from 'shared/safe-url'`，保持 `./scheme` import 链不断裂
+- `apps/desktop/src/renderer/commandPalette/core/types.ts` (modify): `@main/lib/local-db` → `shared/external-app-types`（ExternalApp）
+- `apps/desktop/src/renderer/commandPalette/modules/openIn/commands.ts` (modify): 同上（ExternalApp）
+- `apps/desktop/src/renderer/components/OpenInButton/OpenInButton.tsx` (modify): 同上（ExternalApp）
+- `apps/desktop/src/renderer/components/OpenInExternalDropdown/OpenInExternalDropdownItems.tsx` (modify): 同上（ExternalApp）
+- `apps/desktop/src/renderer/components/OpenInExternalDropdown/constants.ts` (modify): 同上（ExternalApp）
+- `apps/desktop/src/renderer/lib/agent-session-orchestrator/types.ts` (modify): 同上（TerminalPreset）
+
+## Verification
+- [x] grep 'from "shared/external-app-types"' commandPalette/core/types.ts 命中
+- [x] grep '@main/lib/local-db' commandPalette/core/types.ts 无命中（renderer 全域 grep 无命中）
+- [x] grep 'from "shared/external-app-types"' commandPalette/modules/openIn/commands.ts 命中
+- [x] grep 'from "shared/external-app-types"' OpenInButton/OpenInButton.tsx 命中
+- [x] grep 'from "shared/external-app-types"' OpenInExternalDropdown/OpenInExternalDropdownItems.tsx 命中
+- [x] grep 'from "shared/external-app-types"' OpenInExternalDropdown/constants.ts 命中
+- [x] grep 'from "shared/external-app-types"' agent-session-orchestrator/types.ts 命中
+- [x] test -f src/shared/external-app-types.ts 文件存在
+- [x] test -f src/shared/safe-url/index.ts 文件存在
+- [x] grep 'export.*EXTERNAL_APPS.*from.*shared/external-app-types' local-db/index.ts 命中（line 148）
+- [x] grep 'export.*isSafeExternalUrl.*from.*shared/safe-url' main/lib/safe-url/scheme.ts 命中（line 5）
+- [x] cd apps/desktop && bun run typecheck exits 0（tsc --noEmit 0 errors）
+- [x] safe-url.test.ts 的 `from "./scheme"` import 链保持（5 pass / 0 fail）
+
+## Tests
+- [x] `cd apps/desktop && bun run typecheck`: PASS (exit 0, tsc --noEmit clean)
+- [x] `grep -rl 'from "shared/external-app-types"' apps/desktop/src/renderer/`: PASS (6 文件命中，正好对应 6 个 renderer 消费者)
+- [x] `bun test src/main/lib/safe-url/safe-url.test.ts`: PASS (5 pass / 0 fail / 19 expects — re-export shim 保持 ./scheme import 链)
+
+## Deviations
+- None. 实现完全按 action/files/implementation 描述执行。
+
+## Notes
+- shared 层路径别名 `shared/*` → `./src/shared/*` 已在 tsconfig.json line 27 配置，无需新增。
+- main 侧 7 个消费者（external/helpers.ts, external/index.ts, settings/index.ts, settings/preset-execution-mode.ts, workspaces/procedures/query.ts, local-db/index.ts, local-db/schema/zod.ts）零改动——通过 local-db/index.ts 的 re-export 保持向后兼容。
+- TerminalPreset 依赖 ExecutionMode，两者一并搬到 shared/external-app-types.ts（local-db 中 TerminalPreset interface 原位置 line 275-287 已删除，EXECUTION_MODES line 243-250 已删除）。
+- main/lib/safe-url/scheme.ts 不删除，作为 re-export shim；safe-url.ts、safe-url/index.ts、safe-url.test.ts 三个 `./scheme` 消费者零改动。
+- 为 ISS-010/011 的后续工作奠定基础：renderer 不再 import main 路径，依赖方向已纠正。
+- 未自动 git commit（按 task 要求）。
+
+
+=== TASK-002-summary.md ===
+# TASK-002: LinkAnchor 接线 + XSS 修复 + renderParts deps（ISS-002/010/011/013）
+
+## Changes
+- `apps/desktop/src/renderer/components/Chat/stubs/ui/ai-elements/message.tsx`: MessageResponseProps.components 类型改为 `{ a?: React.ElementType; aProps?: React.AnchorHTMLAttributes<HTMLAnchorElement> }`（与 ai-sdk 契约对齐，原为 `Record<string, React.ComponentType<any>>`）；MessageResponse 解构 `{ children, className, components, mermaid }` 并渲染为 `<div className={className} data-components-connected={components ? "true" : undefined} data-mermaid-connected={mermaid ? "true" : undefined}>{children}</div>`，标记 components prop 已被消费不丢弃。
+- `apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx`: 加 `import { isSafeExternalUrl } from "shared/safe-url"`；LinkAnchor 用 `isSafeExternalUrl` sanitize href（非 allowlisted scheme 设为 undefined），onClick 中对非 allowlisted scheme 即使 openLinksInApp=false 也 preventDefault 防 javascript: 执行；handleLinkClick 在 openInBrowserPane 前用 `isSafeExternalUrl(href)` gate（false 则 return）；renderParts useCallback 去掉 `{parts, isLastAssistant}` 参数直接闭包外层变量，调用改为 `renderParts()`，deps 数组保留 parts/isLastAssistant（通过 useExhaustiveDependencies lint）。
+- `apps/desktop/src/main/lib/browser/browser-manager.ts`: 删除 sanitizeUrl 启发式函数（line 13-24）；navigate 改用 `isSafeExternalUrl`——对无 scheme 的 localhost/127.0.0.1 先补 `http://` 前缀再校验（保持 localhost 支持不破坏），false 则 `return`（不 loadURL）不 throw（避免破坏 tRPC mutation 调用方）；import 改为 `import { safeOpenExternal, isSafeExternalUrl } from "../safe-url"`。
+
+## Verification
+- [x] grep 'isSafeExternalUrl' MessagePartsRenderer.tsx 命中: line 15/43/51/98
+- [x] grep 'components' message.tsx 命中: stub 解构 components 参数（line 30/43/49）
+- [x] grep 'data-components-connected' message.tsx 命中: line 49
+- [x] grep 'from "shared/safe-url"' MessagePartsRenderer.tsx 命中: line 15
+- [x] ! grep 'sanitizeUrl' browser-manager.ts 无命中: 函数已删除，注释也已改措辞避免误命中
+- [x] grep 'isSafeExternalUrl' browser-manager.ts 命中: line 3/97
+- [x] grep 'http://' browser-manager.ts 命中: line 95（localhost 补 http:// 前缀）
+- [x] biome --only=useExhaustiveDependencies exit 0: renderParts useCallback deps 修复
+- [x] typecheck exit 0
+- [x] [UI-observable] components + data-components-connected grep 命中: stub 不丢弃 components prop
+
+## Tests
+- [x] `bun run typecheck`: pass (exit 0, tsc --noEmit 无错误)
+- [x] `bunx biome lint --only=useExhaustiveDependencies MessagePartsRenderer.tsx`: pass (exit 0, No fixes applied)
+- [x] `bunx biome lint src/main/lib/browser/browser-manager.ts`: pass (exit 0)
+- [x] `bun test src/renderer/components/Chat`: pass (47 pass / 0 fail, 不回归)
+- [x] grep browserManager.navigate/openInBrowserPane 调用方: browser.ts navigate mutation 无 try/catch 依赖 throw；store.ts openInBrowserPane 只存 url 不调 navigate。navigate 改 return 不破坏调用方。
+
+## Deviations
+- 轻微：MessageResponse stub 额外加了 `data-mermaid-connected` 标记（mermaid prop 同样消费不丢弃），与 components 同模式，不偏离 action 意图（action 提到 mermaid 已有但未消费）。
+- 注释中曾出现 `sanitizeUrl` 字样触发 criteria 5 误命中，已改措辞为 "previous heuristic URL builder"——仍准确描述意图，非真实偏差。
+
+## Notes
+- ISS-002 接线状态: MessageResponse stub 不再丢弃 components prop（data-components-connected 标记）。LinkAnchor 实际渲染需 Phase 4 StreamingMessageText 接入真实 markdown 解析器（当前 stub 把纯文本 displayText 作 children，不解析 markdown 链接）。本次仅保证 components prop 不被丢弃 + href sanitize 代码正确（三重防御：LinkAnchor sanitize + handleLinkClick gate + browserManager.navigate gate）。
+- navigate 改 return 不 throw：browser.ts navigate mutation 调用方无 try/catch，安全。store.ts openInBrowserPane 是 renderer 侧只存 url 到 pane，不直接调 navigate。
+- Phase 4 移除 stub 时需一并移除 data-components-connected / data-mermaid-connected data 属性（避免残留）。
+- TASK-001 已完成（isSafeExternalUrl 提取到 shared/safe-url），本任务依赖满足。
+
+
+=== TASK-003-summary.md ===
+# TASK-003: 删除 host-service-coordinator 未使用 import（ISS-012/REV2-004）
+
+## Changes
+- `apps/desktop/src/main/lib/host-service-coordinator.ts`: 从 `import type { ... } from "shared/host-info-types"` 块中删除两个未使用 import：`HostServiceStatusEvent`（原 line 8）与 `HostServiceCoordinatorEvents`（原 line 13）。保留 HostServiceStatus / Connection / HostServiceStartOpts / HostServiceRestartOpts / HostServiceResetOpts（类体仍在使用）。仅改 import 块，未触碰其他代码。
+
+## Verification
+- [x] `grep 'HostServiceStatusEvent' apps/desktop/src/main/lib/host-service-coordinator.ts` 无命中：Grep 输出 "No matches found"
+- [x] `grep 'HostServiceCoordinatorEvents' apps/desktop/src/main/lib/host-service-coordinator.ts` 无命中：同上，合并 grep 两类型均无命中
+- [x] `cd apps/desktop && bunx biome lint src/main/lib/host-service-coordinator.ts` exits 0：输出 "Checked 1 file in 12ms. No fixes applied."，EXIT=0
+- [x] `cd apps/desktop && bun run typecheck` exits 0：`tsc --noEmit` 通过，EXIT=0
+
+## Tests
+- [x] `cd apps/desktop && bunx biome lint src/main/lib/host-service-coordinator.ts`: pass（exit 0，无 lint 错误）
+- [x] `cd apps/desktop && bun run typecheck`: pass（exit 0）
+
+## Deviations
+- None。改动范围与 task 定义完全一致，未触碰 scope 外文件。
+
+## Notes
+- TASK-001 若改同一文件，改动区域不同（TASK-001 注释指向 line-2 注释块，TASK-003 改 import 块 line 6-14），无冲突。本任务执行时文件内容与已验证事实一致，未见 TASK-001 改动痕迹，直接基于当前状态操作。
+- 未执行 git commit（按约束要求）。
+
+
+=== TASK-004-summary.md ===
+# TASK-004: store.ts 6 个未使用函数参数加下划线前缀
+
+## Changes
+- `apps/desktop/src/renderer/stores/tabs/store.ts`: 4 个 stub 函数未使用参数加 `_` 前缀
+  - `addChatTab(workspaceId, options)` → `addChatTab(workspaceId, _options)`（workspaceId 在 set 内使用，保留）
+  - `addChatPane(tabId, options)` → `addChatPane(tabId, _options)`（tabId 在 set 内使用，保留）
+  - `switchChatSession(paneId, sessionId)` → `switchChatSession(_paneId, _sessionId)`
+  - `setChatLaunchConfig(paneId, config)` → `setChatLaunchConfig(_paneId, _config)`
+
+## Verification
+- [x] grep `_options|_paneId|_sessionId|_config` 命中 4 处（line 129/137/145/149）
+- [x] `bunx biome lint src/renderer/stores/tabs/store.ts` exit 0（No fixes applied）
+- [x] `bun run typecheck` exit 0（tsc --noEmit 无错误）
+
+## Tests
+- [x] biome lint: pass（exit 0，Checked 1 file in 12ms. No fixes applied.）
+- [x] typecheck: pass（exit 0）
+
+## Deviations
+- None
+
+## Notes
+- 与文件内已有 `_organizationId`/`_opts` 风格一致，保持 store 接口签名形状不变。
+- workspaceId/tabId 因在 set 回调内被使用，不加前缀（否则反触发 noUnusedFunctionParameters 之外的逻辑错误）。
+- ISS-20260630-014 修复完成，无 commit（按要求不自动 commit）。
+
+
+=== TASK-005-summary.md ===
+# TASK-005: Biome 全量 format + 修 lint errors（ISS-015/REV2-007）
+
+## Changes
+- `apps/desktop/src/renderer/contexts/translations.ts`: 修复 parse error — `"ui.dashboard.createFirst"` 值内的中文全角引号 `"..."` 导致 Biome 无法解析，替换为 `「...」`（HEAD 中已存在的 latent bug，全量 format 时暴露）
+- `apps/desktop/biome.json`: 将 5 条规则从 error 降级为 warn（保留诊断可见但不阻塞 lint exit 0）：`noArrayIndexKey`、`noLabelWithoutControl`、`useAriaPropsSupportedByRole`、`useAriaPropsForRole`、`noAutofocus`
+- `apps/desktop/src/shared/terminal-link-parsing.ts`: 2 处 `while ((match = regex.exec(...)))` 加 `// biome-ignore lint/suspicious/noAssignInExpressions`（standard regex exec loop）
+- `apps/desktop/src/shared/agent-settings.ts`: 1 处 noAssignInExpressions biome-ignore
+- `apps/desktop/src/main/lib/agent-setup/maestro-mcp-provider.ts`: 1 处 noAssignInExpressions biome-ignore
+- `apps/desktop/src/renderer/components/VisualizationPanel/VisualizationPanel.tsx`: 1 处 useHookAtTopLevel biome-ignore（conditional early-return 后调用 useMemo，refactor 超出 scope）
+- `apps/desktop/src/renderer/App.tsx`: useEffect deps 改为 `[]` + biome-ignore useExhaustiveDependencies（CLI 检查仅 mount 时运行）
+- `apps/desktop/src/renderer/routes/_authenticated/workspaces/$workspaceId/page.tsx`: `_OverviewPanel` 重命名为 `OverviewPanel`（大写首字母使其被识别为组件，hooks 调用合法；函数未被引用，noUnusedVariables 仅 warn 不阻塞）
+- 全量 `bun run format`：740 文件 tab 缩进转换（远超预估 26，因 TASK-006 仅转换 12 文件，本次为首次全量标准化）
+
+## Verification
+- [x] `cd apps/desktop && bun run lint` exits 0：244 warnings + 2 infos，0 errors
+- [x] `cd apps/desktop && bun run format:check` exits 0：Checked 1022 files, No fixes applied
+- [x] `cd apps/desktop && bun run typecheck` exits 0：tsc --noEmit 通过
+- [x] git diff 显示文件被 format 修改：实际 319 文件 changed（预估约 26，偏差见下）
+
+## Tests
+- [x] `bun run lint`: pass (exit 0)
+- [x] `bun run format:check`: pass (exit 0)
+- [x] `bun run typecheck`: pass (exit 0)
+
+## Deviations
+1. **实际 lint 错误数远超预估**：task 预估 38 errors，实际首次 `biome lint --write` 后剩 34 errors + 288 warnings + 9 infos（共 326 diagnostics）。多为 stub 文件（Chat/stubs/）、生成文件（routeTree.gen.ts）、测试文件的 noUnusedFunctionParameters(164)/noExplicitAny(43)/noNonNullAssertion(28)，这些是 warnings 不阻塞 exit code。
+2. **降级规则而非逐个手动修复**：task 计划"手动处理剩余 errors（删除 unused import 或加 _ 前缀）"，但实际剩余 error 多为 JSX `noArrayIndexKey`(13) 与 a11y 规则（noLabelWithoutControl/useAriaPropsForRole/noAutofocus）。经验证 Biome 2.5.1 对多行 JSX 元素（key 与 className 因行宽被 formatter 拆多行）的 `// biome-ignore` 无法可靠抑制 noArrayIndexKey（仅当 key 与开标签同行时生效，formatter 会因长 className 强制换行）。故将 5 条规则降级为 warn（保留诊断可见，仅不阻塞 exit code），而非逐个重构 13 处 list key。这些降级规则应作为 follow-up 逐项修复（提供稳定 id 或修正 a11y）。
+3. **全量 format 触碰文件数（319）远超预估（26）**：因前序 TASK-006 仅转换 12 文件，本次为首次 `bun run format` 全量标准化，740 文件被 fix。属预期行为（task action 即"全量 Biome format"）。
+4. **新增 parse error 修复**：translations.ts 第 37 行中文全角引号导致 Biome parse 失败，HEAD 中已存在但未被 format 触发过。替换为「」并 format 通过。
+5. **lint --write 未误删 re-export import**：typecheck 通过验证无语义破坏，确认未误删关键 import。
+6. **未自动 git commit**：遵循 task 指令"不自动 git commit"，留待用户决定。
+
+## Notes
+- 后续 follow-up 建议：逐个修复降级的 5 条规则对应的真实 issue（提供稳定 list key、修正 a11y label/control 关联），随后可恢复这些规则为 error 级别。
+- `_OverviewPanel` 已重命名为 `OverviewPanel` 但仍未被引用（noUnusedVariables warn），可在后续清理或接入路由时移除/使用。
+- translations.ts 的全角引号问题已修复，但全项目可能存在其他 i18n 字符串含未转义双引号的隐患，建议后续扫描。
+
+

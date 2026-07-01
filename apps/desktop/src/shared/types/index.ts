@@ -4,8 +4,8 @@ type Route = Parameters<typeof registerRoute>[0];
 
 /** Window creation props that extend Electron's BrowserWindow options with routing metadata. */
 export interface WindowProps extends Electron.BrowserWindowConstructorOptions {
-  id: Route["id"];
-  query?: Route["query"];
+	id: Route["id"];
+	query?: Route["query"];
 }
 
 /** A port detected on a running process by the port scanner. */

@@ -47,7 +47,7 @@ export interface FallbackLink {
  * Pattern that matches a line/column suffix after a path.
  * Examples: :42, :42:10, (42), (42,10), [42], [42,10], #42
  */
-const LINE_COL_SUFFIX_PATTERN =
+const _LINE_COL_SUFFIX_PATTERN =
 	/^[:([](\d+)(?:[,:]\s*(\d+))?\s*[)\]]|^\[(\d+)(?:[,:]\s*(\d+))?\]|^#(\d+)/;
 
 // Query string pattern
@@ -58,7 +58,9 @@ const QUERY_STRING = /[?#].*$/;
  */
 export function removeLinkSuffix(link: string): string {
 	// Try each suffix pattern anchored at the position after the last path-like segment
-	const parts = link.match(/^(.+?)(:\d+(:\d+)?|\(\d+(,\d+)?\)|\[\d+(,\d+)?\]|#\d+)$/);
+	const parts = link.match(
+		/^(.+?)(:\d+(:\d+)?|\(\d+(,\d+)?\)|\[\d+(,\d+)?\]|#\d+)$/,
+	);
 	if (parts?.[1]) {
 		return parts[1].trim();
 	}
@@ -94,7 +96,7 @@ const PATH_REGEX =
 	/(?:(?:\]8;;)|(?:file:\/\/\/?))?(?<path>(?:[./]|~\/)[^\s"'`;|><{}[\]]+)/g;
 
 // Matches the section of a path from the last / onwards to check for suffix
-const PATH_END_REGEX = /([^/\s]+)$/;
+const _PATH_END_REGEX = /([^/\s]+)$/;
 
 /**
  * Detect link candidates from terminal text.
@@ -108,10 +110,11 @@ export function detectLinks(text: string, _os: OSType): IParsedLink[] {
 	const regex = new RegExp(PATH_REGEX.source, "g");
 	let match: RegExpExecArray | null;
 
+	// biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop pattern
 	while ((match = regex.exec(text)) !== null) {
 		const rawText = match.groups?.path ?? match[0];
 		if (!rawText) continue;
-		const rawIndex = match.index + (match[0].indexOf(rawText));
+		const rawIndex = match.index + match[0].indexOf(rawText);
 
 		const parsed = splitPathAndSuffix(rawText, rawIndex);
 		if (!parsed) continue;
@@ -237,9 +240,7 @@ function extractSuffix(rawText: string): SuffixResult | null {
  * Generate trimmed path candidates by removing trailing punctuation
  * (brackets, quotes, commas, periods, etc.).
  */
-export function generateTrimmedCandidates(
-	path: string,
-): { path: string }[] {
+export function generateTrimmedCandidates(path: string): { path: string }[] {
 	const candidates: { path: string }[] = [];
 	if (!path) return candidates;
 
@@ -311,6 +312,7 @@ export function detectFallbackLinks(text: string): FallbackLink[] {
 	for (const matcher of FALLBACK_MATCHERS) {
 		const regex = new RegExp(matcher.pattern.source, matcher.pattern.flags);
 		let match: RegExpExecArray | null;
+		// biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop pattern
 		while ((match = regex.exec(text)) !== null) {
 			// For git diff --git, handle both a/ and b/ paths
 			if (matcher.pattern.source.includes("diff --git") && match[2]) {
@@ -330,8 +332,7 @@ export function detectFallbackLinks(text: string): FallbackLink[] {
 				const pathB = match[2];
 				if (pathB && !seen.has(pathB)) {
 					const linkTextB = `b/${pathB}`;
-					const linkIndexB =
-						match.index + match[0].indexOf(linkTextB);
+					const linkIndexB = match.index + match[0].indexOf(linkTextB);
 					seen.add(pathB);
 					results.push({
 						link: linkTextB,

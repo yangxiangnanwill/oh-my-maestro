@@ -4,20 +4,20 @@
  */
 
 declare module "@pierre/trees" {
-  export interface FileTreeIconConfig {
-    byFileName?: Record<string, string>;
-    byFileExtension?: Record<string, string>;
-    remap?: Record<string, string>;
-  }
+	export interface FileTreeIconConfig {
+		byFileName?: Record<string, string>;
+		byFileExtension?: Record<string, string>;
+		remap?: Record<string, string>;
+	}
 
-  export interface FileTree {
-    setIcons(config: {
-      set: string;
-      colored: boolean;
-      spriteSheet?: string;
-      byFileName?: Record<string, string>;
-      byFileExtension?: Record<string, string>;
-      remap?: Record<string, string>;
-    }): void;
-  }
+	export interface FileTree {
+		setIcons(config: {
+			set: string;
+			colored: boolean;
+			spriteSheet?: string;
+			byFileName?: Record<string, string>;
+			byFileExtension?: Record<string, string>;
+			remap?: Record<string, string>;
+		}): void;
+	}
 }

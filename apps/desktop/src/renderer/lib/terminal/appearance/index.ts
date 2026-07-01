@@ -144,7 +144,7 @@ function isFontFamilyMonospace(family: string): boolean {
 export function sanitizeTerminalFontFamily(
 	cssValue: string | null | undefined,
 ): string {
-	if (!cssValue || !cssValue.trim()) return DEFAULT_TERMINAL_FONT_FAMILY;
+	if (!cssValue?.trim()) return DEFAULT_TERMINAL_FONT_FAMILY;
 	const families = parseFontFamilyList(cssValue);
 	if (families.length === 0) return DEFAULT_TERMINAL_FONT_FAMILY;
 

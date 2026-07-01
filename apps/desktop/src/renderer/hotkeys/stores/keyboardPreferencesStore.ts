@@ -3,30 +3,30 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { useKeyboardLayoutStore } from "./keyboardLayoutStore";
 
 interface KeyboardPreferencesState {
-  /** When true (default), logical bindings are translated through the OS
-   *  keyboard layout — e.g. `@Z` fires on the key labeled "Z" regardless
-   *  of layout (physical KeyY on QWERTZ). Matches macOS / VS Code / Chrome
-   *  convention. Flip off to anchor bindings to physical key positions
-   *  (`@Z` always on physical KeyZ, regardless of label). */
-  adaptiveLayoutEnabled: boolean;
-  setAdaptiveLayoutEnabled: (enabled: boolean) => void;
+	/** When true (default), logical bindings are translated through the OS
+	 *  keyboard layout — e.g. `@Z` fires on the key labeled "Z" regardless
+	 *  of layout (physical KeyY on QWERTZ). Matches macOS / VS Code / Chrome
+	 *  convention. Flip off to anchor bindings to physical key positions
+	 *  (`@Z` always on physical KeyZ, regardless of label). */
+	adaptiveLayoutEnabled: boolean;
+	setAdaptiveLayoutEnabled: (enabled: boolean) => void;
 }
 
 export const useKeyboardPreferencesStore = create<KeyboardPreferencesState>()(
-  persist(
-    (set) => ({
-      adaptiveLayoutEnabled: true,
-      setAdaptiveLayoutEnabled: (enabled) =>
-        set({ adaptiveLayoutEnabled: enabled }),
-    }),
-    {
-      name: "keyboard-preferences",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        adaptiveLayoutEnabled: state.adaptiveLayoutEnabled,
-      }),
-    },
-  ),
+	persist(
+		(set) => ({
+			adaptiveLayoutEnabled: true,
+			setAdaptiveLayoutEnabled: (enabled) =>
+				set({ adaptiveLayoutEnabled: enabled }),
+		}),
+		{
+			name: "keyboard-preferences",
+			storage: createJSONStorage(() => localStorage),
+			partialize: (state) => ({
+				adaptiveLayoutEnabled: state.adaptiveLayoutEnabled,
+			}),
+		},
+	),
 );
 
 /**
@@ -40,13 +40,13 @@ export const useKeyboardPreferencesStore = create<KeyboardPreferencesState>()(
  * `useKeyboardLayoutStore` directly outside this file.
  */
 export function useEffectiveLayoutMap(): ReadonlyMap<string, string> | null {
-  const layoutMap = useKeyboardLayoutStore((s) => s.map);
-  const adaptive = useKeyboardPreferencesStore((s) => s.adaptiveLayoutEnabled);
-  return adaptive ? layoutMap : null;
+	const layoutMap = useKeyboardLayoutStore((s) => s.map);
+	const adaptive = useKeyboardPreferencesStore((s) => s.adaptiveLayoutEnabled);
+	return adaptive ? layoutMap : null;
 }
 
 /** Imperative form of {@link useEffectiveLayoutMap} for non-React contexts. */
 export function getEffectiveLayoutMap(): ReadonlyMap<string, string> | null {
-  const adaptive = useKeyboardPreferencesStore.getState().adaptiveLayoutEnabled;
-  return adaptive ? useKeyboardLayoutStore.getState().map : null;
+	const adaptive = useKeyboardPreferencesStore.getState().adaptiveLayoutEnabled;
+	return adaptive ? useKeyboardLayoutStore.getState().map : null;
 }

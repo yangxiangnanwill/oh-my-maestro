@@ -6,8 +6,8 @@ if (typeof window === "undefined") {
 }
 
 // Phase 3 stub — @xterm/addon-serialize dynamic import (will fail in typecheck but works at runtime)
-const { SerializeAddon } = await import("@xterm/addon-serialize") as any;
-const { Terminal: HeadlessTerminal } = await import("@xterm/headless") as any;
+const { SerializeAddon } = (await import("@xterm/addon-serialize")) as any;
+const { Terminal: HeadlessTerminal } = (await import("@xterm/headless")) as any;
 const { flushSession, getSerializedScrollback, recoverScrollback } =
 	await import("./session");
 

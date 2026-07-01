@@ -3,5 +3,5 @@
 import { describe, it } from "bun:test";
 
 describe("HostServiceCoordinator", () => {
-  it.todo("Phase 4: implement tests", () => {});
+	it.todo("Phase 4: implement tests", () => {});
 });

@@ -15,8 +15,10 @@ interface RemoveFromSidebarIntentState {
 	request: (req: RemoveFromSidebarRequest) => void;
 }
 
-export const useRemoveFromSidebarIntent = create<RemoveFromSidebarIntentState>(() => ({
-	request: (_req) => {
-		// Stub: no-op until sidebar management is integrated
-	},
-}));
+export const useRemoveFromSidebarIntent = create<RemoveFromSidebarIntentState>(
+	() => ({
+		request: (_req) => {
+			// Stub: no-op until sidebar management is integrated
+		},
+	}),
+);

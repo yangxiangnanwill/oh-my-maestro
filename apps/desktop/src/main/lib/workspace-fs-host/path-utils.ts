@@ -4,5 +4,5 @@
 import path from "node:path";
 
 export function toRelativePath(rootPath: string, absolutePath: string): string {
-  return path.relative(rootPath, absolutePath);
+	return path.relative(rootPath, absolutePath);
 }

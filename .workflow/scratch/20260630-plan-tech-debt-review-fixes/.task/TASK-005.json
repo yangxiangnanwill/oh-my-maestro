@@ -1,0 +1,105 @@
+{
+  "id": "TASK-005",
+  "title": "tabs/store: replace module-level mutable counters with crypto.randomUUID()",
+  "description": "Fix ISS-008: tabs/store.ts uses module-level mutable `let tabCounter = 0; let paneCounter = 0;` (lines 58-59) to generate IDs. These counters do not reset during HMR, risking ID collisions. Replace with crypto.randomUUID() so IDs are unique without stateful counters.",
+  "issue_id": "ISS-20260630-008",
+  "issue_refs": ["ISS-20260630-008"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "small",
+  "action": "In apps/desktop/src/renderer/stores/tabs/store.ts: (1) Delete `let tabCounter = 0;` (line 58) and `let paneCounter = 0;` (line 59). (2) Rewrite `nextTabId()` (lines 61-63) to `return crypto.randomUUID();`. (3) Rewrite `nextPaneId()` (lines 65-67) to `return crypto.randomUUID();`. (4) Update the stale comment block (lines 56-57) `// Phase 4: 将计数器移入 zustand store 内部或使用 crypto.randomUUID() / // 模块级可变计数器在 HMR 时不重置，可能导致 ID 碰撞` to a single line documenting the crypto.randomUUID approach. crypto.randomUUID is available globally in Electron renderer (secure context).",
+  "status": "completed",
+  "completed_at": "2026-06-30",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/renderer/stores/tabs/store.ts",
+  "focus_paths": [
+    "apps/desktop/src/renderer/stores/tabs/store.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/stores/tabs/store.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave-1-independent",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n 'crypto.randomUUID' apps/desktop/src/renderer/stores/tabs/store.ts returns at least 2 matches (nextTabId + nextPaneId)",
+      "! grep -n 'tabCounter' apps/desktop/src/renderer/stores/tabs/store.ts returns no matches",
+      "! grep -n 'paneCounter' apps/desktop/src/renderer/stores/tabs/store.ts returns no matches",
+      "! grep -n 'let tabCounter = 0\\|let paneCounter = 0' apps/desktop/src/renderer/stores/tabs/store.ts returns no matches",
+      "cd apps/desktop && bun run typecheck exits 0"
+    ],
+    "verification": "Run grep checks to confirm counters removed + crypto.randomUUID present, then `cd apps/desktop && bun run typecheck` exits 0. crypto.randomUUID is typed in lib.dom.d.ts (included via tsconfig lib DOM), so no import needed.",
+    "definition_of_done": "Tab and pane IDs are generated via crypto.randomUUID() — no module-level mutable state, no HMR collision risk, IDs remain unique string type (compatible with existing Tab.id/Pane.id string fields)."
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/stores/tabs/store.ts",
+      "action": "modify",
+      "target": "nextTabId + nextPaneId + counters",
+      "change": "Delete `let tabCounter = 0;` and `let paneCounter = 0;`; rewrite `function nextTabId(): string { return crypto.randomUUID(); }` and `function nextPaneId(): string { return crypto.randomUUID(); }`; replace the 2-line Phase-4 comment with `// IDs generated via crypto.randomUUID() — no module-level mutable counters (HMR-safe).`"
+    }
+  ],
+  "implementation": [
+    "Step 1: Read store.ts to confirm counters at lines 58-59 and nextTabId/nextPaneId at lines 61-67, and that Tab.id/Pane.id are `string` (no format constraint on `tab-`/`pane-` prefixes).",
+    "Step 2: Delete lines 58-59 (the two `let ...Counter = 0;` declarations).",
+    "Step 3: Rewrite nextTabId body from `return \\`tab-${++tabCounter}-${Date.now()}\\`;` to `return crypto.randomUUID();`. Same for nextPaneId.",
+    "Step 4: Replace the 2-line Phase-4 comment (lines 56-57) with the single-line HMR-safe comment.",
+    "Step 5: Run `cd apps/desktop && bun run typecheck` — crypto.randomUUID is globally available (DOM lib) so no import needed; expect exit 0.",
+    "Step 6: Grep-verify no `tabCounter`/`paneCounter` references remain anywhere in the file."
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck",
+      "grep -rn 'tabCounter\\|paneCounter' apps/desktop/src/renderer/stores/tabs/store.ts"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck exits 0",
+      "no counter references remain",
+      "crypto.randomUUID used in both ID generators"
+    ]
+  },
+  "reference": {
+    "pattern": "crypto.randomUUID() for unique identifiers in browser/Electron renderer contexts — replaces stateful counters; returns a v4 UUID string.",
+    "files": [
+      "apps/desktop/src/renderer/stores/tabs/store.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "crypto.randomUUID() over zustand-store-internal counters — UUIDs are globally unique (HMR-safe, no reset needed), require zero state, and return `string` matching the existing Tab.id/Pane.id types. The store-internal-counter alternative would still need reset logic on HMR.",
+    "decision_factors": [
+      "Electron renderer is a secure context — crypto.randomUUID is available without polyfill.",
+      "Existing ID format `tab-${n}-${ts}` was only used as a unique string key; no code parses the prefix.",
+      "UUIDs are longer but string-key equivalence is preserved."
+    ],
+    "tradeoffs": "UUIDs are less human-readable than `tab-1-1700000000` in devtools, but uniqueness/HMR-safety outweighs debug readability."
+  },
+  "risks": [
+    {
+      "risk": "Some code parses tab/pane ID format expecting `tab-`/`pane-` prefix",
+      "mitigation": "grep `tab-\\|pane-` across src/ for ID format dependencies before the change; if found, prefix the UUID (e.g. `\\`tab-${crypto.randomUUID()}\\``). Read_first already includes the store; a quick grep during implementation confirms safety."
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["workspace tabs/panes"],
+    "affected_components": ["useTabsStore"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "status": "pending",
+    "estimated_time": "15m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": "wave-1-independent",
+    "executor": "agent"
+  }
+}

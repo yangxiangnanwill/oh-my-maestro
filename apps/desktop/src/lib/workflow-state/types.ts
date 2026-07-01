@@ -110,9 +110,7 @@ export const artifactSchema = z.object({
 	context_package: z.string().optional(),
 	verdict: z.string().optional(),
 	scope_verdict: z.string().optional(),
-	depends_on: z
-		.union([z.array(z.string()), z.string()])
-		.optional(),
+	depends_on: z.union([z.array(z.string()), z.string()]).optional(),
 	harvested: z.boolean().optional(),
 	created_at: z.string().optional(),
 	completed_at: z.string().optional(),

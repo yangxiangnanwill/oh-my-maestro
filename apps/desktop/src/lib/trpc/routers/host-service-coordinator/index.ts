@@ -1,9 +1,7 @@
 import { observable } from "@trpc/server/observable";
 import { env } from "main/env.main";
-import {
-	getHostServiceCoordinator,
-	type HostServiceStatusEvent,
-} from "main/lib/host-service-coordinator";
+import { getHostServiceCoordinator } from "main/lib/host-service-coordinator";
+import type { HostServiceStatusEvent } from "shared/host-info-types";
 import { z } from "zod";
 import { publicProcedure, router } from "../..";
 import { loadToken } from "../auth/utils/auth-functions";

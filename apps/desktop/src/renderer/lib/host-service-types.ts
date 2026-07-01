@@ -12,9 +12,9 @@
  * when it cannot clean up workspace resources.
  */
 export interface TeardownFailureCause {
-  message: string;
-  code?: string;
-  details?: unknown;
+	message: string;
+	code?: string;
+	details?: unknown;
 }
 
 /**
@@ -22,6 +22,6 @@ export interface TeardownFailureCause {
  * the same workspace.
  */
 export interface DeleteInProgressCause {
-  message: string;
-  startedAt?: string;
+	message: string;
+	startedAt?: string;
 }

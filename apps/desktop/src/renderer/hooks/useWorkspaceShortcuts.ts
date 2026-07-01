@@ -37,13 +37,10 @@ export function useWorkspaceShortcuts() {
 	});
 
 	// TODO: Register hotkeys via useHotkey when renderer/hotkeys migration is complete
-	const switchToWorkspace = useCallback(
-		(_index: number) => {
-			// const workspace = allWorkspaces[_index];
-			// if (workspace) navigateToWorkspace(workspace.id, navigate);
-		},
-		[],
-	);
+	const switchToWorkspace = useCallback((_index: number) => {
+		// const workspace = allWorkspaces[_index];
+		// if (workspace) navigateToWorkspace(workspace.id, navigate);
+	}, []);
 
 	// Hotkeys are registered as no-ops until hotkeys migration is complete
 	// useHotkey("JUMP_TO_WORKSPACE_1", () => switchToWorkspace(0));

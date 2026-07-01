@@ -67,7 +67,16 @@ const openPullRequest = {
 	deletions: 0,
 	reviewDecision: "pending" as const,
 	checksStatus: "none" as const,
-	checks: [] as Array<{ name: string; status: string; conclusion: string | null; url: string | null; }>, headRefName: null, headRepositoryOwner: null, headRepositoryName: null, isCrossRepository: false,
+	checks: [] as Array<{
+		name: string;
+		status: string;
+		conclusion: string | null;
+		url: string | null;
+	}>,
+	headRefName: null,
+	headRepositoryOwner: null,
+	headRepositoryName: null,
+	isCrossRepository: false,
 };
 let mergePullRequest: typeof import("./merge-pull-request").mergePullRequest;
 

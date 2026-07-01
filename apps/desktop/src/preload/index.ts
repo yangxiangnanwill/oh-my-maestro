@@ -73,27 +73,46 @@ const API = {
 };
 
 const maestroAPI = {
-	selectProject: () => ipcRenderer.invoke("maestro:selectProject") as Promise<string | null>,
-	checkCli: () => ipcRenderer.invoke("maestro:checkCli") as Promise<MaestroCliStatus>,
+	selectProject: () =>
+		ipcRenderer.invoke("maestro:selectProject") as Promise<string | null>,
+	checkCli: () =>
+		ipcRenderer.invoke("maestro:checkCli") as Promise<MaestroCliStatus>,
 	run: (payload: MaestroRunPayload) =>
 		ipcRenderer.invoke("maestro:run", payload) as Promise<MaestroRunResult>,
 	readState: (cwd: string) =>
-		ipcRenderer.invoke("maestro:readState", { cwd }) as Promise<MaestroStateResult>,
+		ipcRenderer.invoke("maestro:readState", {
+			cwd,
+		}) as Promise<MaestroStateResult>,
 	createCodingSession: (payload: MaestroCodingSessionPayload) =>
 		ipcRenderer.invoke(
 			"maestro:createCodingSession",
 			payload,
 		) as Promise<MaestroCodingSessionResult>,
 	ralphSession: (payload: RalphCommandPayload) =>
-		ipcRenderer.invoke("maestro:ralphSession", payload) as Promise<MaestroRunResult>,
+		ipcRenderer.invoke(
+			"maestro:ralphSession",
+			payload,
+		) as Promise<MaestroRunResult>,
 	ralphCheck: (payload: RalphCommandPayload) =>
-		ipcRenderer.invoke("maestro:ralphCheck", payload) as Promise<MaestroRunResult>,
+		ipcRenderer.invoke(
+			"maestro:ralphCheck",
+			payload,
+		) as Promise<MaestroRunResult>,
 	ralphNext: (payload: RalphCommandPayload) =>
-		ipcRenderer.invoke("maestro:ralphNext", payload) as Promise<MaestroRunResult>,
+		ipcRenderer.invoke(
+			"maestro:ralphNext",
+			payload,
+		) as Promise<MaestroRunResult>,
 	ralphComplete: (payload: RalphCompletePayload) =>
-		ipcRenderer.invoke("maestro:ralphComplete", payload) as Promise<MaestroRunResult>,
+		ipcRenderer.invoke(
+			"maestro:ralphComplete",
+			payload,
+		) as Promise<MaestroRunResult>,
 	ralphRetry: (payload: RalphRetryPayload) =>
-		ipcRenderer.invoke("maestro:ralphRetry", payload) as Promise<MaestroRunResult>,
+		ipcRenderer.invoke(
+			"maestro:ralphRetry",
+			payload,
+		) as Promise<MaestroRunResult>,
 };
 
 contextBridge.exposeInMainWorld("App", API);

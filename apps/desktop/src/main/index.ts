@@ -133,7 +133,10 @@ function validateCompletionStatus(status: unknown): RalphCompletionStatus {
 	throw new Error("Invalid completion status");
 }
 
-function validateOptionalText(value: unknown, fieldName: string): string | null {
+function validateOptionalText(
+	value: unknown,
+	fieldName: string,
+): string | null {
 	if (value === undefined || value === null || value === "") {
 		return null;
 	}
@@ -312,7 +315,8 @@ async function createCodingSession(
 				id: "G1",
 				goal: "Plan the desktop coding workflow change",
 				boundary: "apps/desktop only",
-				done_when: "Plan identifies UI state, command boundary, and verification steps",
+				done_when:
+					"Plan identifies UI state, command boundary, and verification steps",
 				evidence: ".workflow/scratch/*/plan.md",
 				lifecycle: ["plan"],
 				status: "pending",
@@ -323,7 +327,8 @@ async function createCodingSession(
 				id: "G2",
 				goal: "Implement the desktop coding workflow",
 				boundary: "Minimal renderer/main/preload changes",
-				done_when: "User can create or continue a Ralph coding workflow from the desktop app",
+				done_when:
+					"User can create or continue a Ralph coding workflow from the desktop app",
 				evidence: "apps/desktop source changes",
 				lifecycle: ["execute"],
 				status: "pending",
@@ -334,7 +339,8 @@ async function createCodingSession(
 				id: "G3",
 				goal: "Review safety and product fit",
 				boundary: "No unrelated refactor",
-				done_when: "Review finds no blocking command safety or workflow defects",
+				done_when:
+					"Review finds no blocking command safety or workflow defects",
 				evidence: "review output",
 				lifecycle: ["review"],
 				status: "pending",
@@ -368,7 +374,9 @@ async function runRalphCommand(
 	return runExecutable("maestro", ["ralph", ...args], cwd);
 }
 
-async function readFirstWorkflowState(cwd: string): Promise<MaestroStateResult> {
+async function readFirstWorkflowState(
+	cwd: string,
+): Promise<MaestroStateResult> {
 	const candidates = [
 		join(cwd, ".workflow", "state.json"),
 		join(cwd, "status.json"),
@@ -429,9 +437,9 @@ function runExecutable(
 			(error, stdout, stderr) => {
 				if (error) {
 					const exitCode =
-						typeof (error as NodeJS.ErrnoException & { code?: unknown }).code ===
-						"number"
-							? ((error as NodeJS.ErrnoException & { code: number }).code)
+						typeof (error as NodeJS.ErrnoException & { code?: unknown })
+							.code === "number"
+							? (error as NodeJS.ErrnoException & { code: number }).code
 							: null;
 					resolveResult({
 						ok: false,
@@ -491,25 +499,28 @@ function registerMaestroIpc() {
 		return readFirstWorkflowState(cwd);
 	});
 
-	ipcMain.handle("maestro:createCodingSession", async (_event, payload: unknown) => {
-		if (payload === null || typeof payload !== "object") {
-			throw new Error("Invalid coding session payload");
-		}
-		const input = payload as { cwd?: unknown; task?: unknown };
-		const cwd = validateCwd(input.cwd);
-		const task = validateTask(input.task);
-		try {
-			return await createCodingSession(cwd, task);
-		} catch (error) {
-			return {
-				ok: false,
-				sessionId: "",
-				sessionDir: "",
-				statusPath: "",
-				error: error instanceof Error ? error.message : String(error),
-			};
-		}
-	});
+	ipcMain.handle(
+		"maestro:createCodingSession",
+		async (_event, payload: unknown) => {
+			if (payload === null || typeof payload !== "object") {
+				throw new Error("Invalid coding session payload");
+			}
+			const input = payload as { cwd?: unknown; task?: unknown };
+			const cwd = validateCwd(input.cwd);
+			const task = validateTask(input.task);
+			try {
+				return await createCodingSession(cwd, task);
+			} catch (error) {
+				return {
+					ok: false,
+					sessionId: "",
+					sessionDir: "",
+					statusPath: "",
+					error: error instanceof Error ? error.message : String(error),
+				};
+			}
+		},
+	);
 
 	ipcMain.handle("maestro:ralphSession", async (_event, payload: unknown) => {
 		if (payload === null || typeof payload !== "object") {
@@ -554,7 +565,11 @@ function registerMaestroIpc() {
 		if (payload === null || typeof payload !== "object") {
 			throw new Error("Invalid Ralph retry payload");
 		}
-		const input = payload as { cwd?: unknown; sessionId?: unknown; index?: unknown };
+		const input = payload as {
+			cwd?: unknown;
+			sessionId?: unknown;
+			index?: unknown;
+		};
 		const cwd = validateCwd(input.cwd);
 		const sessionId = validateSessionId(input.sessionId);
 		const index = validateStepIndex(input.index);
@@ -624,11 +639,11 @@ app.whenReady().then(() => {
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
+	if (process.platform !== "darwin") app.quit();
 });
 
 app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+	if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
 export function setSkipQuitConfirmation(): void {}

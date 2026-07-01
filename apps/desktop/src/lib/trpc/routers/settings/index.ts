@@ -147,7 +147,12 @@ function runAgentPresetPermissionsMigration() {
 
 	const nextOverrides = isExistingUser
 		? applyLegacyPermissionsOverrides(
-				readAgentPresetOverrides(row.agentPresetOverrides as AgentPresetOverrideEnvelope | null | undefined),
+				readAgentPresetOverrides(
+					row.agentPresetOverrides as
+						| AgentPresetOverrideEnvelope
+						| null
+						| undefined,
+				),
 			)
 		: undefined;
 
@@ -168,7 +173,9 @@ function runAgentPresetPermissionsMigration() {
 function readRawAgentPresetOverrides(): AgentPresetOverrideEnvelope {
 	runAgentPresetPermissionsMigration();
 	const row = getSettings();
-	return readAgentPresetOverrides(row.agentPresetOverrides as AgentPresetOverrideEnvelope | null | undefined);
+	return readAgentPresetOverrides(
+		row.agentPresetOverrides as AgentPresetOverrideEnvelope | null | undefined,
+	);
 }
 
 function readRawAgentCustomDefinitions(): AgentCustomDefinition[] {
@@ -240,10 +247,13 @@ function initializeDefaultPresets() {
 			: DEFAULT_PRESETS.map((p) => ({
 					id: crypto.randomUUID(),
 					...p,
-					executionMode: p.executionMode ?? "new-tab", projectIds: p.projectIds ?? null,
+					executionMode: p.executionMode ?? "new-tab",
+					projectIds: p.projectIds ?? null,
 				}));
 
-	saveTerminalPresets(mergedPresets as TerminalPreset[], { terminalPresetsInitialized: true });
+	saveTerminalPresets(mergedPresets as TerminalPreset[], {
+		terminalPresetsInitialized: true,
+	});
 
 	return mergedPresets;
 }

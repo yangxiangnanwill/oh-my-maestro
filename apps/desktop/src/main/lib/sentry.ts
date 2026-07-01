@@ -14,7 +14,7 @@
 // import { session } from "electron";
 // import { env } from "../env.main";
 
-let sentryInitialized = false;
+const sentryInitialized = false;
 
 export function initSentry(): void {
 	if (sentryInitialized) return;
@@ -37,5 +37,7 @@ export function initSentry(): void {
 	//
 	// sentryInitialized = true;
 
-	console.log("[sentry] Sentry is not enabled — install @sentry/electron and configure SENTRY_DSN_DESKTOP to enable");
+	console.log(
+		"[sentry] Sentry is not enabled — install @sentry/electron and configure SENTRY_DSN_DESKTOP to enable",
+	);
 }

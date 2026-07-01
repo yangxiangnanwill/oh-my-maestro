@@ -8,162 +8,162 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as AuthenticatedDashboardLayoutRouteImport } from './routes/_authenticated/_dashboard/layout'
-import { Route as AuthenticatedSettingsPageRouteImport } from './routes/_authenticated/settings/page'
-import { Route as AuthenticatedDashboardPageRouteImport } from './routes/_authenticated/_dashboard/page'
-import { Route as AuthenticatedWorkspacesWorkspaceIdLayoutRouteImport } from './routes/_authenticated/workspaces/$workspaceId/layout'
-import { Route as AuthenticatedWorkspacesWorkspaceIdPageRouteImport } from './routes/_authenticated/workspaces/$workspaceId/page'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as AuthenticatedDashboardLayoutRouteImport } from "./routes/_authenticated/_dashboard/layout";
+import { Route as AuthenticatedSettingsPageRouteImport } from "./routes/_authenticated/settings/page";
+import { Route as AuthenticatedDashboardPageRouteImport } from "./routes/_authenticated/_dashboard/page";
+import { Route as AuthenticatedWorkspacesWorkspaceIdLayoutRouteImport } from "./routes/_authenticated/workspaces/$workspaceId/layout";
+import { Route as AuthenticatedWorkspacesWorkspaceIdPageRouteImport } from "./routes/_authenticated/workspaces/$workspaceId/page";
 
 const AuthenticatedDashboardLayoutRoute =
-  AuthenticatedDashboardLayoutRouteImport.update({
-    id: '/_authenticated/_dashboard',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+	AuthenticatedDashboardLayoutRouteImport.update({
+		id: "/_authenticated/_dashboard",
+		getParentRoute: () => rootRouteImport,
+	} as any);
 const AuthenticatedSettingsPageRoute =
-  AuthenticatedSettingsPageRouteImport.update({
-    id: '/_authenticated/settings/',
-    path: '/settings/',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+	AuthenticatedSettingsPageRouteImport.update({
+		id: "/_authenticated/settings/",
+		path: "/settings/",
+		getParentRoute: () => rootRouteImport,
+	} as any);
 const AuthenticatedDashboardPageRoute =
-  AuthenticatedDashboardPageRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedDashboardLayoutRoute,
-  } as any)
+	AuthenticatedDashboardPageRouteImport.update({
+		id: "/",
+		path: "/",
+		getParentRoute: () => AuthenticatedDashboardLayoutRoute,
+	} as any);
 const AuthenticatedWorkspacesWorkspaceIdLayoutRoute =
-  AuthenticatedWorkspacesWorkspaceIdLayoutRouteImport.update({
-    id: '/_authenticated/workspaces/$workspaceId',
-    path: '/workspaces/$workspaceId',
-    getParentRoute: () => rootRouteImport,
-  } as any)
+	AuthenticatedWorkspacesWorkspaceIdLayoutRouteImport.update({
+		id: "/_authenticated/workspaces/$workspaceId",
+		path: "/workspaces/$workspaceId",
+		getParentRoute: () => rootRouteImport,
+	} as any);
 const AuthenticatedWorkspacesWorkspaceIdPageRoute =
-  AuthenticatedWorkspacesWorkspaceIdPageRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedWorkspacesWorkspaceIdLayoutRoute,
-  } as any)
+	AuthenticatedWorkspacesWorkspaceIdPageRouteImport.update({
+		id: "/",
+		path: "/",
+		getParentRoute: () => AuthenticatedWorkspacesWorkspaceIdLayoutRoute,
+	} as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedDashboardPageRoute
-  '/workspaces/$workspaceId': typeof AuthenticatedWorkspacesWorkspaceIdLayoutRouteWithChildren
-  '/settings/': typeof AuthenticatedSettingsPageRoute
-  '/workspaces/$workspaceId/': typeof AuthenticatedWorkspacesWorkspaceIdPageRoute
+	"/": typeof AuthenticatedDashboardPageRoute;
+	"/workspaces/$workspaceId": typeof AuthenticatedWorkspacesWorkspaceIdLayoutRouteWithChildren;
+	"/settings/": typeof AuthenticatedSettingsPageRoute;
+	"/workspaces/$workspaceId/": typeof AuthenticatedWorkspacesWorkspaceIdPageRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof AuthenticatedDashboardPageRoute
-  '/settings': typeof AuthenticatedSettingsPageRoute
-  '/workspaces/$workspaceId': typeof AuthenticatedWorkspacesWorkspaceIdPageRoute
+	"/": typeof AuthenticatedDashboardPageRoute;
+	"/settings": typeof AuthenticatedSettingsPageRoute;
+	"/workspaces/$workspaceId": typeof AuthenticatedWorkspacesWorkspaceIdPageRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/_authenticated/_dashboard': typeof AuthenticatedDashboardLayoutRouteWithChildren
-  '/_authenticated/workspaces/$workspaceId': typeof AuthenticatedWorkspacesWorkspaceIdLayoutRouteWithChildren
-  '/_authenticated/_dashboard/': typeof AuthenticatedDashboardPageRoute
-  '/_authenticated/settings/': typeof AuthenticatedSettingsPageRoute
-  '/_authenticated/workspaces/$workspaceId/': typeof AuthenticatedWorkspacesWorkspaceIdPageRoute
+	__root__: typeof rootRouteImport;
+	"/_authenticated/_dashboard": typeof AuthenticatedDashboardLayoutRouteWithChildren;
+	"/_authenticated/workspaces/$workspaceId": typeof AuthenticatedWorkspacesWorkspaceIdLayoutRouteWithChildren;
+	"/_authenticated/_dashboard/": typeof AuthenticatedDashboardPageRoute;
+	"/_authenticated/settings/": typeof AuthenticatedSettingsPageRoute;
+	"/_authenticated/workspaces/$workspaceId/": typeof AuthenticatedWorkspacesWorkspaceIdPageRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/workspaces/$workspaceId'
-    | '/settings/'
-    | '/workspaces/$workspaceId/'
-  fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings' | '/workspaces/$workspaceId'
-  id:
-    | '__root__'
-    | '/_authenticated/_dashboard'
-    | '/_authenticated/workspaces/$workspaceId'
-    | '/_authenticated/_dashboard/'
-    | '/_authenticated/settings/'
-    | '/_authenticated/workspaces/$workspaceId/'
-  fileRoutesById: FileRoutesById
+	fileRoutesByFullPath: FileRoutesByFullPath;
+	fullPaths:
+		| "/"
+		| "/workspaces/$workspaceId"
+		| "/settings/"
+		| "/workspaces/$workspaceId/";
+	fileRoutesByTo: FileRoutesByTo;
+	to: "/" | "/settings" | "/workspaces/$workspaceId";
+	id:
+		| "__root__"
+		| "/_authenticated/_dashboard"
+		| "/_authenticated/workspaces/$workspaceId"
+		| "/_authenticated/_dashboard/"
+		| "/_authenticated/settings/"
+		| "/_authenticated/workspaces/$workspaceId/";
+	fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  AuthenticatedDashboardLayoutRoute: typeof AuthenticatedDashboardLayoutRouteWithChildren
-  AuthenticatedWorkspacesWorkspaceIdLayoutRoute: typeof AuthenticatedWorkspacesWorkspaceIdLayoutRouteWithChildren
-  AuthenticatedSettingsPageRoute: typeof AuthenticatedSettingsPageRoute
+	AuthenticatedDashboardLayoutRoute: typeof AuthenticatedDashboardLayoutRouteWithChildren;
+	AuthenticatedWorkspacesWorkspaceIdLayoutRoute: typeof AuthenticatedWorkspacesWorkspaceIdLayoutRouteWithChildren;
+	AuthenticatedSettingsPageRoute: typeof AuthenticatedSettingsPageRoute;
 }
 
-declare module '@tanstack/react-router' {
-  interface FileRoutesByPath {
-    '/_authenticated/_dashboard': {
-      id: '/_authenticated/_dashboard'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedDashboardLayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/settings/': {
-      id: '/_authenticated/settings/'
-      path: '/settings'
-      fullPath: '/settings/'
-      preLoaderRoute: typeof AuthenticatedSettingsPageRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/_dashboard/': {
-      id: '/_authenticated/_dashboard/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedDashboardPageRouteImport
-      parentRoute: typeof AuthenticatedDashboardLayoutRoute
-    }
-    '/_authenticated/workspaces/$workspaceId': {
-      id: '/_authenticated/workspaces/$workspaceId'
-      path: '/workspaces/$workspaceId'
-      fullPath: '/workspaces/$workspaceId'
-      preLoaderRoute: typeof AuthenticatedWorkspacesWorkspaceIdLayoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/workspaces/$workspaceId/': {
-      id: '/_authenticated/workspaces/$workspaceId/'
-      path: '/'
-      fullPath: '/workspaces/$workspaceId/'
-      preLoaderRoute: typeof AuthenticatedWorkspacesWorkspaceIdPageRouteImport
-      parentRoute: typeof AuthenticatedWorkspacesWorkspaceIdLayoutRoute
-    }
-  }
+declare module "@tanstack/react-router" {
+	interface FileRoutesByPath {
+		"/_authenticated/_dashboard": {
+			id: "/_authenticated/_dashboard";
+			path: "";
+			fullPath: "/";
+			preLoaderRoute: typeof AuthenticatedDashboardLayoutRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		"/_authenticated/settings/": {
+			id: "/_authenticated/settings/";
+			path: "/settings";
+			fullPath: "/settings/";
+			preLoaderRoute: typeof AuthenticatedSettingsPageRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		"/_authenticated/_dashboard/": {
+			id: "/_authenticated/_dashboard/";
+			path: "/";
+			fullPath: "/";
+			preLoaderRoute: typeof AuthenticatedDashboardPageRouteImport;
+			parentRoute: typeof AuthenticatedDashboardLayoutRoute;
+		};
+		"/_authenticated/workspaces/$workspaceId": {
+			id: "/_authenticated/workspaces/$workspaceId";
+			path: "/workspaces/$workspaceId";
+			fullPath: "/workspaces/$workspaceId";
+			preLoaderRoute: typeof AuthenticatedWorkspacesWorkspaceIdLayoutRouteImport;
+			parentRoute: typeof rootRouteImport;
+		};
+		"/_authenticated/workspaces/$workspaceId/": {
+			id: "/_authenticated/workspaces/$workspaceId/";
+			path: "/";
+			fullPath: "/workspaces/$workspaceId/";
+			preLoaderRoute: typeof AuthenticatedWorkspacesWorkspaceIdPageRouteImport;
+			parentRoute: typeof AuthenticatedWorkspacesWorkspaceIdLayoutRoute;
+		};
+	}
 }
 
 interface AuthenticatedDashboardLayoutRouteChildren {
-  AuthenticatedDashboardPageRoute: typeof AuthenticatedDashboardPageRoute
+	AuthenticatedDashboardPageRoute: typeof AuthenticatedDashboardPageRoute;
 }
 
 const AuthenticatedDashboardLayoutRouteChildren: AuthenticatedDashboardLayoutRouteChildren =
-  {
-    AuthenticatedDashboardPageRoute: AuthenticatedDashboardPageRoute,
-  }
+	{
+		AuthenticatedDashboardPageRoute: AuthenticatedDashboardPageRoute,
+	};
 
 const AuthenticatedDashboardLayoutRouteWithChildren =
-  AuthenticatedDashboardLayoutRoute._addFileChildren(
-    AuthenticatedDashboardLayoutRouteChildren,
-  )
+	AuthenticatedDashboardLayoutRoute._addFileChildren(
+		AuthenticatedDashboardLayoutRouteChildren,
+	);
 
 interface AuthenticatedWorkspacesWorkspaceIdLayoutRouteChildren {
-  AuthenticatedWorkspacesWorkspaceIdPageRoute: typeof AuthenticatedWorkspacesWorkspaceIdPageRoute
+	AuthenticatedWorkspacesWorkspaceIdPageRoute: typeof AuthenticatedWorkspacesWorkspaceIdPageRoute;
 }
 
 const AuthenticatedWorkspacesWorkspaceIdLayoutRouteChildren: AuthenticatedWorkspacesWorkspaceIdLayoutRouteChildren =
-  {
-    AuthenticatedWorkspacesWorkspaceIdPageRoute:
-      AuthenticatedWorkspacesWorkspaceIdPageRoute,
-  }
+	{
+		AuthenticatedWorkspacesWorkspaceIdPageRoute:
+			AuthenticatedWorkspacesWorkspaceIdPageRoute,
+	};
 
 const AuthenticatedWorkspacesWorkspaceIdLayoutRouteWithChildren =
-  AuthenticatedWorkspacesWorkspaceIdLayoutRoute._addFileChildren(
-    AuthenticatedWorkspacesWorkspaceIdLayoutRouteChildren,
-  )
+	AuthenticatedWorkspacesWorkspaceIdLayoutRoute._addFileChildren(
+		AuthenticatedWorkspacesWorkspaceIdLayoutRouteChildren,
+	);
 
 const rootRouteChildren: RootRouteChildren = {
-  AuthenticatedDashboardLayoutRoute:
-    AuthenticatedDashboardLayoutRouteWithChildren,
-  AuthenticatedWorkspacesWorkspaceIdLayoutRoute:
-    AuthenticatedWorkspacesWorkspaceIdLayoutRouteWithChildren,
-  AuthenticatedSettingsPageRoute: AuthenticatedSettingsPageRoute,
-}
+	AuthenticatedDashboardLayoutRoute:
+		AuthenticatedDashboardLayoutRouteWithChildren,
+	AuthenticatedWorkspacesWorkspaceIdLayoutRoute:
+		AuthenticatedWorkspacesWorkspaceIdLayoutRouteWithChildren,
+	AuthenticatedSettingsPageRoute: AuthenticatedSettingsPageRoute,
+};
 export const routeTree = rootRouteImport
-  ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+	._addFileChildren(rootRouteChildren)
+	._addFileTypes<FileRouteTypes>();

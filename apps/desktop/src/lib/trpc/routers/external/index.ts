@@ -143,7 +143,16 @@ export const createExternalRouter = () => {
 		openInFinder: publicProcedure
 			.input(z.string())
 			.mutation(async ({ input }) => {
-				// Phase 4: 添加路径验证 — 检查绝对路径、规范化路径、防止路径遍历
+				// openInFinder reveals a path in the OS file manager; with no cwd
+				// input there's no safe way to interpret a relative path, so we
+				// reject them loudly instead of silently resolving against
+				// Electron's working directory.
+				if (!nodePath.isAbsolute(input)) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: `openInFinder requires an absolute path (got ${JSON.stringify(input)}).`,
+					});
+				}
 				shell.showItemInFolder(input);
 			}),
 

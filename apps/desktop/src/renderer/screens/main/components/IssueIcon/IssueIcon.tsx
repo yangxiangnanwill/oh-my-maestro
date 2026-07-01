@@ -5,13 +5,13 @@ import { GoIssueClosed, GoIssueOpened } from "react-icons/go";
 export type IssueState = "open" | "closed";
 
 interface IssueIconProps {
-  state: IssueState;
-  className?: string;
+	state: IssueState;
+	className?: string;
 }
 
 export function IssueIcon({ state, className }: IssueIconProps) {
-  if (state === "closed") {
-    return <GoIssueClosed className={className} />;
-  }
-  return <GoIssueOpened className={className} />;
+	if (state === "closed") {
+		return <GoIssueClosed className={className} />;
+	}
+	return <GoIssueOpened className={className} />;
 }

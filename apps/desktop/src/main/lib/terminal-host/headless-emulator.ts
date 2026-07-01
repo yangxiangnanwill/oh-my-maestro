@@ -93,7 +93,7 @@ export class HeadlessEmulator {
 
 		this.serializeAddon = new SerializeAddon();
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			this.terminal.loadAddon(this.serializeAddon as any);
+		this.terminal.loadAddon(this.serializeAddon as any);
 
 		// Initialize mode state
 		this.modes = { ...DEFAULT_MODES };

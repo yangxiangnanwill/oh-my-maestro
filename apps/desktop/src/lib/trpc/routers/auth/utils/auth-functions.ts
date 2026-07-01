@@ -20,7 +20,7 @@ import { EventEmitter } from "node:events";
 export const authEvents = new EventEmitter();
 
 export function getAuthToken(): string | null {
-  return null;
+	return null;
 }
 
 /**
@@ -28,23 +28,25 @@ export function getAuthToken(): string | null {
  * 当前 stub 始终返回 false — 调用方必须正确处理 false 返回值（拒绝访问）。
  */
 export function validateAuthToken(_token: string): boolean {
-  return false;
+	return false;
 }
 
 /**
  * Phase 4: 实现真实的 OAuth 回调处理。
  * 当前 stub 始终返回 success: false。
  */
-export function handleAuthCallback(_params: Record<string, string>): Promise<{ success: boolean; error?: string }> {
-  return Promise.resolve({ success: false, error: "Not implemented" });
+export function handleAuthCallback(
+	_params: Record<string, string>,
+): Promise<{ success: boolean; error?: string }> {
+	return Promise.resolve({ success: false, error: "Not implemented" });
 }
 
 // Phase 4: Updated to return object shape for settings router compatibility (migrated from Superset)
 export async function loadToken(): Promise<{
-  token: string | null;
-  expiresAt: string | null;
+	token: string | null;
+	expiresAt: string | null;
 }> {
-  return { token: null, expiresAt: null };
+	return { token: null, expiresAt: null };
 }
 
 /**
@@ -52,5 +54,5 @@ export async function loadToken(): Promise<{
  * 当前返回 null 以防止空对象 {} 被误判为 truthy 认证参数（COR-001 修复）。
  */
 export function parseAuthDeepLink(_url: string): Record<string, string> | null {
-  return null;
+	return null;
 }

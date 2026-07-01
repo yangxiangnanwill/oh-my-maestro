@@ -2,7 +2,11 @@ import {
 	PromptInputButton,
 	usePromptInputAttachments,
 } from "../../../stubs/ui/ai-elements/prompt-input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../../stubs/ui/tooltip";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "../../../stubs/ui/tooltip";
 import { HiMiniPaperClip } from "react-icons/hi2";
 import { PILL_BUTTON_CLASS } from "../../styles";
 

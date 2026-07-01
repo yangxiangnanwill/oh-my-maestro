@@ -10,8 +10,6 @@
  *   - @better-auth/stripe/client
  */
 
-import { env } from "renderer/env.renderer";
-
 let authToken: string | null = null;
 
 export function setAuthToken(token: string | null) {
@@ -40,10 +38,14 @@ export function getJwt(): string | null {
 export const authClient = {
 	signIn: {
 		email: async (_params: { email: string; password: string }) => {
-			throw new Error("authClient.signIn.email not implemented — add better-auth dependency");
+			throw new Error(
+				"authClient.signIn.email not implemented — add better-auth dependency",
+			);
 		},
 		social: async (_params: { provider: string; callbackURL?: string }) => {
-			throw new Error("authClient.signIn.social not implemented — add better-auth dependency");
+			throw new Error(
+				"authClient.signIn.social not implemented — add better-auth dependency",
+			);
 		},
 	},
 	signOut: async (_opts?: { fetchOptions?: { throw?: boolean } }) => {
@@ -51,8 +53,14 @@ export const authClient = {
 		setJwt(null);
 	},
 	signUp: {
-		email: async (_params: { email: string; password: string; name: string }) => {
-			throw new Error("authClient.signUp.email not implemented — add better-auth dependency");
+		email: async (_params: {
+			email: string;
+			password: string;
+			name: string;
+		}) => {
+			throw new Error(
+				"authClient.signUp.email not implemented — add better-auth dependency",
+			);
 		},
 	},
 	getSession: async () => {

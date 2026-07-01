@@ -47,17 +47,20 @@ export const createCommandChainRouter = () => {
 		getStatus: publicProcedure
 			.input(
 				z.object({
-					cwd: z.string().min(1).refine(
-						(val) => {
-							// 路径安全校验：拒绝空字节注入 + 路径遍历（..）
-							if (val.includes("\0")) {
-								return false;
-							}
-							const segments = resolve(val).split(sep);
-							return !segments.includes("..");
-						},
-						{ message: "Invalid working directory path" },
-					),
+					cwd: z
+						.string()
+						.min(1)
+						.refine(
+							(val) => {
+								// 路径安全校验：拒绝空字节注入 + 路径遍历（..）
+								if (val.includes("\0")) {
+									return false;
+								}
+								const segments = resolve(val).split(sep);
+								return !segments.includes("..");
+							},
+							{ message: "Invalid working directory path" },
+						),
 				}),
 			)
 			.output(commandChainStatusSchema.nullable())

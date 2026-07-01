@@ -1,6 +1,10 @@
 // Phase 4: Agent settings types and functions (migrated from Superset @superset/shared/agent-settings)
 
-import type { AgentCustomDefinition, AgentPresetOverrideEnvelope, PromptTransport } from "main/lib/local-db";
+import type {
+	AgentCustomDefinition,
+	AgentPresetOverrideEnvelope,
+	PromptTransport,
+} from "main/lib/local-db";
 
 export type AgentDefinitionId = string;
 
@@ -50,6 +54,7 @@ export function validateTaskPromptTemplate(template: string): {
 	const unknownVariables: string[] = [];
 	let match: RegExpExecArray | null;
 
+	// biome-ignore lint/suspicious/noAssignInExpressions: standard regex exec loop pattern
 	while ((match = varPattern.exec(template)) !== null) {
 		const varName = match[1];
 		if (!KNOWN_TASK_PROMPT_VARIABLES.includes(varName)) {
@@ -147,7 +152,11 @@ export function createOverrideEnvelopeWithPatch({
 		...currentOverrides,
 		overrides: {
 			...currentOverrides.overrides,
-			[id]: { ...((currentOverrides.overrides?.[id] as Record<string, unknown>) ?? {}), ...patch },
+			[id]: {
+				...((currentOverrides.overrides?.[id] as Record<string, unknown>) ??
+					{}),
+				...patch,
+			},
 		},
 	};
 }

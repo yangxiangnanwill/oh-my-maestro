@@ -14,13 +14,13 @@ import { buildHostRoutingKey } from "renderer/lib/host-routing";
  * time is a programmer error, not a runtime UX state.
  */
 export function resolveHostUrl(args: {
-  hostId: string;
-  machineId: string | null;
-  activeHostUrl: string | null;
-  organizationId: string;
-  relayUrl: string;
+	hostId: string;
+	machineId: string | null;
+	activeHostUrl: string | null;
+	organizationId: string;
+	relayUrl: string;
 }): string | null {
-  if (args.hostId === args.machineId) return args.activeHostUrl;
-  const routingKey = buildHostRoutingKey(args.organizationId, args.hostId);
-  return `${args.relayUrl}/hosts/${routingKey}`;
+	if (args.hostId === args.machineId) return args.activeHostUrl;
+	const routingKey = buildHostRoutingKey(args.organizationId, args.hostId);
+	return `${args.relayUrl}/hosts/${routingKey}`;
 }

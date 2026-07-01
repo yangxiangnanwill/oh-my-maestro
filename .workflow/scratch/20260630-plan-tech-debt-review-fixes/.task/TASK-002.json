@@ -1,0 +1,117 @@
+{
+  "id": "TASK-002",
+  "title": "host-service-coordinator: real singleton + remove shared-type re-export",
+  "description": "Fix ISS-007 (getHostServiceCoordinator returns a new HostServiceCoordinator on every call) and ISS-004 (coordinator re-exports shared types from shared/host-info-types, making the shared layer a dead boundary — consumers import types from main layer instead of the shared source).",
+  "issue_id": "ISS-20260630-007",
+  "issue_refs": ["ISS-20260630-007", "ISS-20260630-004"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "small",
+  "action": "In apps/desktop/src/main/lib/host-service-coordinator.ts: (1) Replace getHostServiceCoordinator body with lazy singleton — add module-level `let instance: HostServiceCoordinator | null = null;` and change the function to `return (instance ??= new HostServiceCoordinator());`. (2) Delete the `export type { HostServiceStatus, HostServiceStatusEvent, Connection, HostServiceStartOpts, HostServiceRestartOpts, HostServiceResetOpts, HostServiceCoordinatorEvents };` re-export block (lines 16-25). Keep the `import type { ... } from \"shared/host-info-types\"` (lines 6-14) for the class's own type usage. Then redirect the single type consumer: in apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts change `import { getHostServiceCoordinator, type HostServiceStatusEvent } from \"main/lib/host-service-coordinator\"` to two imports — keep `import { getHostServiceCoordinator } from \"main/lib/host-service-coordinator\"` and add `import type { HostServiceStatusEvent } from \"shared/host-info-types\"`.",
+  "status": "completed",
+  "completed_at": "2026-06-30",
+  "actual_duration": null,
+  "scope": "apps/desktop/src/main/lib/host-service-coordinator.ts + 1 consumer",
+  "focus_paths": [
+    "apps/desktop/src/main/lib/host-service-coordinator.ts",
+    "apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts"
+  ],
+  "read_first": [
+    "apps/desktop/src/main/lib/host-service-coordinator.ts",
+    "apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts",
+    "apps/desktop/src/shared/host-info-types.ts",
+    "apps/desktop/src/main/index.full.ts"
+  ],
+  "depends_on": [],
+  "wave": 1,
+  "parallel_group": "wave-1-independent",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep 'let instance: HostServiceCoordinator | null = null' apps/desktop/src/main/lib/host-service-coordinator.ts returns one match",
+      "grep 'instance ??= new HostServiceCoordinator' apps/desktop/src/main/lib/host-service-coordinator.ts returns one match",
+      "! grep -n 'return new HostServiceCoordinator' apps/desktop/src/main/lib/host-service-coordinator.ts returns no matches",
+      "! grep -n 'export type {' apps/desktop/src/main/lib/host-service-coordinator.ts returns no matches",
+      "grep -n 'import type { HostServiceStatusEvent } from \"shared/host-info-types\"' apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts returns one match",
+      "! grep -n 'type HostServiceStatusEvent' apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts | grep 'main/lib/host-service-coordinator' returns no matches (type no longer imported from coordinator)",
+      "cd apps/desktop && bun run typecheck exits 0"
+    ],
+    "verification": "Run the grep checks above to confirm singleton pattern + re-export removal + consumer redirect, then `cd apps/desktop && bun run typecheck` to confirm no broken type imports.",
+    "definition_of_done": "HostServiceCoordinator is a true process-wide singleton, and shared types are imported only from their shared-layer source — the main-layer coordinator no longer re-exports them."
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/main/lib/host-service-coordinator.ts",
+      "action": "modify",
+      "target": "getHostServiceCoordinator + re-export block",
+      "change": "Add `let instance: HostServiceCoordinator | null = null;` before the function; change body to `return (instance ??= new HostServiceCoordinator());`; delete the 10-line `export type { ... }` block (lines 16-25) including its `// Re-export types for backward compatibility` comment."
+    },
+    {
+      "path": "apps/desktop/src/lib/trpc/routers/host-service-coordinator/index.ts",
+      "action": "modify",
+      "target": "import line 3-6",
+      "change": "Split `import { getHostServiceCoordinator, type HostServiceStatusEvent } from \"main/lib/host-service-coordinator\"` into `import { getHostServiceCoordinator } from \"main/lib/host-service-coordinator\"` and `import type { HostServiceStatusEvent } from \"shared/host-info-types\"`."
+    }
+  ],
+  "implementation": [
+    "Step 1: Read host-service-coordinator.ts and the router consumer to confirm current state (re-export block lines 16-25, single type consumer).",
+    "Step 2: Edit host-service-coordinator.ts — insert `let instance: HostServiceCoordinator | null = null;` after the class definition (before getHostServiceCoordinator), replace the function body `return new HostServiceCoordinator();` with `return (instance ??= new HostServiceCoordinator());`, and delete the entire `export type { ... };` block + its comment.",
+    "Step 3: Edit the router — replace the combined import with split imports (value from coordinator, type from shared/host-info-types).",
+    "Step 4: Run `cd apps/desktop && bun run typecheck` — expect exit 0 (no other consumer imports the re-exported types; verified only host-service-coordinator/index.ts imports HostServiceStatusEvent).",
+    "Step 5: Run convergence grep checks."
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck",
+      "cd apps/desktop && bun test src/main/lib/host-service-coordinator.test.ts"
+    ],
+    "unit": ["apps/desktop/src/main/lib/host-service-coordinator.test.ts"],
+    "integration": [],
+    "success_metrics": [
+      "typecheck exits 0",
+      "host-service-coordinator.test.ts passes",
+      "singleton pattern grep matches"
+    ]
+  },
+  "reference": {
+    "pattern": "Lazy singleton via `??=` assignment — common Node.js service pattern; matches EventEmitter-based service coordinators.",
+    "files": [
+      "apps/desktop/src/main/lib/host-service-coordinator.ts",
+      "apps/desktop/src/shared/host-info-types.ts"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Lazy module-level singleton with `??=` rather than a static class field — keeps the export-as-function API unchanged (backward compatible) and avoids initialization-order issues. Removing the re-export forces consumers to the shared source-of-truth, eliminating the dual-source boundary.",
+    "decision_factors": [
+      "Verified only one type consumer (host-service-coordinator router) imports HostServiceStatusEvent from the re-export.",
+      "Runtime-function consumers (getHostId, getHostServiceCoordinator in device/settings/main.full/routers) import values, not types — unaffected.",
+      "Existing test file references the class directly, not the singleton — still works."
+    ],
+    "tradeoffs": "Module-level mutable `let instance` is a process-global; acceptable for an Electron main-process service that should have exactly one coordinator."
+  },
+  "risks": [
+    {
+      "risk": "A hidden consumer imports a re-exported type not caught by grep",
+      "mitigation": "typecheck gate catches any broken type import; grep for all 7 re-exported type names across src/ was performed during planning (only HostServiceStatusEvent has a consumer)"
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["host service lifecycle"],
+    "affected_components": ["HostServiceCoordinator", "host-service-coordinator router"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "status": "pending",
+    "estimated_time": "25m",
+    "risk": "low",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 1,
+    "execution_group": "wave-1-independent",
+    "executor": "agent"
+  }
+}

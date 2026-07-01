@@ -8,5 +8,12 @@ export function getSoundPath(filename: string): string | null {
 	if (isPackaged) {
 		return join(process.resourcesPath, "assets", "sounds", filename);
 	}
-	return join(app.getAppPath(), "src", "resources", "assets", "sounds", filename);
+	return join(
+		app.getAppPath(),
+		"src",
+		"resources",
+		"assets",
+		"sounds",
+		filename,
+	);
 }

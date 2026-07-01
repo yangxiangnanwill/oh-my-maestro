@@ -4,9 +4,9 @@
  */
 
 export const PLATFORM = {
-  IS_MAC: process.platform === "darwin",
-  IS_LINUX: process.platform === "linux",
-  IS_WINDOWS: process.platform === "win32",
+	IS_MAC: process.platform === "darwin",
+	IS_LINUX: process.platform === "linux",
+	IS_WINDOWS: process.platform === "win32",
 } as const;
 
 export const PROTOCOL_SCHEME = "maestro";
@@ -28,10 +28,10 @@ export const DEFAULT_TERMINAL_SCROLLBACK = 5000;
 
 /** Company / brand configuration used by menus and help links. */
 export const COMPANY = {
-  DOCS_URL: "https://maestro.sh/docs",
-  MAIL_TO: "mailto:hi@maestro.sh",
-  REPORT_ISSUE_URL: "https://github.com/maestro-sh/maestro/issues/new",
-  DISCORD_URL: "https://discord.gg/maestro",
+	DOCS_URL: "https://maestro.sh/docs",
+	MAIL_TO: "mailto:hi@maestro.sh",
+	REPORT_ISSUE_URL: "https://github.com/maestro-sh/maestro/issues/new",
+	DISCORD_URL: "https://discord.gg/maestro",
 } as const;
 
 /** Directory name for project-level Maestro configuration. */
@@ -70,10 +70,10 @@ export const DEFAULT_TELEMETRY_ENABLED = false;
 // ============================================================
 
 export const NOTIFICATION_EVENTS = {
-  AGENT_LIFECYCLE: "agent-lifecycle",
-  FOCUS_TAB: "focus-tab",
-  FOCUS_V2_NOTIFICATION_SOURCE: "focus-v2-notification-source",
-  TERMINAL_EXIT: "terminal-exit",
+	AGENT_LIFECYCLE: "agent-lifecycle",
+	FOCUS_TAB: "focus-tab",
+	FOCUS_V2_NOTIFICATION_SOURCE: "focus-v2-notification-source",
+	TERMINAL_EXIT: "terminal-exit",
 } as const;
 
 /** Mock organization ID used in dev mode when SKIP_ENV_VALIDATION is enabled. */
@@ -84,7 +84,7 @@ export const MOCK_ORG_ID = "mock-org-id";
 // ============================================================
 
 export const EXTERNAL_LINKS = {
-  SETUP_TEARDOWN_SCRIPTS: "https://maestro.sh/docs/setup-teardown-scripts",
+	SETUP_TEARDOWN_SCRIPTS: "https://maestro.sh/docs/setup-teardown-scripts",
 } as const;
 
 /** Default config file template shown to new users. */

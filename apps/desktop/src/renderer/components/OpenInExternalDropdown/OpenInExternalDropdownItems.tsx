@@ -1,4 +1,4 @@
-import type { ExternalApp } from "@superset/local-db";
+import type { ExternalApp } from "shared/external-app-types";
 import {
 	DropdownMenuItem,
 	DropdownMenuSeparator,

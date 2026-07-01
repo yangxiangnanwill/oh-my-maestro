@@ -644,7 +644,7 @@ export class DaemonTerminalManager extends EventEmitter {
 		const { paneId, data } = params;
 
 		const session = this.sessions.get(paneId);
-		if (!session || !session.isAlive) {
+		if (!session?.isAlive) {
 			throw new Error(`Terminal session ${paneId} not found or not alive`);
 		}
 
@@ -692,7 +692,7 @@ export class DaemonTerminalManager extends EventEmitter {
 		const { paneId, signal = "SIGINT" } = params;
 		const session = this.sessions.get(paneId);
 
-		if (!session || !session.isAlive) {
+		if (!session?.isAlive) {
 			console.warn(
 				`Cannot signal terminal ${paneId}: session not found or not alive`,
 			);

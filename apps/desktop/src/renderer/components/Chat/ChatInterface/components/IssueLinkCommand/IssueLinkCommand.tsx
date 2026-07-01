@@ -8,8 +8,16 @@ import {
 	CommandItem,
 	CommandList,
 } from "../../../stubs/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "../../../stubs/ui/popover";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../../../stubs/ui/tooltip";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "../../../stubs/ui/popover";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "../../../stubs/ui/tooltip";
 import { useLiveQuery } from "@tanstack/react-db";
 import Fuse from "fuse.js";
 import type { ReactNode } from "react";

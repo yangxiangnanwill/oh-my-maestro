@@ -1,0 +1,132 @@
+{
+  "summary": "Gap-fix 计划：修复 REV-002 review 发现的 7 个 high findings（ISS-009/010/011/012/013/014/015）并联动修复 ISS-002（LinkAnchor 死代码接线）。共 5 个 task，分 4 个 wave。核心工作：(1) 提取 ExternalApp/TerminalPreset + isSafeExternalUrl 到 src/shared 跨层契约层；(2) 修复 MessageResponse stub 接线 + LinkAnchor XSS sanitize + renderParts useCallback deps；(3) 清理 host-service-coordinator unused imports；(4) store.ts unused 参数加 _ 前缀；(5) 全量 Biome format + 修 38 lint errors。最终 `cd apps/desktop && bun run lint` exit 0、`bun run typecheck` exit 0。",
+  "approach": "按 anti-splitting 原则：一个 feature 一个 task。Wave1 并行两个独立简单 Biome 修复（TASK-003 host-service-coordinator、TASK-004 store.ts）+ 架构提取 TASK-001（不同文件无冲突）。Wave2 串行 TASK-002（depends_on TASK-001，需 shared/safe-url 的 isSafeExternalUrl）。Wave3 串行 TASK-005 全量 format（depends_on TASK-001~004，触碰所有前序文件须最后做）。TASK-001 涉及 local-db 重构，采用 local-db 从 shared re-export 策略保持向后兼容（main 侧消费者零改动）。safe-url 提取采用新建 src/shared/safe-url/ re-export 现有 main/lib/safe-url/scheme.ts 的 isSafeExternalUrl，避免逻辑重复（renderer 不能 import main 路径，故必须 shared 化）。",
+  "task_ids": [
+    "TASK-001",
+    "TASK-002",
+    "TASK-003",
+    "TASK-004",
+    "TASK-005"
+  ],
+  "task_count": 5,
+  "complexity": "medium",
+  "estimated_time": "3h",
+  "recommended_execution": "Agent",
+  "waves": [
+    {
+      "wave": 1,
+      "tasks": [
+        "TASK-001",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "description": "并行：架构提取（shared 层 ExternalApp/TerminalPreset + safe-url）+ 两个独立 Biome 简单修复（host-service-coordinator unused import、store.ts unused params）。三者触碰不同文件无冲突。"
+    },
+    {
+      "wave": 2,
+      "tasks": [
+        "TASK-002"
+      ],
+      "description": "串行：LinkAnchor 接线 + XSS 修复（depends_on TASK-001 需 isSafeExternalUrl from shared/safe-url）。修 MessageResponse stub spread components + LinkAnchor href sanitize + openInBrowserPane gate + renderParts useCallback deps。"
+    },
+    {
+      "wave": 3,
+      "tasks": [
+        "TASK-005"
+      ],
+      "description": "串行：全量 Biome format + 38 lint errors 修复（depends_on TASK-001~004，触碰所有前序修改文件须最后执行避免格式化冲突）。"
+    }
+  ],
+  "data_flow": {
+    "diagram": null,
+    "stages": [
+      "shared 层提取（ExternalApp/TerminalPreset/safe-url 作为跨层契约）",
+      "renderer 消费 shared 类型 + isSafeExternalUrl 校验",
+      "LinkAnchor 渲染时 sanitize href + openInBrowserPane gate",
+      "Biome 全量 format 收敛 lint/format 状态"
+    ]
+  },
+  "design_decisions": [
+    "ExternalApp/TerminalPreset 提取到 src/shared/external-app-types.ts：EXTERNAL_APPS const + NON_EDITOR_APPS + ExecutionMode + TerminalPreset 全部搬移（TerminalPreset 依赖 ExecutionMode 必须同处）。local-db/index.ts 改为从 shared re-export（`export type { ExternalApp, TerminalPreset, ExecutionMode } from 'shared/external-app-types'` + `export { EXTERNAL_APPS, NON_EDITOR_APPS } from 'shared/external-app-types'`），保持 main 侧 7 个消费者零改动。",
+    "safe-url 提取策略：新建 src/shared/safe-url/index.ts + scheme.ts 承载 isSafeExternalUrl 逻辑。main/lib/safe-url/scheme.ts 改为 re-export shim（不删除）：`export { isSafeExternalUrl, externalUrlLogLabel } from 'shared/safe-url';`，保持 safe-url.test.ts 的 `from './scheme'` import 链与 main/lib/safe-url/index.ts 的 re-export 链均不断裂。renderer 从 'shared/safe-url' import isSafeExternalUrl，避免 renderer→main 依赖方向违反。",
+    "LinkAnchor XSS 修复：openLinksInApp=false 时对非 allowlisted scheme 仍 preventDefault（防 javascript: href 在 renderer 执行）。href sanitize 复用 isSafeExternalUrl，非 http/https/mailto 的 href 丢弃（设为 undefined）。browserManager.navigate 对无 scheme 的 localhost/127.0.0.1 先补 http:// 前缀再校验（保持 localhost 支持不破坏），校验 false 则 return（不 loadURL）不 throw（避免破坏调用方）。",
+    "MessageResponse stub 接线方案确定：解构 { children, className, components, mermaid } 渲染为 `<div className={className} data-components-connected={components ? 'true' : undefined}>{children}</div>`，标记 components prop 已被消费不丢弃。StreamingMessageText 把纯文本 displayText 作为 children 传（stub 不解析 markdown），LinkAnchor 实际渲染需 Phase 4 接入真实 markdown 解析器。本次 [UI-observable] criterion 改为可 grep 验证的等价条件（stub 解构 components + data-components-connected 标记），而非 LinkAnchor 实际渲染。stub 类型声明 components?: { a?: React.ElementType; aProps?: React.AnchorHTMLAttributes } 与真实 ai-sdk 契约对齐。",
+    "renderParts useCallback deps：去掉参数直接闭包外层 parts/isLastAssistant（依赖列表已含 parts/isLastAssistant，无需重复传参）。简化 line 361 调用点为 renderParts()。",
+    "store.ts unused 参数：对 stub 函数不使用的参数加 _ 前缀（_options/_paneId/_sessionId/_config），与文件内已有 _organizationId/_opts 风格一致，满足 Biome noUnusedFunctionParameters。",
+    "TASK-005 全量 format 须最后串行：Biome format 会重写所有文件格式（约 26 文件 tab 转换），若与前序 task 并行会冲突。lint --write 自动修多数 unused import/param 错误，剩余手动处理。"
+  ],
+  "shared_context": {
+    "patterns": [
+      "shared 跨层契约层模式（src/shared/）",
+      "re-export 向后兼容模式",
+      "isSafeExternalUrl scheme allowlist 模式"
+    ],
+    "conventions": [
+      "Bun monorepo",
+      "TypeScript strict noImplicitAny",
+      "Biome 2.5.1 tab 缩进",
+      "renderer 不可 import main 路径"
+    ],
+    "dependencies": [
+      "electron 40+",
+      "react 19",
+      "ai (ai-sdk)"
+    ]
+  },
+  "_metadata": {
+    "timestamp": "2026-06-30T00:00:00+08:00",
+    "source": "workflow-planner",
+    "planning_mode": "gap-fix",
+    "plan_type": "review2-fix"
+  },
+  "confidence": {
+    "overall": 0.85,
+    "dimensions": {
+      "requirements_coverage": 0.95,
+      "task_quality": 0.85,
+      "dependency_correctness": 0.92,
+      "estimation_accuracy": 0.85,
+      "collision_safety": 0.9
+    },
+    "factors": {
+      "completeness": 0.92,
+      "specificity": 0.88,
+      "structural_validity": 0.88,
+      "user_validation": 0.85,
+      "consistency": 0.88
+    },
+    "pressure_pass": {
+      "target_task": "TASK-002",
+      "read_first_ok": true,
+      "convergence_ok": true,
+      "action_ok": true,
+      "notes": "P4 round 1 修订后: [UI-observable] 改为 grep 可验证(data-components-connected); stub 接线单一方案; navigate localhost 处理; criteria[5] 收窄 --only. TASK-001 路径修正+scheme.ts re-export shim."
+    },
+    "boundary_grill": {
+      "executed": true,
+      "conflicts": [
+        {
+          "type": "wave_dependency",
+          "severity": "low",
+          "tasks": [
+            "TASK-001",
+            "TASK-002"
+          ],
+          "resolution": "TASK-002 depends_on TASK-001 (需 shared/safe-url)"
+        },
+        {
+          "type": "format_overlap",
+          "severity": "low",
+          "tasks": [
+            "TASK-005",
+            "TASK-001~004"
+          ],
+          "resolution": "TASK-005 wave 3 串行最后, depends_on 全前序, 避免格式化冲突"
+        }
+      ],
+      "blocking": false
+    },
+    "check_rounds": 1,
+    "checker_verdict": "WARN->revised->PASS"
+  }
+}

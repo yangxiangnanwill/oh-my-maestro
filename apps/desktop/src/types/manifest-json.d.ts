@@ -5,16 +5,16 @@
  */
 
 declare module "resources/public/file-icons/manifest.json" {
-  export interface FileIconManifestJson {
-    fileNames: Record<string, string>;
-    fileExtensions: Record<string, string>;
-    folderNames: Record<string, string>;
-    folderNamesExpanded: Record<string, string>;
-    defaultIcon: string;
-    defaultFolderIcon: string;
-    defaultFolderOpenIcon: string;
-  }
+	export interface FileIconManifestJson {
+		fileNames: Record<string, string>;
+		fileExtensions: Record<string, string>;
+		folderNames: Record<string, string>;
+		folderNamesExpanded: Record<string, string>;
+		defaultIcon: string;
+		defaultFolderIcon: string;
+		defaultFolderOpenIcon: string;
+	}
 
-  const manifest: FileIconManifestJson;
-  export default manifest;
+	const manifest: FileIconManifestJson;
+	export default manifest;
 }

@@ -8,8 +8,8 @@ export type HostRoutingKey = string;
  * The format is: `org/{organizationId}/host/{hostId}`
  */
 export function buildHostRoutingKey(
-  organizationId: string,
-  hostId: string,
+	organizationId: string,
+	hostId: string,
 ): HostRoutingKey {
-  return `org/${encodeURIComponent(organizationId)}/host/${encodeURIComponent(hostId)}`;
+	return `org/${encodeURIComponent(organizationId)}/host/${encodeURIComponent(hostId)}`;
 }

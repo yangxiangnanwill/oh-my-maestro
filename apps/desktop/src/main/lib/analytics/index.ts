@@ -8,9 +8,9 @@ import { DEFAULT_TELEMETRY_ENABLED } from "shared/constants";
 let userId: string | null = null;
 
 // Use dynamic import for posthog-node since it may not be installed
-let posthogClient: unknown = null;
+const _posthogClient: unknown = null;
 
-async function getClient(): Promise<unknown | null> {
+async function _getClient(): Promise<unknown | null> {
 	// Phase 4: PostHog not yet configured for oh-my-maestro
 	// Full implementation pending analytics configuration migration
 	return null;
@@ -20,7 +20,7 @@ export function getUserId(): string | null {
 	return userId;
 }
 
-function isTelemetryEnabled(): boolean {
+function _isTelemetryEnabled(): boolean {
 	return DEFAULT_TELEMETRY_ENABLED;
 }
 

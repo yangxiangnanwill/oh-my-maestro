@@ -11,5 +11,5 @@ import { app } from "electron";
  * // => 'com.example.app'
  */
 export function makeAppId(id?: string): string {
-  return id ?? app.name;
+	return id ?? app.name;
 }

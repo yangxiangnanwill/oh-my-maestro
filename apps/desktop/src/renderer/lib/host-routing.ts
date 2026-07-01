@@ -14,8 +14,8 @@
  * The format is: `org/{organizationId}/host/{hostId}`
  */
 export function buildHostRoutingKey(
-  organizationId: string,
-  hostId: string,
+	organizationId: string,
+	hostId: string,
 ): string {
-  return `org/${encodeURIComponent(organizationId)}/host/${encodeURIComponent(hostId)}`;
+	return `org/${encodeURIComponent(organizationId)}/host/${encodeURIComponent(hostId)}`;
 }

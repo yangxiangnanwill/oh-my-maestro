@@ -8,8 +8,9 @@ interface RightSidebarToggleIntentState {
 	request: () => void;
 }
 
-export const useRightSidebarToggleIntent = create<RightSidebarToggleIntentState>(() => ({
-	request: () => {
-		// Stub: no-op until sidebar system is integrated
-	},
-}));
+export const useRightSidebarToggleIntent =
+	create<RightSidebarToggleIntentState>(() => ({
+		request: () => {
+			// Stub: no-op until sidebar system is integrated
+		},
+	}));

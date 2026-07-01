@@ -4,5 +4,5 @@
  */
 
 declare module "renderer/screens/main/components/WorkspaceView/ChangesContent/components/LightDiffViewer" {
-  export * from "renderer/components/Chat/stubs/LightDiffViewer";
+	export * from "renderer/components/Chat/stubs/LightDiffViewer";
 }

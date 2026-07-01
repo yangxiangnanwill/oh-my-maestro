@@ -6,9 +6,9 @@
  */
 
 export function initTray(): void {
-  // Stub
+	// Stub
 }
 
 export function disposeTray(): void {
-  // Stub
+	// Stub
 }

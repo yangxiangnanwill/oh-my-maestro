@@ -2,7 +2,6 @@ import { useNavigate } from "@tanstack/react-router";
 import { electronTrpc } from "renderer/lib/electron-trpc";
 import { navigateToWorkspace } from "renderer/routes/_authenticated/_dashboard/utils/workspace-navigation";
 import { useWorkspaceInitStore } from "renderer/stores/workspace-init";
-import type { WorkspaceInitProgress } from "shared/types/workspace-init";
 
 export function useOpenMainRepoWorkspace(
 	options?: Parameters<
@@ -38,8 +37,12 @@ export function useOpenMainRepoWorkspace(
 				addPendingTerminalSetup({
 					workspaceId: data.workspace.id,
 					projectId: data.projectId,
-					initialCommands: (setupData as { initialCommands?: string[] | null } | null)?.initialCommands ?? null,
-					defaultPresets: (setupData as { defaultPresets?: string[] } | null)?.defaultPresets ?? [],
+					initialCommands:
+						(setupData as { initialCommands?: string[] | null } | null)
+							?.initialCommands ?? null,
+					defaultPresets:
+						(setupData as { defaultPresets?: string[] } | null)
+							?.defaultPresets ?? [],
 				});
 
 				// Branch workspaces skip git init, so mark ready immediately to trigger terminal setup

@@ -4,9 +4,9 @@
  */
 
 declare module "shared/tabs-types" {
-  export interface ChatLaunchConfig {
-    sessionId?: string;
-    thinkingLevel?: string;
-    [key: string]: unknown;
-  }
+	export interface ChatLaunchConfig {
+		sessionId?: string;
+		thinkingLevel?: string;
+		[key: string]: unknown;
+	}
 }

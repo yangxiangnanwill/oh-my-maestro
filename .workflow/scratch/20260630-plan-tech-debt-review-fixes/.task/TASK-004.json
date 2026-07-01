@@ -1,0 +1,120 @@
+{
+  "id": "TASK-004",
+  "title": "MessagePartsRenderer: useCallback renderParts + extract inline `a` to module-level memo component",
+  "description": "Fix ISS-002: renderParts is defined inline in the component body (line 109) so every render rebuilds it, and during streaming the high-frequency re-renders rebuild all React nodes. The TASK-013 plan intended to wrap renderParts in useCallback and extract the inline `a` component, but only a comment was added (line 78). Implement the actual refactor: wrap renderParts in useCallback, and extract the inline `a` to a module-level React.memo component so the components useMemo returns a stable reference.",
+  "issue_id": "ISS-20260630-002",
+  "issue_refs": ["ISS-20260630-002"],
+  "type": "fix",
+  "priority": "high",
+  "effort": "medium",
+  "action": "In apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx: (1) Extract the inline `a` component (currently lines 82-96 inside useMemo) to a module-level component declared before `MessagePartsRenderer` — e.g. `const LinkAnchor = React.memo(function LinkAnchor({ href, children, onClick, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { onClick?: (e: React.MouseEvent<HTMLAnchorElement>, href: string) => void }) { ... })`. The onClick prop receives href so the handler stays stable. (2) Update the `components` useMemo (lines 79-98) to return `{ a: LinkAnchor }` (or undefined) — the returned object identity stays stable per deps. (3) Wrap `renderParts` (lines 109-336) in `useCallback(..., [parts, isLastAssistant, isStreaming, isInterrupted, workspaceId, workspaceCwd, components, mermaidConfig, openFileInPane, onAnswer])` so the function reference is stable across renders that don't change those deps. Add `useCallback` to the React import (line 12 already imports useCallback — verify). (4) Delete the `// Phase 4: 将 a 组件提取到 useMemo 外部并用 React.memo 包裹` comment (line 78).",
+  "status": "completed",
+  "completed_at": null,
+  "actual_duration": null,
+  "scope": "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx",
+  "focus_paths": [
+    "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx"
+  ],
+  "read_first": [
+    "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx",
+    "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/components/StreamingMessageText/StreamingMessageText.tsx"
+  ],
+  "depends_on": [],
+  "wave": 2,
+  "parallel_group": "wave-2-arch",
+  "execution_group": null,
+  "executor": "agent",
+  "convergence": {
+    "criteria": [
+      "grep -n 'const LinkAnchor = React.memo' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns one match (module-level memo component extracted)",
+      "grep -n 'useCallback' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns at least 3 matches (existing handleLinkClick + openFileInPane + new renderParts wrapper)",
+      "! grep -n 'Phase 4: 将 a 组件提取到 useMemo 外部并用 React.memo 包裹' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns no matches (stale comment removed)",
+      "grep -n 'a: LinkAnchor\\|a: LinkAnchor,' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns one match (components useMemo returns stable ref)",
+      "! grep -nP 'renderParts = \\(\\{' apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx returns no matches matching the old unwrapped arrow assignment (now wrapped in useCallback)",
+      "cd apps/desktop && bun run typecheck exits 0",
+      "[UI-observable] Stream a chat message with tool calls in the running desktop app and confirm: (a) text streams character-by-character without regression, (b) read-only tool groups render with correct pending/available status, (c) clicking a file link in a streamed message opens the file viewer pane — render output is visually identical to pre-refactor."
+    ],
+    "verification": "Run `cd apps/desktop && bun run typecheck` for type safety. Run `cd apps/desktop && bun run dev`, open a workspace chat, send a prompt that triggers tool calls, and verify streaming + tool-block + link-click rendering is unchanged (UI-observable check). Optionally run any existing MessagePartsRenderer test via `cd apps/desktop && bun test src/renderer/components/Chat`.",
+    "definition_of_done": "renderParts is memoized via useCallback and the `a` component is a stable React.memo module-level component — streaming re-renders no longer rebuild all React nodes, with zero observable change to message rendering."
+  },
+  "files": [
+    {
+      "path": "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx",
+      "action": "modify",
+      "target": "MessagePartsRenderer component + module scope",
+      "change": "Add module-level `const LinkAnchor = React.memo(function LinkAnchor(...) {...})` before the main component; change the `components` useMemo to return `{ a: LinkAnchor }` (or undefined); wrap `renderParts` assignment in `useCallback(..., [deps])`; delete the stale Phase-4 comment on line 78; ensure `memo` and `useCallback` are imported from react (line 12 currently imports useCallback; add `memo` if not present, or use `React.memo`)."
+    }
+  ],
+  "implementation": [
+    "Step 1: Read MessagePartsRenderer.tsx fully and StreamingMessageText.tsx to understand how `components.a` is consumed (the `a` renderer receives standard anchor props).",
+    "Step 2: Define `LinkAnchor` at module scope (after imports, before `interface MessagePartsRendererProps`): `const LinkAnchor = React.memo(function LinkAnchor({ href, children, onClick, ...props }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { onClick?: (e: React.MouseEvent<HTMLAnchorElement>, href?: string) => void }) { return (<a {...props} href={href} onClick={(e) => { if (href) onClick?.(e, href); }}>{children}</a>); });`. Adjust the onClick signature so handleLinkClick (which takes (e, href)) is passed as a prop — this decouples the component from the closure.",
+    "Step 3: Rewrite the `components` useMemo to: `const components = useMemo(() => { if (!openLinksInApp || !workspaceId) return undefined; return { a: LinkAnchor, aProps: { onClick: handleLinkClick } }; }, [openLinksInApp, workspaceId, handleLinkClick])` — OR if StreamingMessageText expects `components.a` to be a full component, pass `LinkAnchor` directly and bind onClick via a wrapper. Verify StreamingMessageText's expected `components` shape first; the minimal-risk approach is `a: (props) => <LinkAnchor {...props} onClick={(e, href) => handleLinkClick(e, href)} />` is NOT stable — prefer passing onClick as a prop. If StreamingMessageText only renders `components.a` as a component, set `a: LinkAnchor` and ensure handleLinkClick is passed through a context or prop. Choose the approach that keeps the returned object stable while preserving the click behavior.",
+    "Step 4: Wrap `renderParts` in `useCallback`: `const renderParts = useCallback(({ parts, isLastAssistant }: {...}): React.ReactNode[] => { ... }, [parts, isLastAssistant, isStreaming, isInterrupted, workspaceId, workspaceCwd, components, mermaidConfig, openFileInPane, onAnswer]);` — include all closure variables in the deps array.",
+    "Step 5: Delete the `// Phase 4: 将 a 组件提取到 useMemo 外部并用 React.memo 包裹` comment (line 78).",
+    "Step 6: Run `cd apps/desktop && bun run typecheck` and fix any deps/type errors.",
+    "Step 7: Run `cd apps/desktop && bun run dev`, stream a chat message with tool calls, and verify the UI-observable criteria (streaming, tool groups, link clicks all unchanged)."
+  ],
+  "test": {
+    "commands": [
+      "cd apps/desktop && bun run typecheck",
+      "cd apps/desktop && bun test src/renderer/components/Chat"
+    ],
+    "unit": [],
+    "integration": [],
+    "success_metrics": [
+      "typecheck exits 0",
+      "LinkAnchor module-level memo component present",
+      "renderParts wrapped in useCallback",
+      "[UI-observable] streaming + tool + link rendering unchanged in dev app"
+    ]
+  },
+  "reference": {
+    "pattern": "React.memo + useCallback for streaming-render stabilization — standard React 19 performance pattern; the `a` component is a markdown link renderer passed to StreamingMessageText.",
+    "files": [
+      "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/MessagePartsRenderer.tsx",
+      "apps/desktop/src/renderer/components/Chat/ChatInterface/components/MessagePartsRenderer/components/StreamingMessageText/StreamingMessageText.tsx"
+    ],
+    "examples": null
+  },
+  "rationale": {
+    "chosen_approach": "Module-level React.memo `LinkAnchor` + useCallback-wrapped renderParts — stabilizes both the component reference and the render function reference so streaming re-renders (which change `parts`/`isStreaming`) don't recreate the `a` component identity or rebuild the render closure unnecessarily.",
+    "decision_factors": [
+      "TASK-013 plan already specified this exact refactor but only added a comment — the intent is documented.",
+      "Streaming causes high-frequency re-renders; unstable `a` identity forces StreamingMessageText to re-mount link subtrees.",
+      "renderParts closure captures ~10 variables — useCallback with a correct deps array is the minimal change to stabilize it."
+    ],
+    "tradeoffs": "Extracting `a` requires deciding how onClick is bound (prop vs closure). The implementation step documents the stable-reference approach; if StreamingMessageText's `components` shape doesn't support passing onClick as a prop, fall back to a stable wrapper bound via useRef. Slightly higher complexity than a pure useCallback, but necessary for the memo to be effective."
+  },
+  "risks": [
+    {
+      "risk": "Streaming render behavior regresses (text stops streaming, tool groups disappear, links unclickable)",
+      "mitigation": "UI-observable convergence criterion requires manual dev-app verification; typecheck + existing chat tests catch type/logic errors; render output is intentionally unchanged.",
+      "severity": "medium"
+    },
+    {
+      "risk": "useCallback deps array missing a closure variable causes stale renders",
+      "mitigation": "Implementation step 4 enumerates all closure vars; typecheck + dev verification surface stale-closure bugs."
+    },
+    {
+      "risk": "StreamingMessageText's `components.a` contract differs from the extracted LinkAnchor signature",
+      "mitigation": "Read StreamingMessageText.tsx first (in read_first) to confirm the expected component shape before extracting."
+    }
+  ],
+  "code_skeleton": null,
+  "doc_context": {
+    "affected_features": ["Chat streaming render"],
+    "affected_components": ["MessagePartsRenderer"],
+    "affected_requirements": [],
+    "adr_ids": []
+  },
+  "meta": {
+    "status": "pending",
+    "estimated_time": "45m",
+    "risk": "medium",
+    "autonomous": true,
+    "checkpoint": false,
+    "wave": 2,
+    "execution_group": "wave-2-arch",
+    "executor": "agent"
+  }
+}

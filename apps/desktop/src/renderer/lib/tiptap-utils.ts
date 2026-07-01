@@ -9,4 +9,8 @@
 import type { useEditor } from "@tiptap/react";
 
 /** TipTap useEditor extensions 数组的正确类型 */
-export type TipTapExtensions = Parameters<typeof useEditor>[0] extends { extensions?: infer E } ? E : never;
+export type TipTapExtensions = Parameters<typeof useEditor>[0] extends {
+	extensions?: infer E;
+}
+	? E
+	: never;

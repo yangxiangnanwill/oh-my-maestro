@@ -7,13 +7,13 @@ import { bindingToDispatchChord } from "../../utils/binding";
 import { useBinding } from "../useBinding";
 
 export function useHotkeyDisplay(id: string): HotkeyDisplay {
-  const binding = useBinding(id as Parameters<typeof useBinding>[0]);
-  const layoutMap = useEffectiveLayoutMap();
-  const chord = bindingToDispatchChord(binding, layoutMap);
-  return useMemo(
-    () => formatHotkeyDisplay(chord, PLATFORM, layoutMap),
-    [chord, layoutMap],
-  );
+	const binding = useBinding(id as Parameters<typeof useBinding>[0]);
+	const layoutMap = useEffectiveLayoutMap();
+	const chord = bindingToDispatchChord(binding, layoutMap);
+	return useMemo(
+		() => formatHotkeyDisplay(chord, PLATFORM, layoutMap),
+		[chord, layoutMap],
+	);
 }
 
 /**
@@ -23,12 +23,12 @@ export function useHotkeyDisplay(id: string): HotkeyDisplay {
  * {@link useHotkeyDisplay} via the hotkey id.
  */
 export function useFormatBinding(
-  binding: ShortcutBinding | null,
+	binding: ShortcutBinding | null,
 ): HotkeyDisplay {
-  const layoutMap = useEffectiveLayoutMap();
-  const chord = bindingToDispatchChord(binding, layoutMap);
-  return useMemo(
-    () => formatHotkeyDisplay(chord, PLATFORM, layoutMap),
-    [chord, layoutMap],
-  );
+	const layoutMap = useEffectiveLayoutMap();
+	const chord = bindingToDispatchChord(binding, layoutMap);
+	return useMemo(
+		() => formatHotkeyDisplay(chord, PLATFORM, layoutMap),
+		[chord, layoutMap],
+	);
 }

@@ -13,7 +13,11 @@ import {
 } from "renderer/components/Chat/stubs/ui/command";
 import { Input } from "renderer/components/Chat/stubs/ui/input";
 import { Label } from "renderer/components/Chat/stubs/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "renderer/components/Chat/stubs/ui/popover";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "renderer/components/Chat/stubs/ui/popover";
 import { Switch } from "renderer/components/Chat/stubs/ui/switch";
 import { GoGitBranch } from "react-icons/go";
 import {

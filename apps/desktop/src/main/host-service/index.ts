@@ -10,7 +10,6 @@
 
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
-import { env } from "./env";
 
 const SHUTDOWN_GRACE_MS = 3_000;
 const WATCHDOG_INTERVAL_MS = 2_000;
@@ -58,7 +57,9 @@ export function startHostService(port: number): void {
 	// Watchdog: restart if the server dies unexpectedly
 	const watchdog = setInterval(() => {
 		if (!server) {
-			console.warn("[host-service] Watchdog detected server death, restarting...");
+			console.warn(
+				"[host-service] Watchdog detected server death, restarting...",
+			);
 			startHostService(port);
 		}
 	}, WATCHDOG_INTERVAL_MS);

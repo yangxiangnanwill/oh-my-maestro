@@ -125,7 +125,9 @@ describe("existing PR push target resolution", () => {
 					},
 				],
 				pr: {
-					headRepositoryOwner: "owner", headRepositoryName: "repo", isCrossRepository: false,
+					headRepositoryOwner: "owner",
+					headRepositoryName: "repo",
+					isCrossRepository: false,
 				},
 				fallbackRemote: "origin",
 			}),

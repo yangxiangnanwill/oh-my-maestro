@@ -8,7 +8,11 @@ import {
 	CommandItem,
 	CommandList,
 } from "renderer/components/Chat/stubs/ui/command";
-import { Popover, PopoverAnchor, PopoverContent } from "renderer/components/Chat/stubs/ui/popover";
+import {
+	Popover,
+	PopoverAnchor,
+	PopoverContent,
+} from "renderer/components/Chat/stubs/ui/popover";
 import type React from "react";
 import type { RefObject } from "react";
 import { useId, useMemo, useState } from "react";

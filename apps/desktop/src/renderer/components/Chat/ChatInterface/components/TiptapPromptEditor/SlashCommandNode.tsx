@@ -5,7 +5,11 @@ import {
 	CommandItem,
 	CommandList,
 } from "../../../stubs/ui/command";
-import { Popover, PopoverAnchor, PopoverContent } from "../../../stubs/ui/popover";
+import {
+	Popover,
+	PopoverAnchor,
+	PopoverContent,
+} from "../../../stubs/ui/popover";
 import { cn } from "../../../stubs/ui/utils";
 import { mergeAttributes, Node } from "@tiptap/core";
 import {

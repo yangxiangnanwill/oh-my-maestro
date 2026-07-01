@@ -1,4 +1,6 @@
-{{MARKER}}
+{
+	MARKER;
+}
 /**
  * Superset Notification Extension for pi
  *

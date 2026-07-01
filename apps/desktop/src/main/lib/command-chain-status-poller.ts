@@ -92,7 +92,8 @@ function validateStatus(data: unknown): CommandChainStatus | null {
 				id: String(step.id ?? ""),
 				label: String(step.label ?? ""),
 				status: validateStepState(step.status),
-				startedAt: typeof step.startedAt === "string" ? step.startedAt : undefined,
+				startedAt:
+					typeof step.startedAt === "string" ? step.startedAt : undefined,
 				completedAt:
 					typeof step.completedAt === "string" ? step.completedAt : undefined,
 				error: typeof step.error === "string" ? step.error : undefined,
@@ -102,27 +103,29 @@ function validateStatus(data: unknown): CommandChainStatus | null {
 	const steps: CommandChainStep[] = filteredSteps;
 
 	const filteredNodes = Array.isArray(data.decisionNodes)
-		? data.decisionNodes.map((node: unknown) => {
-				if (node === null || typeof node !== "object") {
-					return null;
-				}
-				if (!isRecord(node)) {
-					return null;
-				}
-				return {
-					id: String(node.id ?? ""),
-					label: String(node.label ?? ""),
-					question: String(node.question ?? ""),
-					options: Array.isArray(node.options)
-						? node.options.map((o: unknown) => String(o))
-						: [],
-					selectedOption:
-						typeof node.selectedOption === "string"
-							? node.selectedOption
-							: undefined,
-					resolved: Boolean(node.resolved),
-				};
-			}).filter((n): n is NonNullable<typeof n> => n !== null)
+		? data.decisionNodes
+				.map((node: unknown) => {
+					if (node === null || typeof node !== "object") {
+						return null;
+					}
+					if (!isRecord(node)) {
+						return null;
+					}
+					return {
+						id: String(node.id ?? ""),
+						label: String(node.label ?? ""),
+						question: String(node.question ?? ""),
+						options: Array.isArray(node.options)
+							? node.options.map((o: unknown) => String(o))
+							: [],
+						selectedOption:
+							typeof node.selectedOption === "string"
+								? node.selectedOption
+								: undefined,
+						resolved: Boolean(node.resolved),
+					};
+				})
+				.filter((n): n is NonNullable<typeof n> => n !== null)
 		: [];
 	const decisionNodes: CommandChainDecisionNode[] = filteredNodes;
 
@@ -133,9 +136,7 @@ function validateStatus(data: unknown): CommandChainStatus | null {
 	};
 }
 
-function validateStepState(
-	status: unknown,
-): CommandChainStep["status"] {
+function validateStepState(status: unknown): CommandChainStep["status"] {
 	const validStatuses: CommandChainStep["status"][] = [
 		"pending",
 		"running",
@@ -145,6 +146,6 @@ function validateStepState(
 	];
 	const s = String(status ?? "pending");
 	return validStatuses.includes(s as CommandChainStep["status"])
-		? s as CommandChainStep["status"]
+		? (s as CommandChainStep["status"])
 		: "pending";
 }

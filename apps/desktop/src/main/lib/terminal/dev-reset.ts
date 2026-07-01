@@ -7,7 +7,7 @@ import { MAESTRO_HOME_DIR } from "../app-environment";
 // import { disposeTerminalHostClient, getTerminalHostClient } from "main/lib/terminal-host/client";
 const appState = {} as any;
 const defaultAppState = {} as any;
-const getTerminalHostClient = () => ({} as any);
+const getTerminalHostClient = () => ({}) as any;
 const disposeTerminalHostClient = () => {};
 
 const TERMINAL_STATE_PATHS = [

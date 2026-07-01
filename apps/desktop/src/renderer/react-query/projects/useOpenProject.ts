@@ -5,6 +5,6 @@ import { electronTrpc } from "renderer/lib/electron-trpc";
  * Returns { openNew } for compatibility with NewWorkspaceModal.
  */
 export function useOpenProject() {
-  const openNewMutation = electronTrpc.projects.openNew.useMutation();
-  return { openNew: openNewMutation.mutateAsync };
+	const openNewMutation = electronTrpc.projects.openNew.useMutation();
+	return { openNew: openNewMutation.mutateAsync };
 }

@@ -11,19 +11,19 @@ import { bindingToDispatchChord } from "../../utils/binding";
  * normalize.
  */
 export function useBinding(id: HotkeyId): ShortcutBinding | null {
-  return useHotkeyOverridesStore((state) => {
-    if (!id) return null;
-    if (id in state.overrides) return state.overrides[id] ?? null;
-    return HOTKEYS[id]?.key ?? null;
-  });
+	return useHotkeyOverridesStore((state) => {
+		if (!id) return null;
+		if (id in state.overrides) return state.overrides[id] ?? null;
+		return HOTKEYS[id]?.key ?? null;
+	});
 }
 
 /** Imperative version of {@link useBinding} for non-React contexts. */
 export function getBinding(id: HotkeyId): ShortcutBinding | null {
-  const state = useHotkeyOverridesStore.getState();
-  if (!id) return null;
-  if (id in state.overrides) return state.overrides[id] ?? null;
-  return HOTKEYS[id]?.key ?? null;
+	const state = useHotkeyOverridesStore.getState();
+	if (!id) return null;
+	if (id in state.overrides) return state.overrides[id] ?? null;
+	return HOTKEYS[id]?.key ?? null;
 }
 
 /**
@@ -33,5 +33,5 @@ export function getBinding(id: HotkeyId): ShortcutBinding | null {
  * the bound handler on non-US layouts.
  */
 export function getDispatchChord(id: HotkeyId): string | null {
-  return bindingToDispatchChord(getBinding(id), getEffectiveLayoutMap());
+	return bindingToDispatchChord(getBinding(id), getEffectiveLayoutMap());
 }

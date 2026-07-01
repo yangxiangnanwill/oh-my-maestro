@@ -1,4 +1,6 @@
-{{MARKER}}
+{
+	MARKER;
+}
 // @i-know-the-amp-plugin-api-is-wip-and-very-experimental-right-now
 
 import { spawn } from "node:child_process";
@@ -57,7 +59,7 @@ function getSessionId(event: unknown): string | undefined {
 }
 
 function isDebugEnabled(): boolean {
-	const env = typeof process === "undefined" ? {} : process.env ?? {};
+	const env = typeof process === "undefined" ? {} : (process.env ?? {});
 	return ["SUPERSET_DEBUG_HOOKS", "SUPERSET_DEBUG"].some((key) => {
 		const value = env[key];
 		return value === "1" || value === "true" || value === "TRUE";
@@ -66,7 +68,7 @@ function isDebugEnabled(): boolean {
 
 function debugLog(message: string): void {
 	if (!isDebugEnabled()) return;
-	process?.stderr?.write?.("[superset-amp-plugin] " + message + "\n");
+	process?.stderr?.write?.(`[superset-amp-plugin] ${message}\n`);
 }
 
 export default function supersetAmpLifecyclePlugin(amp: AmpApi) {
@@ -74,7 +76,7 @@ export default function supersetAmpLifecyclePlugin(amp: AmpApi) {
 	if (supersetGlobal.__supersetAmpLifecyclePluginV1) return;
 	supersetGlobal.__supersetAmpLifecyclePluginV1 = true;
 
-	const env = typeof process === "undefined" ? {} : process.env ?? {};
+	const env = typeof process === "undefined" ? {} : (process.env ?? {});
 	if (!env.SUPERSET_TERMINAL_ID && !env.SUPERSET_TAB_ID) {
 		debugLog("disabled: missing Superset terminal env");
 		return;
@@ -83,7 +85,7 @@ export default function supersetAmpLifecyclePlugin(amp: AmpApi) {
 	const supersetHome = env.SUPERSET_HOME_DIR || join(homedir(), ".superset");
 	const notifyPath = join(supersetHome, "hooks", "notify.sh");
 	if (!existsSync(notifyPath)) {
-		debugLog("disabled: notify hook missing at " + notifyPath);
+		debugLog(`disabled: notify hook missing at ${notifyPath}`);
 		return;
 	}
 
@@ -111,10 +113,10 @@ export default function supersetAmpLifecyclePlugin(amp: AmpApi) {
 				env: { ...env, SUPERSET_AGENT_ID: "amp" },
 			});
 			child.on("error", (error) => {
-				debugLog("spawn failed event=" + hookEventName + " error=" + error.message);
+				debugLog(`spawn failed event=${hookEventName} error=${error.message}`);
 			});
 			child.stdin?.on("error", (error) => {
-				debugLog("stdin failed event=" + hookEventName + " error=" + error.message);
+				debugLog(`stdin failed event=${hookEventName} error=${error.message}`);
 			});
 			child.stdin?.end(payload);
 			child.unref();
